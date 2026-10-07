@@ -303,10 +303,10 @@ T17
 
 **Done when**:
 
-- [ ] Job não finalizado é rejeitado com conflito
-- [ ] Job `FAILED` gera novo despacho mantendo os eventos antigos
-- [ ] Test count: 4 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Job não finalizado é rejeitado com conflito
+- [x] Job `FAILED` gera novo despacho mantendo os eventos antigos
+- [x] Test count: 4 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
