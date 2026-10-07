@@ -96,11 +96,11 @@ T9 -> T10
 
 **Done when**:
 
-- [ ] Mostra contagem por setor/status e pendências
-- [ ] Mostra produção por setor e cumprimento de prazo
-- [ ] Trata carregando e erro
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Mostra contagem por setor/status e pendências
+- [x] Mostra produção por setor e cumprimento de prazo
+- [x] Trata carregando e erro
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
