@@ -158,10 +158,10 @@ T8 -> T7
 
 **Done when**:
 
-- [ ] Credenciais válidas navegam; inválidas mostram erro acessível
-- [ ] Formulário funciona por teclado
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Credenciais válidas navegam; inválidas mostram erro acessível
+- [x] Formulário funciona por teclado
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

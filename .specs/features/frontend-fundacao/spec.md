@@ -121,8 +121,8 @@ O sistema só tem APIs; não há interface. O operador de produção precisa reg
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| FE-01 | P1: Login | Design | Pending |
-| FE-02 | P1: Login | Design | Pending |
+| FE-01 | P1: Login | Execute | Done |
+| FE-02 | P1: Login | Execute | Done |
 | FE-03 | P1: Login | Execute | Done |
 | FE-04 | P1: Shell | Design | Pending |
 | FE-05 | P1: Shell | Design | Pending |
