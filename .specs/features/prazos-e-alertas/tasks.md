@@ -218,10 +218,10 @@ T7
 
 **Done when**:
 
-- [ ] Prazo válido responde `200`
-- [ ] Sem perfil `403`; data inválida `400`; atividade inexistente `404`
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm run lint && npm run typecheck && npm test`
+- [x] Prazo válido responde `200`
+- [x] Sem perfil `403`; data inválida `400`; atividade inexistente `404`
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm run lint && npm run typecheck && npm test`
 
 **Tests**: integration
 **Gate**: full

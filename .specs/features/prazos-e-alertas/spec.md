@@ -101,7 +101,7 @@ O pedido pode nascer sem data de entrega e, mesmo com data, não há como sinali
 | --- | --- | --- | --- | --- |
 | PRAZO-01 | P1: Definir | Execute | T1, T4, T5 | Done (T1) |
 | PRAZO-02 | P1: Definir | Execute | T1, T4, T6 | Done (T1) |
-| PRAZO-03 | P1: Definir | Execute | T5, T6 | Done (T5) |
+| PRAZO-03 | P1: Definir | Execute | T5, T6 | Done (T5, T6) |
 | PRAZO-04 | P1: Definir | Execute | T1, T5, T6 | Done (T1) |
 | PRAZO-05 | P1: Atraso | Execute | T2 | Done (T2) |
 | PRAZO-06 | P1: Atraso | Execute | T2 | Done (T2) |
@@ -109,7 +109,7 @@ O pedido pode nascer sem data de entrega e, mesmo com data, não há como sinali
 | PRAZO-08 | P1: Atraso | Execute | T2 | Done (T2) |
 | PRAZO-09 | P1: Atraso | Execute | T2 | Done (T2) |
 | PRAZO-10 | P1: Alertas | Execute | T3, T4, T7 | Done (T3) |
-| PRAZO-11 | Edge: atividade inexistente | Execute | T1, T6 | Done (T1) |
+| PRAZO-11 | Edge: atividade inexistente | Execute | T1, T6 | Done (T1, T6) |
 | PRAZO-12 | Edge: item inexistente | Execute | T1, T5 | Done (T1) |
 
 **Coverage:** 12 total, 12 mapped to tasks, 0 unmapped
