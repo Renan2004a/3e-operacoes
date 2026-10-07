@@ -165,10 +165,10 @@ T7
 
 **Done when**:
 
-- [ ] Retorna quantidade, usuário, data/hora e exceção
-- [ ] Item inexistente é rejeitado
-- [ ] Test count: 5 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Retorna quantidade, usuário, data/hora e exceção
+- [x] Item inexistente é rejeitado
+- [x] Test count: 5 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

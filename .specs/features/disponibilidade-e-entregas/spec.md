@@ -123,8 +123,8 @@ A produção já é registrada, mas a Expedição não tem como saber o que est�
 | EXP-08 | P1: Entrega | Design | Implemented |
 | EXP-09 | P1: Entrega | Design | Implemented |
 | EXP-10 | P1: Saldo | Design | Implemented |
-| EXP-11 | P1: Histórico | Design | Pending |
-| EXP-12 | Edge: item inexistente | Design | Pending |
+| EXP-11 | P1: Histórico | Design | Implemented |
+| EXP-12 | Edge: item inexistente | Design | Implemented |
 | EXP-13 | Edge: quantidade inválida | Design | Implemented |
 | EXP-14 | Edge: sem produção | Design | Implemented |
 
