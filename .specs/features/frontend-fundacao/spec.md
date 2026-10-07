@@ -123,18 +123,18 @@ O sistema só tem APIs; não há interface. O operador de produção precisa reg
 | --- | --- | --- | --- |
 | FE-01 | P1: Login | Design | Pending |
 | FE-02 | P1: Login | Design | Pending |
-| FE-03 | P1: Login | Design | Pending |
+| FE-03 | P1: Login | Execute | Done |
 | FE-04 | P1: Shell | Design | Pending |
 | FE-05 | P1: Shell | Design | Pending |
 | FE-06 | P1: Shell | Execute | Done |
 | FE-07 | P1: Fila | Design | Pending |
-| FE-08 | P1: Fila | Design | Pending |
+| FE-08 | P1: Fila | Execute | Done |
 | FE-09 | P1: Executar | Design | Pending |
 | FE-10 | P1: Executar | Design | Pending |
 | FE-11 | P1: Ocorrência | Design | Pending |
 | FE-12 | P1: Ocorrência | Design | Pending |
 | FE-13 | Edge: 401 | Design | Pending |
-| FE-14 | Edge: falha de API | Design | Pending |
+| FE-14 | Edge: falha de API | Execute | Done |
 
 **Coverage:** 14 total, 0 mapped to tasks, 14 unmapped ⚠️
 

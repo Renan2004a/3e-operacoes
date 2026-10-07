@@ -105,10 +105,10 @@ T8 -> T7
 
 **Done when**:
 
-- [ ] Componentes com alvos de toque grandes e foco visível
-- [ ] Rótulos acessíveis nos campos
-- [ ] Test count: 8 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Componentes com alvos de toque grandes e foco visível
+- [x] Rótulos acessíveis nos campos
+- [x] Test count: 8 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
