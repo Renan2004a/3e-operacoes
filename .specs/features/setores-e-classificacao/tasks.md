@@ -226,8 +226,8 @@ T9
 
 **Done when**:
 
-- [ ] Item marcado `CLASSIFIED` e `Activity` criada na mesma transação
-- [ ] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
+- [x] Item marcado `CLASSIFIED` e `Activity` criada na mesma transação
+- [x] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
 
 **Tests**: none
 **Gate**: build
