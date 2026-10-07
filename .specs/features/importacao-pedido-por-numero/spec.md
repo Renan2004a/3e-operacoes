@@ -154,7 +154,7 @@ O acompanhamento dos pedidos depende hoje de controle manual e de comunicação 
 | INTG-22 | Edge: item cancelado | Design | Done |
 | INTG-23 | Edge: importação concorrente | Design | Done |
 
-**Coverage:** 23 total, 22 mapped to tasks, 1 unmapped ⚠️
+**Coverage:** 23 total, 23 mapped to tasks, 0 unmapped ✅
 
 ---
 
