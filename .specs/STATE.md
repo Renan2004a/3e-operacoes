@@ -58,11 +58,11 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 
 ## Handoff
 
-- **Feature**: setores-e-classificacao (concluída e verificada)
-- **Phase / Task**: Feature 2 Done → próxima: Fase 4 do backlog (produção e fila de atividades)
-- **Completed**: T1–T13; verificação PASS; `validate_state` 0 erros
+- **Feature**: producao-e-fila (concluída e verificada)
+- **Phase / Task**: Feature 3 Done → próxima: Fase 5 do backlog (ocorrências: perda, refugo, indisponibilidade)
+- **Completed**: T1–T11; verificação PASS; `validate_state` 0 erros
 - **In-progress** (file:line): nenhum
-- **Next step**: especificar a feature "produção e fila de atividades" (RF003, RF004, RF007, RF018)
+- **Next step**: especificar a feature "ocorrências" (RF005)
 - **Blockers**: nenhum para desenvolvimento; migrations dependem de um MySQL de runtime
-- **Uncommitted files**: validation.md, spec.md, docs/execucao.md, .specs/STATE.md
+- **Uncommitted files**: validation.md, spec.md, tasks.md, docs/execucao.md, .specs/STATE.md
 - **Branch**: main

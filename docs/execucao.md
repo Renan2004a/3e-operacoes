@@ -73,3 +73,36 @@ Manter setores operacionais, o de/para categoria → setor auditável e a classi
 ### Riscos abertos
 - Categoria do legado continua indisponível na AWS; itens sem categoria ficam pendentes.
 - Rotas protegidas por `APP_INTERNAL_TOKEN` até a feature de autenticação.
+
+---
+
+## Feature 3 — Produção e Fila de Atividades
+
+**Data**: 2026-10-07
+**Requisitos**: RF003, RF004, RF007, RF018; RN001, RN003, RN010, RN011, RN020, RN021, RN022, RN030, RN031, RN033
+**Artefatos**: `.specs/features/producao-e-fila/{spec,design,tasks,validation}.md`
+
+### Objetivo
+Fila de atividades por setor, registro de execução com validação de unidade, saldo pendente (solicitado − executado), prioridades e dados da ordem de produção.
+
+### Como foi feito
+- **Specify**: 15 critérios EARS; `validate_spec.py` 0/0.
+- **Design**: domínio puro `src/modules/producao/`; porta `ProducaoRepository`; adapter Prisma; usuário atual via cabeçalho temporário `x-user-id`.
+- **Tasks**: 11 tarefas em 3 fases; `validate_tasks.py` 0 erros.
+- **Execute**: 2 batches (T1–T7, T8–T11), commit atômico por tarefa.
+- **Verify**: Verifier independente → **PASS** na primeira rodada.
+
+### Resultado
+- **11 tarefas** implementadas.
+- **208 testes** passando. Cobertura de produção 100% linhas/funções, 96,9% branches.
+- **Verificação: PASS** — 15/15 ACs, 8/8 mutantes mortos. `validate_state.py`: 0 erros.
+
+### Decisões e desvios
+- Peça inteira; metro 2 casas; demais unidades inteiras.
+- Atividade `COMPLETED` quando executado ≥ solicitado; `DIVERGENT` quando ultrapassa.
+- Revenda: pendente = solicitado − separado (indisponibilidade entra na feature de ocorrências).
+- Usuário atual via `x-user-id` temporário até a autenticação.
+
+### Riscos abertos
+- Códigos de unidade do legado não estão definidos na spec (allowlist de metro).
+- Revenda com indisponibilidade ainda depende de validação do "pedido atendido".

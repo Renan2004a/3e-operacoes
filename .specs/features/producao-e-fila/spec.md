@@ -130,21 +130,21 @@ A classificação cria as atividades por setor, mas não existe fila para o oper
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| PROD-01 | P1: Fila | Design | Done |
-| PROD-02 | P1: Fila | Design | Done |
-| PROD-03 | P1: Fila | Design | Done |
-| PROD-04 | P1: Execução | Design | Done |
-| PROD-05 | P1: Execução | Design | Done |
-| PROD-06 | P1: Execução | Design | Done |
-| PROD-07 | P1: Execução | Design | Done |
-| PROD-08 | P1: Saldo | Design | Done |
-| PROD-09 | P1: Saldo | Design | Done |
-| PROD-10 | P1: Saldo | Design | Done |
-| PROD-11 | P1: Prioridade | Design | Done |
-| PROD-12 | P2: Ordem | Design | Done |
-| PROD-13 | Edge: atividade inexistente | Design | Done |
-| PROD-14 | Edge: setor do operador | Design | Done |
-| PROD-15 | Edge: quantidade inválida | Design | Done |
+| PROD-01 | P1: Fila | Design | Verified |
+| PROD-02 | P1: Fila | Design | Verified |
+| PROD-03 | P1: Fila | Design | Verified |
+| PROD-04 | P1: Execução | Design | Verified |
+| PROD-05 | P1: Execução | Design | Verified |
+| PROD-06 | P1: Execução | Design | Verified |
+| PROD-07 | P1: Execução | Design | Verified |
+| PROD-08 | P1: Saldo | Design | Verified |
+| PROD-09 | P1: Saldo | Design | Verified |
+| PROD-10 | P1: Saldo | Design | Verified |
+| PROD-11 | P1: Prioridade | Design | Verified |
+| PROD-12 | P2: Ordem | Design | Verified |
+| PROD-13 | Edge: atividade inexistente | Design | Verified |
+| PROD-14 | Edge: setor do operador | Design | Verified |
+| PROD-15 | Edge: quantidade inválida | Design | Verified |
 
 **Coverage:** 15 total, 15 mapped to tasks, 0 unmapped ✅
 
