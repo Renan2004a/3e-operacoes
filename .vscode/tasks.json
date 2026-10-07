@@ -1,0 +1,42 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "dev",
+      "type": "shell",
+      "command": "npm run dev",
+      "problemMatcher": [],
+      "group": { "kind": "build", "isDefault": true }
+    },
+    {
+      "label": "test",
+      "type": "shell",
+      "command": "npm test",
+      "problemMatcher": []
+    },
+    {
+      "label": "test:e2e",
+      "type": "shell",
+      "command": "npm run test:e2e",
+      "problemMatcher": []
+    },
+    {
+      "label": "db:up (MySQL local)",
+      "type": "shell",
+      "command": "npm run db:up",
+      "problemMatcher": []
+    },
+    {
+      "label": "prisma:migrate",
+      "type": "shell",
+      "command": "npm run prisma:migrate",
+      "problemMatcher": []
+    },
+    {
+      "label": "prisma:seed",
+      "type": "shell",
+      "command": "npm run prisma:seed",
+      "problemMatcher": []
+    }
+  ]
+}

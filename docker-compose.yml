@@ -1,0 +1,25 @@
+# Banco MySQL local para desenvolvimento. Sobe com `npm run db:up`.
+# Combina com o DATABASE_URL padrão do .env de exemplo:
+#   mysql://app:app@127.0.0.1:3306/3e_operacoes
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: 3e-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: 3e_operacoes
+      MYSQL_USER: app
+      MYSQL_PASSWORD: app
+    ports:
+      - "3306:3306"
+    volumes:
+      - 3e-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  3e-mysql-data:
