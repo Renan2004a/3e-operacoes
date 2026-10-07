@@ -332,9 +332,9 @@ T17
 
 **Done when**:
 
-- [ ] Criar, buscar por idempotência, buscar por id e atualizar status implementados
-- [ ] Eventos do job são persistidos
-- [ ] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
+- [x] Criar, buscar por idempotência, buscar por id e atualizar status implementados
+- [x] Eventos do job são persistidos
+- [x] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
 
 **Tests**: none
 **Gate**: build
