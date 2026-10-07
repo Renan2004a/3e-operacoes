@@ -253,11 +253,11 @@ T9
 
 **Done when**:
 
-- [ ] Criação responde `201`; duplicado responde `409`; código vazio `400`
-- [ ] Listagem responde `200` só com ativos
-- [ ] Token ausente responde `401`
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm run lint && npm run typecheck && npm test`
+- [x] Criação responde `201`; duplicado responde `409`; código vazio `400`
+- [x] Listagem responde `200` só com ativos
+- [x] Token ausente responde `401`
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm run lint && npm run typecheck && npm test`
 
 **Tests**: integration
 **Gate**: full
