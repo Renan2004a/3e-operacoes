@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { PageHead } from '@/shared/ui/page-head'
 import { PedidoDetalhe } from '@/shared/ui/pedido-detalhe'
 import { PedidosLista, type PedidoListado } from '@/shared/ui/pedidos-lista'
 
@@ -13,12 +14,10 @@ export default function VendedorPedidosPage() {
 
   return (
     <section className="grid gap-4">
-      <header>
-        <h1 className="text-2xl font-semibold text-ink">Pedidos</h1>
-        <p className="text-sm text-muted">
-          Consulte os pedidos e defina o prazo de entrega. A produção é somente leitura.
-        </p>
-      </header>
+      <PageHead
+        title="Pedidos"
+        description="Consulte os pedidos e defina o prazo de entrega. A produção é somente leitura."
+      />
 
       <PedidosLista onSelecionar={setSelecionado} />
 

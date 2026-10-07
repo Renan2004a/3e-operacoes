@@ -179,4 +179,11 @@ describe('EntregasPage', () => {
 
     expect(await screen.findByLabelText('Pedido')).toBeInTheDocument()
   })
+
+  it('usa o cabeçalho de página com o título (VIS-09)', async () => {
+    configurarApi([detalhe(5)])
+    render(<EntregasPage />)
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Entregas' })).toBeInTheDocument()
+  })
 })

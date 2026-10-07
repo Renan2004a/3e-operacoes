@@ -7,6 +7,7 @@ import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import { Field } from '@/shared/ui/field'
 import { Input } from '@/shared/ui/input'
+import { PageHead } from '@/shared/ui/page-head'
 import { Spinner } from '@/shared/ui/spinner'
 
 interface Setor {
@@ -180,10 +181,10 @@ export default function SetoresPage() {
 
   return (
     <section className="grid gap-4">
-      <header>
-        <h1 className="text-2xl font-semibold text-ink">Setores e mapeamentos</h1>
-        <p className="text-sm text-muted">Mantenha setores e o mapeamento de categoria para setor.</p>
-      </header>
+      <PageHead
+        title="Setores e mapeamentos"
+        description="Mantenha setores e o mapeamento de categoria para setor."
+      />
 
       <Card>
         <CardHeader>

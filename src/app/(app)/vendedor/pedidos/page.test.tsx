@@ -131,4 +131,11 @@ describe('VendedorPedidosPage', () => {
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent(/não foi possível carregar o pedido/i)
   })
+
+  it('usa o cabeçalho de página com o título (VIS-09)', async () => {
+    configurarApi()
+    render(<VendedorPedidosPage />)
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Pedidos' })).toBeInTheDocument()
+  })
 })

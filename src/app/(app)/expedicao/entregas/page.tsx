@@ -7,6 +7,7 @@ import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import { Field } from '@/shared/ui/field'
 import { Input } from '@/shared/ui/input'
+import { PageHead } from '@/shared/ui/page-head'
 import { Spinner } from '@/shared/ui/spinner'
 
 interface ItemSaldo {
@@ -243,10 +244,7 @@ export default function EntregasPage() {
 
   return (
     <section className="grid gap-4">
-      <header>
-        <h1 className="text-2xl font-semibold text-ink">Entregas</h1>
-        <p className="text-sm text-muted">Itens disponíveis e registro de entrega.</p>
-      </header>
+      <PageHead title="Entregas" description="Itens disponíveis e registro de entrega." />
 
       <Field label="Pedido">
         {(props) => (

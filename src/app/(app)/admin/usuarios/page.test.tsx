@@ -145,4 +145,11 @@ describe('UsuariosPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Novo usuário' })).toBeInTheDocument()
   })
+
+  it('usa o cabeçalho de página com o título (VIS-09)', async () => {
+    configurarApi([])
+    render(<UsuariosPage />)
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Usuários' })).toBeInTheDocument()
+  })
 })

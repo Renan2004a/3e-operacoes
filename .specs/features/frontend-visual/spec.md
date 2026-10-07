@@ -114,9 +114,9 @@ A interface funciona, mas está visualmente simples e distante da referência `f
 | VIS-06 | P1: Login | Design | Done |
 | VIS-07 | P1: Componentes | Design | Done |
 | VIS-08 | P1: Componentes | Design | Done |
-| VIS-09 | P1: Telas | Design | In progress |
-| VIS-10 | P1: Telas | Design | In progress |
-| VIS-11 | P1: Telas | Design | In progress |
+| VIS-09 | P1: Telas | Design | Done |
+| VIS-10 | P1: Telas | Design | Done |
+| VIS-11 | P1: Telas | Design | Done |
 
 **Coverage:** 11 total, 0 mapped to tasks, 11 unmapped ⚠️
 

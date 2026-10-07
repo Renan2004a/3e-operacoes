@@ -10,6 +10,7 @@ import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import { Field } from '@/shared/ui/field'
 import { Input } from '@/shared/ui/input'
+import { PageHead } from '@/shared/ui/page-head'
 import { Spinner } from '@/shared/ui/spinner'
 
 interface Usuario {
@@ -145,10 +146,7 @@ export default function UsuariosPage() {
 
   return (
     <section className="grid gap-4">
-      <header>
-        <h1 className="text-2xl font-semibold text-ink">Usuários</h1>
-        <p className="text-sm text-muted">Cadastre usuários e associe perfis e setores.</p>
-      </header>
+      <PageHead title="Usuários" description="Cadastre usuários e associe perfis e setores." />
 
       <Card>
         <CardHeader>
