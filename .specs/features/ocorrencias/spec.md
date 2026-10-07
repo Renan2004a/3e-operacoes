@@ -115,7 +115,7 @@ O chão de fábrica precisa registrar o que dá errado durante a produção: pe�
 | OCO-12 | Edge: pausa/parada | Design | Implemented |
 | OCO-13 | Edge: quantidade inválida | Design | Implemented |
 
-**Coverage:** 13 total, 0 mapped to tasks, 13 unmapped ⚠️
+**Coverage:** 13 total, 13 mapped to tasks, 0 unmapped ✅
 
 ---
 
