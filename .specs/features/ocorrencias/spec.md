@@ -107,10 +107,10 @@ O chão de fábrica precisa registrar o que dá errado durante a produção: pe�
 | OCO-04 | P1: Registrar | Design | Implemented |
 | OCO-05 | P1: Registrar | Design | Implemented |
 | OCO-06 | P1: Registrar | Design | Implemented |
-| OCO-07 | P1: Listar | Design | Pending |
+| OCO-07 | P1: Listar | Design | Implemented |
 | OCO-08 | P1: Motivos | Design | Implemented |
 | OCO-09 | P1: Motivos | Design | Implemented |
-| OCO-10 | Edge: atividade inexistente | Design | Pending |
+| OCO-10 | Edge: atividade inexistente | Design | Implemented |
 | OCO-11 | Edge: setor do operador | Design | Implemented |
 | OCO-12 | Edge: pausa/parada | Design | Implemented |
 | OCO-13 | Edge: quantidade inválida | Design | Implemented |
