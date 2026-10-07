@@ -58,11 +58,11 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 
 ## Handoff
 
-- **Feature**: qualidade-e-fechamento (concluída e verificada)
-- **Phase / Task**: Feature 11 Done → projeto com o backlog implementado
-- **Completed**: T1–T7; verificação PASS; `validate_state` 0 erros
+- **Feature**: qualidade-e-fechamento (concluída e verificada) + validação operacional contra a AWS
+- **Phase / Task**: projeto com o backlog implementado e rodando contra o banco AWS
+- **Completed**: 11 features; importação real (70435) e fluxo operacional completo validados
 - **In-progress** (file:line): nenhum
-- **Next step**: revisão final do usuário; criar remote e commitar; aplicar migrations quando houver MySQL
-- **Blockers**: nenhum para desenvolvimento; migrations e E2E com dados dependem de um MySQL de runtime
-- **Uncommitted files**: validation.md, spec.md, tasks.md, docs/execucao.md, .specs/STATE.md
+- **Next step**: criar remote e push; go-live (Cloudflare/conector no cliente); usuário read-only e rotação de senha
+- **Blockers**: nenhum para desenvolvimento
+- **Uncommitted files**: docs/execucao.md, .specs/STATE.md
 - **Branch**: main

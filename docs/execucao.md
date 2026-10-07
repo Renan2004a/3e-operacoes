@@ -361,3 +361,33 @@ E2E Playwright (login e responsividade), acessibilidade, fechamento das lacunas 
 ### Riscos abertos
 - E2E de fluxos com banco depende de um MySQL de runtime.
 - Go-live depende de Cloudflare/conector no ambiente do cliente (documentado em `docs/go-live.md`).
+
+---
+
+## Validação operacional contra a AWS (2026-10-07)
+
+### Banco
+- Schema do app criado na AWS: **`3e_operacoes`** (separado do legado). O **`topgerente` ficou intacto** (482 tabelas, somente leitura).
+- Migration e seed aplicados: 3 setores, 9 motivos, 5 usuários (um por perfil).
+- Conector lê `topgerente` e devolve por callback; o app grava em `3e_operacoes`.
+
+### Importação real
+- Pedido **70435** importado do `topgerente` para `3e_operacoes` (cliente "MARCO ANTONIO DE OLIVEIRA", 5 itens: 30/15/6/50/180).
+
+### Fluxo operacional validado ponta a ponta
+- **Reimportar** o 70435 (resync) → `SUCCEEDED`, **sem duplicar** (1 pedido, 5 itens).
+- **Classificar** itens → atividades criadas (Telhas e Corte e Dobra).
+- **Fila do operador** → 2 atividades.
+- **Execução** 100 de 180 → `IN_PROGRESS`, pendente 80 (RN001: solicitado − executado).
+- **Ocorrência** de perda 2 com motivo → registrada **sem alterar o saldo** (perda não reduz a obrigação).
+- **Entrega** parcial 30 de 100 disponíveis → `PARCIAL` (RN002: disponível = executado − entregue).
+- **Saldo do item**: solicitado 180, executado 100, disponível 70, entregue 30, pendente 80.
+- **Indicadores**: painel por setor/status + produção por setor (Telhas 100) + cumprimento de prazo.
+
+### Ajustes
+- Timeout do despacho agora **configurável** (`CONNECTOR_TIMEOUT_MS`; padrão 5 s, usado 20 s para o RDS remoto).
+- Conector passou a carregar `.env` local (`dotenv`).
+
+### Riscos abertos
+- Usar **usuário somente leitura** no `topgerente` (hoje é o `admin`) e **rotacionar a senha**.
+- Callback após `CONNECTOR_TIMEOUT` ainda conclui o job (`FAILED` → `SUCCEEDED`); revisar a máquina de estados.
