@@ -5,11 +5,18 @@ import {
   type CallbackPayload,
   type IntegracaoRepository,
 } from './contratos'
-import { importarPedido, type PedidoImportado, type PedidosRepository } from '../pedidos/importar-pedido'
+import {
+  importarPedido,
+  type ClassificacaoAutomaticaPort,
+  type PedidoImportado,
+  type PedidosRepository,
+} from '../pedidos/importar-pedido'
 
 export interface ProcessarCallbackDeps {
   integracao: IntegracaoRepository
   pedidos: PedidosRepository
+  /** Porta opcional de auto-classificação repassada à importação. */
+  classificacao?: ClassificacaoAutomaticaPort
   now?: () => Date
 }
 
@@ -51,7 +58,7 @@ export async function processarCallback(
   const now = deps.now?.() ?? new Date()
 
   try {
-    const result = await importarPedido(toPedidoImportado(data), deps.pedidos)
+    const result = await importarPedido(toPedidoImportado(data), deps.pedidos, deps.classificacao)
 
     await deps.integracao.updateStatus({
       jobId: job.id,

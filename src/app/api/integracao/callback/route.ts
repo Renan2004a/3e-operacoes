@@ -6,6 +6,7 @@ import {
 import { processarCallback } from '../../../../modules/integracao/processar-callback'
 import { prismaIntegracaoRepository } from '../../../../modules/integracao/adapters/prisma-integracao-repository'
 import { prismaPedidosRepository } from '../../../../modules/pedidos/adapters/prisma-pedidos-repository'
+import { prismaClassificacaoAutomatica } from '../../../../modules/setores/adapters/prisma-classificacao-automatica'
 import { requireCallbackToken } from '../../../../shared/http/internal-auth'
 
 /** POST /api/integracao/callback — recebe o payload normalizado do conector. */
@@ -25,6 +26,7 @@ export async function POST(request: Request) {
     await processarCallback(body as CallbackPayload, {
       integracao: prismaIntegracaoRepository,
       pedidos: prismaPedidosRepository,
+      classificacao: prismaClassificacaoAutomatica,
     })
     return Response.json({ ok: true }, { status: 200 })
   } catch (error) {

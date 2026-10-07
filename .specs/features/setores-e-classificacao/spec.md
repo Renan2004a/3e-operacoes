@@ -127,7 +127,7 @@ Depois da importação, os itens chegam sem categoria utilizável, porque `cad_p
 | SET-06 | P1: Mapeamento | Design | Done |
 | SET-07 | P1: Mapeamento | Design | Done |
 | SET-08 | P1: Mapeamento | Design | Done |
-| SET-09 | P1: Classificação | Design | Done |
+| SET-09 | P1: Classificação | Design | Implementing |
 | SET-10 | P1: Classificação | Design | Done |
 | SET-11 | P1: Classificação | Design | Done |
 | SET-12 | P1: Classificação | Design | Done |

@@ -15,7 +15,24 @@ const mocks = vi.hoisted(() => {
   }> = []
   const events: Array<{ id: string; jobId: string; type: string; detail: string | null; createdAt: Date }> = []
   const upsertCalls: unknown[] = []
+  const orderItems: Array<{
+    id: string
+    orderId: string
+    legacyItemKey: string
+    legacyCategory: string | null
+    classificationStatus: 'CLASSIFIED' | 'PENDING_CLASSIFICATION'
+  }> = []
+  const mappings: Array<{
+    id: string
+    legacyCategory: string
+    sectorId: string
+    status: 'ACTIVE' | 'INACTIVE'
+    createdAt: Date
+    updatedAt: Date
+  }> = []
+  const activities: Array<{ id: string; orderItemId: string; sectorId: string }> = []
   let seq = 0
+  let actSeq = 0
 
   const integracao = {
     findRecentByIdempotencyKey: async () => null,
@@ -68,21 +85,93 @@ const mocks = vi.hoisted(() => {
 
   const pedidos = {
     findOrderByLegacyKey: async () => null,
-    upsertOrder: async (input: unknown) => {
+    upsertOrder: async (input: { items: Array<{ legacyItemKey: string; legacyCategory: string | null }> }) => {
       upsertCalls.push(input)
+      for (const item of input.items) {
+        seq += 1
+        orderItems.push({
+          id: `item_${seq}`,
+          orderId: 'order_1',
+          legacyItemKey: item.legacyItemKey,
+          legacyCategory: item.legacyCategory,
+          classificationStatus: 'PENDING_CLASSIFICATION',
+        })
+      }
       return { orderId: 'order_1' }
     },
     registrarDivergencia: async () => {},
+  }
+
+  // Exercita o adaptador real de auto-classificação com a infraestrutura mockada.
+  const prisma = {
+    orderItem: {
+      findMany: async ({ where }: { where: { orderId: string } }) =>
+        orderItems
+          .filter((item) => item.orderId === where.orderId)
+          .map((item) => ({
+            id: item.id,
+            legacyItemKey: item.legacyItemKey,
+            classificationStatus: item.classificationStatus,
+          })),
+    },
+  }
+
+  const classificacao = {
+    findItemById: async (id: string) => {
+      const found = orderItems.find((item) => item.id === id)
+      return found
+        ? {
+            id: found.id,
+            legacyCategory: found.legacyCategory,
+            classificationStatus: found.classificationStatus,
+          }
+        : null
+    },
+    findSectorById: async () => null,
+    markClassified: async ({ itemId, sectorId }: { itemId: string; sectorId: string }) => {
+      const found = orderItems.find((item) => item.id === itemId)
+      if (!found) throw new Error('item não encontrado')
+      found.classificationStatus = 'CLASSIFIED'
+      actSeq += 1
+      const activity = { id: `act_${actSeq}`, orderItemId: itemId, sectorId }
+      activities.push(activity)
+      return activity
+    },
+  }
+
+  const mapeamento = {
+    findByCategory: async (legacyCategory: string) => {
+      const found = mappings.find((mapping) => mapping.legacyCategory === legacyCategory)
+      return found ? { ...found } : null
+    },
+    findById: async (id: string) => {
+      const found = mappings.find((mapping) => mapping.id === id)
+      return found ? { ...found } : null
+    },
+    create: async () => {
+      throw new Error('não usado')
+    },
+    update: async () => {
+      throw new Error('não usado')
+    },
+    deactivate: async () => {
+      throw new Error('não usado')
+    },
+    recordAudit: async () => {},
   }
 
   function reset() {
     jobs.length = 0
     events.length = 0
     upsertCalls.length = 0
+    orderItems.length = 0
+    mappings.length = 0
+    activities.length = 0
     seq = 0
+    actSeq = 0
   }
 
-  return { jobs, events, upsertCalls, integracao, pedidos, reset }
+  return { jobs, events, upsertCalls, orderItems, mappings, activities, integracao, pedidos, prisma, classificacao, mapeamento, reset }
 })
 
 vi.mock('../../../../modules/integracao/adapters/prisma-integracao-repository', () => ({
@@ -92,6 +181,16 @@ vi.mock('../../../../modules/integracao/adapters/prisma-integracao-repository', 
 vi.mock('../../../../modules/pedidos/adapters/prisma-pedidos-repository', () => ({
   prismaPedidosRepository: mocks.pedidos,
 }))
+
+vi.mock('../../../../modules/setores/adapters/prisma-classificacao-repository', () => ({
+  prismaClassificacaoRepository: mocks.classificacao,
+}))
+
+vi.mock('../../../../modules/setores/adapters/prisma-setores-repository', () => ({
+  prismaMapeamentoRepository: mocks.mapeamento,
+}))
+
+vi.mock('@/shared/db/prisma', () => ({ prisma: mocks.prisma }))
 
 import { POST } from './route'
 
@@ -218,5 +317,40 @@ describe('POST /api/integracao/callback', () => {
 
     expect(response.status).toBe(404)
     expect(mocks.upsertCalls).toHaveLength(0)
+  })
+
+  it('classifica automaticamente o item com categoria mapeada no callback', async () => {
+    mocks.jobs.push(makeJob('job_1', 'RUNNING'))
+    mocks.mappings.push({
+      id: 'map_1',
+      legacyCategory: 'Telhas',
+      sectorId: 'setor_telhas',
+      status: 'ACTIVE',
+      createdAt: NOW,
+      updatedAt: NOW,
+    })
+
+    const response = await POST(
+      request(
+        validPayload({
+          items: [
+            {
+              seq: 1,
+              productCode: 'P001',
+              description: 'TELHA',
+              unit: 'UN',
+              requestedQuantity: '5.000',
+              legacyCategory: 'Telhas',
+            },
+          ],
+        }),
+      ),
+    )
+
+    expect(response.status).toBe(200)
+    expect(mocks.orderItems[0].classificationStatus).toBe('CLASSIFIED')
+    expect(mocks.activities).toEqual([
+      { id: 'act_1', orderItemId: mocks.orderItems[0].id, sectorId: 'setor_telhas' },
+    ])
   })
 })

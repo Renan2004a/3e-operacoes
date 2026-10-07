@@ -9,7 +9,13 @@ import {
   type JobStatus,
 } from './contratos'
 import { processarCallback } from './processar-callback'
-import type { PedidosRepository } from '../pedidos/importar-pedido'
+import type { ClassificacaoAutomaticaPort, PedidosRepository } from '../pedidos/importar-pedido'
+import {
+  classificarPorMapeamento,
+  type ActivityCriada,
+  type ClassificacaoRepository,
+} from '../setores/classificar-item'
+import type { CategorySectorMapping, MapeamentoRepository } from '../setores/mapeamento'
 
 const NOW = new Date('2026-10-06T12:00:00.000Z')
 
@@ -74,7 +80,10 @@ function createIntegracaoFake(seedJobs: IntegrationJob[] = [], seedEvents: Integ
 }
 
 interface FakeOrderItem {
+  id?: string
   legacyItemKey: string
+  legacyCategory?: string | null
+  classificationStatus?: 'CLASSIFIED' | 'PENDING_CLASSIFICATION'
   requestedQuantity: string
   executedQuantity: string
   deliveredQuantity: string
@@ -123,14 +132,21 @@ function createPedidosFake(options: { failUpsert?: boolean; seed?: FakeOrder[] }
 
       for (const item of input.items) {
         const existing = order.items.find((candidate) => candidate.legacyItemKey === item.legacyItemKey)
-        if (existing) existing.requestedQuantity = item.requestedQuantity
-        else
+        if (existing) {
+          existing.requestedQuantity = item.requestedQuantity
+          existing.legacyCategory = item.legacyCategory
+        } else {
+          seq += 1
           order.items.push({
+            id: `item_${seq}`,
             legacyItemKey: item.legacyItemKey,
+            legacyCategory: item.legacyCategory,
+            classificationStatus: 'PENDING_CLASSIFICATION',
             requestedQuantity: item.requestedQuantity,
             executedQuantity: '0.000',
             deliveredQuantity: '0.000',
           })
+        }
       }
 
       return { orderId: order.id }
@@ -141,6 +157,98 @@ function createPedidosFake(options: { failUpsert?: boolean; seed?: FakeOrder[] }
   }
 
   return { repo, orders }
+}
+
+function mapping(
+  overrides: Partial<CategorySectorMapping> & Pick<CategorySectorMapping, 'legacyCategory'>,
+): CategorySectorMapping {
+  const base: CategorySectorMapping = {
+    id: 'map_1',
+    legacyCategory: overrides.legacyCategory,
+    sectorId: 'setor_telhas',
+    status: 'ACTIVE',
+    createdAt: NOW,
+    updatedAt: NOW,
+  }
+  return { ...base, ...overrides }
+}
+
+/** Porta de auto-classificação apoiada nos repositórios falsos em memória. */
+function createClassificacaoPort(
+  orders: FakeOrder[],
+  seedMappings: CategorySectorMapping[] = [],
+) {
+  const mappings = [...seedMappings]
+  const activities: ActivityCriada[] = []
+  let seq = 0
+
+  const classificacao: ClassificacaoRepository = {
+    async findItemById(itemId) {
+      for (const order of orders) {
+        const found = order.items.find((item) => item.id === itemId)
+        if (found) {
+          return {
+            id: found.id ?? itemId,
+            legacyCategory: found.legacyCategory ?? null,
+            classificationStatus: found.classificationStatus ?? 'PENDING_CLASSIFICATION',
+          }
+        }
+      }
+      return null
+    },
+    async findSectorById() {
+      return null
+    },
+    async markClassified({ itemId, sectorId }) {
+      for (const order of orders) {
+        const found = order.items.find((item) => item.id === itemId)
+        if (found) {
+          found.classificationStatus = 'CLASSIFIED'
+          seq += 1
+          const activity: ActivityCriada = { id: `act_${seq}`, orderItemId: itemId, sectorId }
+          activities.push(activity)
+          return activity
+        }
+      }
+      throw new Error('item não encontrado')
+    },
+  }
+
+  const mapeamento: MapeamentoRepository = {
+    async findByCategory(legacyCategory) {
+      const found = mappings.find((candidate) => candidate.legacyCategory === legacyCategory)
+      return found ? { ...found } : null
+    },
+    async findById(id) {
+      const found = mappings.find((candidate) => candidate.id === id)
+      return found ? { ...found } : null
+    },
+    async create() {
+      throw new Error('não usado')
+    },
+    async update() {
+      throw new Error('não usado')
+    },
+    async deactivate() {
+      throw new Error('não usado')
+    },
+    async recordAudit() {},
+  }
+
+  const port: ClassificacaoAutomaticaPort = {
+    async classificarItens({ orderId, items }) {
+      const order = orders.find((candidate) => candidate.id === orderId)
+      if (!order) throw new Error('pedido não encontrado')
+      for (const item of items) {
+        const found = order.items.find((candidate) => candidate.legacyItemKey === item.legacyItemKey)
+        if (!found || !found.id) continue
+        if (found.classificationStatus === 'CLASSIFIED') continue
+        await classificarPorMapeamento(found.id, { classificacao, mapeamento })
+      }
+    },
+  }
+
+  return { port, activities }
 }
 
 function validCallback(overrides: Partial<CallbackPayload> = {}): CallbackPayload {
@@ -342,5 +450,35 @@ describe('processarCallback', () => {
     expect(integracao.jobs[0].status).toBe('FAILED')
     expect(integracao.jobs[0].errorCode).toBe('UPSERT_FAILED')
     expect(integracao.events.map((event) => event.type)).toEqual(['FAILED'])
+  })
+
+  it('classifica automaticamente o item com categoria mapeada e cria a atividade', async () => {
+    const integracao = createIntegracaoFake([makeJob('job_1', 'RUNNING')])
+    const pedidos = createPedidosFake()
+    const { port, activities } = createClassificacaoPort(pedidos.orders, [
+      mapping({ legacyCategory: 'Telhas', sectorId: 'setor_telhas' }),
+    ])
+
+    await processarCallback(
+      validCallback({
+        items: [
+          {
+            seq: 1,
+            productCode: 'P001',
+            description: 'TELHA',
+            unit: 'UN',
+            requestedQuantity: '5.000',
+            legacyCategory: 'Telhas',
+          },
+        ],
+      }),
+      { integracao: integracao.repo, pedidos: pedidos.repo, classificacao: port, now: () => NOW },
+    )
+
+    expect(integracao.jobs[0].status).toBe('SUCCEEDED')
+    expect(pedidos.orders[0].items[0].classificationStatus).toBe('CLASSIFIED')
+    expect(activities).toEqual([
+      { id: 'act_1', orderItemId: pedidos.orders[0].items[0].id, sectorId: 'setor_telhas' },
+    ])
   })
 })

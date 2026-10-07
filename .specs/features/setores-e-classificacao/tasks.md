@@ -63,6 +63,14 @@ T8
 T9
 ```
 
+### Phase 4: Correções de verificação
+
+```
+T10
+T11
+T12
+```
+
 ---
 
 ## Task Breakdown
@@ -323,6 +331,90 @@ T9
 
 ---
 
+### Phase 4: Correções de verificação
+
+#### T10: Auto-classificação fim a fim no callback de importação
+
+**What**: Implementar a porta `ClassificacaoAutomaticaPort` com Prisma e injetá-la em `processarCallback` e na rota de callback, para que itens reimportados com categoria mapeada saiam `CLASSIFIED` com `Activity`.
+**Where**: `src/modules/setores/adapters/prisma-classificacao-automatica.ts` (novo) + `src/modules/integracao/processar-callback.ts` + `src/app/api/integracao/callback/route.ts` + testes
+**Depends on**: T3, T4, T5, T6
+**Reuses**: `classificarPorMapeamento` (T3), adaptadores Prisma (T5, T6), porta de importação (T4).
+**Requirement**: SET-09
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `tlc-spec-driven`, `dominio-3e`
+
+**Done when**:
+
+- [x] Item com categoria mapeada termina `CLASSIFIED` com uma `Activity` via `processarCallback`
+- [x] Callback fim a fim (rota) classifica o item mapeado
+- [x] Item já classificado é ignorado (sem erro de reclassificação na reimportação)
+- [x] Test count: 143 testes passam na suíte (sem remoções silenciosas)
+- [x] Gate check passa: `npm run lint && npm run typecheck && npm test`
+
+**Tests**: unit + integration
+**Gate**: full
+
+**Commit**: `feat(setores): auto-classifica itens mapeados no callback`
+
+---
+
+#### T11: Cobre mapeamento inativo na classificação
+
+**What**: Adicionar teste do ramo de mapeamento `INACTIVE`, garantindo que o item permanece `PENDING_CLASSIFICATION` sem criar `Activity`.
+**Where**: `src/modules/setores/classificar-item.test.ts`
+**Depends on**: T3
+**Reuses**: Harness de `classificar-item.test.ts`.
+**Requirement**: SET-13, SET-16
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `tlc-spec-driven`, `tdd-3e`
+
+**Done when**:
+
+- [x] Mapeamento `INACTIVE` mantém o item `PENDING_CLASSIFICATION`
+- [x] Nenhuma `Activity` é criada
+- [x] Test count: 10 testes passam em `classificar-item.test.ts` (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `test(setores): cobre mapeamento inativo na classificacao`
+
+---
+
+#### T12: Documenta e cobre o contrato do GET de mapeamentos
+
+**What**: Documentar no design o contrato de `GET /api/mapeamentos?category=` (resolve por categoria; `400` sem o parâmetro; `404` quando ausente) e cobrir os caminhos de erro na rota.
+**Where**: `.specs/features/setores-e-classificacao/design.md` + `src/app/api/mapeamentos/route.test.ts`
+**Depends on**: T8
+**Reuses**: Testes de rota existentes (T8).
+**Requirement**: N/A (precisão de contrato de leitura)
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `tlc-spec-driven`
+
+**Done when**:
+
+- [x] Contrato do GET documentado no design
+- [x] `400` sem `category` e `404` quando o mapeamento não existe cobertos por teste
+- [x] Test count: 8 testes passam em `mapeamentos/route.test.ts` (sem remoções silenciosas)
+- [x] Gate check passa: `npm run lint && npm run typecheck && npm test`
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `test(api): cobre contrato do GET de mapeamentos`
+
+---
+
 ## Phase Execution Map
 
 ```
@@ -333,6 +425,9 @@ Phase 2: T6
 Phase 3: T7
 Phase 3: T8
 Phase 3: T9
+Phase 4: T10
+Phase 4: T11
+Phase 4: T12
 ```
 
 ---
@@ -350,6 +445,9 @@ Phase 3: T9
 | T7: rota setores | 1 rota | ✅ Granular |
 | T8: rota mapeamento | 1 rota | ✅ Granular |
 | T9: rota classificação | 1 rota | ✅ Granular |
+| T10: auto-classificação fim a fim | 1 porta + fiação | ⚠️ Multi-arquivo (deliverable atômico) |
+| T11: mapeamento inativo | 1 teste | ✅ Granular |
+| T12: contrato do GET | 1 doc + 1 teste | ✅ Granular |
 
 ## Diagram-Definition Cross-Check
 
@@ -362,6 +460,9 @@ Phase 3: T9
 | T7 | T1, T5 | (sem seta intra-fase) | ✅ Match |
 | T8 | T2, T5 | (sem seta intra-fase) | ✅ Match |
 | T9 | T3, T6 | (sem seta intra-fase) | ✅ Match |
+| T10 | T3, T4, T5, T6 | (sem seta intra-fase) | ✅ Match |
+| T11 | T3 | (sem seta intra-fase) | ✅ Match |
+| T12 | T8 | (sem seta intra-fase) | ✅ Match |
 
 ## Test Co-location Validation
 
@@ -376,6 +477,9 @@ Phase 3: T9
 | T7: rota setores | Route handler | integration | integration | ✅ OK |
 | T8: rota mapeamento | Route handler | integration | integration | ✅ OK |
 | T9: rota classificação | Route handler | integration | integration | ✅ OK |
+| T10: auto-classificação fim a fim | Adapter + domain + route | none/unit/integration | unit + integration | ✅ OK |
+| T11: mapeamento inativo | Domain | unit | unit | ✅ OK |
+| T12: contrato do GET | Route handler | integration | integration | ✅ OK |
 
 ---
 
