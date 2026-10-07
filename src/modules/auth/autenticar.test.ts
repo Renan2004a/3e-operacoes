@@ -39,6 +39,15 @@ function repoDe(usuarios: UsuarioAuth[]): AuthRepository {
   }
 }
 
+async function capturarErro(promessa: Promise<unknown>): Promise<Error> {
+  try {
+    await promessa
+    throw new Error('esperava falha de autenticação')
+  } catch (erro) {
+    return erro as Error
+  }
+}
+
 describe('autenticar', () => {
   it('emite uma sessão válida para credenciais corretas', async () => {
     const result = await autenticar(
@@ -86,18 +95,15 @@ describe('autenticar', () => {
     const repo = repoDe([usuarioAtivo])
     const inativo = repoDe([{ ...usuarioAtivo, status: 'INACTIVE' }])
 
-    const senhaErrada = await autenticar(
-      { email: 'user@example.com', senha: 'errada' },
-      repo,
-    ).catch((erro: Error) => erro)
-    const emailInexistente = await autenticar(
-      { email: 'nao-existe@example.com', senha: 'senha-certa' },
-      repo,
-    ).catch((erro: Error) => erro)
-    const usuarioInativo = await autenticar(
-      { email: 'user@example.com', senha: 'senha-certa' },
-      inativo,
-    ).catch((erro: Error) => erro)
+    const senhaErrada = await capturarErro(
+      autenticar({ email: 'user@example.com', senha: 'errada' }, repo),
+    )
+    const emailInexistente = await capturarErro(
+      autenticar({ email: 'nao-existe@example.com', senha: 'senha-certa' }, repo),
+    )
+    const usuarioInativo = await capturarErro(
+      autenticar({ email: 'user@example.com', senha: 'senha-certa' }, inativo),
+    )
 
     expect(senhaErrada.message).toBe('Credenciais inválidas')
     expect(emailInexistente.message).toBe(senhaErrada.message)
