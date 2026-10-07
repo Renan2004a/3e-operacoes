@@ -170,11 +170,11 @@ T9
 
 **Done when**:
 
-- [ ] Item com categoria mapeada sai `CLASSIFIED` e ganha `Activity`
-- [ ] Item sem mapeamento permanece pendente
-- [ ] Comportamento da feature 1 preservado (sem porta, nada muda)
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Item com categoria mapeada sai `CLASSIFIED` e ganha `Activity`
+- [x] Item sem mapeamento permanece pendente
+- [x] Comportamento da feature 1 preservado (sem porta, nada muda)
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

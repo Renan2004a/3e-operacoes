@@ -77,6 +77,24 @@ export interface ImportarPedidoResult {
   divergencias: DivergenciaItem[]
 }
 
+export interface ClassificacaoAutomaticaItem {
+  legacyItemKey: string
+  legacyCategory: string | null
+}
+
+/**
+ * Porta opcional de auto-classificação. Quando injetada, `importarPedido`
+ * delega a classificação dos itens importados por categoria. Sem mapeamento
+ * ativo o item permanece `PENDING_CLASSIFICATION`. Implementada fora do
+ * domínio para não acoplar `pedidos` a `setores`.
+ */
+export interface ClassificacaoAutomaticaPort {
+  classificarItens(input: {
+    orderId: string
+    items: ClassificacaoAutomaticaItem[]
+  }): Promise<void>
+}
+
 function toScaled(value: string): bigint {
   const normalized = value.trim()
   const negative = normalized.startsWith('-')
@@ -89,6 +107,7 @@ function toScaled(value: string): bigint {
 export async function importarPedido(
   pedido: PedidoImportado,
   repo: PedidosRepository,
+  classificacao?: ClassificacaoAutomaticaPort,
 ): Promise<ImportarPedidoResult> {
   const snapshot = await repo.findOrderByLegacyKey(pedido.legacyOrderKey)
   const items = pedido.items.filter((item) => item.cancelled !== true)
@@ -124,6 +143,16 @@ export async function importarPedido(
       legacyCategory: item.legacyCategory,
     })),
   })
+
+  if (classificacao) {
+    await classificacao.classificarItens({
+      orderId,
+      items: items.map((item) => ({
+        legacyItemKey: item.legacyItemKey,
+        legacyCategory: item.legacyCategory,
+      })),
+    })
+  }
 
   for (const divergencia of divergencias) {
     await repo.registrarDivergencia({ legacyOrderKey: pedido.legacyOrderKey, divergencia })
