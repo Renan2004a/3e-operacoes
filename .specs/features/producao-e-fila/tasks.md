@@ -309,12 +309,12 @@ T11
 
 **Done when**:
 
-- [ ] Execução válida responde `201`
-- [ ] Quantidade inválida responde `400`
-- [ ] Operador fora do setor responde `403`
-- [ ] Atividade inexistente responde `404`
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm run lint && npm run typecheck && npm test`
+- [x] Execução válida responde `201`
+- [x] Quantidade inválida responde `400`
+- [x] Operador fora do setor responde `403`
+- [x] Atividade inexistente responde `404`
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm run lint && npm run typecheck && npm test`
 
 **Tests**: integration
 **Gate**: full
