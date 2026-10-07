@@ -138,10 +138,10 @@ T7
 
 **Done when**:
 
-- [ ] Retorna os cinco valores por item
-- [ ] Pendente = solicitado − executado
-- [ ] Test count: 5 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Retorna os cinco valores por item
+- [x] Pendente = solicitado − executado
+- [x] Test count: 5 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
