@@ -132,9 +132,9 @@ T8 -> T7
 
 **Done when**:
 
-- [ ] Envia cookies e trata `401` e falhas
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Envia cookies e trata `401` e falhas
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
