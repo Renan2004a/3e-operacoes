@@ -141,12 +141,12 @@ T9
 
 **Done when**:
 
-- [ ] Item com categoria mapeada é classificado e ganha `Activity`
-- [ ] Item sem mapeamento permanece `PENDING_CLASSIFICATION`
-- [ ] Item já classificado é rejeitado com conflito
-- [ ] Setor inativo/inexistente é rejeitado
-- [ ] Test count: 9 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Item com categoria mapeada é classificado e ganha `Activity`
+- [x] Item sem mapeamento permanece `PENDING_CLASSIFICATION`
+- [x] Item já classificado é rejeitado com conflito
+- [x] Setor inativo/inexistente é rejeitado
+- [x] Test count: 9 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
