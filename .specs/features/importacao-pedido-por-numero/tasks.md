@@ -469,11 +469,11 @@ T17
 
 **Done when**:
 
-- [ ] Payload válido responde `200` e conclui o job
-- [ ] Token inválido responde `401` sem persistir
-- [ ] Callback duplicado responde `200` sem repetir upsert
-- [ ] Test count: 5 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm run lint && npm run typecheck && npm test`
+- [x] Payload válido responde `200` e conclui o job
+- [x] Token inválido responde `401` sem persistir
+- [x] Callback duplicado responde `200` sem repetir upsert
+- [x] Test count: 5 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm run lint && npm run typecheck && npm test`
 
 **Tests**: integration
 **Gate**: full

@@ -133,7 +133,7 @@ O acompanhamento dos pedidos depende hoje de controle manual e de comunicação 
 | INTG-01 | P1: Importar pedido | Design | Done |
 | INTG-02 | P1: Importar pedido | Design | Implementing |
 | INTG-03 | P1: Importar pedido | Design | Implementing |
-| INTG-04 | P1: Importar pedido | Design | Implementing |
+| INTG-04 | P1: Importar pedido | Design | Done |
 | INTG-05 | P1: Importar pedido | Design | Implementing |
 | INTG-06 | P1: Importar pedido | Design | Implementing |
 | INTG-07 | P1: Importar pedido | Design | Implementing |
@@ -149,8 +149,8 @@ O acompanhamento dos pedidos depende hoje de controle manual e de comunicação 
 | INTG-17 | P3: Reprocessar | Design | Done |
 | INTG-18 | P3: Reprocessar | Design | Implementing |
 | INTG-19 | Edge: pedido inexistente | Design | Pending |
-| INTG-20 | Edge: callback inválido | Design | Implementing |
-| INTG-21 | Edge: callback duplicado | Design | Implementing |
+| INTG-20 | Edge: callback inválido | Design | Done |
+| INTG-21 | Edge: callback duplicado | Design | Done |
 | INTG-22 | Edge: item cancelado | Design | Implementing |
 | INTG-23 | Edge: importação concorrente | Design | Implementing |
 
