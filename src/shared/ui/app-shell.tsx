@@ -5,24 +5,7 @@ import Link from 'next/link'
 import type { RoleCode } from '@/generated/prisma/client'
 import { cn } from './utils'
 import { Button } from './button'
-
-interface ItemNav {
-  href: string
-  label: string
-}
-
-/**
- * Navegação por perfil (FE-04). As telas dos demais perfis ficam para a próxima
- * feature; por isso os perfis sem tela entregue aparecem sem itens.
- */
-const NAV_POR_PERFIL: Record<RoleCode, ItemNav[]> = {
-  OPERATOR: [{ href: '/operador/fila', label: 'Fila' }],
-  PRODUCTION_MANAGER: [{ href: '/operador/fila', label: 'Fila' }],
-  SELLER: [],
-  SHIPPING: [],
-  SYSTEM_RESPONSIBLE: [],
-  TECHNICAL_RESPONSIBLE: [],
-}
+import { NAV_POR_PERFIL } from './navegacao-perfil'
 
 export interface AppShellProps {
   perfil: RoleCode
@@ -33,7 +16,7 @@ export interface AppShellProps {
 
 /**
  * Shell responsivo: cabeçalho fixo, navegação do perfil e menu acessível no
- * celular (FE-04, FE-05). O contêiner raiz evita rolagem horizontal (FE-06).
+ * celular (FEP-10, FE-05). O contêiner raiz evita rolagem horizontal (FE-06).
  */
 export function AppShell({ perfil, usuarioNome, onLogout, children }: AppShellProps) {
   const [menuAberto, setMenuAberto] = useState(false)

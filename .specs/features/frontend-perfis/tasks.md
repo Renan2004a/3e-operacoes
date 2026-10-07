@@ -322,10 +322,10 @@ T9 -> T10
 
 **Done when**:
 
-- [ ] Cada perfil vê apenas as rotas do seu escopo
-- [ ] Menu acessível no celular
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Cada perfil vê apenas as rotas do seu escopo
+- [x] Menu acessível no celular
+- [x] Test count: 15 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
