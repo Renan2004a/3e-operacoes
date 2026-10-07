@@ -124,10 +124,10 @@ T9 -> T10
 
 **Done when**:
 
-- [ ] Filtros de cliente, setor, status e período
-- [ ] Estados de carregando, vazio e erro
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Filtros de cliente, setor, status e período
+- [x] Estados de carregando, vazio e erro
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

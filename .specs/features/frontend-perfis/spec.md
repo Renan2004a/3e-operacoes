@@ -128,7 +128,7 @@ Só existe a fatia do operador. Gerente, vendedor, expedição e responsável pe
 | --- | --- | --- | --- |
 | FEP-01 | P1: Painel | Design | Verified |
 | FEP-02 | P1: Painel | Design | Verified |
-| FEP-03 | P1: Consulta | Design | Pending |
+| FEP-03 | P1: Consulta | Design | Verified |
 | FEP-04 | P1: Consulta | Design | Pending |
 | FEP-05 | P1: Prazo | Design | Pending |
 | FEP-06 | P1: Entregas | Design | Pending |
