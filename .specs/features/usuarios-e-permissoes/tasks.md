@@ -494,6 +494,128 @@ T15
 
 ---
 
+### Phase 6: Correções de verificação
+
+#### T16: Sessão na rota de execução
+
+**What**: Usar a sessão (não `x-user-id`) na rota de execução.
+**Where**: `src/app/api/producao/atividades/[id]/execucoes/route.ts`
+**Depends on**: T4, T5
+**Requirement**: AUTH-14
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `tlc-spec-driven`, `seguranca-3e`
+
+**Done when**:
+
+- [ ] Sem sessão `401`; sem perfil `403`; usa o usuário da sessão
+- [ ] Gate check passa: `npm run lint && npm run typecheck && npm test`
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `refactor(api): usa sessao na rota de execucao`
+
+---
+
+#### T17: Sessão nas rotas de ordem e prioridade
+
+**What**: Usar a sessão nas rotas de ordem e prioridade.
+**Where**: `src/app/api/producao/atividades/[id]/ordem/route.ts`
+**Depends on**: T4, T5
+**Requirement**: AUTH-14
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `tlc-spec-driven`, `seguranca-3e`
+
+**Done when**:
+
+- [ ] Sem sessão `401`; sem perfil `403`
+- [ ] Gate check passa: `npm run lint && npm run typecheck && npm test`
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `refactor(api): usa sessao nas rotas de ordem e prioridade`
+
+---
+
+#### T18: Sessão nas rotas de saldo e classificação
+
+**What**: Usar a sessão nas rotas de saldo e classificação.
+**Where**: `src/app/api/pedidos/[orderId]/saldo/route.ts`
+**Depends on**: T4, T5
+**Requirement**: AUTH-14
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `tlc-spec-driven`, `seguranca-3e`
+
+**Done when**:
+
+- [ ] Sem sessão `401`; sem perfil `403`
+- [ ] Gate check passa: `npm run lint && npm run typecheck && npm test`
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `refactor(api): usa sessao nas rotas de saldo e classificacao`
+
+---
+
+#### T19: Sessão nas rotas administrativas
+
+**What**: Usar a sessão nas rotas de setores, motivos e mapeamentos.
+**Where**: `src/app/api/setores/route.ts`
+**Depends on**: T4, T5
+**Requirement**: AUTH-14
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `tlc-spec-driven`, `seguranca-3e`
+
+**Done when**:
+
+- [ ] Sem sessão `401`; sem perfil `403`
+- [ ] Gate check passa: `npm run lint && npm run typecheck && npm test`
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `refactor(api): usa sessao nas rotas de setores, motivos e mapeamentos`
+
+---
+
+#### T20: Sessão nas rotas de integração
+
+**What**: Usar a sessão nas rotas de importação; o callback segue no token de serviço.
+**Where**: `src/app/api/integracao/pedidos/route.ts`
+**Depends on**: T4, T5
+**Requirement**: AUTH-14
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `tlc-spec-driven`, `seguranca-3e`
+
+**Done when**:
+
+- [ ] Sem sessão `401`; sem perfil `403`; callback mantém o token de serviço
+- [ ] Gate check passa: `npm run lint && npm run typecheck && npm test`
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `refactor(api): usa sessao nas rotas de integracao`
+
+---
+
 ## Phase Execution Map
 
 ```
@@ -510,6 +632,11 @@ Phase 4: T12
 Phase 5: T13
 Phase 5: T14
 Phase 5: T15
+Phase 6: T16
+Phase 6: T17
+Phase 6: T18
+Phase 6: T19
+Phase 6: T20
 ```
 
 ---

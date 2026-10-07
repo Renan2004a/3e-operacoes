@@ -68,7 +68,7 @@ Todas as rotas usam um cabeçalho temporário `x-user-id`, sem login nem autoriz
 
 1. WHEN um usuário acessa uma ação sem o perfil permitido THEN o sistema SHALL responder `403`.
 2. The system SHALL aplicar a matriz de perfis no servidor, não só na interface.
-3. The system SHALL permitir ao Vendedor apenas consulta.
+3. The system SHALL permitir ao Vendedor apenas consulta e definição de prazo.
 
 **Independent Test**: Vendedor tentando registrar execução recebe `403`.
 
@@ -130,7 +130,7 @@ Todas as rotas usam um cabeçalho temporário `x-user-id`, sem login nem autoriz
 | AUTH-11 | P1: Usuários | Design | Done |
 | AUTH-12 | P1: Usuários | Design | Done |
 | AUTH-13 | P1: Usuários | Design | Done |
-| AUTH-14 | P2: Sessão nas rotas | Design | Done |
+| AUTH-14 | P2: Sessão nas rotas | Design | Implementing |
 | AUTH-15 | Edge: usuário inativo | Design | Done |
 | AUTH-16 | Edge: token adulterado | Design | Done |
 
