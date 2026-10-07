@@ -84,6 +84,46 @@ describe('PedidosLista', () => {
     )
   })
 
+  it('documenta o filtro de cliente como substring sem diferenciar maiúsculas (QF-09)', async () => {
+    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+
+    expect(screen.getByText(/não diferencia maiúsculas/i)).toBeInTheDocument()
+  })
+
+  it('envia o cliente como substring, preservando o trecho digitado (QF-09)', async () => {
+    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+    await screen.findByText('Sem pedidos')
+
+    fireEvent.change(screen.getByLabelText('Cliente'), { target: { value: 'Cons' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Filtrar' }))
+
+    await waitFor(() => expect(mocks.apiGet).toHaveBeenLastCalledWith('/api/pedidos?cliente=Cons'))
+  })
+
+  it('remove os espaços em volta do trecho de cliente (QF-09)', async () => {
+    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+    await screen.findByText('Sem pedidos')
+
+    fireEvent.change(screen.getByLabelText('Cliente'), { target: { value: '  Ana  ' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Filtrar' }))
+
+    await waitFor(() => expect(mocks.apiGet).toHaveBeenLastCalledWith('/api/pedidos?cliente=Ana'))
+  })
+
+  it('omite o parâmetro de cliente quando o campo está vazio (QF-09)', async () => {
+    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+    await screen.findByText('Sem pedidos')
+
+    fireEvent.change(screen.getByLabelText('Cliente'), { target: { value: '   ' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Filtrar' }))
+
+    await waitFor(() => expect(mocks.apiGet).toHaveBeenLastCalledWith('/api/pedidos'))
+  })
+
   it('selecionar um pedido aciona o chamador com o pedido (FEP-03)', async () => {
     const onSelecionar = vi.fn()
     mocks.apiGet.mockResolvedValue({ pedidos: [PEDIDO] })

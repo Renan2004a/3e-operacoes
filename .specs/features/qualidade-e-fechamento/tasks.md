@@ -140,9 +140,9 @@ T7
 
 **Done when**:
 
-- [ ] Filtro envia o cliente como substring
-- [ ] Test count: 4 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Filtro envia o cliente como substring
+- [x] Test count: 4 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

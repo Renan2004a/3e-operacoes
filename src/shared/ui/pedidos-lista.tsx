@@ -49,6 +49,11 @@ const VARIANTE_STATUS: Record<StatusPedido, 'neutral' | 'info' | 'success'> = {
 const CLASSE_SELECT =
   'min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base text-ink'
 
+/**
+ * Monta a URL da consulta. O cliente é enviado como trecho (substring) e sem
+ * transformar maiúsculas: a comparação sem diferenciar maiúsculas acontece no
+ * servidor (QF-09).
+ */
 function montarUrl(filtros: Filtros): string {
   const params = new URLSearchParams()
   if (filtros.cliente.trim()) params.set('cliente', filtros.cliente.trim())
@@ -101,7 +106,7 @@ export function PedidosLista({ onSelecionar }: PedidosListaProps) {
   return (
     <section className="grid gap-4">
       <form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5" onSubmit={aoFiltrar} noValidate>
-        <Field label="Cliente">
+        <Field label="Cliente" hint="Trecho do nome do cliente; não diferencia maiúsculas.">
           {(props) => (
             <Input
               {...props}
