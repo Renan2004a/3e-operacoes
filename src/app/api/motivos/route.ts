@@ -1,12 +1,11 @@
 import { prismaOcorrenciasRepository } from '../../../modules/ocorrencias/adapters/prisma-ocorrencias-repository'
 import { TipoOcorrenciaInvalidoError, listarMotivos } from '../../../modules/ocorrencias/motivos'
-import { requireInternalToken } from '../../../shared/http/internal-auth'
+import { autorizar } from '../../../shared/http/autorizacao'
 
-/** GET /api/motivos?tipo= — lista os motivos ativos de um tipo (OCO-08,09). */
+/** GET /api/motivos?tipo= — lista os motivos ativos de um tipo (OCO-08,09, AUTH-14). */
 export async function GET(request: Request) {
-  if (!requireInternalToken(request)) {
-    return Response.json({ error: 'unauthorized' }, { status: 401 })
-  }
+  const auth = await autorizar(request, 'consultar_pedidos')
+  if (!auth.autorizado) return auth.resposta
 
   const tipo = new URL(request.url).searchParams.get('tipo') ?? ''
 

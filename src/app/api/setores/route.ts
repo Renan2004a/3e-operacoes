@@ -5,23 +5,21 @@ import {
   listarSetores,
 } from '../../../modules/setores/gerenciar-setores'
 import { prismaSectorRepository } from '../../../modules/setores/adapters/prisma-setores-repository'
-import { requireInternalToken } from '../../../shared/http/internal-auth'
+import { autorizar } from '../../../shared/http/autorizacao'
 
-/** GET /api/setores — lista os setores ativos. */
+/** GET /api/setores — lista os setores ativos (AUTH-14). */
 export async function GET(request: Request) {
-  if (!requireInternalToken(request)) {
-    return Response.json({ error: 'unauthorized' }, { status: 401 })
-  }
+  const auth = await autorizar(request, 'gerenciar_setores')
+  if (!auth.autorizado) return auth.resposta
 
   const sectors = await listarSetores(prismaSectorRepository)
   return Response.json({ sectors }, { status: 200 })
 }
 
-/** POST /api/setores — cria um setor ativo. */
+/** POST /api/setores — cria um setor ativo (AUTH-14). */
 export async function POST(request: Request) {
-  if (!requireInternalToken(request)) {
-    return Response.json({ error: 'unauthorized' }, { status: 401 })
-  }
+  const auth = await autorizar(request, 'gerenciar_setores')
+  if (!auth.autorizado) return auth.resposta
 
   let body: unknown
   try {

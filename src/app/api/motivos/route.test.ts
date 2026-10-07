@@ -1,15 +1,25 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { RoleCode } from '@/generated/prisma/client'
+import { assinarSessao } from '../../../modules/auth/sessao'
+import { SESSION_COOKIE } from '../../../shared/http/auth-context'
 import type { OcorrenciasRepository } from '../../../modules/ocorrencias/adapters/prisma-ocorrencias-repository'
 import type { MotivoOcorrencia } from '../../../modules/ocorrencias/motivos'
 
 const holder = vi.hoisted(() => ({
   repo: null as unknown as OcorrenciasRepository,
+  perfis: {} as Record<string, RoleCode[]>,
 }))
 
 vi.mock('../../../modules/ocorrencias/adapters/prisma-ocorrencias-repository', () => ({
   prismaOcorrenciasRepository: {
     listarMotivosPorTipo: (tipo: Parameters<OcorrenciasRepository['listarMotivosPorTipo']>[0]) =>
       holder.repo.listarMotivosPorTipo(tipo),
+  },
+}))
+
+vi.mock('@/modules/usuarios/adapters/prisma-usuarios-repository', () => ({
+  prismaUsuariosRepository: {
+    findById: async (id: string) => ({ id, roles: [...(holder.perfis[id] ?? [])] }),
   },
 }))
 
@@ -33,23 +43,28 @@ function seedMotivo(overrides: Partial<MotivoOcorrencia> & Pick<MotivoOcorrencia
   })
 }
 
-function request(url: string, token: string | null = 'segredo-interno'): Request {
+function request(url: string, opts: { usuarioId?: string | null } = {}): Request {
+  const { usuarioId = 'user_op' } = opts
   const headers: Record<string, string> = {}
-  if (token !== null) headers.authorization = `Bearer ${token}`
+  if (usuarioId) {
+    const token = assinarSessao({ userId: usuarioId, expiraEm: new Date(Date.now() + 60_000) })
+    headers.cookie = `${SESSION_COOKIE}=${token}`
+  }
   return new Request(url, { headers })
 }
 
 describe('GET /api/motivos', () => {
-  const original = process.env.APP_INTERNAL_TOKEN
+  const original = process.env.SESSION_SECRET
 
   beforeEach(() => {
-    process.env.APP_INTERNAL_TOKEN = 'segredo-interno'
+    process.env.SESSION_SECRET = 'segredo-de-teste'
     motivos.length = 0
+    holder.perfis.user_op = ['OPERATOR']
   })
 
   afterEach(() => {
-    if (original === undefined) delete process.env.APP_INTERNAL_TOKEN
-    else process.env.APP_INTERNAL_TOKEN = original
+    if (original === undefined) delete process.env.SESSION_SECRET
+    else process.env.SESSION_SECRET = original
   })
 
   it('responde 200 com apenas os motivos ativos do tipo (OCO-08)', async () => {
@@ -79,8 +94,10 @@ describe('GET /api/motivos', () => {
     expect((await response.json()).error).toBe('invalid_tipo')
   })
 
-  it('responde 401 quando o token está ausente', async () => {
-    const response = await GET(request('http://localhost/api/motivos?tipo=PERDA', null))
+  it('responde 401 quando a sessão está ausente', async () => {
+    const response = await GET(
+      request('http://localhost/api/motivos?tipo=PERDA', { usuarioId: null }),
+    )
 
     expect(response.status).toBe(401)
   })

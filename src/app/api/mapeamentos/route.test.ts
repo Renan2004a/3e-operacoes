@@ -1,4 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { RoleCode } from '@/generated/prisma/client'
+import { assinarSessao } from '../../../modules/auth/sessao'
+import { SESSION_COOKIE } from '../../../shared/http/auth-context'
 
 const mocks = vi.hoisted(() => {
   const NOW = new Date('2026-10-07T12:00:00.000Z')
@@ -11,6 +14,7 @@ const mocks = vi.hoisted(() => {
     updatedAt: Date
   }> = []
   const audits: Array<Record<string, unknown>> = []
+  const perfis: Record<string, RoleCode[]> = {}
 
   const repo = {
     findByCategory: async (legacyCategory: string) => {
@@ -54,28 +58,37 @@ const mocks = vi.hoisted(() => {
   function reset() {
     mappings.length = 0
     audits.length = 0
+    for (const key of Object.keys(perfis)) delete perfis[key]
   }
 
-  return { mappings, audits, repo, reset }
+  return { mappings, audits, repo, reset, perfis }
 })
 
 vi.mock('../../../modules/setores/adapters/prisma-setores-repository', () => ({
   prismaMapeamentoRepository: mocks.repo,
 }))
 
+vi.mock('@/modules/usuarios/adapters/prisma-usuarios-repository', () => ({
+  prismaUsuariosRepository: {
+    findById: async (id: string) => ({ id, roles: [...(mocks.perfis[id] ?? [])] }),
+  },
+}))
+
 import { GET, PATCH, POST } from './route'
 
 function request(
   method: 'GET' | 'POST' | 'PATCH',
-  options: { body?: unknown; token?: string | null; query?: string } = {},
+  options: { body?: unknown; usuarioId?: string | null; query?: string } = {},
 ): Request {
-  const token = options.token === undefined ? 'segredo-interno' : options.token
+  const { usuarioId = 'user_admin' } = options
+  const headers: Record<string, string> = { 'content-type': 'application/json' }
+  if (usuarioId) {
+    const token = assinarSessao({ userId: usuarioId, expiraEm: new Date(Date.now() + 60_000) })
+    headers.cookie = `${SESSION_COOKIE}=${token}`
+  }
   return new Request(`http://localhost/api/mapeamentos${options.query ?? ''}`, {
     method,
-    headers:
-      token === null
-        ? { 'content-type': 'application/json' }
-        : { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+    headers,
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
   })
 }
@@ -92,16 +105,17 @@ function seedMapping(overrides: Partial<{ id: string; sectorId: string; status: 
 }
 
 describe('/api/mapeamentos', () => {
-  const original = process.env.APP_INTERNAL_TOKEN
+  const original = process.env.SESSION_SECRET
 
   beforeEach(() => {
-    process.env.APP_INTERNAL_TOKEN = 'segredo-interno'
+    process.env.SESSION_SECRET = 'segredo-de-teste'
     mocks.reset()
+    mocks.perfis.user_admin = ['SYSTEM_RESPONSIBLE']
   })
 
   afterEach(() => {
-    if (original === undefined) delete process.env.APP_INTERNAL_TOKEN
-    else process.env.APP_INTERNAL_TOKEN = original
+    if (original === undefined) delete process.env.SESSION_SECRET
+    else process.env.SESSION_SECRET = original
   })
 
   it('responde 201 ao criar um mapeamento ativo', async () => {
@@ -175,29 +189,45 @@ describe('/api/mapeamentos', () => {
     expect(await response.json()).toEqual({ error: 'mapping_not_found' })
   })
 
-  it('responde 401 no GET sem token', async () => {
+  it('responde 401 no GET sem sessão', async () => {
     seedMapping()
 
-    const response = await GET(request('GET', { query: '?category=Telhas', token: null }))
+    const response = await GET(request('GET', { query: '?category=Telhas', usuarioId: null }))
 
     expect(response.status).toBe(401)
   })
 
-  it('responde 401 na criação sem token e não persiste', async () => {
+  it('responde 401 na criação sem sessão e não persiste', async () => {
     const response = await POST(
-      request('POST', { body: { legacyCategory: 'Telhas', sectorId: 'setor_telhas' }, token: null }),
+      request('POST', { body: { legacyCategory: 'Telhas', sectorId: 'setor_telhas' }, usuarioId: null }),
     )
 
     expect(response.status).toBe(401)
     expect(mocks.mappings).toHaveLength(0)
   })
 
-  it('responde 401 na alteração sem token e não audita', async () => {
+  it('responde 401 na alteração sem sessão e não audita', async () => {
     seedMapping()
 
-    const response = await PATCH(request('PATCH', { body: { id: 'map_1', sectorId: 'setor_b' }, token: null }))
+    const response = await PATCH(
+      request('PATCH', { body: { id: 'map_1', sectorId: 'setor_b' }, usuarioId: null }),
+    )
 
     expect(response.status).toBe(401)
     expect(mocks.audits).toHaveLength(0)
+  })
+
+  it('responde 403 na criação sem perfil autorizado', async () => {
+    mocks.perfis.user_vendedor = ['SELLER']
+
+    const response = await POST(
+      request('POST', {
+        body: { legacyCategory: 'Telhas', sectorId: 'setor_telhas' },
+        usuarioId: 'user_vendedor',
+      }),
+    )
+
+    expect(response.status).toBe(403)
+    expect(mocks.mappings).toHaveLength(0)
   })
 })

@@ -1,4 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { RoleCode } from '@/generated/prisma/client'
+import { assinarSessao } from '../../../modules/auth/sessao'
+import { SESSION_COOKIE } from '../../../shared/http/auth-context'
 
 const mocks = vi.hoisted(() => {
   const NOW = new Date('2026-10-07T12:00:00.000Z')
@@ -10,6 +13,7 @@ const mocks = vi.hoisted(() => {
     createdAt: Date
     updatedAt: Date
   }> = []
+  const perfis: Record<string, RoleCode[]> = {}
 
   const repo = {
     findByCode: async (code: string) => sectors.find((sector) => sector.code === code) ?? null,
@@ -36,13 +40,20 @@ const mocks = vi.hoisted(() => {
 
   function reset() {
     sectors.length = 0
+    for (const key of Object.keys(perfis)) delete perfis[key]
   }
 
-  return { sectors, repo, reset }
+  return { sectors, repo, reset, perfis }
 })
 
 vi.mock('../../../modules/setores/adapters/prisma-setores-repository', () => ({
   prismaSectorRepository: mocks.repo,
+}))
+
+vi.mock('@/modules/usuarios/adapters/prisma-usuarios-repository', () => ({
+  prismaUsuariosRepository: {
+    findById: async (id: string) => ({ id, roles: [...(mocks.perfis[id] ?? [])] }),
+  },
 }))
 
 import { GET, POST } from './route'
@@ -50,29 +61,33 @@ import { GET, POST } from './route'
 function request(
   method: 'GET' | 'POST',
   body?: unknown,
-  token: string | null = 'segredo-interno',
+  opts: { usuarioId?: string | null } = {},
 ): Request {
+  const { usuarioId = 'user_admin' } = opts
+  const headers: Record<string, string> = { 'content-type': 'application/json' }
+  if (usuarioId) {
+    const token = assinarSessao({ userId: usuarioId, expiraEm: new Date(Date.now() + 60_000) })
+    headers.cookie = `${SESSION_COOKIE}=${token}`
+  }
   return new Request('http://localhost/api/setores', {
     method,
-    headers:
-      token === null
-        ? { 'content-type': 'application/json' }
-        : { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+    headers,
     body: body === undefined ? undefined : JSON.stringify(body),
   })
 }
 
 describe('/api/setores', () => {
-  const original = process.env.APP_INTERNAL_TOKEN
+  const original = process.env.SESSION_SECRET
 
   beforeEach(() => {
-    process.env.APP_INTERNAL_TOKEN = 'segredo-interno'
+    process.env.SESSION_SECRET = 'segredo-de-teste'
     mocks.reset()
+    mocks.perfis.user_admin = ['SYSTEM_RESPONSIBLE']
   })
 
   afterEach(() => {
-    if (original === undefined) delete process.env.APP_INTERNAL_TOKEN
-    else process.env.APP_INTERNAL_TOKEN = original
+    if (original === undefined) delete process.env.SESSION_SECRET
+    else process.env.SESSION_SECRET = original
   })
 
   it('responde 200 listando apenas setores ativos', async () => {
@@ -134,16 +149,20 @@ describe('/api/setores', () => {
     expect(mocks.sectors).toHaveLength(0)
   })
 
-  it('responde 401 na listagem sem token', async () => {
-    const response = await GET(request('GET', undefined, null))
+  it('responde 401 na listagem sem sessão', async () => {
+    const response = await GET(request('GET', undefined, { usuarioId: null }))
 
     expect(response.status).toBe(401)
   })
 
-  it('responde 401 na criação sem token e não persiste', async () => {
-    const response = await POST(request('POST', { code: 'TELHAS', name: 'Telhas' }, null))
+  it('responde 403 na criação sem perfil autorizado e não persiste', async () => {
+    mocks.perfis.user_vendedor = ['SELLER']
 
-    expect(response.status).toBe(401)
+    const response = await POST(
+      request('POST', { code: 'TELHAS', name: 'Telhas' }, { usuarioId: 'user_vendedor' }),
+    )
+
+    expect(response.status).toBe(403)
     expect(mocks.sectors).toHaveLength(0)
   })
 })

@@ -5,13 +5,12 @@ import {
   criarMapeamento,
 } from '../../../modules/setores/mapeamento'
 import { prismaMapeamentoRepository } from '../../../modules/setores/adapters/prisma-setores-repository'
-import { requireInternalToken } from '../../../shared/http/internal-auth'
+import { autorizar } from '../../../shared/http/autorizacao'
 
-/** GET /api/mapeamentos?category=... — retorna o mapeamento da categoria. */
+/** GET /api/mapeamentos?category=... — retorna o mapeamento da categoria (AUTH-14). */
 export async function GET(request: Request) {
-  if (!requireInternalToken(request)) {
-    return Response.json({ error: 'unauthorized' }, { status: 401 })
-  }
+  const auth = await autorizar(request, 'gerenciar_setores')
+  if (!auth.autorizado) return auth.resposta
 
   const category = new URL(request.url).searchParams.get('category')
   if (!category) {
@@ -26,11 +25,10 @@ export async function GET(request: Request) {
   return Response.json({ mapping }, { status: 200 })
 }
 
-/** POST /api/mapeamentos — cria o mapeamento categoria → setor. */
+/** POST /api/mapeamentos — cria o mapeamento categoria → setor (AUTH-14). */
 export async function POST(request: Request) {
-  if (!requireInternalToken(request)) {
-    return Response.json({ error: 'unauthorized' }, { status: 401 })
-  }
+  const auth = await autorizar(request, 'gerenciar_setores')
+  if (!auth.autorizado) return auth.resposta
 
   let body: unknown
   try {
@@ -65,11 +63,10 @@ export async function POST(request: Request) {
   }
 }
 
-/** PATCH /api/mapeamentos — altera o setor de um mapeamento existente. */
+/** PATCH /api/mapeamentos — altera o setor de um mapeamento existente (AUTH-14). */
 export async function PATCH(request: Request) {
-  if (!requireInternalToken(request)) {
-    return Response.json({ error: 'unauthorized' }, { status: 401 })
-  }
+  const auth = await autorizar(request, 'gerenciar_setores')
+  if (!auth.autorizado) return auth.resposta
 
   let body: unknown
   try {
