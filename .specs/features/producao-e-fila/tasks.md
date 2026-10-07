@@ -338,11 +338,11 @@ T11
 
 **Done when**:
 
-- [ ] Prioridade válida responde `200`
-- [ ] Atividade inexistente responde `404`
-- [ ] Token ausente responde `401`
-- [ ] Test count: 5 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm run lint && npm run typecheck && npm test`
+- [x] Prioridade válida responde `200`
+- [x] Atividade inexistente responde `404`
+- [x] Token ausente responde `401`
+- [x] Test count: 5 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm run lint && npm run typecheck && npm test`
 
 **Tests**: integration
 **Gate**: full
