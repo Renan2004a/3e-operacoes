@@ -191,11 +191,11 @@ T17
 
 **Done when**:
 
-- [ ] Número inválido retorna erro sem criar job
-- [ ] Mesmo número dentro de 60 s reutiliza o job existente
-- [ ] Dois pedidos concorrentes do mesmo número criam um único job
-- [ ] Test count: 7 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Número inválido retorna erro sem criar job
+- [x] Mesmo número dentro de 60 s reutiliza o job existente
+- [x] Dois pedidos concorrentes do mesmo número criam um único job
+- [x] Test count: 7 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
