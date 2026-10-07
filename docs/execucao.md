@@ -298,3 +298,34 @@ Design system responsivo (celular, tablet, notebook, desktop), shell por perfil,
 - FE-06 (sem rolagem horizontal 360–1440 px) só verificável em navegador real; E2E fica para a feature de qualidade.
 - FE-03 (operabilidade por teclado) coberto por rótulos/tipos, sem teste de Tab/Enter.
 - Telas de gerente, vendedor, expedição e responsável ficam para a próxima feature.
+
+---
+
+## Feature 10 — Frontend (Telas dos Perfis)
+
+**Data**: 2026-10-07
+**Requisitos**: RF006, RF008, RF009/RF010, RF013/RF014
+**Artefatos**: `.specs/features/frontend-perfis/{spec,design,tasks,validation}.md`
+
+### Objetivo
+Telas de gerente (painel/pedidos), vendedor (consulta/prazo), expedição (entregas) e responsável (usuários/setores), além da navegação por perfil e do redireciono pós-login.
+
+### Como foi feito
+- **Specify**: 13 critérios EARS; `validate_spec.py` 0/0.
+- **Design**: reusa componentes/cliente/shell da feature 9; lista de pedidos compartilhada.
+- **Tasks**: 10 tarefas em 6 fases; `validate_tasks.py` 0 erros.
+- **Execute**: 2 batches (T1–T8, T9–T10), commit atômico por tarefa.
+- **Verify**: Verifier independente → **PASS** na primeira rodada.
+
+### Resultado
+- **10 tarefas** implementadas.
+- **543 testes** passando. Cobertura 96,6% linhas / 93,8% branches.
+- **Verificação: PASS** — 13/13 ACs; 6/6 mutantes mortos. `validate_state.py`: 0 erros.
+
+### Decisões e desvios
+- Mapa perfil→rota único em `src/shared/ui/navegacao-perfil.ts`; `/api/auth/sessao` passou a devolver os perfis (guardado por sessão).
+- Lista de pedidos e detalhe compartilhados entre gerente e vendedor.
+- Filtro de setor por texto (a API de setores é restrita ao responsável).
+
+### Decisão de produto pendente
+- O gerente não tem o atalho para a fila de produção (antes tinha). A matriz permite `registrar_execucao` ao gerente; decidir se o atalho volta.

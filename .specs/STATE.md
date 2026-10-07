@@ -58,11 +58,11 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 
 ## Handoff
 
-- **Feature**: frontend-fundacao (concluída e verificada)
-- **Phase / Task**: Feature 9 Done → próxima: telas de gerente/vendedor/expedição/responsável + qualidade (E2E)
-- **Completed**: T1–T9; verificação PASS; `validate_state` 0 erros
+- **Feature**: frontend-perfis (concluída e verificada)
+- **Phase / Task**: Feature 10 Done → próxima: qualidade (E2E Playwright + a11y) e go-live
+- **Completed**: T1–T10; verificação PASS; `validate_state` 0 erros
 - **In-progress** (file:line): nenhum
-- **Next step**: especificar a feature "telas dos demais perfis" e a feature de qualidade (E2E Playwright)
+- **Next step**: especificar a feature de qualidade (E2E Playwright, acessibilidade, fechar lacunas de precisão)
 - **Blockers**: nenhum para desenvolvimento; migrations dependem de um MySQL de runtime
-- **Uncommitted files**: validation.md, spec.md, tasks.md, docs/execucao.md, .specs/STATE.md
+- **Uncommitted files**: validation.md, tasks.md, docs/execucao.md, .specs/STATE.md
 - **Branch**: main
