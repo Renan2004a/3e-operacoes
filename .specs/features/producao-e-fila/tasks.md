@@ -366,11 +366,11 @@ T11
 
 **Done when**:
 
-- [ ] Retorna `200` com os dados da ordem
-- [ ] Atividade inexistente responde `404`
-- [ ] Token ausente responde `401`
-- [ ] Test count: 5 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm run lint && npm run typecheck && npm test`
+- [x] Retorna `200` com os dados da ordem
+- [x] Atividade inexistente responde `404`
+- [x] Token ausente responde `401`
+- [x] Test count: 5 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm run lint && npm run typecheck && npm test`
 
 **Tests**: integration
 **Gate**: full
