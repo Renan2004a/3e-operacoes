@@ -358,9 +358,9 @@ T17
 
 **Done when**:
 
-- [ ] Upsert de pedido por `legacyOrderKey` implementado
-- [ ] Upsert de itens por `(orderId, legacyItemKey)` implementado
-- [ ] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
+- [x] Upsert de pedido por `legacyOrderKey` implementado
+- [x] Upsert de itens por `(orderId, legacyItemKey)` implementado
+- [x] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
 
 **Tests**: none
 **Gate**: build

@@ -141,7 +141,7 @@ O acompanhamento dos pedidos depende hoje de controle manual e de comunicação 
 | INTG-09 | P1: Status | Design | Implementing |
 | INTG-10 | P1: Status | Design | Implementing |
 | INTG-11 | P1: Status | Design | Implementing |
-| INTG-12 | P2: Ressincronizar | Design | Implementing |
+| INTG-12 | P2: Ressincronizar | Design | Done |
 | INTG-13 | P2: Ressincronizar | Design | Implementing |
 | INTG-14 | P2: Ressincronizar | Design | Implementing |
 | INTG-15 | P2: Ressincronizar | Design | Implementing |
