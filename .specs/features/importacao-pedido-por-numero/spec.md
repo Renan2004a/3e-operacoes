@@ -144,7 +144,7 @@ O acompanhamento dos pedidos depende hoje de controle manual e de comunicação 
 | INTG-12 | P2: Ressincronizar | Design | Done |
 | INTG-13 | P2: Ressincronizar | Design | Done |
 | INTG-14 | P2: Ressincronizar | Design | Done |
-| INTG-15 | P2: Ressincronizar | Design | Done |
+| INTG-15 | P2: Ressincronizar | Design | Implementing |
 | INTG-16 | P2: Ressincronizar | Design | Done |
 | INTG-17 | P3: Reprocessar | Design | Done |
 | INTG-18 | P3: Reprocessar | Design | Implementing |

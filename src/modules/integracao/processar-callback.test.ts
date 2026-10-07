@@ -135,6 +135,9 @@ function createPedidosFake(options: { failUpsert?: boolean; seed?: FakeOrder[] }
 
       return { orderId: order.id }
     },
+    async registrarDivergencia() {
+      // A escrita do AuditLog é verificada no adapter Prisma; aqui basta satisfazer a porta.
+    },
   }
 
   return { repo, orders }

@@ -72,6 +72,7 @@ const mocks = vi.hoisted(() => {
       upsertCalls.push(input)
       return { orderId: 'order_1' }
     },
+    registrarDivergencia: async () => {},
   }
 
   function reset() {

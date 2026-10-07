@@ -680,11 +680,11 @@ T23
 
 **Done when**:
 
-- [ ] `importarPedido` chama `registrarDivergencia` para cada divergência detectada
-- [ ] Fake do repositório registra a divergência (assert no teste)
-- [ ] Adapter Prisma testado com fake: `$transaction` no upsert e `auditLog.create` na divergência
-- [ ] Test count: +3 testes (sem remoções silenciosas)
-- [ ] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
+- [x] `importarPedido` chama `registrarDivergencia` para cada divergência detectada
+- [x] Fake do repositório registra a divergência (assert no teste)
+- [x] Adapter Prisma testado com fake: `$transaction` no upsert e `auditLog.create` na divergência
+- [x] Test count: +2 testes no adapter; asserts de divergência reforçados no fake (sem remoções silenciosas)
+- [x] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
 
 **Tests**: unit
 **Gate**: build

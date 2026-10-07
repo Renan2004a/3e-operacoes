@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   importarPedido,
+  type DivergenciaItem,
   type PedidoImportado,
   type PedidoImportadoItem,
   type PedidosRepository,
@@ -32,6 +33,7 @@ interface FakeOrder {
 
 function createFakeRepo(seed: FakeOrder[] = []) {
   const orders = [...seed]
+  const divergenciasRegistradas: Array<{ legacyOrderKey: string; divergencia: DivergenciaItem }> = []
   let seq = seed.length
 
   const repo: PedidosRepository = {
@@ -95,9 +97,12 @@ function createFakeRepo(seed: FakeOrder[] = []) {
 
       return { orderId: order.id }
     },
+    async registrarDivergencia(input) {
+      divergenciasRegistradas.push(input)
+    },
   }
 
-  return { repo, orders }
+  return { repo, orders, divergenciasRegistradas }
 }
 
 function item(
@@ -212,7 +217,7 @@ describe('importarPedido', () => {
   })
 
   it('sinaliza divergência quando a nova quantidade é menor que a executada', async () => {
-    const { repo } = createFakeRepo([seedOrder('5.000', '0.000')])
+    const { repo, divergenciasRegistradas } = createFakeRepo([seedOrder('5.000', '0.000')])
 
     const result = await importarPedido(
       pedido({ items: [item({ legacyItemKey: '1', requestedQuantity: '3.000' })] }),
@@ -226,6 +231,17 @@ describe('importarPedido', () => {
         requestedQuantity: '3.000',
         executedQuantity: '5.000',
         deliveredQuantity: '0.000',
+      },
+    ])
+    expect(divergenciasRegistradas).toEqual([
+      {
+        legacyOrderKey: '1:70435',
+        divergencia: {
+          legacyItemKey: '1',
+          requestedQuantity: '3.000',
+          executedQuantity: '5.000',
+          deliveredQuantity: '0.000',
+        },
       },
     ])
   })
@@ -243,7 +259,7 @@ describe('importarPedido', () => {
   })
 
   it('não sinaliza divergência quando a quantidade é igual à executada', async () => {
-    const { repo } = createFakeRepo([seedOrder('5.000', '0.000')])
+    const { repo, divergenciasRegistradas } = createFakeRepo([seedOrder('5.000', '0.000')])
 
     const result = await importarPedido(
       pedido({ items: [item({ legacyItemKey: '1', requestedQuantity: '5.000' })] }),
@@ -252,6 +268,7 @@ describe('importarPedido', () => {
 
     expect(result.divergente).toBe(false)
     expect(result.divergencias).toHaveLength(0)
+    expect(divergenciasRegistradas).toHaveLength(0)
   })
 
   it('não sinaliza divergência quando a quantidade é maior que a executada', async () => {

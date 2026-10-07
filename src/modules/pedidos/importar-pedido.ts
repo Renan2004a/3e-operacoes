@@ -52,8 +52,11 @@ export interface UpsertPedidoInput {
     requestedQuantity: string
     legacyCategory: string | null
   }>
-  /** Divergências a registrar em AuditLog; o adapter persiste na mesma transação. */
-  divergencias: DivergenciaItem[]
+}
+
+export interface RegistrarDivergenciaInput {
+  legacyOrderKey: string
+  divergencia: DivergenciaItem
 }
 
 export interface PedidosRepository {
@@ -64,6 +67,8 @@ export interface PedidosRepository {
    * `(orderId, legacyItemKey)`. Não remove registros operacionais existentes.
    */
   upsertOrder(input: UpsertPedidoInput): Promise<{ orderId: string }>
+  /** Registra a divergência de quantidade detectada no `AuditLog`. */
+  registrarDivergencia(input: RegistrarDivergenciaInput): Promise<void>
 }
 
 export interface ImportarPedidoResult {
@@ -118,8 +123,11 @@ export async function importarPedido(
       requestedQuantity: item.requestedQuantity,
       legacyCategory: item.legacyCategory,
     })),
-    divergencias,
   })
+
+  for (const divergencia of divergencias) {
+    await repo.registrarDivergencia({ legacyOrderKey: pedido.legacyOrderKey, divergencia })
+  }
 
   return { orderId, divergente: divergencias.length > 0, divergencias }
 }

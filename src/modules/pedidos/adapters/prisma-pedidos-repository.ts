@@ -81,23 +81,23 @@ export const prismaPedidosRepository: PedidosRepository = {
         })
       }
 
-      for (const divergencia of input.divergencias) {
-        await tx.auditLog.create({
-          data: {
-            action: 'QUANTITY_DIVERGENCE',
-            entityType: 'OrderItem',
-            entityId: `${input.legacyOrderKey}:${divergencia.legacyItemKey}`,
-            beforeJson: {
-              executedQuantity: divergencia.executedQuantity,
-              deliveredQuantity: divergencia.deliveredQuantity,
-            },
-            afterJson: { requestedQuantity: divergencia.requestedQuantity },
-            reason: 'Nova quantidade solicitada menor que o executado ou entregue',
-          },
-        })
-      }
-
       return { orderId: order.id }
+    })
+  },
+
+  async registrarDivergencia({ legacyOrderKey, divergencia }) {
+    await prisma.auditLog.create({
+      data: {
+        action: 'QUANTITY_DIVERGENCE',
+        entityType: 'OrderItem',
+        entityId: `${legacyOrderKey}:${divergencia.legacyItemKey}`,
+        beforeJson: {
+          executedQuantity: divergencia.executedQuantity,
+          deliveredQuantity: divergencia.deliveredQuantity,
+        },
+        afterJson: { requestedQuantity: divergencia.requestedQuantity },
+        reason: 'Nova quantidade solicitada menor que o executado ou entregue',
+      },
     })
   },
 }
