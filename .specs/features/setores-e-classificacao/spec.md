@@ -138,7 +138,7 @@ Depois da importação, os itens chegam sem categoria utilizável, porque `cad_p
 | SET-17 | Edge: categoria reutilizada | Design | Done |
 | SET-18 | Edge: código vazio | Design | Done |
 
-**Coverage:** 18 total, 0 mapped to tasks, 18 unmapped ⚠️
+**Coverage:** 18 total, 18 mapped to tasks, 0 unmapped ✅
 
 ---
 

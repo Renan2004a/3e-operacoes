@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/setores-e-classificacao/design.md`
-**Status**: Draft
+**Status**: Done
 
 ---
 
@@ -309,12 +309,12 @@ T9
 
 **Done when**:
 
-- [ ] Classificação válida responde `200`
-- [ ] Item já classificado responde `409`
-- [ ] Setor inválido responde `400`
-- [ ] Token ausente responde `401`
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm run lint && npm run typecheck && npm test`
+- [x] Classificação válida responde `200`
+- [x] Item já classificado responde `409`
+- [x] Setor inválido responde `400`
+- [x] Token ausente responde `401`
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm run lint && npm run typecheck && npm test`
 
 **Tests**: integration
 **Gate**: full
