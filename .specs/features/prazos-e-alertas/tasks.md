@@ -245,10 +245,10 @@ T7
 
 **Done when**:
 
-- [ ] Retorna `200` com as atividades atrasadas
-- [ ] Sem sessão `401`
-- [ ] Test count: 5 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm run lint && npm run typecheck && npm test`
+- [x] Retorna `200` com as atividades atrasadas
+- [x] Sem sessão `401`
+- [x] Test count: 5 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm run lint && npm run typecheck && npm test`
 
 **Tests**: integration
 **Gate**: full
