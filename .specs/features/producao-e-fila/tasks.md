@@ -197,10 +197,10 @@ T11
 
 **Done when**:
 
-- [ ] Prioridade persistida e refletida na ordenação
-- [ ] Atividade inexistente rejeitada
-- [ ] Test count: 4 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Prioridade persistida e refletida na ordenação
+- [x] Atividade inexistente rejeitada
+- [x] Test count: 4 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
