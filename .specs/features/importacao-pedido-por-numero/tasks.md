@@ -219,10 +219,10 @@ T17
 
 **Done when**:
 
-- [ ] Job inexistente retorna erro de não encontrado
-- [ ] Estado final e estado não final são distinguidos
-- [ ] Test count: 4 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Job inexistente retorna erro de não encontrado
+- [x] Estado final e estado não final são distinguidos
+- [x] Test count: 4 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
