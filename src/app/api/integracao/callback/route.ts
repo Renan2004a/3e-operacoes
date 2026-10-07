@@ -6,11 +6,11 @@ import {
 import { processarCallback } from '../../../../modules/integracao/processar-callback'
 import { prismaIntegracaoRepository } from '../../../../modules/integracao/adapters/prisma-integracao-repository'
 import { prismaPedidosRepository } from '../../../../modules/pedidos/adapters/prisma-pedidos-repository'
-import { requireInternalToken } from '../../../../shared/http/internal-auth'
+import { requireCallbackToken } from '../../../../shared/http/internal-auth'
 
 /** POST /api/integracao/callback — recebe o payload normalizado do conector. */
 export async function POST(request: Request) {
-  if (!requireInternalToken(request)) {
+  if (!requireCallbackToken(request)) {
     return Response.json({ error: 'unauthorized' }, { status: 401 })
   }
 

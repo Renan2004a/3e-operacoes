@@ -735,11 +735,11 @@ T23
 
 **Done when**:
 
-- [ ] `requireCallbackToken` valida `CONNECTOR_CALLBACK_TOKEN`; `requireInternalToken` mantém `APP_INTERNAL_TOKEN`
-- [ ] Rota de callback usa `requireCallbackToken`
-- [ ] Conector e `.env.example` usam `CONNECTOR_CALLBACK_TOKEN`
-- [ ] Test count: +2 testes em `internal-auth.test.ts` (sem remoções silenciosas)
-- [ ] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
+- [x] `requireCallbackToken` valida `CONNECTOR_CALLBACK_TOKEN`; `requireInternalToken` mantém `APP_INTERNAL_TOKEN`
+- [x] Rota de callback usa `requireCallbackToken`
+- [x] Conector e `.env.example` usam `CONNECTOR_CALLBACK_TOKEN`
+- [x] Test count: +3 testes em `internal-auth.test.ts` (sem remoções silenciosas)
+- [x] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
 
 **Tests**: unit, integration
 **Gate**: build

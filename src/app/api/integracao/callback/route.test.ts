@@ -150,16 +150,16 @@ function request(body: unknown, token: string | null = 'segredo-interno'): Reque
 }
 
 describe('POST /api/integracao/callback', () => {
-  const original = process.env.APP_INTERNAL_TOKEN
+  const original = process.env.CONNECTOR_CALLBACK_TOKEN
 
   beforeEach(() => {
-    process.env.APP_INTERNAL_TOKEN = 'segredo-interno'
+    process.env.CONNECTOR_CALLBACK_TOKEN = 'segredo-interno'
     mocks.reset()
   })
 
   afterEach(() => {
-    if (original === undefined) delete process.env.APP_INTERNAL_TOKEN
-    else process.env.APP_INTERNAL_TOKEN = original
+    if (original === undefined) delete process.env.CONNECTOR_CALLBACK_TOKEN
+    else process.env.CONNECTOR_CALLBACK_TOKEN = original
   })
 
   it('responde 200 e conclui o job para payload válido', async () => {

@@ -102,7 +102,7 @@ function buildDepsFromEnv(): ImportOrderDeps {
     queryable: createLegadoQueryable(),
     sharedToken: process.env.CONNECTOR_SHARED_TOKEN ?? '',
     callbackUrl: process.env.RAILWAY_CALLBACK_URL ?? '',
-    callbackToken: process.env.RAILWAY_CALLBACK_TOKEN ?? '',
+    callbackToken: process.env.CONNECTOR_CALLBACK_TOKEN ?? '',
     empresa: Number(process.env.TOPGERENTE_EMPRESA ?? 1),
   }
 }
