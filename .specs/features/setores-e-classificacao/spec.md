@@ -119,24 +119,24 @@ Depois da importação, os itens chegam sem categoria utilizável, porque `cad_p
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| SET-01 | P1: Setores | Design | Done |
-| SET-02 | P1: Setores | Design | Done |
-| SET-03 | P1: Setores | Design | Done |
-| SET-04 | P1: Setores | Design | Done |
-| SET-05 | P1: Mapeamento | Design | Done |
-| SET-06 | P1: Mapeamento | Design | Done |
-| SET-07 | P1: Mapeamento | Design | Done |
-| SET-08 | P1: Mapeamento | Design | Done |
-| SET-09 | P1: Classificação | Design | Implementing |
-| SET-10 | P1: Classificação | Design | Done |
-| SET-11 | P1: Classificação | Design | Done |
-| SET-12 | P1: Classificação | Design | Done |
-| SET-13 | P1: Classificação | Design | Implementing |
-| SET-14 | P2: Auditoria | Design | Done |
-| SET-15 | Edge: setor inativo | Design | Done |
-| SET-16 | Edge: sem mapeamento | Design | Implementing |
-| SET-17 | Edge: categoria reutilizada | Design | Done |
-| SET-18 | Edge: código vazio | Design | Done |
+| SET-01 | P1: Setores | Design | Verified |
+| SET-02 | P1: Setores | Design | Verified |
+| SET-03 | P1: Setores | Design | Verified |
+| SET-04 | P1: Setores | Design | Verified |
+| SET-05 | P1: Mapeamento | Design | Verified |
+| SET-06 | P1: Mapeamento | Design | Verified |
+| SET-07 | P1: Mapeamento | Design | Verified |
+| SET-08 | P1: Mapeamento | Design | Verified |
+| SET-09 | P1: Classificação | Design | Verified |
+| SET-10 | P1: Classificação | Design | Verified |
+| SET-11 | P1: Classificação | Design | Verified |
+| SET-12 | P1: Classificação | Design | Verified |
+| SET-13 | P1: Classificação | Design | Verified |
+| SET-14 | P2: Auditoria | Design | Verified |
+| SET-15 | Edge: setor inativo | Design | Verified |
+| SET-16 | Edge: sem mapeamento | Design | Verified |
+| SET-17 | Edge: categoria reutilizada | Design | Verified |
+| SET-18 | Edge: código vazio | Design | Verified |
 
 **Coverage:** 18 total, 18 mapped to tasks, 0 unmapped ✅
 

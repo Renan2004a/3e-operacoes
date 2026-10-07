@@ -40,3 +40,36 @@ Job idempotente (janela 60 s), guarda de token, contratos Zod, despacho autentic
 - Categoria do produto indisponível na AWS (`cad_produto` vazia) → item fica `PENDING_CLASSIFICATION`.
 - Vendedor só tem código (`Vend`); nome nulo.
 - Migrations ainda não aplicadas (sem MySQL de runtime no ambiente atual).
+
+---
+
+## Feature 2 — Setores e Classificação de Itens
+
+**Data**: 2026-10-07
+**Requisitos**: RF002, RF015
+**Artefatos**: `.specs/features/setores-e-classificacao/{spec,design,tasks,validation}.md`
+
+### Objetivo
+Manter setores operacionais, o de/para categoria → setor auditável e a classificação de itens pendentes. A classificação cria uma `Activity` (item × setor) e marca o item como `CLASSIFIED`.
+
+### Como foi feito
+- **Specify**: 18 critérios EARS; `validate_spec.py` 0/0.
+- **Design**: classificação cria `Activity`; chave do mapeamento = `categoriaLegado`; auto-classificação por porta injetada.
+- **Tasks**: 9 tarefas em 3 fases; `validate_tasks.py` 0 erros.
+- **Execute**: 1 batch (T1–T9), commit atômico por tarefa.
+- **Verify**: Verifier independente. Iteração 1 = FAIL (SET-09 não ligada ponta a ponta). Correções T10–T13. Iteração 2 = **PASS**.
+
+### Resultado
+- **13 tarefas** (T1–T13) implementadas.
+- **148 testes** passando. Cobertura de domínio 95% stmts / 89,7% branches.
+- **Verificação final: PASS** — 18/18 ACs com evidência, 7/7 mutantes mortos.
+- `validate_state.py`: 0 erros.
+
+### Decisões e desvios
+- Setor do item vive na `Activity`; `OrderItem` só recebe `CLASSIFIED`.
+- `prisma-classificacao-automatica.ts` liga a porta ao callback de importação.
+- GET `/api/mapeamentos` resolve `?category=` (contrato documentado no design).
+
+### Riscos abertos
+- Categoria do legado continua indisponível na AWS; itens sem categoria ficam pendentes.
+- Rotas protegidas por `APP_INTERNAL_TOKEN` até a feature de autenticação.
