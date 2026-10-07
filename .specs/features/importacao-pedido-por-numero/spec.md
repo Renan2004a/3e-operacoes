@@ -135,7 +135,7 @@ O acompanhamento dos pedidos depende hoje de controle manual e de comunicação 
 | INTG-03 | P1: Importar pedido | Design | Done |
 | INTG-04 | P1: Importar pedido | Design | Done |
 | INTG-05 | P1: Importar pedido | Design | Done |
-| INTG-06 | P1: Importar pedido | Design | Implementing |
+| INTG-06 | P1: Importar pedido | Design | Verified |
 | INTG-07 | P1: Importar pedido | Design | Done |
 | INTG-08 | P1: Status | Design | Done |
 | INTG-09 | P1: Status | Design | Done |
@@ -144,11 +144,11 @@ O acompanhamento dos pedidos depende hoje de controle manual e de comunicação 
 | INTG-12 | P2: Ressincronizar | Design | Done |
 | INTG-13 | P2: Ressincronizar | Design | Done |
 | INTG-14 | P2: Ressincronizar | Design | Done |
-| INTG-15 | P2: Ressincronizar | Design | Implementing |
+| INTG-15 | P2: Ressincronizar | Design | Verified |
 | INTG-16 | P2: Ressincronizar | Design | Done |
 | INTG-17 | P3: Reprocessar | Design | Done |
-| INTG-18 | P3: Reprocessar | Design | Implementing |
-| INTG-19 | Edge: pedido inexistente | Design | Implementing |
+| INTG-18 | P3: Reprocessar | Design | Verified |
+| INTG-19 | Edge: pedido inexistente | Design | Verified |
 | INTG-20 | Edge: callback inválido | Design | Done |
 | INTG-21 | Edge: callback duplicado | Design | Done |
 | INTG-22 | Edge: item cancelado | Design | Done |
