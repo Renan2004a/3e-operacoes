@@ -224,10 +224,10 @@ T11
 
 **Done when**:
 
-- [ ] Retorna pedido, item, setor, solicitado, executado e pendente
-- [ ] Atividade inexistente rejeitada
-- [ ] Test count: 5 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Retorna pedido, item, setor, solicitado, executado e pendente
+- [x] Atividade inexistente rejeitada
+- [x] Test count: 5 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
