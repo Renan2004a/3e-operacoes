@@ -107,12 +107,12 @@ T7
 
 **Done when**:
 
-- [ ] Sem prazo → `SEM_PRAZO`
-- [ ] Prazo futuro → `EM_DIA`
-- [ ] Prazo passado e não concluído → `ATRASADO`
-- [ ] Prazo passado e concluído → não atrasado
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Sem prazo → `SEM_PRAZO`
+- [x] Prazo futuro → `EM_DIA`
+- [x] Prazo passado e não concluído → `ATRASADO`
+- [x] Prazo passado e concluído → não atrasado
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
