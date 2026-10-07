@@ -43,7 +43,6 @@ export function OcorrenciaForm({ atividadeId, onRegistrada }: OcorrenciaFormProp
   const [quantidade, setQuantidade] = useState('')
   const [observacao, setObservacao] = useState('')
   const [motivos, setMotivos] = useState<Motivo[]>([])
-  const [carregandoMotivos, setCarregandoMotivos] = useState(false)
   const [erroMotivos, setErroMotivos] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [sucesso, setSucesso] = useState(false)
@@ -51,32 +50,30 @@ export function OcorrenciaForm({ atividadeId, onRegistrada }: OcorrenciaFormProp
 
   const exigeMotivo = TIPOS_COM_MOTIVO.includes(tipo)
 
-  const carregarMotivos = useCallback(async () => {
-    if (!TIPOS_COM_MOTIVO.includes(tipo)) {
-      setMotivos([])
-      setErroMotivos(false)
-      return
-    }
-    setCarregandoMotivos(true)
-    setErroMotivos(false)
-    try {
-      const dados = await apiGet<{ motivos: Motivo[] }>(`/api/motivos?tipo=${tipo}`)
-      setMotivos(dados.motivos)
-    } catch {
-      setErroMotivos(true)
-    } finally {
-      setCarregandoMotivos(false)
-    }
-  }, [tipo])
+  const carregarMotivos = useCallback(
+    () =>
+      apiGet<{ motivos: Motivo[] }>(`/api/motivos?tipo=${tipo}`)
+        .then((dados) => {
+          setMotivos(dados.motivos)
+          setErroMotivos(false)
+        })
+        .catch(() => setErroMotivos(true)),
+    [tipo],
+  )
 
   useEffect(() => {
+    if (!TIPOS_COM_MOTIVO.includes(tipo)) return
     void carregarMotivos()
-  }, [carregarMotivos])
+  }, [tipo, carregarMotivos])
 
   function trocarTipo(novo: TipoOcorrencia) {
     setTipo(novo)
     setMotivoId('')
     setErro(null)
+    if (!TIPOS_COM_MOTIVO.includes(novo)) {
+      setMotivos([])
+      setErroMotivos(false)
+    }
   }
 
   async function aoEnviar(evento: React.FormEvent<HTMLFormElement>) {
@@ -151,7 +148,6 @@ export function OcorrenciaForm({ atividadeId, onRegistrada }: OcorrenciaFormProp
               aria-invalid={props.invalid || undefined}
               className={CLASSE_SELECT}
               value={motivoId}
-              disabled={carregandoMotivos}
               onChange={(evento) => setMotivoId(evento.target.value)}
             >
               <option value="">Selecione…</option>

@@ -129,14 +129,14 @@ O sistema só tem APIs; não há interface. O operador de produção precisa reg
 | FE-06 | P1: Shell | Execute | Done |
 | FE-07 | P1: Fila | Execute | Done |
 | FE-08 | P1: Fila | Execute | Done |
-| FE-09 | P1: Executar | Design | Pending |
-| FE-10 | P1: Executar | Design | Pending |
+| FE-09 | P1: Executar | Execute | Done |
+| FE-10 | P1: Executar | Execute | Done |
 | FE-11 | P1: Ocorrência | Execute | Done |
 | FE-12 | P1: Ocorrência | Execute | Done |
 | FE-13 | Edge: 401 | Execute | Done |
 | FE-14 | Edge: falha de API | Execute | Done |
 
-**Coverage:** 14 total, 0 mapped to tasks, 14 unmapped ⚠️
+**Coverage:** 14 total, 14 mapped to tasks, 0 unmapped ✅
 
 ---
 

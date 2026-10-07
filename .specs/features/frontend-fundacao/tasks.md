@@ -243,11 +243,11 @@ T8 -> T7
 
 **Done when**:
 
-- [ ] Registrar quantidade atualiza a lista
-- [ ] Quantidade inválida mostra mensagem sem registrar
-- [ ] Campo numérico no celular
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Registrar quantidade atualiza a lista
+- [x] Quantidade inválida mostra mensagem sem registrar
+- [x] Campo numérico no celular
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

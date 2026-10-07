@@ -41,22 +41,26 @@ export default function FilaPage() {
   const [erro, setErro] = useState(false)
   const [carregando, setCarregando] = useState(true)
 
-  const carregar = useCallback(async () => {
-    setCarregando(true)
-    setErro(false)
-    try {
-      const dados = await apiGet<{ atividades: Atividade[] }>('/api/producao/atividades')
-      setAtividades(dados.atividades)
-    } catch {
-      setErro(true)
-    } finally {
-      setCarregando(false)
-    }
-  }, [])
+  const buscar = useCallback(
+    () =>
+      apiGet<{ atividades: Atividade[] }>('/api/producao/atividades')
+        .then((dados) => {
+          setAtividades(dados.atividades)
+          setErro(false)
+        })
+        .catch(() => setErro(true))
+        .finally(() => setCarregando(false)),
+    [],
+  )
 
   useEffect(() => {
-    void carregar()
-  }, [carregar])
+    void buscar()
+  }, [buscar])
+
+  function tentarDeNovo() {
+    setCarregando(true)
+    void buscar()
+  }
 
   if (carregando) {
     return (
@@ -71,7 +75,7 @@ export default function FilaPage() {
       <Alert
         variant="error"
         title="Não foi possível carregar a fila"
-        action={<Button onClick={() => void carregar()}>Tentar de novo</Button>}
+        action={<Button onClick={tentarDeNovo}>Tentar de novo</Button>}
       >
         Verifique sua conexão e tente novamente.
       </Alert>
