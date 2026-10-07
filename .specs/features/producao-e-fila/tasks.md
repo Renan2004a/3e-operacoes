@@ -113,10 +113,10 @@ T11
 
 **Done when**:
 
-- [ ] Pendente = solicitado − executado
-- [ ] Executado acima do solicitado resulta em pendente zero
-- [ ] Test count: 5 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Pendente = solicitado − executado
+- [x] Executado acima do solicitado resulta em pendente zero
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
