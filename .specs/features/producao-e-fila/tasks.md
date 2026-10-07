@@ -140,12 +140,12 @@ T11
 
 **Done when**:
 
-- [ ] Execução persiste com usuário e data/hora
-- [ ] Quantidade inválida rejeitada
-- [ ] Atingir o solicitado marca `COMPLETED`
-- [ ] Ultrapassar o solicitado marca `DIVERGENT`
-- [ ] Test count: 9 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Execução persiste com usuário e data/hora
+- [x] Quantidade inválida rejeitada
+- [x] Atingir o solicitado marca `COMPLETED`
+- [x] Ultrapassar o solicitado marca `DIVERGENT`
+- [x] Test count: 9 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

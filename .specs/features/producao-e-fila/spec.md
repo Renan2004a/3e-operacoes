@@ -133,20 +133,20 @@ A classificação cria as atividades por setor, mas não existe fila para o oper
 | PROD-01 | P1: Fila | Design | Pending |
 | PROD-02 | P1: Fila | Design | Pending |
 | PROD-03 | P1: Fila | Design | Pending |
-| PROD-04 | P1: Execução | Design | Pending |
+| PROD-04 | P1: Execução | Design | Done |
 | PROD-05 | P1: Execução | Design | Done |
-| PROD-06 | P1: Execução | Design | Pending |
-| PROD-07 | P1: Execução | Design | Pending |
+| PROD-06 | P1: Execução | Design | Done |
+| PROD-07 | P1: Execução | Design | Done |
 | PROD-08 | P1: Saldo | Design | Done |
 | PROD-09 | P1: Saldo | Design | Done |
 | PROD-10 | P1: Saldo | Design | Done |
 | PROD-11 | P1: Prioridade | Design | Pending |
 | PROD-12 | P2: Ordem | Design | Pending |
 | PROD-13 | Edge: atividade inexistente | Design | Pending |
-| PROD-14 | Edge: setor do operador | Design | Pending |
-| PROD-15 | Edge: quantidade inválida | Design | Pending |
+| PROD-14 | Edge: setor do operador | Design | Done |
+| PROD-15 | Edge: quantidade inválida | Design | Done |
 
-**Coverage:** 15 total, 4 mapped to tasks, 11 unmapped ⚠️
+**Coverage:** 15 total, 9 mapped to tasks, 6 unmapped ⚠️
 
 ---
 
