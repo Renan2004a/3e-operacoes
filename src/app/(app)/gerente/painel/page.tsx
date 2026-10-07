@@ -7,6 +7,8 @@ import { Alert } from '@/shared/ui/alert'
 import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
+import { Metric } from '@/shared/ui/metric'
+import { PageHead } from '@/shared/ui/page-head'
 import { Spinner } from '@/shared/ui/spinner'
 
 interface ContagemPorSetor {
@@ -115,33 +117,20 @@ export default function PainelPage() {
 
   return (
     <section className="grid gap-4">
-      <header>
-        <h1 className="text-2xl font-semibold text-ink">Painel</h1>
-        <p className="text-sm text-muted">Andamento da produção por setor e status.</p>
-      </header>
+      <PageHead title="Painel" description="Andamento da produção por setor e status." />
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Pendências</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-ink">{painel.pendencias}</p>
-            <p className="text-sm text-muted">Atividades não concluídas.</p>
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Metric
+          label="Pendências"
+          value={painel.pendencias}
+          helper="Atividades não concluídas."
+        />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Cumprimento de prazo</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-ink">{cumprimentoPrazo.percentual}%</p>
-            <p className="text-sm text-muted">
-              {cumprimentoPrazo.concluidasNoPrazo} de {cumprimentoPrazo.concluidasComPrazo} no prazo.
-            </p>
-          </CardContent>
-        </Card>
+        <Metric
+          label="Cumprimento de prazo"
+          value={`${cumprimentoPrazo.percentual}%`}
+          helper={`${cumprimentoPrazo.concluidasNoPrazo} de ${cumprimentoPrazo.concluidasComPrazo} no prazo.`}
+        />
       </div>
 
       <Card>

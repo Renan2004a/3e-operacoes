@@ -61,9 +61,7 @@ describe('PainelPage', () => {
     expect(screen.getByText('setor-telhas: 1')).toBeInTheDocument()
     expect(screen.getByText('Pendente')).toBeInTheDocument()
     expect(screen.getByText('Total: 2')).toBeInTheDocument()
-    expect(
-      screen.getByRole('heading', { name: 'Pendências' }).closest('div.rounded-card'),
-    ).toHaveTextContent('2')
+    expect(screen.getByText('Pendências').closest('div.rounded-card')).toHaveTextContent('2')
     expect(mocks.apiGet).toHaveBeenCalledWith('/api/indicadores')
   })
 
@@ -101,5 +99,12 @@ describe('PainelPage', () => {
 
     expect(await screen.findByText('setor-corte: 3')).toBeInTheDocument()
     expect(mocks.apiGet).toHaveBeenCalledTimes(2)
+  })
+
+  it('usa o cabeçalho de página com o título do painel (VIS-09)', async () => {
+    mocks.apiGet.mockResolvedValue(indicadores())
+    render(<PainelPage />)
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Painel' })).toBeInTheDocument()
   })
 })

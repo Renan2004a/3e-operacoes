@@ -199,10 +199,10 @@ T7
 
 **Done when**:
 
-- [ ] Painel com métricas; pedidos em tabela
-- [ ] Estados mantidos; comportamento inalterado
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Painel com métricas; pedidos em tabela
+- [x] Estados mantidos; comportamento inalterado
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

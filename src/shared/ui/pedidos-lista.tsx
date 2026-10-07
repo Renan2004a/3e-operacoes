@@ -189,25 +189,55 @@ export function PedidosLista({ onSelecionar }: PedidosListaProps) {
       ) : !pedidos || pedidos.length === 0 ? (
         <EmptyState title="Sem pedidos" description="Nenhum pedido encontrado com os filtros atuais." />
       ) : (
-        <ul aria-label="Pedidos" className="grid gap-3">
-          {pedidos.map((pedido) => (
-            <li
-              key={pedido.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-line bg-surface p-4"
-            >
-              <div className="min-w-0">
-                <p className="font-semibold text-ink">Pedido {pedido.numero}</p>
-                <p className="text-sm text-muted">{pedido.cliente ?? 'Sem cliente'}</p>
-                <Badge variant={VARIANTE_STATUS[pedido.status]} className="mt-2">
-                  {ROTULO_STATUS[pedido.status]}
-                </Badge>
-              </div>
-              <Button onClick={() => onSelecionar(pedido)} aria-label={`Abrir pedido ${pedido.numero}`}>
-                Abrir
-              </Button>
-            </li>
-          ))}
-        </ul>
+        <div className="overflow-x-auto rounded-card border border-line bg-surface">
+          <table aria-label="Pedidos" className="w-full border-collapse text-left text-sm">
+            <thead>
+              <tr className="border-b border-line text-xs uppercase tracking-wide text-muted">
+                <th scope="col" className="px-4 py-3 font-semibold">
+                  Pedido
+                </th>
+                <th scope="col" className="px-4 py-3 font-semibold">
+                  Cliente
+                </th>
+                <th scope="col" className="px-4 py-3 font-semibold">
+                  Status
+                </th>
+                <th scope="col" className="px-4 py-3 text-right font-semibold">
+                  Ações
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {pedidos.map((pedido) => (
+                <tr
+                  key={pedido.id}
+                  className="border-b border-line last:border-b-0 hover:bg-surface-2"
+                >
+                  <td className="whitespace-nowrap px-4 py-3 font-semibold text-ink">
+                    Pedido {pedido.numero}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 text-muted">
+                    {pedido.cliente ?? 'Sem cliente'}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3">
+                    <Badge variant={VARIANTE_STATUS[pedido.status]}>
+                      {ROTULO_STATUS[pedido.status]}
+                    </Badge>
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 text-right">
+                    <Button
+                      size="sm"
+                      onClick={() => onSelecionar(pedido)}
+                      aria-label={`Abrir pedido ${pedido.numero}`}
+                    >
+                      Abrir
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   )

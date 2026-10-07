@@ -135,4 +135,11 @@ describe('PedidoGerentePage', () => {
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent(/pedido não encontrado/i)
   })
+
+  it('usa o cabeçalho de página com o número do pedido (VIS-09)', async () => {
+    mocks.apiGet.mockResolvedValue({ pedido: pedido() })
+    render(<PedidoGerentePage />)
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Pedido 100' })).toBeInTheDocument()
+  })
 })

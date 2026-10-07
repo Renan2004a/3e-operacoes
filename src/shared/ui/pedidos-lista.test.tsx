@@ -39,10 +39,10 @@ describe('PedidosLista', () => {
     mocks.apiGet.mockResolvedValue({ pedidos: [PEDIDO] })
     render(<PedidosLista onSelecionar={vi.fn()} />)
 
-    const lista = await screen.findByRole('list', { name: 'Pedidos' })
-    expect(within(lista).getByText('Pedido 100')).toBeInTheDocument()
-    expect(within(lista).getByText('Ana')).toBeInTheDocument()
-    expect(within(lista).getByText('Pendente')).toBeInTheDocument()
+    const tabela = await screen.findByRole('table', { name: 'Pedidos' })
+    expect(within(tabela).getByText('Pedido 100')).toBeInTheDocument()
+    expect(within(tabela).getByText('Ana')).toBeInTheDocument()
+    expect(within(tabela).getByText('Pendente')).toBeInTheDocument()
     expect(mocks.apiGet).toHaveBeenCalledWith('/api/pedidos')
   })
 
@@ -139,5 +139,13 @@ describe('PedidosLista', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Abrir pedido 100' }))
 
     expect(onSelecionar).toHaveBeenCalledWith(PEDIDO)
+  })
+
+  it('permite rolagem horizontal interna da tabela em telas estreitas (VIS-11)', async () => {
+    mocks.apiGet.mockResolvedValue({ pedidos: [PEDIDO] })
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+
+    const tabela = await screen.findByRole('table', { name: 'Pedidos' })
+    expect(tabela.parentElement).toHaveClass('overflow-x-auto')
   })
 })
