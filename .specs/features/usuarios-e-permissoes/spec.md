@@ -119,7 +119,7 @@ Todas as rotas usam um cabeçalho temporário `x-user-id`, sem login nem autoriz
 | --- | --- | --- | --- |
 | AUTH-01 | P1: Autenticar | Design | Done |
 | AUTH-02 | P1: Autenticar | Design | Done |
-| AUTH-03 | P1: Autenticar | Design | Pending |
+| AUTH-03 | P1: Autenticar | Design | Done |
 | AUTH-04 | P1: Autenticar | Design | Done |
 | AUTH-05 | P1: Autenticar | Design | Done |
 | AUTH-06 | P1: Autenticar | Design | Done |

@@ -347,10 +347,10 @@ T15
 
 **Done when**:
 
-- [ ] `GET` retorna o usuário da sessão; sem sessão `401`
-- [ ] `DELETE` encerra a sessão
-- [ ] Test count: 5 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm run lint && npm run typecheck && npm test`
+- [x] `GET` retorna o usuário da sessão; sem sessão `401`
+- [x] `DELETE` encerra a sessão
+- [x] Test count: 5 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm run lint && npm run typecheck && npm test`
 
 **Tests**: integration
 **Gate**: full
