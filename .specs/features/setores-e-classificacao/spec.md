@@ -119,10 +119,10 @@ Depois da importação, os itens chegam sem categoria utilizável, porque `cad_p
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| SET-01 | P1: Setores | Design | Pending |
-| SET-02 | P1: Setores | Design | Pending |
-| SET-03 | P1: Setores | Design | Pending |
-| SET-04 | P1: Setores | Design | Pending |
+| SET-01 | P1: Setores | Design | Done |
+| SET-02 | P1: Setores | Design | Done |
+| SET-03 | P1: Setores | Design | Done |
+| SET-04 | P1: Setores | Design | Done |
 | SET-05 | P1: Mapeamento | Design | Pending |
 | SET-06 | P1: Mapeamento | Design | Pending |
 | SET-07 | P1: Mapeamento | Design | Pending |
@@ -136,7 +136,7 @@ Depois da importação, os itens chegam sem categoria utilizável, porque `cad_p
 | SET-15 | Edge: setor inativo | Design | Pending |
 | SET-16 | Edge: sem mapeamento | Design | Pending |
 | SET-17 | Edge: categoria reutilizada | Design | Pending |
-| SET-18 | Edge: código vazio | Design | Pending |
+| SET-18 | Edge: código vazio | Design | Done |
 
 **Coverage:** 18 total, 0 mapped to tasks, 18 unmapped ⚠️
 

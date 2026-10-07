@@ -84,12 +84,12 @@ T9
 
 **Done when**:
 
-- [ ] Código vazio é rejeitado
-- [ ] Código duplicado é rejeitado com conflito
-- [ ] Inativar não apaga o setor
-- [ ] Listagem padrão só traz ativos
-- [ ] Test count: 7 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Código vazio é rejeitado
+- [x] Código duplicado é rejeitado com conflito
+- [x] Inativar não apaga o setor
+- [x] Listagem padrão só traz ativos
+- [x] Test count: 7 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
