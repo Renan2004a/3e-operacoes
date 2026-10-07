@@ -3,6 +3,12 @@ import type { ConectorLegadoPort } from '../contratos'
 
 export const DEFAULT_CONNECTOR_TIMEOUT_MS = 5_000
 
+/** Tempo limite do despacho: usa `CONNECTOR_TIMEOUT_MS` quando válido, senão o padrão. */
+export function resolverConnectorTimeoutMs(valor = process.env.CONNECTOR_TIMEOUT_MS): number {
+  const n = Number(valor)
+  return Number.isFinite(n) && n > 0 ? n : DEFAULT_CONNECTOR_TIMEOUT_MS
+}
+
 export class ConectorLegadoError extends Error {
   readonly code: string
 
@@ -29,7 +35,7 @@ const dispatchResponseSchema = z.object({
 
 /** Adapter HTTP que despacha o job ao conector local com token e tempo limite. */
 export function createHttpConectorLegado(config: HttpConectorLegadoConfig): ConectorLegadoPort {
-  const { baseUrl, token, timeoutMs = DEFAULT_CONNECTOR_TIMEOUT_MS, fetchImpl = fetch } = config
+  const { baseUrl, token, timeoutMs = resolverConnectorTimeoutMs(), fetchImpl = fetch } = config
   const url = `${baseUrl.replace(/\/+$/, '')}/jobs/import-order`
 
   return {
