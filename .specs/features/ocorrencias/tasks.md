@@ -107,12 +107,12 @@ T7
 
 **Done when**:
 
-- [ ] Perda/refugo/indisponibilidade sem motivo é rejeitada
-- [ ] Motivo inválido é rejeitado
-- [ ] Quantidade fora da unidade é rejeitada
-- [ ] Perda/refugo não alteram o saldo (não chamam produção)
-- [ ] Test count: 10 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Perda/refugo/indisponibilidade sem motivo é rejeitada
+- [x] Motivo inválido é rejeitado
+- [x] Quantidade fora da unidade é rejeitada
+- [x] Perda/refugo não alteram o saldo (não chamam produção)
+- [x] Test count: 10 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
