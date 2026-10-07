@@ -6,11 +6,11 @@ A interface funciona, mas está visualmente simples e distante da referência `f
 
 ## Goals
 
-- [ ] Shell com **topbar + sidebar** (desktop) e menu acessível (celular).
-- [ ] **Login** com painel lateral (hero) e caixa de acesso.
-- [ ] Componentes de **métrica, badge, cabeçalho de página e tabela**.
-- [ ] Telas com o padrão visual da referência, mantendo estados de carregando/erro/vazio.
-- [ ] Responsividade em 360/768/1024/1440 px e WCAG 2.1 AA.
+- [x] Shell com **topbar + sidebar** (desktop) e menu acessível (celular).
+- [x] **Login** com painel lateral (hero) e caixa de acesso.
+- [x] Componentes de **métrica, badge, cabeçalho de página e tabela**.
+- [x] Telas com o padrão visual da referência, mantendo estados de carregando/erro/vazio.
+- [x] Responsividade em 360/768/1024/1440 px e WCAG 2.1 AA.
 
 ## Out of Scope
 
@@ -118,13 +118,13 @@ A interface funciona, mas está visualmente simples e distante da referência `f
 | VIS-10 | P1: Telas | Design | Done |
 | VIS-11 | P1: Telas | Design | Done |
 
-**Coverage:** 11 total, 0 mapped to tasks, 11 unmapped ⚠️
+**Coverage:** 11 total, 11 mapped to tasks, 0 unmapped ✅
 
 ---
 
 ## Success Criteria
 
-- [ ] Shell com sidebar no desktop e menu no celular, sem rolagem horizontal.
-- [ ] Login com hero responsivo.
-- [ ] Componentes reutilizáveis aplicados nas telas.
-- [ ] Testes e E2E continuam verdes.
+- [x] Shell com sidebar no desktop e menu no celular, sem rolagem horizontal.
+- [x] Login com hero responsivo.
+- [x] Componentes reutilizáveis aplicados nas telas.
+- [x] Testes e E2E continuam verdes.

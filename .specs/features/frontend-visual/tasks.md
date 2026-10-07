@@ -255,10 +255,10 @@ T7
 
 **Done when**:
 
-- [ ] E2E: login e shell sem rolagem horizontal 360–1440 px
-- [ ] Foco visível e rótulos conferidos
-- [ ] Test count: 5 testes E2E passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm run test:e2e`
+- [x] E2E: login e shell sem rolagem horizontal 360–1440 px
+- [x] Foco visível e rótulos conferidos
+- [x] Test count: 5 testes E2E passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm run test:e2e`
 
 **Tests**: e2e
 **Gate**: e2e
