@@ -209,11 +209,11 @@ T15
 
 **Done when**:
 
-- [ ] Vendedor só pode consultar
-- [ ] Operador executa/ocorrência; Gerente faz o resto da produção
-- [ ] Expedição registra entrega; só Gerente autoriza exceção
-- [ ] Test count: 9 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Vendedor só pode consultar
+- [x] Operador executa/ocorrência; Gerente faz o resto da produção
+- [x] Expedição registra entrega; só Gerente autoriza exceção
+- [x] Test count: 9 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

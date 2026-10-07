@@ -124,8 +124,8 @@ Todas as rotas usam um cabeçalho temporário `x-user-id`, sem login nem autoriz
 | AUTH-05 | P1: Autenticar | Design | Done |
 | AUTH-06 | P1: Autenticar | Design | Done |
 | AUTH-07 | P1: Autorizar | Design | Done |
-| AUTH-08 | P1: Autorizar | Design | Pending |
-| AUTH-09 | P1: Autorizar | Design | Pending |
+| AUTH-08 | P1: Autorizar | Design | Done |
+| AUTH-09 | P1: Autorizar | Design | Done |
 | AUTH-10 | P1: Usuários | Design | Pending |
 | AUTH-11 | P1: Usuários | Design | Pending |
 | AUTH-12 | P1: Usuários | Design | Pending |
