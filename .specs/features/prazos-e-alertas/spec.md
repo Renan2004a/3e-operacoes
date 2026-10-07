@@ -108,7 +108,7 @@ O pedido pode nascer sem data de entrega e, mesmo com data, não há como sinali
 | PRAZO-07 | P1: Atraso | Execute | T2 | Done (T2) |
 | PRAZO-08 | P1: Atraso | Execute | T2 | Done (T2) |
 | PRAZO-09 | P1: Atraso | Execute | T2 | Done (T2) |
-| PRAZO-10 | P1: Alertas | Design | T3, T7 | Pending |
+| PRAZO-10 | P1: Alertas | Execute | T3, T7 | Done (T3) |
 | PRAZO-11 | Edge: atividade inexistente | Execute | T1, T6 | Done (T1) |
 | PRAZO-12 | Edge: item inexistente | Execute | T1, T5 | Done (T1) |
 

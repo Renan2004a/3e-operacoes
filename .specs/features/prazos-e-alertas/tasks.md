@@ -136,9 +136,9 @@ T7
 
 **Done when**:
 
-- [ ] Só atividades com prazo ultrapassado e não concluídas
-- [ ] Test count: 4 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Só atividades com prazo ultrapassado e não concluídas
+- [x] Test count: 4 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
