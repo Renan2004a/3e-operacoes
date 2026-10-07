@@ -109,9 +109,9 @@ A interface funciona, mas está visualmente simples e distante da referência `f
 | VIS-01 | P1: Shell | Design | Done |
 | VIS-02 | P1: Shell | Design | Done |
 | VIS-03 | P1: Shell | Design | Done |
-| VIS-04 | P1: Login | Design | Pending |
-| VIS-05 | P1: Login | Design | Pending |
-| VIS-06 | P1: Login | Design | Pending |
+| VIS-04 | P1: Login | Design | Done |
+| VIS-05 | P1: Login | Design | Done |
+| VIS-06 | P1: Login | Design | Done |
 | VIS-07 | P1: Componentes | Design | Done |
 | VIS-08 | P1: Componentes | Design | Done |
 | VIS-09 | P1: Telas | Design | Pending |

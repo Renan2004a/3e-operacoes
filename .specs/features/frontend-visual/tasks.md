@@ -142,10 +142,10 @@ T7
 
 **Done when**:
 
-- [ ] Hero em ≥ 780 px; só a caixa abaixo disso
-- [ ] Rótulos, foco e erro acessível preservados
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Hero em ≥ 780 px; só a caixa abaixo disso
+- [x] Rótulos, foco e erro acessível preservados
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

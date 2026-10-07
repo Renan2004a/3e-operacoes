@@ -149,3 +149,32 @@ describe('LoginPage', () => {
     expect(mocks.apiPost.mock.calls[0]?.[2]).toEqual({ redirectOnUnauthorized: false })
   })
 })
+
+describe('LoginPage layout (VIS-04, VIS-05, VIS-06)', () => {
+  it('mostra o painel lateral (hero) com a proposta do produto (VIS-04)', () => {
+    render(<LoginPage />)
+
+    expect(screen.getByText(/pedidos, produção e expedição/i)).toBeInTheDocument()
+  })
+
+  it('esconde o hero no celular e o mostra a partir de 780px (VIS-04, VIS-05)', () => {
+    const { container } = render(<LoginPage />)
+
+    const hero = container.querySelector('main > section')
+    expect(hero).toHaveClass('hidden')
+    expect(hero).toHaveClass('min-[780px]:flex')
+  })
+
+  it('mantém um único cabeçalho de nível 1 com a marca (VIS-04)', () => {
+    render(<LoginPage />)
+
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
+    expect(screen.getByRole('heading', { level: 1, name: '3E Operações' })).toBeInTheDocument()
+  })
+
+  it('expõe foco visível no botão de entrar (VIS-06)', () => {
+    render(<LoginPage />)
+
+    expect(screen.getByRole('button', { name: 'Entrar' })).toHaveClass('focus-visible:ring-2')
+  })
+})
