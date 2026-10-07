@@ -161,6 +161,28 @@ describe('/api/mapeamentos', () => {
     expect(body.mapping).toMatchObject({ legacyCategory: 'Telhas', sectorId: 'setor_telhas' })
   })
 
+  it('responde 400 no GET sem o parâmetro category', async () => {
+    const response = await GET(request('GET'))
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ error: 'invalid_category' })
+  })
+
+  it('responde 404 no GET quando a categoria não tem mapeamento', async () => {
+    const response = await GET(request('GET', { query: '?category=Inexistente' }))
+
+    expect(response.status).toBe(404)
+    expect(await response.json()).toEqual({ error: 'mapping_not_found' })
+  })
+
+  it('responde 401 no GET sem token', async () => {
+    seedMapping()
+
+    const response = await GET(request('GET', { query: '?category=Telhas', token: null }))
+
+    expect(response.status).toBe(401)
+  })
+
   it('responde 401 na criação sem token e não persiste', async () => {
     const response = await POST(
       request('POST', { body: { legacyCategory: 'Telhas', sectorId: 'setor_telhas' }, token: null }),

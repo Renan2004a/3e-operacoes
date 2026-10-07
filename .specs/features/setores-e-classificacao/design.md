@@ -83,9 +83,21 @@ graph TD
 
 - `src/modules/setores/adapters/prisma-setores-repository.ts` — setores + mapeamento + auditoria.
 - `src/modules/setores/adapters/prisma-classificacao-repository.ts` — item + Activity.
+- `src/modules/setores/adapters/prisma-classificacao-automatica.ts` — porta de auto-classificação da importação.
 - `src/app/api/setores/route.ts` — `GET`/`POST`.
 - `src/app/api/mapeamentos/route.ts` — `GET`/`POST`/`PATCH`.
 - `src/app/api/pedidos/itens/[itemId]/classificar/route.ts` — `POST`.
+
+### Contrato de leitura de mapeamentos
+
+`GET /api/mapeamentos?category=<categoria>` resolve o mapeamento da categoria informada. Não existe listagem de todos os mapeamentos nesta fatia: a leitura é sempre por categoria.
+
+| Caso | Resposta |
+| --- | --- |
+| `category` presente e mapeamento existente | `200` com `{ mapping }` |
+| `category` ausente | `400` com `{ error: 'invalid_category' }` |
+| `category` presente e mapeamento ausente | `404` com `{ error: 'mapping_not_found' }` |
+| Token interno ausente ou inválido | `401` com `{ error: 'unauthorized' }` |
 
 ---
 

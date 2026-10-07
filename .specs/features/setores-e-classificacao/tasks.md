@@ -405,7 +405,7 @@ T12
 
 - [x] Contrato do GET documentado no design
 - [x] `400` sem `category` e `404` quando o mapeamento não existe cobertos por teste
-- [x] Test count: 8 testes passam em `mapeamentos/route.test.ts` (sem remoções silenciosas)
+- [x] Test count: 9 testes passam em `mapeamentos/route.test.ts` (sem remoções silenciosas)
 - [x] Gate check passa: `npm run lint && npm run typecheck && npm test`
 
 **Tests**: integration
