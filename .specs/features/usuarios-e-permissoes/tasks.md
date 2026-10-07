@@ -237,12 +237,12 @@ T15
 
 **Done when**:
 
-- [ ] Senha persistida como hash
-- [ ] Email duplicado rejeitado
-- [ ] Perfis e setores N:N persistidos
-- [ ] Usuário inativo não loga
-- [ ] Test count: 8 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Senha persistida como hash
+- [x] Email duplicado rejeitado
+- [x] Perfis e setores N:N persistidos
+- [x] Usuário inativo não loga
+- [x] Test count: 8 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
