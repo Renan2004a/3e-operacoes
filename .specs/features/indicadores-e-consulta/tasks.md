@@ -135,10 +135,10 @@ T7
 
 **Done when**:
 
-- [ ] Produção por setor (soma de execuções)
-- [ ] Cumprimento de prazo só sobre atividades com prazo
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Produção por setor (soma de execuções)
+- [x] Cumprimento de prazo só sobre atividades com prazo
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
