@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url'
-import { defineConfig } from 'vitest/config'
+import { configDefaults, defineConfig } from 'vitest/config'
 
 export default defineConfig({
   resolve: {
@@ -9,6 +9,8 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
+    // Os testes E2E são do Playwright (`npm run test:e2e`), não do Vitest.
+    exclude: [...configDefaults.exclude, 'tests/e2e/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],

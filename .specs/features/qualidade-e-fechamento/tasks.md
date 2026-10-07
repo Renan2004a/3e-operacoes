@@ -224,10 +224,10 @@ T7
 
 **Done when**:
 
-- [ ] Login válido navega; inválido mostra erro (API mockada)
-- [ ] 360/768/1024/1440 px sem rolagem horizontal
-- [ ] Test count: 5 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm run test:e2e`
+- [x] Login válido navega; inválido mostra erro (API mockada)
+- [x] 360/768/1024/1440 px sem rolagem horizontal
+- [x] Test count: 5 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm run test:e2e`
 
 **Tests**: e2e
 **Gate**: e2e
