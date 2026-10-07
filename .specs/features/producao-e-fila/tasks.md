@@ -85,11 +85,11 @@ T11
 
 **Done when**:
 
-- [ ] Peça rejeita fração e aceita inteiro
-- [ ] Metro aceita decimal com 2 casas
-- [ ] Quantidade zero/negativa rejeitada
-- [ ] Test count: 8 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Peça rejeita fração e aceita inteiro
+- [x] Metro aceita decimal com 2 casas
+- [x] Quantidade zero/negativa rejeitada
+- [x] Test count: 9 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
