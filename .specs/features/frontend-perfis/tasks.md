@@ -293,10 +293,10 @@ T9 -> T10
 
 **Done when**:
 
-- [ ] Cria e lista setores
-- [ ] Cria e altera mapeamentos
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Cria e lista setores
+- [x] Cria e altera mapeamentos
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
