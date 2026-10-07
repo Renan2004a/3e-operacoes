@@ -15,15 +15,15 @@ const NOW = new Date('2026-10-07T12:00:00.000Z')
 function mapping(
   overrides: Partial<CategorySectorMapping> & Pick<CategorySectorMapping, 'legacyCategory'>,
 ): CategorySectorMapping {
-  return {
+  const base: CategorySectorMapping = {
     id: 'map_1',
     legacyCategory: overrides.legacyCategory,
     sectorId: 'setor_a',
     status: 'ACTIVE',
     createdAt: NOW,
     updatedAt: NOW,
-    ...overrides,
   }
+  return { ...base, ...overrides }
 }
 
 function createFakeRepo(seed: CategorySectorMapping[] = []) {

@@ -10,15 +10,15 @@ import {
 } from './gerenciar-setores'
 
 function sector(overrides: Partial<Sector> & Pick<Sector, 'code'>): Sector {
-  return {
+  const base: Sector = {
     id: 'sector_1',
     code: overrides.code,
-    name: overrides.name ?? overrides.code,
-    active: overrides.active ?? true,
+    name: overrides.code,
+    active: true,
     createdAt: new Date('2026-10-07T12:00:00.000Z'),
     updatedAt: new Date('2026-10-07T12:00:00.000Z'),
-    ...overrides,
   }
+  return { ...base, ...overrides }
 }
 
 function createFakeRepo(seed: Sector[] = []) {

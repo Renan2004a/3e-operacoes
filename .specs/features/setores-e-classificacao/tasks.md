@@ -200,9 +200,9 @@ T9
 
 **Done when**:
 
-- [ ] CRUD de setor e de mapeamento implementados
-- [ ] Auditoria gravada em `AuditLog`
-- [ ] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
+- [x] CRUD de setor e de mapeamento implementados
+- [x] Auditoria gravada em `AuditLog`
+- [x] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
 
 **Tests**: none
 **Gate**: build

@@ -16,38 +16,38 @@ const NOW = new Date('2026-10-07T12:00:00.000Z')
 function itemState(
   overrides: Partial<ItemParaClassificar> & Pick<ItemParaClassificar, 'id'>,
 ): ItemParaClassificar {
-  return {
+  const base: ItemParaClassificar = {
     id: overrides.id,
     legacyCategory: null,
     classificationStatus: 'PENDING_CLASSIFICATION',
-    ...overrides,
   }
+  return { ...base, ...overrides }
 }
 
 function sector(overrides: Partial<Sector> & Pick<Sector, 'id'>): Sector {
-  return {
+  const base: Sector = {
     id: overrides.id,
     code: 'TELHAS',
     name: 'Telhas',
     active: true,
     createdAt: NOW,
     updatedAt: NOW,
-    ...overrides,
   }
+  return { ...base, ...overrides }
 }
 
 function mapping(
   overrides: Partial<CategorySectorMapping> & Pick<CategorySectorMapping, 'legacyCategory'>,
 ): CategorySectorMapping {
-  return {
+  const base: CategorySectorMapping = {
     id: 'map_1',
     legacyCategory: overrides.legacyCategory,
     sectorId: 'setor_telhas',
     status: 'ACTIVE',
     createdAt: NOW,
     updatedAt: NOW,
-    ...overrides,
   }
+  return { ...base, ...overrides }
 }
 
 function createDeps(

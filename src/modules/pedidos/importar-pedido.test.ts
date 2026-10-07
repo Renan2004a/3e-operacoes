@@ -319,15 +319,15 @@ interface HarnessItem {
 function mapping(
   overrides: Partial<CategorySectorMapping> & Pick<CategorySectorMapping, 'legacyCategory'>,
 ): CategorySectorMapping {
-  return {
+  const base: CategorySectorMapping = {
     id: 'map_1',
     legacyCategory: overrides.legacyCategory,
     sectorId: 'setor_telhas',
     status: 'ACTIVE',
     createdAt: NOW_T4,
     updatedAt: NOW_T4,
-    ...overrides,
   }
+  return { ...base, ...overrides }
 }
 
 /** Repositórios falsos compartilhados para compor importação + classificação reais. */
