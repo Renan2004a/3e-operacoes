@@ -151,9 +151,9 @@ T9 -> T10
 
 **Done when**:
 
-- [ ] Renderiza a lista e navega para o detalhe
-- [ ] Test count: 5 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Renderiza a lista e navega para o detalhe
+- [x] Test count: 5 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
