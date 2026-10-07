@@ -1,0 +1,242 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum RoleCode {
+  OPERATOR
+  PRODUCTION_MANAGER
+  SELLER
+  SHIPPING
+  SYSTEM_RESPONSIBLE
+  TECHNICAL_RESPONSIBLE
+}
+
+enum SectorCode {
+  CORTE_DOBRA
+  TELHAS
+  REVENDA
+}
+
+enum MappingStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ItemClassificationStatus {
+  CLASSIFIED
+  PENDING_CLASSIFICATION
+}
+
+enum ActivityStatus {
+  PENDING
+  IN_PROGRESS
+  PAUSED
+  COMPLETED
+  DIVERGENT
+}
+
+enum IntegrationJobStatus {
+  PENDING
+  DISPATCHED
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+
+model User {
+  id        String      @id @default(cuid())
+  name      String
+  email     String      @unique
+  passwordHash String
+  status    UserStatus  @default(ACTIVE)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  roles              UserRole[]
+  sectors            UserSector[]
+  executions         Execution[]
+  occurrences        Occurrence[]
+  deliveriesRecorded Delivery[] @relation("DeliveryRecordedBy")
+  deliveriesApproved Delivery[] @relation("DeliveryAuthorizedBy")
+}
+
+model UserRole {
+  userId String
+  role   RoleCode
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@id([userId, role])
+}
+
+model Sector {
+  id        String     @id @default(cuid())
+  code      SectorCode @unique
+  name      String
+  active    Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  users     UserSector[]
+  categoryMappings CategorySectorMapping[]
+  activities Activity[]
+}
+
+model UserSector {
+  userId   String
+  sectorId String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sector   Sector @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+  @@id([userId, sectorId])
+}
+
+model CategorySectorMapping {
+  id             String        @id @default(cuid())
+  legacyCategory String
+  sectorId       String
+  status         MappingStatus @default(ACTIVE)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  sector         Sector        @relation(fields: [sectorId], references: [id])
+  @@unique([legacyCategory])
+}
+
+model Order {
+  id             String   @id @default(cuid())
+  legacyOrderKey String   @unique
+  legacyNumber   String
+  customerName   String?
+  sellerName     String?
+  sourceUpdatedAt DateTime?
+  lastSyncedAt   DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  items          OrderItem[]
+  integrationJobs IntegrationJob[]
+  @@index([legacyNumber])
+}
+
+model OrderItem {
+  id                   String   @id @default(cuid())
+  orderId              String
+  legacyItemKey        String
+  productCode          String?
+  description          String?
+  legacyCategory       String?
+  unit                 String
+  requestedQuantity    Decimal  @db.Decimal(18, 3)
+  classificationStatus ItemClassificationStatus @default(PENDING_CLASSIFICATION)
+  deadlineAt           DateTime?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  order                Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  activities           Activity[]
+  deliveries           Delivery[]
+  @@unique([orderId, legacyItemKey])
+}
+
+model Activity {
+  id          String         @id @default(cuid())
+  orderItemId String
+  sectorId    String
+  status      ActivityStatus @default(PENDING)
+  priority    Int            @default(0)
+  deadlineAt  DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  orderItem   OrderItem      @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  sector      Sector         @relation(fields: [sectorId], references: [id])
+  executions  Execution[]
+  occurrences Occurrence[]
+  @@unique([orderItemId, sectorId])
+}
+
+model Execution {
+  id          String   @id @default(cuid())
+  activityId  String
+  userId      String
+  quantity    Decimal  @db.Decimal(18, 3)
+  occurredAt  DateTime @default(now())
+  activity    Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id])
+  @@index([activityId, occurredAt])
+}
+
+model Occurrence {
+  id          String   @id @default(cuid())
+  activityId  String
+  userId      String
+  type        String
+  quantity    Decimal? @db.Decimal(18, 3)
+  durationMin Int?
+  reasonCode  String?
+  note        String?
+  occurredAt  DateTime @default(now())
+  activity    Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id])
+  @@index([activityId, occurredAt])
+}
+
+model Delivery {
+  id                    String   @id @default(cuid())
+  orderItemId           String
+  userId                String
+  quantity              Decimal  @db.Decimal(18, 3)
+  managerOverride       Boolean  @default(false)
+  overrideReason        String?
+  authorizedByUserId    String?
+  availableBefore       Decimal? @db.Decimal(18, 3)
+  occurredAt            DateTime @default(now())
+  orderItem             OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  recordedBy            User      @relation("DeliveryRecordedBy", fields: [userId], references: [id])
+  authorizedBy          User?     @relation("DeliveryAuthorizedBy", fields: [authorizedByUserId], references: [id])
+  @@index([orderItemId, occurredAt])
+  @@index([authorizedByUserId])
+}
+
+model IntegrationJob {
+  id             String               @id @default(cuid())
+  orderId         String?
+  legacyOrderNumber String
+  idempotencyKey  String               @unique
+  status          IntegrationJobStatus @default(PENDING)
+  attemptCount    Int                  @default(0)
+  errorCode       String?
+  errorMessage    String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  completedAt     DateTime?
+  order           Order?               @relation(fields: [orderId], references: [id])
+  events          IntegrationJobEvent[]
+}
+
+model IntegrationJobEvent {
+  id        String   @id @default(cuid())
+  jobId     String
+  type      String
+  detail    String?  @db.Text
+  createdAt DateTime @default(now())
+  job       IntegrationJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  @@index([jobId, createdAt])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  action      String
+  entityType  String
+  entityId    String?
+  beforeJson  Json?
+  afterJson   Json?
+  reason      String?
+  correlationId String?
+  createdAt   DateTime @default(now())
+  @@index([entityType, entityId, createdAt])
+}

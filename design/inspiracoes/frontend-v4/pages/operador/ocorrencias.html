@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ocorrências | 3E Operações</title>
+  <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="fila.html"><span class="brand-mark">3E</span><span><strong>3E Operações</strong><small>Operador</small></span></a>
+  <div class="topbar-actions"><span class="sync">● Top Gerente sincronizado</span><span class="user-name">Usuário demonstrativo</span><a href="../../index.html">Sair</a></div>
+</header>
+<div class="shell">
+  <aside class="sidebar"><p class="sidebar-label">Operador</p><nav class="nav"><a class="" href="fila.html">Minha fila</a>
+<a class="" href="executar.html">Executar atividade</a>
+<a class="active" href="ocorrencias.html">Ocorrências</a></nav></aside>
+  <main class="main">
+    <div class="page-head"><div><h1>Ocorrências</h1><p>Registre problemas que afetem a execução da atividade.</p></div><div class="actions"></div></div>
+    <section class="card"><div class="card-head"><div><h2>Registrar ocorrência</h2><p>A ocorrência ficará vinculada à atividade, usuário, data e hora.</p></div></div><form class="form-stack" onsubmit="event.preventDefault(); alert('Ocorrência registrada apenas na demonstração.');"><div class="field"><label>Atividade</label><select><option>#01584 · Corte de chapa</option><option>#01523 · Dobra de perfil</option></select></div><div class="field"><label>Tipo</label><select><option>Perda</option><option>Defeito</option><option>Falta de material</option><option>Parada de máquina</option><option>Pausa</option><option>Outro</option></select></div><div class="field"><label>Quantidade ou duração</label><input placeholder="Quando aplicável"></div><div class="field"><label>Observação</label><textarea rows="4" placeholder="Descreva brevemente"></textarea></div><button class="btn btn-primary" type="submit">Registrar ocorrência</button></form></section>
+  </main>
+</div>
+<script src="../../assets/js/app.js"></script>
+</body>
+</html>

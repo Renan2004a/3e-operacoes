@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pedidos | 3E Operações</title>
+  <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="dashboard.html"><span class="brand-mark">3E</span><span><strong>3E Operações</strong><small>Gerente de Produção</small></span></a>
+  <div class="topbar-actions"><span class="sync">● Top Gerente sincronizado</span><span class="user-name">Usuário demonstrativo</span><a href="../../index.html">Sair</a></div>
+</header>
+<div class="shell">
+  <aside class="sidebar"><p class="sidebar-label">Gerente de Produção</p><nav class="nav"><a class="" href="dashboard.html">Dashboard</a>
+<a class="active" href="pedidos.html">Pedidos</a>
+<a class="" href="producao.html">Produção</a>
+<a class="" href="expedicao.html">Expedição</a>
+<a class="" href="ocorrencias.html">Ocorrências</a>
+<a class="" href="indicadores.html">Indicadores</a></nav></aside>
+  <main class="main">
+    <div class="page-head"><div><h1>Pedidos</h1><p>Acompanhe pedido, itens, setores, status e prazo.</p></div><div class="actions"><button class="btn btn-outline" onclick="window.print()">Imprimir</button></div></div>
+    <section class="card"><div class="toolbar"><input data-filter-table="#pedidos-table" placeholder="Buscar pedido, cliente ou setor"><select><option>Todos os setores</option><option>Corte/Dobra</option><option>Telhas</option><option>Revenda</option></select><select><option>Todos os status</option><option>Em produção</option><option>Atrasado</option><option>Concluído</option></select><select><option>Últimos 30 dias</option></select></div><div class="table-wrap"><table id="pedidos-table"><thead><tr><th>Pedido</th><th>Cliente</th><th>Setor</th><th>Entrega</th><th>Status</th><th>Ações</th></tr></thead><tbody><tr><td><strong>#01584</strong></td><td>Ferro & Cia</td><td>Corte/Dobra</td><td>21/09/26</td><td><span class="badge info">Em produção</span></td><td><button class="btn btn-outline btn-sm" data-toast="Detalhes do pedido serão abertos na versão funcional.">Detalhes</button></td></tr>
+<tr><td><strong>#01547</strong></td><td>Minas Aço</td><td>Telhas</td><td>21/09/26</td><td><span class="badge success">Concluído</span></td><td><button class="btn btn-outline btn-sm" data-toast="Detalhes do pedido serão abertos na versão funcional.">Detalhes</button></td></tr>
+<tr><td><strong>#01523</strong></td><td>Serralheria SP</td><td>Corte/Dobra</td><td>20/09/26</td><td><span class="badge danger">Atrasado</span></td><td><button class="btn btn-outline btn-sm">Detalhes</button></td></tr></tbody></table></div></section>
+  </main>
+</div>
+<script src="../../assets/js/app.js"></script>
+</body>
+</html>

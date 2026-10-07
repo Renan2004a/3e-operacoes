@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ocorrências | 3E Operações</title>
+  <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="dashboard.html"><span class="brand-mark">3E</span><span><strong>3E Operações</strong><small>Gerente de Produção</small></span></a>
+  <div class="topbar-actions"><span class="sync">● Top Gerente sincronizado</span><span class="user-name">Usuário demonstrativo</span><a href="../../index.html">Sair</a></div>
+</header>
+<div class="shell">
+  <aside class="sidebar"><p class="sidebar-label">Gerente de Produção</p><nav class="nav"><a class="" href="dashboard.html">Dashboard</a>
+<a class="" href="pedidos.html">Pedidos</a>
+<a class="" href="producao.html">Produção</a>
+<a class="" href="expedicao.html">Expedição</a>
+<a class="active" href="ocorrencias.html">Ocorrências</a>
+<a class="" href="indicadores.html">Indicadores</a></nav></aside>
+  <main class="main">
+    <div class="page-head"><div><h1>Ocorrências</h1><p>Perdas, defeitos, falta de material, pausas e paradas.</p></div><div class="actions"></div></div>
+    <section class="card"><div class="toolbar"><input data-filter-table="#occ-table" placeholder="Buscar pedido, setor ou ocorrência"><select><option>Todos os setores</option></select><select><option>Todos os status</option></select><select><option>Últimos 7 dias</option></select></div><div class="table-wrap"><table id="occ-table"><thead><tr><th>Data</th><th>Pedido</th><th>Setor</th><th>Descrição</th><th>Status</th></tr></thead><tbody><tr><td>21/09/26 08:12</td><td>#01523</td><td>Corte/Dobra</td><td>Parada de máquina</td><td><span class="badge warning">Em andamento</span></td></tr><tr><td>21/09/26 07:45</td><td>#01547</td><td>Telhas</td><td>Quebra de material</td><td><span class="badge success">Resolvido</span></td></tr></tbody></table></div></section>
+  </main>
+</div>
+<script src="../../assets/js/app.js"></script>
+</body>
+</html>

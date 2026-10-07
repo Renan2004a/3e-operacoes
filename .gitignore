@@ -1,0 +1,24 @@
+node_modules/
+.next/
+out/
+coverage/
+playwright-report/
+test-results/
+.env
+.env.*
+!.env.example
+*.log
+*.tsbuildinfo
+.DS_Store
+.prisma/local.json
+
+# Prisma Client gerado
+src/generated/prisma/
+
+# Dados brutos e dumps locais - não versionar
+*.xlsx
+*.xls
+*.csv
+*.sql
+*.dump
+*.bak

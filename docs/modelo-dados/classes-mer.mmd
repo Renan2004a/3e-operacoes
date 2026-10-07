@@ -1,0 +1,179 @@
+%% Diagrama de classes restrito às entidades do MER
+%% Fonte: docs/modelo-dados/mer.md
+classDiagram
+    direction LR
+
+    class Usuario {
+        +UUID id
+        +String nome
+        +String email
+        +String senhaHash
+        +StatusUsuario status
+        +DateTime criadoEm
+        +DateTime atualizadoEm
+    }
+
+    class UsuarioPerfil {
+        +UUID usuarioId
+        +PerfilUsuario perfil
+    }
+
+    class Setor {
+        +UUID id
+        +CodigoSetor codigo
+        +String nome
+        +bool ativo
+        +DateTime criadoEm
+        +DateTime atualizadoEm
+    }
+
+    class UsuarioSetor {
+        +UUID usuarioId
+        +UUID setorId
+    }
+
+    class MapeamentoCategoriaSetor {
+        +UUID id
+        +String categoriaLegado
+        +UUID setorId
+        +SituacaoMapeamento situacao
+        +DateTime criadoEm
+        +DateTime atualizadoEm
+    }
+
+    class Pedido {
+        +UUID id
+        +String chaveLegado
+        +String numeroLegado
+        +String cliente
+        +String vendedor
+        +DateTime origemAtualizadaEm
+        +DateTime ultimaSincronizacaoEm
+        +DateTime criadoEm
+        +DateTime atualizadoEm
+    }
+
+    class ItemPedido {
+        +UUID id
+        +UUID pedidoId
+        +String chaveItemLegado
+        +String codigoProduto
+        +String descricao
+        +String categoriaLegado
+        +UnidadeMedida unidade
+        +Decimal quantidadeSolicitada
+        +SituacaoClassificacao situacaoClassificacao
+        +DateTime prazo
+        +DateTime criadoEm
+        +DateTime atualizadoEm
+    }
+
+    class Atividade {
+        +UUID id
+        +UUID itemPedidoId
+        +UUID setorId
+        +SituacaoAtividade situacao
+        +int prioridade
+        +DateTime prazo
+        +DateTime criadoEm
+        +DateTime atualizadoEm
+    }
+
+    class Execucao {
+        +UUID id
+        +UUID atividadeId
+        +UUID usuarioId
+        +Decimal quantidade
+        +DateTime ocorridoEm
+    }
+
+    class Ocorrencia {
+        +UUID id
+        +UUID atividadeId
+        +UUID usuarioId
+        +TipoOcorrencia tipo
+        +Decimal quantidade
+        +int duracaoMin
+        +UUID motivoId
+        +String observacao
+        +DateTime ocorridoEm
+    }
+
+    class MotivoOcorrencia {
+        +UUID id
+        +TipoOcorrencia tipo
+        +String codigo
+        +String descricao
+        +bool ativo
+    }
+
+    class Entrega {
+        +UUID id
+        +UUID itemPedidoId
+        +UUID registradoPorUsuarioId
+        +UUID autorizadoPorUsuarioId
+        +Decimal quantidade
+        +Decimal disponivelAntes
+        +bool excecaoGerencial
+        +String motivoExcecao
+        +DateTime ocorridoEm
+    }
+
+    class JobIntegracao {
+        +UUID id
+        +UUID pedidoId
+        +String numeroPedidoLegado
+        +String chaveIdempotencia
+        +SituacaoJob situacao
+        +int tentativas
+        +String erroCodigo
+        +String erroMensagem
+        +DateTime criadoEm
+        +DateTime atualizadoEm
+        +DateTime concluidoEm
+    }
+
+    class EventoJobIntegracao {
+        +UUID id
+        +UUID jobId
+        +String tipo
+        +String detalhe
+        +DateTime criadoEm
+    }
+
+    class LogAuditoria {
+        +UUID id
+        +UUID usuarioId
+        +String acao
+        +String entidadeTipo
+        +String entidadeId
+        +String antesJson
+        +String depoisJson
+        +String motivo
+        +String correlacaoId
+        +DateTime criadoEm
+    }
+
+    Usuario "1" -- "1..*" UsuarioPerfil : possui
+    Usuario "1" -- "0..*" UsuarioSetor : atua
+    Setor "1" -- "0..*" UsuarioSetor : agrupa
+    Setor "1" -- "0..*" MapeamentoCategoriaSetor : direciona
+
+    Pedido "1" *-- "1..*" ItemPedido : contem
+    Pedido "1" o-- "0..*" JobIntegracao : sincroniza
+    JobIntegracao "1" *-- "1..*" EventoJobIntegracao : registra
+
+    ItemPedido "1" *-- "0..*" Atividade : origina
+    Setor "1" o-- "0..*" Atividade : executa
+
+    Atividade "1" *-- "0..*" Execucao : registra
+    Atividade "1" *-- "0..*" Ocorrencia : sofre
+    Usuario "1" -- "0..*" Execucao : realiza
+    Usuario "1" -- "0..*" Ocorrencia : reporta
+
+    ItemPedido "1" *-- "0..*" Entrega : entrega
+    Usuario "1" -- "0..*" Entrega : registra
+    Usuario "0..1" -- "0..*" Entrega : autorizaExcecao
+
+    MotivoOcorrencia "1" -- "0..*" Ocorrencia : justifica
+    Usuario "1" -- "0..*" LogAuditoria : audita

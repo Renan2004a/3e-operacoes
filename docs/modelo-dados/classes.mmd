@@ -1,0 +1,261 @@
+classDiagram
+    direction LR
+
+    class Usuario {
+        +UUID id
+        +String nome
+        +String email
+        -String senhaHash
+        +StatusUsuario status
+        +DateTime criadoEm
+        +DateTime atualizadoEm
+        +autenticar(senha) bool
+        +possuiPerfil(perfil) bool
+        +ativar() void
+        +inativar() void
+    }
+
+    class Setor {
+        +UUID id
+        +CodigoSetor codigo
+        +String nome
+        +bool ativo
+        +ativar() void
+        +inativar() void
+    }
+
+    class MapeamentoCategoriaSetor {
+        +UUID id
+        +String categoriaLegado
+        +SituacaoMapeamento situacao
+        +DateTime criadoEm
+        +DateTime atualizadoEm
+        +ativar() void
+        +inativar() void
+    }
+
+    class Produto {
+        <<readOnly>>
+        +UUID id
+        +String codigo
+        +String tipoProduto
+        +String descricao
+        +UnidadeMedida unidade
+        +String categoriaLegado
+    }
+
+    class Pedido {
+        +UUID id
+        +String chaveLegado
+        +String numeroLegado
+        +String cliente
+        +String vendedor
+        +DateTime origemAtualizadaEm
+        +DateTime ultimaSincronizacaoEm
+        +DateTime criadoEm
+        +DateTime atualizadoEm
+        +sincronizar() void
+        +concluido() bool
+        +saldoPendente() Decimal
+    }
+
+    class ItemPedido {
+        +UUID id
+        +String chaveItemLegado
+        +String codigoProduto
+        +String descricao
+        +String categoriaLegado
+        +UnidadeMedida unidade
+        +Decimal quantidadeSolicitada
+        +SituacaoClassificacao situacaoClassificacao
+        +DateTime prazo
+        +DateTime criadoEm
+        +DateTime atualizadoEm
+        +executado() Decimal
+        +disponivel() Decimal
+        +pendente() Decimal
+        +estaEntregue() bool
+        +classificar(setor) void
+    }
+
+    class Atividade {
+        +UUID id
+        +SituacaoAtividade situacao
+        +int prioridade
+        +DateTime prazo
+        +DateTime criadoEm
+        +DateTime atualizadoEm
+        +executado() Decimal
+        +pendente() Decimal
+        +iniciar() void
+        +pausar() void
+        +concluir() void
+        +estaAtrasada() bool
+    }
+
+    class Execucao {
+        +UUID id
+        +Decimal quantidade
+        +DateTime ocorridoEm
+        +modalidade() ModalidadeExecucao
+    }
+
+    class Ocorrencia {
+        +UUID id
+        +TipoOcorrencia tipo
+        +Decimal quantidade
+        +int duracaoMin
+        +String observacao
+        +DateTime ocorridoEm
+    }
+
+    class MotivoOcorrencia {
+        +UUID id
+        +TipoOcorrencia tipo
+        +String codigo
+        +String descricao
+        +bool ativo
+    }
+
+    class Entrega {
+        +UUID id
+        +Decimal quantidade
+        +Decimal disponivelAntes
+        +bool excecaoGerencial
+        +String motivoExcecao
+        +DateTime ocorridoEm
+        +exigeAutorizacao() bool
+    }
+
+    class JobIntegracao {
+        +UUID id
+        +String numeroPedidoLegado
+        +String chaveIdempotencia
+        +SituacaoJob situacao
+        +int tentativas
+        +String erroCodigo
+        +String erroMensagem
+        +DateTime criadoEm
+        +DateTime atualizadoEm
+        +DateTime concluidoEm
+        +despachar() void
+        +registrarTentativa() void
+        +concluir() void
+        +falhar(mensagem) void
+    }
+
+    class EventoJobIntegracao {
+        +UUID id
+        +String tipo
+        +String detalhe
+        +DateTime criadoEm
+    }
+
+    class LogAuditoria {
+        +UUID id
+        +String acao
+        +String entidadeTipo
+        +String entidadeId
+        +String antesJson
+        +String depoisJson
+        +String motivo
+        +String correlacaoId
+        +DateTime criadoEm
+        +registrar() void
+    }
+
+    class StatusUsuario {
+        <<enumeration>>
+        ATIVO
+        INATIVO
+    }
+    class PerfilUsuario {
+        <<enumeration>>
+        OPERADOR
+        GERENTE_PRODUCAO
+        VENDEDOR
+        EXPEDICAO
+        RESPONSAVEL_SISTEMA
+        RESPONSAVEL_TECNICO
+    }
+    class CodigoSetor {
+        <<enumeration>>
+        CORTE_DOBRA
+        TELHAS
+        REVENDA
+    }
+    class UnidadeMedida {
+        <<enumeration>>
+        PECA
+        METRO
+        UNIDADE
+    }
+    class SituacaoMapeamento {
+        <<enumeration>>
+        ATIVO
+        INATIVO
+    }
+    class SituacaoClassificacao {
+        <<enumeration>>
+        CLASSIFICADO
+        PENDENTE_CLASSIFICACAO
+    }
+    class SituacaoAtividade {
+        <<enumeration>>
+        PENDENTE
+        EM_EXECUCAO
+        PAUSADA
+        CONCLUIDA
+        DIVERGENTE
+    }
+    class ModalidadeExecucao {
+        <<enumeration>>
+        PRODUCAO
+        SEPARACAO
+    }
+    class TipoOcorrencia {
+        <<enumeration>>
+        PERDA
+        REFUGO
+        INDISPONIBILIDADE
+        PARADA
+        INTERRUPCAO
+        DEFEITO
+    }
+    class SituacaoJob {
+        <<enumeration>>
+        PENDENTE
+        DESPACHADO
+        EXECUTANDO
+        CONCLUIDO
+        FALHOU
+    }
+
+    Usuario "1" -- "0..*" Execucao : realiza
+    Usuario "1" -- "0..*" Ocorrencia : reporta
+    Usuario "1" -- "0..*" Entrega : registra
+    Usuario "0..1" -- "0..*" Entrega : autorizaExcecao
+    Usuario "1" -- "0..*" LogAuditoria : gera
+    Usuario "1" -- "0..*" Setor : atua
+
+    Setor "1" -- "0..*" MapeamentoCategoriaSetor : define
+    Setor "1" o-- "0..*" Atividade : executa
+
+    Produto "1" -- "0..*" ItemPedido : refere
+    Produto "1" -- "0..*" MapeamentoCategoriaSetor : categoria
+
+    Pedido "1" *-- "1..*" ItemPedido : contem
+    Pedido "1" o-- "0..*" JobIntegracao : sincroniza
+
+    ItemPedido "1" *-- "0..*" Atividade : origina
+    ItemPedido "1" *-- "0..*" Entrega : possui
+
+    Atividade "1" *-- "0..*" Execucao : registra
+    Atividade "1" *-- "0..*" Ocorrencia : sofre
+
+    MotivoOcorrencia "1" -- "0..*" Ocorrencia : justifica
+    JobIntegracao "1" *-- "1..*" EventoJobIntegracao : registra
+
+    note for Produto "Espelho somente-leitura do Top Gerente; o banco do app guarda snapshot em ItemPedido."
+    note for Atividade "Unidade operacional: item x setor. Fila de trabalho do setor."
+    note for Execucao "Corte/Telhas = PRODUCAO; Revenda = SEPARACAO."

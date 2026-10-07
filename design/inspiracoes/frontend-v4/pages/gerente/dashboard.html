@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | 3E Operações</title>
+  <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="dashboard.html"><span class="brand-mark">3E</span><span><strong>3E Operações</strong><small>Gerente de Produção</small></span></a>
+  <div class="topbar-actions"><span class="sync">● Top Gerente sincronizado</span><span class="user-name">Usuário demonstrativo</span><a href="../../index.html">Sair</a></div>
+</header>
+<div class="shell">
+  <aside class="sidebar"><p class="sidebar-label">Gerente de Produção</p><nav class="nav"><a class="active" href="dashboard.html">Dashboard</a>
+<a class="" href="pedidos.html">Pedidos</a>
+<a class="" href="producao.html">Produção</a>
+<a class="" href="expedicao.html">Expedição</a>
+<a class="" href="ocorrencias.html">Ocorrências</a>
+<a class="" href="indicadores.html">Indicadores</a></nav></aside>
+  <main class="main">
+    <div class="page-head"><div><h1>Dashboard</h1><p>Visão consolidada do andamento dos pedidos e da produção.</p></div><div class="actions"></div></div>
+    <section class="metrics"><article class="metric"><span>Pedidos</span><strong>41</strong><small>acompanhados</small></article><article class="metric"><span>Em produção</span><strong>32</strong><small>atividades</small></article><article class="metric"><span>Atrasados</span><strong>05</strong><small>exigem atenção</small></article><article class="metric"><span>Prontos</span><strong>04</strong><small>para expedição</small></article></section>
+<section class="grid grid-2">
+<article class="card"><div class="card-head"><div><h2>Produção por setor</h2><p>Progresso consolidado.</p></div></div>
+<div class="progress-row"><span>Corte/Dobra</span><progress value="75" max="100"></progress><strong>75%</strong></div><div class="progress-row"><span>Telhas</span><progress value="52" max="100"></progress><strong>52%</strong></div><div class="progress-row"><span>Revenda</span><progress value="90" max="100"></progress><strong>90%</strong></div></article>
+<article class="card"><div class="card-head"><div><h2>Atenção</h2><p>Alertas que podem exigir intervenção.</p></div></div><ul class="alert-list"><li class="alert-item danger"><strong>#01523</strong> · Corte/Dobra · atrasado</li><li class="alert-item"><strong>#01488</strong> · Telhas · parado há 2 horas</li><li class="alert-item"><strong>#01510</strong> · Revenda · não encaminhado</li></ul></article></section>
+  </main>
+</div>
+<script src="../../assets/js/app.js"></script>
+</body>
+</html>

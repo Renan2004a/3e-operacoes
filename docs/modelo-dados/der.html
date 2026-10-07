@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DER — 3E Operações (banco próprio)</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+    <style>
+      :root { color-scheme: light; }
+      body { font-family: system-ui, -apple-system, Segoe UI, sans-serif; margin: 24px; color: #111; }
+      h1 { font-size: 1.4rem; }
+      p { color: #444; }
+      .wrap { overflow: auto; border: 1px solid #e5e5e5; border-radius: 12px; padding: 16px; }
+      .mermaid { min-width: 900px; }
+    </style>
+  </head>
+  <body>
+    <h1>DER — 3E Operações (banco próprio do app)</h1>
+    <p>Rascunho. Fonte: <code>docs/modelo-dados/mer.md</code> · Top Gerente é externo (somente leitura).</p>
+    <div class="wrap">
+      <pre class="mermaid">
+erDiagram
+    USUARIO {
+        string id PK
+        string nome
+        string email UK
+        string senhaHash
+        string status
+        datetime criadoEm
+        datetime atualizadoEm
+    }
+    USUARIO_PERFIL {
+        string usuarioId PK
+        string perfil PK
+    }
+    SETOR {
+        string id PK
+        string codigo UK
+        string nome
+        boolean ativo
+    }
+    USUARIO_SETOR {
+        string usuarioId PK
+        string setorId PK
+    }
+    MAPEAMENTO_CATEGORIA_SETOR {
+        string id PK
+        string categoriaLegado UK
+        string setorId FK
+        string situacao
+    }
+    PEDIDO {
+        string id PK
+        string chaveLegado UK
+        string numeroLegado
+        string cliente
+        string vendedor
+        datetime origemAtualizadaEm
+        datetime ultimaSincronizacaoEm
+    }
+    ITEM_PEDIDO {
+        string id PK
+        string pedidoId FK
+        string chaveItemLegado
+        string codigoProduto
+        string descricao
+        string categoriaLegado
+        string unidade
+        decimal quantidadeSolicitada
+        string situacaoClassificacao
+        datetime prazo
+    }
+    ATIVIDADE {
+        string id PK
+        string itemPedidoId FK
+        string setorId FK
+        string situacao
+        int prioridade
+        datetime prazo
+    }
+    EXECUCAO {
+        string id PK
+        string atividadeId FK
+        string usuarioId FK
+        decimal quantidade
+        datetime ocorridoEm
+    }
+    OCORRENCIA {
+        string id PK
+        string atividadeId FK
+        string usuarioId FK
+        string tipo
+        decimal quantidade
+        int duracaoMin
+        string motivoId FK
+        string observacao
+        datetime ocorridoEm
+    }
+    MOTIVO_OCORRENCIA {
+        string id PK
+        string tipo
+        string codigo UK
+        string descricao
+        boolean ativo
+    }
+    ENTREGA {
+        string id PK
+        string itemPedidoId FK
+        string registradoPorUsuarioId FK
+        string autorizadoPorUsuarioId FK
+        decimal quantidade
+        decimal disponivelAntes
+        boolean excecaoGerencial
+        string motivoExcecao
+        datetime ocorridoEm
+    }
+    JOB_INTEGRACAO {
+        string id PK
+        string pedidoId FK
+        string numeroPedidoLegado
+        string chaveIdempotencia UK
+        string situacao
+        int tentativas
+        string erroCodigo
+        string erroMensagem
+        datetime concluidoEm
+    }
+    EVENTO_JOB_INTEGRACAO {
+        string id PK
+        string jobId FK
+        string tipo
+        string detalhe
+        datetime criadoEm
+    }
+    LOG_AUDITORIA {
+        string id PK
+        string usuarioId FK
+        string acao
+        string entidadeTipo
+        string entidadeId
+        string motivo
+        string correlacaoId
+        datetime criadoEm
+    }
+
+    USUARIO ||--|{ USUARIO_PERFIL : possui
+    USUARIO ||--o{ USUARIO_SETOR : atua
+    SETOR ||--o{ USUARIO_SETOR : agrupa
+    SETOR ||--o{ MAPEAMENTO_CATEGORIA_SETOR : direciona
+    PEDIDO ||--|{ ITEM_PEDIDO : contem
+    ITEM_PEDIDO ||--o{ ATIVIDADE : origina
+    SETOR ||--o{ ATIVIDADE : executa
+    ATIVIDADE ||--o{ EXECUCAO : registra
+    ATIVIDADE ||--o{ OCORRENCIA : sofre
+    USUARIO ||--o{ EXECUCAO : realiza
+    USUARIO ||--o{ OCORRENCIA : reporta
+    ITEM_PEDIDO ||--o{ ENTREGA : entrega
+    USUARIO ||--o{ ENTREGA : registra_ou_autoriza
+    MOTIVO_OCORRENCIA ||--o{ OCORRENCIA : justifica
+    PEDIDO ||--o{ JOB_INTEGRACAO : sincroniza
+    JOB_INTEGRACAO ||--|{ EVENTO_JOB_INTEGRACAO : registra
+    USUARIO ||--o{ LOG_AUDITORIA : audita
+      </pre>
+    </div>
+    <script>
+      mermaid.initialize({ startOnLoad: true, theme: "neutral" });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Entrar | 3E Operações</title><link rel="stylesheet" href="assets/css/styles.css"></head>
+<body>
+<main class="login-page">
+  <section class="login-hero">
+    <div><span class="badge info">Protótipo visual</span><h1>Pedidos, produção e expedição em uma visão integrada.</h1><p>Interface proposta para reduzir controles em papel, melhorar a rastreabilidade e apoiar o Planejamento e Controle da Produção da 3E Ferro e Aço.</p></div>
+    <small>Os dados exibidos nesta versão são demonstrativos.</small>
+  </section>
+  <section class="login-box-wrap"><div class="login-box">
+    <div class="brand"><span class="brand-mark">3E</span><span><strong>3E Operações</strong><small>Acesso ao sistema</small></span></div>
+    <h2>Entrar</h2><p>Use suas credenciais para acessar as funcionalidades permitidas ao seu perfil.</p>
+    <form id="login-form" class="form-stack">
+      <div class="field"><label for="usuario">Usuário</label><input id="usuario" required autocomplete="username" placeholder="Digite seu usuário"></div>
+      <div class="field"><label for="senha">Senha</label><input id="senha" type="password" required autocomplete="current-password" placeholder="Digite sua senha"></div>
+      <div class="field"><label for="perfil-demo">Perfil para demonstração</label><select id="perfil-demo"><option value="gerente">Gerente de Produção</option><option value="operador">Operador</option><option value="vendedor">Vendedor</option><option value="expedicao">Expedição</option><option value="admin">Responsável pelo Sistema</option><option value="tecnico">Responsável Técnico</option></select></div>
+      <label class="checkbox"><input type="checkbox"> Lembrar de mim</label>
+      <button class="btn btn-primary btn-block" type="submit">Entrar</button>
+      <p class="form-note">O seletor de perfil existe somente para navegar pelo protótipo. Na aplicação real, o perfil será obtido pela autenticação e pelas permissões do usuário.</p>
+    </form>
+  </div></section>
+</main>
+<script src="assets/js/app.js"></script>
+</body></html>

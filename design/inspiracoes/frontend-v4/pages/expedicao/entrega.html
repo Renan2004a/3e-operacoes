@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registrar entrega | 3E Operações</title>
+  <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="disponiveis.html"><span class="brand-mark">3E</span><span><strong>3E Operações</strong><small>Expedição</small></span></a>
+  <div class="topbar-actions"><span class="sync">● Top Gerente sincronizado</span><span class="user-name">Usuário demonstrativo</span><a href="../../index.html">Sair</a></div>
+</header>
+<div class="shell">
+  <aside class="sidebar"><p class="sidebar-label">Expedição</p><nav class="nav"><a class="" href="disponiveis.html">Disponíveis</a>
+<a class="active" href="entrega.html">Registrar entrega</a>
+<a class="" href="historico.html">Histórico</a></nav></aside>
+  <main class="main">
+    <div class="page-head"><div><h1>Registrar entrega</h1><p>Registre entrega total ou parcial sem exceder a disponibilidade.</p></div><div class="actions"></div></div>
+    <section class="card"><form class="form-stack" onsubmit="event.preventDefault(); alert('Entrega registrada apenas na demonstração.');"><div class="grid grid-2"><div class="field"><label>Pedido</label><select><option>#01486 · Paraíso FA</option><option>#01520 · Minas Aço</option></select></div><div class="field"><label>Item</label><select><option>Estrutura metálica</option></select></div></div><div class="grid grid-3"><div class="field"><label>Solicitado</label><input value="20" disabled></div><div class="field"><label>Disponível</label><input value="12" disabled></div><div class="field"><label>Quantidade a entregar</label><input type="number" min="1" max="12" value="12"></div></div><label class="checkbox"><input type="checkbox"> Esta é uma entrega parcial</label><div class="field"><label>Observação</label><textarea rows="3"></textarea></div><button class="btn btn-primary" type="submit">Confirmar entrega</button></form></section>
+  </main>
+</div>
+<script src="../../assets/js/app.js"></script>
+</body>
+</html>
