@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { createHttpConectorLegado, type FetchLike } from './http-conector-legado'
+import { describe, expect, it, vi } from 'vitest'
+import { DEFAULT_CONNECTOR_TIMEOUT_MS, createHttpConectorLegado, type FetchLike } from './http-conector-legado'
 
 const BASE = 'https://connector.exemplo.com'
 const TOKEN = 'token-conector'
@@ -69,6 +69,38 @@ describe('createHttpConectorLegado', () => {
     await expect(conector.despachar({ jobId: 'job_1', orderNumber: '70435' })).rejects.toMatchObject({
       code: 'CONNECTOR_TIMEOUT',
     })
+  })
+
+  it('usa o tempo limite padrão de 5 segundos quando não configurado', async () => {
+    expect(DEFAULT_CONNECTOR_TIMEOUT_MS).toBe(5_000)
+
+    vi.useFakeTimers()
+    try {
+      const fetchImpl: FetchLike = (_url, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => {
+            const error = new Error('aborted')
+            error.name = 'AbortError'
+            reject(error)
+          })
+        })
+      const conector = createHttpConectorLegado({ baseUrl: BASE, token: TOKEN, fetchImpl })
+
+      let state: 'pending' | 'rejected' = 'pending'
+      const promise = conector.despachar({ jobId: 'job_1', orderNumber: '70435' })
+      promise.catch(() => {
+        state = 'rejected'
+      })
+
+      await vi.advanceTimersByTimeAsync(DEFAULT_CONNECTOR_TIMEOUT_MS - 1)
+      expect(state).toBe('pending')
+
+      await vi.advanceTimersByTimeAsync(1)
+      await expect(promise).rejects.toMatchObject({ code: 'CONNECTOR_TIMEOUT' })
+      expect(state).toBe('rejected')
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('falha com CONNECTOR_HTTP_ERROR quando o conector responde 500', async () => {

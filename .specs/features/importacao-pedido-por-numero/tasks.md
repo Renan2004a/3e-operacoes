@@ -708,10 +708,10 @@ T23
 
 **Done when**:
 
-- [ ] Adapter: sem `timeoutMs` configurado, o despacho aborta em `DEFAULT_CONNECTOR_TIMEOUT_MS` (5 s)
-- [ ] Legado: a SQL consultada começa com `SELECT` e não contém `INSERT/UPDATE/DELETE`
-- [ ] Test count: +2 testes (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Adapter: sem `timeoutMs` configurado, o despacho aborta em `DEFAULT_CONNECTOR_TIMEOUT_MS` (5 s)
+- [x] Legado: a SQL consultada começa com `SELECT` e não contém `INSERT/UPDATE/DELETE`
+- [x] Test count: +2 testes (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

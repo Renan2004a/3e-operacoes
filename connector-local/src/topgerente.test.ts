@@ -120,4 +120,16 @@ describe('consultarPedidoTopGerente', () => {
     expect(calls[0].sql).toContain(CONSULTAR_PEDIDO_SQL)
     expect(CONSULTAR_PEDIDO_SQL).toContain('WHERE o.Emp = ? AND o.Orc = ?')
   })
+
+  it('consulta o legado apenas com SELECT, sem escrita', async () => {
+    const { calls, queryable } = createQueryable([row()])
+
+    await consultarPedidoTopGerente(queryable, '70435')
+
+    expect(calls).toHaveLength(1)
+    expect(calls[0].sql.trim().toUpperCase().startsWith('SELECT')).toBe(true)
+    expect(calls[0].sql.toUpperCase()).not.toMatch(
+      /\b(INSERT|UPDATE|DELETE|REPLACE|DROP|ALTER|TRUNCATE)\b/,
+    )
+  })
 })
