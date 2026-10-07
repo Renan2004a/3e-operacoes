@@ -246,12 +246,12 @@ T17
 
 **Done when**:
 
-- [ ] Porta `PedidosRepository` definida no mesmo arquivo
-- [ ] Mesma chave de negócio não cria segundo pedido
-- [ ] Itens cancelados são excluídos
-- [ ] Nova quantidade menor que executado/entregue sinaliza divergência
-- [ ] Test count: 9 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Porta `PedidosRepository` definida no mesmo arquivo
+- [x] Mesma chave de negócio não cria segundo pedido
+- [x] Itens cancelados são excluídos
+- [x] Nova quantidade menor que executado/entregue sinaliza divergência
+- [x] Test count: 9 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
