@@ -1,5 +1,8 @@
 import { Prisma } from '@/generated/prisma/client'
+import type { RoleCode } from '@/generated/prisma/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { assinarSessao } from '../../../../../../modules/auth/sessao'
+import { SESSION_COOKIE } from '../../../../../../shared/http/auth-context'
 import type { OcorrenciasRepository } from '../../../../../../modules/ocorrencias/adapters/prisma-ocorrencias-repository'
 import type { OcorrenciaListada } from '../../../../../../modules/ocorrencias/listar-ocorrencias'
 import type { MotivoOcorrencia } from '../../../../../../modules/ocorrencias/motivos'
@@ -7,6 +10,7 @@ import type { Ocorrencia } from '../../../../../../modules/ocorrencias/registrar
 
 const holder = vi.hoisted(() => ({
   repo: null as unknown as OcorrenciasRepository,
+  perfis: {} as Record<string, RoleCode[]>,
 }))
 
 vi.mock('../../../../../../modules/ocorrencias/adapters/prisma-ocorrencias-repository', () => ({
@@ -21,6 +25,12 @@ vi.mock('../../../../../../modules/ocorrencias/adapters/prisma-ocorrencias-repos
     registrarOcorrencia: (input: Parameters<OcorrenciasRepository['registrarOcorrencia']>[0]) =>
       holder.repo.registrarOcorrencia(input),
     listarOcorrencias: (atividadeId: string) => holder.repo.listarOcorrencias(atividadeId),
+  },
+}))
+
+vi.mock('@/modules/usuarios/adapters/prisma-usuarios-repository', () => ({
+  prismaUsuariosRepository: {
+    findById: async (id: string) => ({ id, roles: [...(holder.perfis[id] ?? [])] }),
   },
 }))
 
@@ -111,12 +121,15 @@ function seedMotivo(id: string, tipo: MotivoOcorrencia['tipo']) {
 
 function postRequest(
   body: unknown,
-  opts: { usuarioId?: string | null; token?: string | null } = {},
+  opts: { usuarioId?: string | null; xUserId?: string | null } = {},
 ): Request {
-  const { usuarioId = 'user_1', token = 'segredo-interno' } = opts
+  const { usuarioId = 'user_1', xUserId = null } = opts
   const headers: Record<string, string> = { 'content-type': 'application/json' }
-  if (token !== null) headers.authorization = `Bearer ${token}`
-  if (usuarioId !== null) headers['x-user-id'] = usuarioId
+  if (usuarioId) {
+    const token = assinarSessao({ userId: usuarioId, expiraEm: new Date(Date.now() + 60_000) })
+    headers.cookie = `${SESSION_COOKIE}=${token}`
+  }
+  if (xUserId) headers['x-user-id'] = xUserId
   return new Request('http://localhost/api/producao/atividades/act_1/ocorrencias', {
     method: 'POST',
     headers,
@@ -124,10 +137,13 @@ function postRequest(
   })
 }
 
-function getRequest(opts: { token?: string | null } = {}): Request {
-  const { token = 'segredo-interno' } = opts
+function getRequest(opts: { usuarioId?: string | null } = {}): Request {
+  const { usuarioId = 'user_1' } = opts
   const headers: Record<string, string> = {}
-  if (token !== null) headers.authorization = `Bearer ${token}`
+  if (usuarioId) {
+    const token = assinarSessao({ userId: usuarioId, expiraEm: new Date(Date.now() + 60_000) })
+    headers.cookie = `${SESSION_COOKIE}=${token}`
+  }
   return new Request('http://localhost/api/producao/atividades/act_1/ocorrencias', { headers })
 }
 
@@ -136,17 +152,20 @@ function context(id: string) {
 }
 
 describe('/api/producao/atividades/[id]/ocorrencias', () => {
-  const original = process.env.APP_INTERNAL_TOKEN
+  const original = process.env.SESSION_SECRET
 
   beforeEach(() => {
-    process.env.APP_INTERNAL_TOKEN = 'segredo-interno'
+    process.env.SESSION_SECRET = 'segredo-de-teste'
     reset()
+    holder.perfis.user_1 = ['OPERATOR']
+    holder.perfis.user_2 = ['OPERATOR']
+    holder.perfis.user_vendedor = ['SELLER']
     state.vinculos.add('user_1:setor_corte')
   })
 
   afterEach(() => {
-    if (original === undefined) delete process.env.APP_INTERNAL_TOKEN
-    else process.env.APP_INTERNAL_TOKEN = original
+    if (original === undefined) delete process.env.SESSION_SECRET
+    else process.env.SESSION_SECRET = original
   })
 
   it('responde 201 e registra a perda com usuário e motivo (OCO-01)', async () => {
@@ -154,7 +173,7 @@ describe('/api/producao/atividades/[id]/ocorrencias', () => {
     seedMotivo('m_perda', 'PERDA')
 
     const response = await POST(
-      postRequest({ tipo: 'PERDA', quantidade: '2', motivoId: 'm_perda' }),
+      postRequest({ tipo: 'PERDA', quantidade: '2', motivoId: 'm_perda' }, { xUserId: 'user_outro' }),
       context('act_1'),
     )
 
@@ -273,11 +292,27 @@ describe('/api/producao/atividades/[id]/ocorrencias', () => {
     expect((await response.json()).error).toBe('activity_not_found')
   })
 
-  it('responde 401 sem token no POST e no GET', async () => {
-    const post = await POST(postRequest({ tipo: 'PERDA' }, { token: null }), context('act_1'))
+  it('responde 403 quando o perfil não pode registrar ocorrência (AUTH-14)', async () => {
+    seedAtividade('act_1')
+
+    const response = await POST(
+      postRequest(
+        { tipo: 'PERDA', quantidade: '2', motivoId: 'm_perda' },
+        { usuarioId: 'user_vendedor' },
+      ),
+      context('act_1'),
+    )
+
+    expect(response.status).toBe(403)
+    expect((await response.json()).error).toBe('forbidden')
+    expect(state.ocorrencias).toHaveLength(0)
+  })
+
+  it('responde 401 sem sessão no POST e no GET (AUTH-14)', async () => {
+    const post = await POST(postRequest({ tipo: 'PERDA' }, { usuarioId: null }), context('act_1'))
     expect(post.status).toBe(401)
 
-    const get = await GET(getRequest({ token: null }), context('act_1'))
+    const get = await GET(getRequest({ usuarioId: null }), context('act_1'))
     expect(get.status).toBe(401)
   })
 })

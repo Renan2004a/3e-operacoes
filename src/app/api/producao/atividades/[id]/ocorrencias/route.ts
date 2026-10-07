@@ -13,7 +13,7 @@ import {
   OperadorForaDoSetorError,
 } from '../../../../../../modules/producao/registrar-execucao'
 import { QuantidadeInvalidaError } from '../../../../../../modules/producao/unidades'
-import { requireInternalToken } from '../../../../../../shared/http/internal-auth'
+import { autorizar } from '../../../../../../shared/http/autorizacao'
 
 interface OcorrenciaBody {
   tipo?: unknown
@@ -25,16 +25,15 @@ interface OcorrenciaBody {
 
 /**
  * POST /api/producao/atividades/[id]/ocorrencias — registra a ocorrência
- * (OCO-01..06,11,13). Enquanto a autenticação não existe, o usuário atual vem
- * do cabeçalho temporário `x-user-id`.
+ * (OCO-01..06,11,13, AUTH-14). O usuário vem da sessão; o cabeçalho
+ * temporário `x-user-id` é ignorado.
  */
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
-  if (!requireInternalToken(request)) {
-    return Response.json({ error: 'unauthorized' }, { status: 401 })
-  }
+  const auth = await autorizar(request, 'registrar_ocorrencia')
+  if (!auth.autorizado) return auth.resposta
 
   const { id } = await context.params
-  const usuarioId = request.headers.get('x-user-id') ?? ''
+  const usuarioId = auth.usuario.userId
 
   let body: unknown
   try {
@@ -96,11 +95,10 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   }
 }
 
-/** GET /api/producao/atividades/[id]/ocorrencias — lista as ocorrências (OCO-07,10). */
+/** GET /api/producao/atividades/[id]/ocorrencias — lista as ocorrências (OCO-07,10, AUTH-14). */
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
-  if (!requireInternalToken(request)) {
-    return Response.json({ error: 'unauthorized' }, { status: 401 })
-  }
+  const auth = await autorizar(request, 'registrar_ocorrencia')
+  if (!auth.autorizado) return auth.resposta
 
   const { id } = await context.params
 
