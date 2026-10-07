@@ -208,10 +208,10 @@ T9 -> T10
 
 **Done when**:
 
-- [ ] Consulta todos os pedidos, somente leitura de produção
-- [ ] Permite definir prazo
-- [ ] Test count: 5 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Consulta todos os pedidos, somente leitura de produção
+- [x] Permite definir prazo
+- [x] Test count: 5 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
