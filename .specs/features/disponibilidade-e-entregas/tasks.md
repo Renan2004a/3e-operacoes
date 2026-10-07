@@ -222,12 +222,12 @@ T7
 
 **Done when**:
 
-- [ ] Entrega válida responde `201`
-- [ ] Acima do disponível responde `409`
-- [ ] Papel sem permissão responde `403`
-- [ ] Histórico responde `200`
-- [ ] Test count: 7 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm run lint && npm run typecheck && npm test`
+- [x] Entrega válida responde `201`
+- [x] Acima do disponível responde `409`
+- [x] Papel sem permissão responde `403`
+- [x] Histórico responde `200`
+- [x] Test count: 7 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm run lint && npm run typecheck && npm test`
 
 **Tests**: integration
 **Gate**: full
