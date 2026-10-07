@@ -8,7 +8,7 @@ import {
   PapelSemPermissaoError,
   registrarEntrega,
   type Entrega,
-  type ExpedicaoRepository,
+  type EntregaRepository,
   type PapelUsuario,
   type RegistrarEntregaPortInput,
 } from './registrar-entrega'
@@ -39,7 +39,7 @@ function createDeps(
       .filter((candidate) => candidate.orderItemId === itemId)
       .reduce((total, candidate) => total.plus(candidate.quantidade), new Prisma.Decimal(0))
 
-  const repo: ExpedicaoRepository = {
+  const repo: EntregaRepository = {
     async buscarItemParaEntrega(itemId) {
       const found = itens.find((candidate) => candidate.id === itemId)
       if (!found) return null

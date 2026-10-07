@@ -71,7 +71,7 @@ export interface RegistrarEntregaPortResult {
   status: StatusEntrega
 }
 
-export interface ExpedicaoRepository {
+export interface EntregaRepository {
   /** Item com unidade, executado e entregue, ou null se não existir. */
   buscarItemParaEntrega(itemId: string): Promise<ItemParaEntrega | null>
   /** Papéis cadastrados do usuário (RF014). */
@@ -143,7 +143,7 @@ export interface RegistrarEntregaResult {
  */
 export async function registrarEntrega(
   input: RegistrarEntregaInput,
-  repo: ExpedicaoRepository,
+  repo: EntregaRepository,
 ): Promise<RegistrarEntregaResult> {
   const item = await repo.buscarItemParaEntrega(input.itemId)
   if (!item) throw new ItemNaoEncontradoError(input.itemId)

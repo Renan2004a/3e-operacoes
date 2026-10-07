@@ -194,9 +194,9 @@ T7
 
 **Done when**:
 
-- [ ] Entrega e auditoria gravadas em transação
-- [ ] Consultas de execução, entrega e papéis
-- [ ] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
+- [x] Entrega e auditoria gravadas em transação
+- [x] Consultas de execução, entrega e papéis
+- [x] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
 
 **Tests**: none
 **Gate**: build
