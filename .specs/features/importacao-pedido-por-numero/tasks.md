@@ -557,10 +557,10 @@ T17
 
 **Done when**:
 
-- [ ] `APP_INTERNAL_TOKEN` documentado
-- [ ] `LOCAL_CONNECTOR_BASE_URL`, `LOCAL_CONNECTOR_TOKEN`, `CONNECTOR_CALLBACK_TOKEN` mantidos
-- [ ] Nenhuma credencial do Top Gerente no `.env.example`
-- [ ] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
+- [x] `APP_INTERNAL_TOKEN` documentado
+- [x] `LOCAL_CONNECTOR_BASE_URL`, `LOCAL_CONNECTOR_TOKEN`, `CONNECTOR_CALLBACK_TOKEN` mantidos
+- [x] Nenhuma credencial do Top Gerente no `.env.example`
+- [x] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
 
 **Tests**: none
 **Gate**: build
