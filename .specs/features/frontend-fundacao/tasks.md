@@ -283,6 +283,33 @@ T8 -> T7
 
 ---
 
+### Phase 4: Correção de verificação
+
+#### T9: Corrigir fail-open de perfil no layout
+
+**What**: Não assumir `OPERATOR` quando o usuário não tem perfis; redirecionar ao login.
+**Where**: `src/app/(app)/layout.tsx`
+**Depends on**: T5
+**Requirement**: FE-04, FE-13
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `tlc-spec-driven`, `seguranca-3e`
+
+**Done when**:
+
+- [ ] Sem usuário ou sem perfis redireciona ao login (sem fail-open)
+- [ ] Test count: 4 testes passam (sem remoções silenciosas)
+- [ ] Gate check passa: `npm run lint && npm run typecheck && npm test`
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `fix(frontend): remove fail-open de perfil no layout`
+
+---
+
 ## Phase Execution Map
 
 ```
@@ -292,6 +319,7 @@ Phase 1: T3 -> T4
 Phase 2: T5
 Phase 3: T6
 Phase 3: T8 -> T7
+Phase 4: T9
 ```
 
 ---
