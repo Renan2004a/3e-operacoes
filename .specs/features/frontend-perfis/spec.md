@@ -129,15 +129,15 @@ Só existe a fatia do operador. Gerente, vendedor, expedição e responsável pe
 | FEP-01 | P1: Painel | Design | Verified |
 | FEP-02 | P1: Painel | Design | Verified |
 | FEP-03 | P1: Consulta | Design | Verified |
-| FEP-04 | P1: Consulta | Design | Pending |
-| FEP-05 | P1: Prazo | Design | Pending |
+| FEP-04 | P1: Consulta | Design | Verified |
+| FEP-05 | P1: Prazo | Design | Verified |
 | FEP-06 | P1: Entregas | Design | Pending |
 | FEP-07 | P1: Entregas | Design | Pending |
 | FEP-08 | P1: Administração | Design | Pending |
 | FEP-09 | P1: Administração | Design | Pending |
 | FEP-10 | P1: Navegação | Design | Pending |
 | FEP-11 | P1: Navegação | Design | Pending |
-| FEP-12 | Edge: 401 | Design | Pending |
+| FEP-12 | Edge: 401 | Design | Verified |
 | FEP-13 | Edge: falha de API | Design | Verified |
 
 **Coverage:** 13 total, 0 mapped to tasks, 13 unmapped ⚠️

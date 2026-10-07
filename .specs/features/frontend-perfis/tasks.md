@@ -179,10 +179,10 @@ T9 -> T10
 
 **Done when**:
 
-- [ ] Mostra solicitado, executado, disponível, entregue e pendente por item
-- [ ] Define prazo e reflete o status
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Mostra solicitado, executado, disponível, entregue e pendente por item
+- [x] Define prazo e reflete o status
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
