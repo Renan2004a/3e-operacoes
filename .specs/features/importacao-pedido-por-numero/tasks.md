@@ -161,11 +161,11 @@ T17
 
 **Done when**:
 
-- [ ] Schema de despacho `{ jobId, orderNumber }` definido
-- [ ] Schema de callback com `order` e `items` definido
-- [ ] Portas `IntegracaoRepository` e `ConectorLegadoPort` exportadas
-- [ ] Test count: 8 testes passam (payload válido, inválido e campos obrigatórios)
-- [ ] Gate check passa: `npm test`
+- [x] Schema de despacho `{ jobId, orderNumber }` definido
+- [x] Schema de callback com `order` e `items` definido
+- [x] Portas `IntegracaoRepository` e `ConectorLegadoPort` exportadas
+- [x] Test count: 8 testes passam (payload válido, inválido e campos obrigatórios)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
