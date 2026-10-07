@@ -1,0 +1,14 @@
+# Revisores por área. Substitua pelos usuários do GitHub (@usuario).
+# Enquanto os revisores não forem definidos, o arquivo fica como referência.
+
+# Padrão (qualquer mudança): responsável pelo repositório
+*       @substitua-pelo-usuario
+
+# Domínio e integração
+/src/modules/            @substitua-pelo-usuario
+/connector-local/        @substitua-pelo-usuario
+/prisma/                 @substitua-pelo-usuario
+
+# Documentação e especificações
+/docs/                   @substitua-pelo-usuario
+/.specs/                 @substitua-pelo-usuario
