@@ -1,13 +1,12 @@
 import { AtividadeNaoEncontradaError } from '../../../../../../modules/producao/registrar-execucao'
 import { definirPrioridade } from '../../../../../../modules/producao/prioridade'
 import { prismaProducaoRepository } from '../../../../../../modules/producao/adapters/prisma-producao-repository'
-import { requireInternalToken } from '../../../../../../shared/http/internal-auth'
+import { autorizar } from '../../../../../../shared/http/autorizacao'
 
-/** PATCH /api/producao/atividades/[id]/prioridade — define a prioridade (PROD-11). */
+/** PATCH /api/producao/atividades/[id]/prioridade — define a prioridade (PROD-11, AUTH-14). */
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
-  if (!requireInternalToken(request)) {
-    return Response.json({ error: 'unauthorized' }, { status: 401 })
-  }
+  const auth = await autorizar(request, 'definir_prioridade')
+  if (!auth.autorizado) return auth.resposta
 
   const { id } = await context.params
 

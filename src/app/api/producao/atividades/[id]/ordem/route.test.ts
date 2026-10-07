@@ -1,5 +1,8 @@
 import { Prisma } from '@/generated/prisma/client'
+import type { RoleCode } from '@/generated/prisma/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { assinarSessao } from '../../../../../../modules/auth/sessao'
+import { SESSION_COOKIE } from '../../../../../../shared/http/auth-context'
 import type {
   DadosOrdemProducao,
   OrdemProducaoRepository,
@@ -7,11 +10,18 @@ import type {
 
 const holder = vi.hoisted(() => ({
   repo: null as unknown as OrdemProducaoRepository,
+  perfis: {} as Record<string, RoleCode[]>,
 }))
 
 vi.mock('../../../../../../modules/producao/adapters/prisma-producao-repository', () => ({
   prismaProducaoRepository: {
     buscarOrdemProducao: (atividadeId: string) => holder.repo.buscarOrdemProducao(atividadeId),
+  },
+}))
+
+vi.mock('@/modules/usuarios/adapters/prisma-usuarios-repository', () => ({
+  prismaUsuariosRepository: {
+    findById: async (id: string) => ({ id, roles: [...(holder.perfis[id] ?? [])] }),
   },
 }))
 
@@ -45,10 +55,15 @@ function seedOrdem(
   })
 }
 
-function request(token: string | null = 'segredo-interno'): Request {
-  return new Request('http://localhost/api/producao/atividades/act_1/ordem', {
-    headers: token === null ? {} : { authorization: `Bearer ${token}` },
-  })
+function request(opts: { usuarioId?: string | null; xUserId?: string | null } = {}): Request {
+  const { usuarioId = 'user_1', xUserId = null } = opts
+  const headers: Record<string, string> = {}
+  if (usuarioId) {
+    const token = assinarSessao({ userId: usuarioId, expiraEm: new Date(Date.now() + 60_000) })
+    headers.cookie = `${SESSION_COOKIE}=${token}`
+  }
+  if (xUserId) headers['x-user-id'] = xUserId
+  return new Request('http://localhost/api/producao/atividades/act_1/ordem', { headers })
 }
 
 function context(id: string) {
@@ -56,16 +71,18 @@ function context(id: string) {
 }
 
 describe('GET /api/producao/atividades/[id]/ordem', () => {
-  const original = process.env.APP_INTERNAL_TOKEN
+  const original = process.env.SESSION_SECRET
 
   beforeEach(() => {
-    process.env.APP_INTERNAL_TOKEN = 'segredo-interno'
+    process.env.SESSION_SECRET = 'segredo-de-teste'
     reset()
+    holder.perfis.user_1 = ['OPERATOR']
+    holder.perfis.user_sem_perfil = []
   })
 
   afterEach(() => {
-    if (original === undefined) delete process.env.APP_INTERNAL_TOKEN
-    else process.env.APP_INTERNAL_TOKEN = original
+    if (original === undefined) delete process.env.SESSION_SECRET
+    else process.env.SESSION_SECRET = original
   })
 
   it('responde 200 com pedido, item e setor', async () => {
@@ -108,11 +125,28 @@ describe('GET /api/producao/atividades/[id]/ordem', () => {
     expect(response.status).toBe(404)
   })
 
-  it('responde 401 quando o token está ausente', async () => {
+  it('responde 401 sem sessão (AUTH-14)', async () => {
     seedOrdem('act_1')
 
-    const response = await GET(request(null), context('act_1'))
+    const response = await GET(request({ usuarioId: null }), context('act_1'))
 
     expect(response.status).toBe(401)
+  })
+
+  it('ignora o cabeçalho x-user-id quando não há sessão (AUTH-14)', async () => {
+    seedOrdem('act_1')
+
+    const response = await GET(request({ usuarioId: null, xUserId: 'user_1' }), context('act_1'))
+
+    expect(response.status).toBe(401)
+  })
+
+  it('responde 403 quando o perfil não pode consultar (AUTH-14)', async () => {
+    seedOrdem('act_1')
+
+    const response = await GET(request({ usuarioId: 'user_sem_perfil' }), context('act_1'))
+
+    expect(response.status).toBe(403)
+    expect((await response.json()).error).toBe('forbidden')
   })
 })

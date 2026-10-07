@@ -1,4 +1,7 @@
+import type { RoleCode } from '@/generated/prisma/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { assinarSessao } from '../../../../../../modules/auth/sessao'
+import { SESSION_COOKIE } from '../../../../../../shared/http/auth-context'
 
 const mocks = vi.hoisted(() => {
   interface Atividade {
@@ -11,6 +14,7 @@ const mocks = vi.hoisted(() => {
   }
 
   const store: Atividade[] = []
+  const perfis: Record<string, RoleCode[]> = {}
 
   const repo = {
     definirPrioridade: async ({ atividadeId, prioridade }: { atividadeId: string; prioridade: number }) => {
@@ -37,25 +41,35 @@ const mocks = vi.hoisted(() => {
     store.length = 0
   }
 
-  return { store, atividade, repo, reset }
+  return { store, atividade, repo, perfis, reset }
 })
 
 vi.mock('../../../../../../modules/producao/adapters/prisma-producao-repository', () => ({
   prismaProducaoRepository: mocks.repo,
 }))
 
+vi.mock('@/modules/usuarios/adapters/prisma-usuarios-repository', () => ({
+  prismaUsuariosRepository: {
+    findById: async (id: string) => ({ id, roles: [...(mocks.perfis[id] ?? [])] }),
+  },
+}))
+
 import { PATCH } from './route'
 
 function request(
   body: unknown,
-  token: string | null = 'segredo-interno',
+  opts: { usuarioId?: string | null; xUserId?: string | null } = {},
 ): Request {
+  const { usuarioId = 'user_mgr', xUserId = null } = opts
+  const headers: Record<string, string> = { 'content-type': 'application/json' }
+  if (usuarioId) {
+    const token = assinarSessao({ userId: usuarioId, expiraEm: new Date(Date.now() + 60_000) })
+    headers.cookie = `${SESSION_COOKIE}=${token}`
+  }
+  if (xUserId) headers['x-user-id'] = xUserId
   return new Request('http://localhost/api/producao/atividades/act_1/prioridade', {
     method: 'PATCH',
-    headers:
-      token === null
-        ? { 'content-type': 'application/json' }
-        : { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+    headers,
     body: JSON.stringify(body),
   })
 }
@@ -65,16 +79,18 @@ function context(id: string) {
 }
 
 describe('PATCH /api/producao/atividades/[id]/prioridade', () => {
-  const original = process.env.APP_INTERNAL_TOKEN
+  const original = process.env.SESSION_SECRET
 
   beforeEach(() => {
-    process.env.APP_INTERNAL_TOKEN = 'segredo-interno'
+    process.env.SESSION_SECRET = 'segredo-de-teste'
     mocks.reset()
+    mocks.perfis.user_mgr = ['PRODUCTION_MANAGER']
+    mocks.perfis.user_operador = ['OPERATOR']
   })
 
   afterEach(() => {
-    if (original === undefined) delete process.env.APP_INTERNAL_TOKEN
-    else process.env.APP_INTERNAL_TOKEN = original
+    if (original === undefined) delete process.env.SESSION_SECRET
+    else process.env.SESSION_SECRET = original
   })
 
   it('responde 200 e persiste a prioridade da atividade', async () => {
@@ -112,12 +128,37 @@ describe('PATCH /api/producao/atividades/[id]/prioridade', () => {
     expect(mocks.store[0].priority).toBe(0)
   })
 
-  it('responde 401 quando o token está ausente', async () => {
+  it('responde 401 sem sessão e não persiste (AUTH-14)', async () => {
     mocks.store.push(mocks.atividade({ id: 'act_1', sectorId: 'setor_telhas' }))
 
-    const response = await PATCH(request({ prioridade: 7 }, null), context('act_1'))
+    const response = await PATCH(request({ prioridade: 7 }, { usuarioId: null }), context('act_1'))
 
     expect(response.status).toBe(401)
+    expect(mocks.store[0].priority).toBe(0)
+  })
+
+  it('ignora o cabeçalho x-user-id quando não há sessão (AUTH-14)', async () => {
+    mocks.store.push(mocks.atividade({ id: 'act_1', sectorId: 'setor_telhas' }))
+
+    const response = await PATCH(
+      request({ prioridade: 7 }, { usuarioId: null, xUserId: 'user_mgr' }),
+      context('act_1'),
+    )
+
+    expect(response.status).toBe(401)
+    expect(mocks.store[0].priority).toBe(0)
+  })
+
+  it('responde 403 quando o perfil não pode definir prioridade (AUTH-14)', async () => {
+    mocks.store.push(mocks.atividade({ id: 'act_1', sectorId: 'setor_telhas' }))
+
+    const response = await PATCH(
+      request({ prioridade: 7 }, { usuarioId: 'user_operador' }),
+      context('act_1'),
+    )
+
+    expect(response.status).toBe(403)
+    expect((await response.json()).error).toBe('forbidden')
     expect(mocks.store[0].priority).toBe(0)
   })
 })
