@@ -86,10 +86,10 @@ T7
 
 **Done when**:
 
-- [ ] Ordem determinística por criação
-- [ ] Limites padrão aplicados e documentados
-- [ ] Test count: 5 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Ordem determinística por criação
+- [x] Limites padrão aplicados e documentados
+- [x] Test count: 5 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

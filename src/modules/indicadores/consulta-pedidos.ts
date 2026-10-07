@@ -68,8 +68,32 @@ export interface ConsultaPedidosRepository extends SaldoPedidoRepository {
   buscarCabecalhoPedido(orderId: string): Promise<CabecalhoPedido | null>
 }
 
+/** Limite padrão quando o filtro não informa um valor (QF-07). */
 const LIMITE_PADRAO = 20
+/** Teto do limite para não sobrecarregar a resposta (QF-07). */
+const LIMITE_MAXIMO = 100
+/** Offset padrão quando o filtro não informa um valor (QF-07). */
 const OFFSET_PADRAO = 0
+
+/**
+ * Normaliza a paginação: limite padrão quando ausente, limitado a
+ * `[1, LIMITE_MAXIMO]`; offset padrão quando ausente, nunca negativo (QF-07).
+ */
+function normalizarPaginacao(filtros: FiltrosPedido): { limite: number; offset: number } {
+  const limite = Math.min(Math.max(filtros.limite ?? LIMITE_PADRAO, 1), LIMITE_MAXIMO)
+  const offset = Math.max(filtros.offset ?? OFFSET_PADRAO, 0)
+  return { limite, offset }
+}
+
+/**
+ * Ordenação determinística: criação decrescente (mais recente primeiro) e, em
+ * caso de empate, id crescente. Sem o desempate a paginação poderia repetir ou
+ * pular pedidos (QF-07).
+ */
+function compararPorCriacao(a: PedidoConsultado, b: PedidoConsultado): number {
+  const porData = b.criadoEm.getTime() - a.criadoEm.getTime()
+  return porData !== 0 ? porData : a.id.localeCompare(b.id)
+}
 
 /**
  * Status do pedido a partir das atividades dos itens: sem atividades ou todas
@@ -94,22 +118,23 @@ function dentroDoPeriodo(pedido: PedidoConsultado, de?: Date, ate?: Date): boole
 }
 
 /**
- * Lista os pedidos aplicando os filtros de cliente, setor, status e período e a
- * paginação por limite/offset (IND-01, IND-02, IND-03).
+ * Lista os pedidos aplicando os filtros de cliente, setor, status e período,
+ * ordena por criação decrescente (id como desempate) e pagina por
+ * limite/offset (IND-01, IND-02, IND-03, QF-07).
  */
 export async function listarPedidos(
   filtros: FiltrosPedido,
   repo: ConsultaPedidosRepository,
 ): Promise<PedidoListado[]> {
   const pedidos = await repo.listarPedidosParaConsulta()
-  const limite = filtros.limite ?? LIMITE_PADRAO
-  const offset = filtros.offset ?? OFFSET_PADRAO
+  const { limite, offset } = normalizarPaginacao(filtros)
 
   return pedidos
     .filter((pedido) => !filtros.cliente?.trim() || clienteContem(pedido.cliente, filtros.cliente))
     .filter((pedido) => !filtros.setor || pedido.atividades.some((a) => a.sectorId === filtros.setor))
     .filter((pedido) => !filtros.status || statusDoPedido(pedido.atividades) === filtros.status)
     .filter((pedido) => dentroDoPeriodo(pedido, filtros.de, filtros.ate))
+    .sort(compararPorCriacao)
     .slice(offset, offset + limite)
     .map((pedido) => ({
       id: pedido.id,

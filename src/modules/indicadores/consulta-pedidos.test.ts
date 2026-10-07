@@ -175,6 +175,76 @@ describe('listarPedidos', () => {
 
     expect(lista.map((linha) => linha.id)).toEqual(['ped_2'])
   })
+
+  it('ordena por criação decrescente (QF-07)', async () => {
+    const repo = createRepo([
+      pedido({ id: 'ped_1', numero: '1001', criadoEm: new Date('2026-01-01T00:00:00.000Z') }),
+      pedido({ id: 'ped_2', numero: '1002', criadoEm: new Date('2026-03-01T00:00:00.000Z') }),
+      pedido({ id: 'ped_3', numero: '1003', criadoEm: new Date('2026-02-01T00:00:00.000Z') }),
+    ])
+
+    const lista = await listarPedidos({}, repo)
+
+    expect(lista.map((linha) => linha.id)).toEqual(['ped_2', 'ped_3', 'ped_1'])
+  })
+
+  it('desempata pela chave do pedido, mantendo a ordem determinística (QF-07)', async () => {
+    const mesmaData = new Date('2026-10-07T12:00:00.000Z')
+    const repo = createRepo([
+      pedido({ id: 'ped_c', numero: '1003', criadoEm: mesmaData }),
+      pedido({ id: 'ped_a', numero: '1001', criadoEm: mesmaData }),
+      pedido({ id: 'ped_b', numero: '1002', criadoEm: mesmaData }),
+    ])
+
+    const lista = await listarPedidos({}, repo)
+
+    expect(lista.map((linha) => linha.id)).toEqual(['ped_a', 'ped_b', 'ped_c'])
+  })
+
+  it('aplica o limite padrão de 20 quando ausente (QF-07)', async () => {
+    const repo = createRepo(
+      Array.from({ length: 25 }, (_, indice) =>
+        pedido({
+          id: `ped_${String(indice).padStart(2, '0')}`,
+          numero: String(1000 + indice),
+          criadoEm: new Date(2026, 0, 1, 0, indice),
+        }),
+      ),
+    )
+
+    const lista = await listarPedidos({}, repo)
+
+    expect(lista).toHaveLength(20)
+    expect(lista[0].id).toBe('ped_24')
+  })
+
+  it('limita o limite ao teto de 100 (QF-07)', async () => {
+    const repo = createRepo(
+      Array.from({ length: 120 }, (_, indice) =>
+        pedido({
+          id: `ped_${String(indice).padStart(3, '0')}`,
+          numero: String(1000 + indice),
+          criadoEm: new Date(2026, 0, 1, 0, indice),
+        }),
+      ),
+    )
+
+    const lista = await listarPedidos({ limite: 500 }, repo)
+
+    expect(lista).toHaveLength(100)
+  })
+
+  it('normaliza limite não positivo e offset negativo (QF-07)', async () => {
+    const repo = createRepo([
+      pedido({ id: 'ped_1', numero: '1001', criadoEm: new Date('2026-01-01T00:00:00.000Z') }),
+      pedido({ id: 'ped_2', numero: '1002', criadoEm: new Date('2026-03-01T00:00:00.000Z') }),
+      pedido({ id: 'ped_3', numero: '1003', criadoEm: new Date('2026-02-01T00:00:00.000Z') }),
+    ])
+
+    const lista = await listarPedidos({ limite: 0, offset: -5 }, repo)
+
+    expect(lista.map((linha) => linha.id)).toEqual(['ped_2'])
+  })
 })
 
 describe('detalharPedido', () => {
