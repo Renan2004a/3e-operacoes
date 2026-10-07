@@ -152,10 +152,10 @@ T15
 
 **Done when**:
 
-- [ ] Credenciais válidas emitem sessão
-- [ ] Credenciais inválidas e usuário inativo retornam erro de autenticação
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Credenciais válidas emitem sessão
+- [x] Credenciais inválidas e usuário inativo retornam erro de autenticação
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

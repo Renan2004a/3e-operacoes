@@ -117,8 +117,8 @@ Todas as rotas usam um cabeçalho temporário `x-user-id`, sem login nem autoriz
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| AUTH-01 | P1: Autenticar | Design | Pending |
-| AUTH-02 | P1: Autenticar | Design | Pending |
+| AUTH-01 | P1: Autenticar | Design | Done |
+| AUTH-02 | P1: Autenticar | Design | Done |
 | AUTH-03 | P1: Autenticar | Design | Pending |
 | AUTH-04 | P1: Autenticar | Design | Pending |
 | AUTH-05 | P1: Autenticar | Design | Done |
@@ -131,7 +131,7 @@ Todas as rotas usam um cabeçalho temporário `x-user-id`, sem login nem autoriz
 | AUTH-12 | P1: Usuários | Design | Pending |
 | AUTH-13 | P1: Usuários | Design | Pending |
 | AUTH-14 | P2: Sessão nas rotas | Design | Pending |
-| AUTH-15 | Edge: usuário inativo | Design | Pending |
+| AUTH-15 | Edge: usuário inativo | Design | Done |
 | AUTH-16 | Edge: token adulterado | Design | Done |
 
 **Coverage:** 16 total, 0 mapped to tasks, 16 unmapped ⚠️
