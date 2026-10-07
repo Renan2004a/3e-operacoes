@@ -9,6 +9,7 @@ import { EmptyState } from './empty-state'
 import { Field } from './field'
 import { Input } from './input'
 import { Spinner } from './spinner'
+import { FOCO_VISIVEL } from './utils'
 
 export type StatusPedido = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED'
 
@@ -46,8 +47,7 @@ const VARIANTE_STATUS: Record<StatusPedido, 'neutral' | 'info' | 'success'> = {
   COMPLETED: 'success',
 }
 
-const CLASSE_SELECT =
-  'min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base text-ink'
+const CLASSE_SELECT = `min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base text-ink ${FOCO_VISIVEL}`
 
 /**
  * Monta a URL da consulta. O cliente é enviado como trecho (substring) e sem
@@ -134,6 +134,7 @@ export function PedidosLista({ onSelecionar }: PedidosListaProps) {
               id={props.id}
               name="status"
               aria-describedby={props['aria-describedby']}
+              aria-invalid={props.invalid || undefined}
               className={CLASSE_SELECT}
               value={filtros.status}
               onChange={(evento) => setFiltros((atual) => ({ ...atual, status: evento.target.value }))}

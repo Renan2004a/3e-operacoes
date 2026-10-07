@@ -91,6 +91,13 @@ describe('PedidosLista', () => {
     expect(screen.getByText(/não diferencia maiúsculas/i)).toBeInTheDocument()
   })
 
+  it('expõe foco visível no filtro de status (QF-04)', async () => {
+    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+
+    expect(screen.getByLabelText('Status')).toHaveClass('focus-visible:ring-2')
+  })
+
   it('envia o cliente como substring, preservando o trecho digitado (QF-09)', async () => {
     mocks.apiGet.mockResolvedValue({ pedidos: [] })
     render(<PedidosLista onSelecionar={vi.fn()} />)

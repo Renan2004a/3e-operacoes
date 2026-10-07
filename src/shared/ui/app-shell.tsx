@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import type { RoleCode } from '@/generated/prisma/client'
-import { cn } from './utils'
+import { cn, FOCO_VISIVEL } from './utils'
 import { Button } from './button'
 import { NAV_POR_PERFIL } from './navegacao-perfil'
 
@@ -46,7 +46,10 @@ export function AppShell({ perfil, usuarioNome, onLogout, children }: AppShellPr
           ) : null}
           <button
             type="button"
-            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-line text-ink md:hidden"
+            className={cn(
+              'inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-line text-ink md:hidden',
+              FOCO_VISIVEL,
+            )}
             aria-expanded={menuAberto}
             aria-controls="nav-principal"
             aria-label={menuAberto ? 'Fechar menu' : 'Abrir menu'}
@@ -75,7 +78,10 @@ export function AppShell({ perfil, usuarioNome, onLogout, children }: AppShellPr
               <Link
                 key={item.href}
                 href={item.href}
-                className="inline-flex min-h-11 items-center rounded-lg px-3 font-medium text-ink hover:bg-surface-2"
+                className={cn(
+                  'inline-flex min-h-11 items-center rounded-lg px-3 font-medium text-ink hover:bg-surface-2',
+                  FOCO_VISIVEL,
+                )}
                 onClick={() => setMenuAberto(false)}
               >
                 {item.label}

@@ -86,6 +86,18 @@ describe('AppShell', () => {
     expect(screen.getByRole('navigation', { name: 'Navegação principal' })).toBeInTheDocument()
   })
 
+  it('expõe foco visível nos links de navegação (QF-04)', () => {
+    render(<AppShell perfil="OPERATOR">{conteudo}</AppShell>)
+
+    expect(screen.getByRole('link', { name: 'Fila' })).toHaveClass('focus-visible:ring-2')
+  })
+
+  it('expõe foco visível no botão do menu mobile (QF-04)', () => {
+    render(<AppShell perfil="OPERATOR">{conteudo}</AppShell>)
+
+    expect(screen.getByRole('button', { name: 'Abrir menu' })).toHaveClass('focus-visible:ring-2')
+  })
+
   it('usa overflow-x-hidden no contêiner raiz para evitar rolagem horizontal (FE-06)', () => {
     const { container } = render(<AppShell perfil="OPERATOR">{conteudo}</AppShell>)
 

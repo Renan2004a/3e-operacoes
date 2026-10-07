@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './card'
 import { Field } from './field'
 import { Input } from './input'
 import { Spinner } from './spinner'
+import { cn, FOCO_VISIVEL } from './utils'
 
 interface ItemSaldo {
   itemId: string
@@ -126,7 +127,7 @@ export function PedidoDetalhe({ orderId, basePath = '/gerente/pedidos' }: Pedido
   return (
     <section className="grid gap-4">
       <div>
-        <Link href={basePath} className="text-sm font-medium text-accent">
+        <Link href={basePath} className={cn('text-sm font-medium text-accent', FOCO_VISIVEL)}>
           ← Voltar para os pedidos
         </Link>
         <h1 className="mt-1 text-2xl font-semibold text-ink">Pedido {pedido.numero}</h1>

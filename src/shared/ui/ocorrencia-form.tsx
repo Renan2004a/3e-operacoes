@@ -7,6 +7,7 @@ import { Alert } from './alert'
 import { Button } from './button'
 import { Field } from './field'
 import { Input } from './input'
+import { FOCO_VISIVEL } from './utils'
 
 const TIPOS: { valor: TipoOcorrencia; rotulo: string }[] = [
   { valor: 'PERDA', rotulo: 'Perda' },
@@ -25,8 +26,7 @@ interface Motivo {
   ativo: boolean
 }
 
-const CLASSE_SELECT =
-  'min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base text-ink'
+const CLASSE_SELECT = `min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base text-ink ${FOCO_VISIVEL}`
 
 export interface OcorrenciaFormProps {
   atividadeId: string
@@ -189,7 +189,7 @@ export function OcorrenciaForm({ atividadeId, onRegistrada }: OcorrenciaFormProp
           <textarea
             id={props.id}
             aria-describedby={props['aria-describedby']}
-            className="min-h-24 w-full rounded-lg border border-line bg-surface px-3 py-2 text-base text-ink"
+            className={`min-h-24 w-full rounded-lg border border-line bg-surface px-3 py-2 text-base text-ink ${FOCO_VISIVEL}`}
             value={observacao}
             onChange={(evento) => setObservacao(evento.target.value)}
           />

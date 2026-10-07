@@ -38,6 +38,15 @@ describe('Button', () => {
     fireEvent.click(button)
     expect(onClick).not.toHaveBeenCalled()
   })
+
+  it('expõe foco visível no próprio botão (QF-04)', () => {
+    render(<Button>Salvar</Button>)
+
+    expect(screen.getByRole('button', { name: 'Salvar' })).toHaveClass(
+      'focus-visible:ring-2',
+      'focus-visible:ring-accent',
+    )
+  })
 })
 
 describe('Field + Input', () => {
@@ -77,6 +86,16 @@ describe('Field + Input', () => {
     const alert = screen.getByRole('alert')
     expect(alert).toHaveTextContent('Quantidade inválida')
     expect(input.getAttribute('aria-describedby')).toContain(alert.id)
+  })
+
+  it('expõe foco visível no campo (QF-04)', () => {
+    render(
+      <Field label="E-mail">
+        {(props) => <Input type="email" {...props} />}
+      </Field>,
+    )
+
+    expect(screen.getByLabelText('E-mail')).toHaveClass('focus-visible:ring-2')
   })
 })
 
@@ -136,5 +155,18 @@ describe('Alert', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Falha ao carregar')
     fireEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }))
     expect(onRetry).toHaveBeenCalledTimes(1)
+  })
+
+  it('informação anuncia em role=status, com texto e sem depender de cor (QF-05, QF-06)', () => {
+    render(
+      <Alert variant="info" title="Pedido sem itens">
+        Este pedido não possui itens.
+      </Alert>,
+    )
+
+    const status = screen.getByRole('status')
+    expect(status).toHaveTextContent('Pedido sem itens')
+    expect(status).toHaveTextContent('Este pedido não possui itens.')
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 })

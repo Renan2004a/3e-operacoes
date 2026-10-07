@@ -196,11 +196,11 @@ T7
 
 **Done when**:
 
-- [ ] Rótulos associados e foco visível
-- [ ] Erros com `role="alert"`
-- [ ] Estado não depende só de cor
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Rótulos associados e foco visível
+- [x] Erros com `role="alert"`
+- [x] Estado não depende só de cor
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

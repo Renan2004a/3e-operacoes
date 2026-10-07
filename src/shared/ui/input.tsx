@@ -1,5 +1,5 @@
 import { forwardRef } from 'react'
-import { cn } from './utils'
+import { cn, FOCO_VISIVEL } from './utils'
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   invalid?: boolean
@@ -18,6 +18,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         'min-h-11 w-full rounded-lg border border-line bg-surface px-3 py-2 text-base text-ink',
         'placeholder:text-muted',
         'focus-visible:border-accent',
+        FOCO_VISIVEL,
         invalid && 'border-danger',
         className,
       )}

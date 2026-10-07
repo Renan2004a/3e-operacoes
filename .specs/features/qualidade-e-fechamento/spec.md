@@ -118,9 +118,9 @@ As features anteriores passaram em testes de unidade, mas faltam: verificação 
 | QF-01 | P1: E2E | Design | Pending |
 | QF-02 | P1: E2E | Design | Pending |
 | QF-03 | P1: E2E | Design | Pending |
-| QF-04 | P1: A11y | Design | Pending |
-| QF-05 | P1: A11y | Design | Pending |
-| QF-06 | P1: A11y | Design | Pending |
+| QF-04 | P1: A11y | Design | Done |
+| QF-05 | P1: A11y | Design | Done |
+| QF-06 | P1: A11y | Design | Done |
 | QF-07 | P1: Precisão | Design | Done |
 | QF-08 | P1: Precisão | Design | Done |
 | QF-09 | P1: Precisão | Design | Done |

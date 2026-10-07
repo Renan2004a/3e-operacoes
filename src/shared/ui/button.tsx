@@ -1,5 +1,5 @@
 import { forwardRef } from 'react'
-import { cn } from './utils'
+import { cn, FOCO_VISIVEL } from './utils'
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'danger'
 type ButtonSize = 'sm' | 'md'
@@ -34,6 +34,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       className={cn(
         'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-colors',
         'disabled:cursor-not-allowed disabled:opacity-60',
+        FOCO_VISIVEL,
         VARIANT[variant],
         SIZE[size],
         block && 'w-full',
