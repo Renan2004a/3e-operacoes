@@ -124,7 +124,7 @@ As features anteriores passaram em testes de unidade, mas faltam: verificação 
 | QF-07 | P1: Precisão | Design | Done |
 | QF-08 | P1: Precisão | Design | Done |
 | QF-09 | P1: Precisão | Design | Done |
-| QF-10 | P1: Gerente | Design | Pending |
+| QF-10 | P1: Gerente | Design | Done |
 | QF-11 | P2: Go-live | Design | Pending |
 
 **Coverage:** 11 total, 0 mapped to tasks, 11 unmapped ⚠️
