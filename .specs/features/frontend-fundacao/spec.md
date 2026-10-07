@@ -127,7 +127,7 @@ O sistema só tem APIs; não há interface. O operador de produção precisa reg
 | FE-04 | P1: Shell | Execute | Done |
 | FE-05 | P1: Shell | Execute | Done |
 | FE-06 | P1: Shell | Execute | Done |
-| FE-07 | P1: Fila | Design | Pending |
+| FE-07 | P1: Fila | Execute | Done |
 | FE-08 | P1: Fila | Execute | Done |
 | FE-09 | P1: Executar | Design | Pending |
 | FE-10 | P1: Executar | Design | Pending |

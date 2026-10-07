@@ -216,10 +216,10 @@ T8 -> T7
 
 **Done when**:
 
-- [ ] Lista as atividades ou mostra estado vazio
-- [ ] Trata carregando e erro
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Lista as atividades ou mostra estado vazio
+- [x] Trata carregando e erro
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
