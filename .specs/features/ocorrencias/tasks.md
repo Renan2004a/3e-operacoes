@@ -79,11 +79,11 @@ T7
 
 **Done when**:
 
-- [ ] Lista apenas motivos ativos do tipo
-- [ ] Rejeita motivo de outro tipo ou inativo
-- [ ] Sugestões iniciais marcadas como sugestão
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Lista apenas motivos ativos do tipo
+- [x] Rejeita motivo de outro tipo ou inativo
+- [x] Sugestões iniciais marcadas como sugestão
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
