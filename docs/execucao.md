@@ -170,3 +170,36 @@ Calcular disponível = executado − entregue; registrar entrega total/parcial r
 ### Riscos abertos
 - Persistência da auditoria da exceção só será coberta por teste de integração quando houver MySQL.
 - Indisponibilidade de Revenda ainda sem efeito no saldo.
+
+---
+
+## Feature 6 — Usuários, Perfis e Permissões
+
+**Data**: 2026-10-07
+**Requisitos**: RF013, RF014
+**Artefatos**: `.specs/features/usuarios-e-permissoes/{spec,design,tasks,validation}.md`
+
+### Objetivo
+Autenticação com sessão, autorização no servidor pela matriz de perfis, gestão de usuários e substituição do cabeçalho temporário `x-user-id` pela sessão em todas as rotas.
+
+### Como foi feito
+- **Specify**: 16 critérios EARS; `validate_spec.py` 0/0.
+- **Design**: sessão em cookie httpOnly assinado (HMAC); senha com `scrypt`; matriz de perfis; callback segue em token de serviço.
+- **Tasks**: 15 tarefas em 5 fases + 5 de correção (T16–T20); `validate_tasks.py` 0 erros.
+- **Execute**: 2 batches (T1–T8, T9–T15). A verificação reprovou o AUTH-14 (rotas restantes fora da sessão).
+- **Verify**: iteração 1 = FAIL; correção T16–T20; iteração 2 = **PASS**.
+
+### Resultado
+- **20 tarefas** implementadas (15 + 5 correções).
+- **360 testes** passando. Cobertura de domínio 96% linhas / 93% branches.
+- **Verificação: PASS** — 16/16 ACs; 6/6 mutantes mortos; 20 rotas classificadas (18 na sessão, callback no token de serviço, health público).
+- `validate_state.py`: 0 erros.
+
+### Decisões e desvios
+- `SESSION_SECRET` em variável de ambiente; cookie `3e_session` httpOnly.
+- Matriz de perfis em `src/modules/usuarios/permissoes.ts`; Vendedor só consulta e prazo.
+- A rota de execução e as demais passaram a usar `autorizar(request, acao)`.
+
+### Riscos abertos
+- Recuperação de senha, MFA e tela de login ficam para o frontend.
+- Permissões ambíguas (classificação/importação) registradas como suposição.

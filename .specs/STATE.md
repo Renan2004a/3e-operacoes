@@ -58,11 +58,11 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 
 ## Handoff
 
-- **Feature**: disponibilidade-e-entregas (concluída e verificada)
-- **Phase / Task**: Feature 5 Done → próxima: Fase 7 do backlog (usuários, perfis e permissões)
-- **Completed**: T1–T7; verificação PASS; `validate_state` 0 erros
+- **Feature**: usuarios-e-permissoes (concluída e verificada)
+- **Phase / Task**: Feature 6 Done → próxima: Fase 8 do backlog (prazos e alertas)
+- **Completed**: T1–T20; verificação PASS; `validate_state` 0 erros
 - **In-progress** (file:line): nenhum
-- **Next step**: especificar a feature "usuários, perfis e permissões" (RF013, RF014)
+- **Next step**: especificar a feature "prazos e alertas" (RF012)
 - **Blockers**: nenhum para desenvolvimento; migrations dependem de um MySQL de runtime
 - **Uncommitted files**: validation.md, spec.md, tasks.md, docs/execucao.md, .specs/STATE.md
 - **Branch**: main
