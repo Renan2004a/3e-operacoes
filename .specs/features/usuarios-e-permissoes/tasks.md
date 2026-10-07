@@ -401,10 +401,10 @@ T15
 
 **Done when**:
 
-- [ ] Atualização responde `200`; inexistente `404`
-- [ ] Inativar impede login
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm run lint && npm run typecheck && npm test`
+- [x] Atualização responde `200`; inexistente `404`
+- [x] Inativar impede login
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm run lint && npm run typecheck && npm test`
 
 **Tests**: integration
 **Gate**: full
