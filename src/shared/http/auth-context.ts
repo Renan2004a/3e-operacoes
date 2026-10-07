@@ -37,6 +37,22 @@ export interface ExigirPerfilDeps {
   pode(perfis: RoleCode[], acao: string): boolean
 }
 
+/** Atributos comuns do cookie de sessão: httpOnly, mesmo site e escopo global (AUTH-06). */
+function atributosCookie(): string {
+  const seguro = process.env.NODE_ENV === 'production' ? '; Secure' : ''
+  return `; Path=/; HttpOnly; SameSite=Lax${seguro}`
+}
+
+/** Serializa o cookie de sessão httpOnly com validade em segundos (AUTH-06). */
+export function serializarCookieSessao(token: string, maxAgeSegundos: number): string {
+  return `${SESSION_COOKIE}=${token}${atributosCookie()}; Max-Age=${maxAgeSegundos}`
+}
+
+/** Serializa o cookie de sessão já expirado, encerrando a sessão no cliente (AUTH-03). */
+export function serializarCookieSessaoExpirado(): string {
+  return `${SESSION_COOKIE}=${atributosCookie()}; Max-Age=0`
+}
+
 function cookieSessao(request: AuthRequest): string | null {
   const header = request.headers.get('cookie')
   if (!header) return null

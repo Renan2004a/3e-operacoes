@@ -320,10 +320,10 @@ T15
 
 **Done when**:
 
-- [ ] Credenciais válidas respondem `200` e setam cookie httpOnly
-- [ ] Credenciais inválidas respondem `401`
-- [ ] Test count: 5 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm run lint && npm run typecheck && npm test`
+- [x] Credenciais válidas respondem `200` e setam cookie httpOnly
+- [x] Credenciais inválidas respondem `401`
+- [x] Test count: 5 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm run lint && npm run typecheck && npm test`
 
 **Tests**: integration
 **Gate**: full
