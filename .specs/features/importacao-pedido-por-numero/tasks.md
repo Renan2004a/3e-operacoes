@@ -441,11 +441,11 @@ T17
 
 **Done when**:
 
-- [ ] Job inexistente responde `404`
-- [ ] Estado não final responde `202`; estado final responde `200`
-- [ ] Token ausente responde `401`
-- [ ] Test count: 5 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm run lint && npm run typecheck && npm test`
+- [x] Job inexistente responde `404`
+- [x] Estado não final responde `202`; estado final responde `200`
+- [x] Token ausente responde `401`
+- [x] Test count: 5 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm run lint && npm run typecheck && npm test`
 
 **Tests**: integration
 **Gate**: full
