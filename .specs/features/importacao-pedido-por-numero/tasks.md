@@ -87,6 +87,16 @@ T15 -> T16
 T17
 ```
 
+### Phase 7: Correções de verificação
+
+```
+T18
+T19 -> T20
+T21
+T22
+T23
+```
+
 ---
 
 ## Task Breakdown
@@ -569,6 +579,175 @@ T17
 
 ---
 
+### Phase 7: Correções de verificação
+
+#### T18: Rota de reprocessamento do job
+
+**What**: Expor `POST /api/integracao/pedidos/[jobId]/reprocessar` (token-guard) que chama `reprocessar` e agenda o novo despacho; mapear `JobNotFailedError` → `409` e `JobNotFoundError` → `404`. Extrai `agendarDespacho` para reuso entre as rotas de criação e reprocessamento.
+**Where**: `src/app/api/integracao/pedidos/[jobId]/reprocessar/route.ts`
+**Depends on**: T8, T12
+**Reuses**: Caso de uso `reprocessar` (T8), helper de despacho, repositório (T9).
+**Requirement**: INTG-17, INTG-18
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `tlc-spec-driven`, `seguranca-3e`
+
+**Done when**:
+
+- [x] Job `FAILED` responde `202` com o novo `jobId` e agenda o despacho
+- [x] Job não `FAILED` responde `409` sem criar job nem agendar despacho
+- [x] Job inexistente responde `404`; token ausente/divergente responde `401`
+- [x] Test count: 5 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm run lint && npm run typecheck && npm test`
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(api): adiciona rota de reprocessamento de job`
+
+---
+
+#### T19: Cobertura do pedido inexistente no despacho
+
+**What**: Testar o mapeamento do adapter `connector 404 → code ORDER_NOT_FOUND` e o despacho agendado que falha por pedido inexistente, terminando o job `FAILED` com `errorCode = ORDER_NOT_FOUND` e evento `FAILED`.
+**Where**: `src/app/api/integracao/pedidos/route.test.ts`
+**Depends on**: T12
+**Reuses**: Adapter HTTP (T11), rota de criação (T12).
+**Requirement**: INTG-19
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `tlc-spec-driven`, `integracao-top-gerente`
+
+**Done when**:
+
+- [ ] Adapter: resposta `404` do conector rejeita com `code = ORDER_NOT_FOUND`
+- [ ] Rota: despacho agendado com conector lançando `ORDER_NOT_FOUND` termina o job `FAILED` com `errorCode = ORDER_NOT_FOUND`
+- [ ] Evento `FAILED` registrado com detalhe `ORDER_NOT_FOUND`
+- [ ] Test count: +2 testes (sem remoções silenciosas)
+- [ ] Gate check passa: `npm run lint && npm run typecheck && npm test`
+
+**Tests**: unit, integration
+**Gate**: full
+
+**Commit**: `test(integracao): cobre pedido nao encontrado no despacho`
+
+---
+
+#### T20: Cobertura do timeout no despacho
+
+**What**: Testar o despacho agendado que falha por `CONNECTOR_TIMEOUT`, terminando o job `FAILED` com `errorCode = CONNECTOR_TIMEOUT` e evento `FAILED`.
+**Where**: `src/app/api/integracao/pedidos/route.test.ts`
+**Depends on**: T19
+**Reuses**: Rota de criação (T12), adapter HTTP (T11).
+**Requirement**: INTG-06
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `tlc-spec-driven`, `integracao-top-gerente`
+
+**Done when**:
+
+- [ ] Despacho agendado com conector lançando `CONNECTOR_TIMEOUT` termina o job `FAILED`
+- [ ] `errorCode` do job é `CONNECTOR_TIMEOUT`
+- [ ] Evento `FAILED` registrado com detalhe `CONNECTOR_TIMEOUT`
+- [ ] Test count: +1 teste (sem remoções silenciosas)
+- [ ] Gate check passa: `npm run lint && npm run typecheck && npm test`
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `test(integracao): cobre timeout do conector no despacho`
+
+---
+
+#### T21: Divergência de quantidade na porta de pedidos
+
+**What**: Adicionar `registrarDivergencia` à porta `PedidosRepository`, chamada por `importarPedido` quando há divergência; mover a escrita do `AuditLog` para o adapter. Testar a chamada no fake e o uso de `$transaction` + `auditLog.create` no adapter Prisma.
+**Where**: `src/modules/pedidos/importar-pedido.ts`
+**Depends on**: T6
+**Reuses**: Modelos `Order`/`OrderItem`/`AuditLog` (Prisma).
+**Requirement**: INTG-03, INTG-15
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `tlc-spec-driven`, `dominio-3e`
+
+**Done when**:
+
+- [ ] `importarPedido` chama `registrarDivergencia` para cada divergência detectada
+- [ ] Fake do repositório registra a divergência (assert no teste)
+- [ ] Adapter Prisma testado com fake: `$transaction` no upsert e `auditLog.create` na divergência
+- [ ] Test count: +3 testes (sem remoções silenciosas)
+- [ ] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `refactor(pedidos): registra divergencia pela porta do repositorio`
+
+---
+
+#### T22: Precisão de INTG-02 e INTG-07
+
+**What**: Testar que o despacho usa o tempo limite padrão de 5 s e que a consulta ao legado é somente `SELECT` (sem `INSERT/UPDATE/DELETE`).
+**Where**: `connector-local/src/topgerente.test.ts`
+**Depends on**: T11, T15
+**Reuses**: Adapter HTTP (T11), consulta ao legado (T15).
+**Requirement**: INTG-02, INTG-07
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `tlc-spec-driven`, `integracao-top-gerente`
+
+**Done when**:
+
+- [ ] Adapter: sem `timeoutMs` configurado, o despacho aborta em `DEFAULT_CONNECTOR_TIMEOUT_MS` (5 s)
+- [ ] Legado: a SQL consultada começa com `SELECT` e não contém `INSERT/UPDATE/DELETE`
+- [ ] Test count: +2 testes (sem remoções silenciosas)
+- [ ] Gate check passa: `npm test`
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `test(integracao): cobre timeout padrao e leitura somente do legado`
+
+---
+
+#### T23: Fiação do token de callback do conector
+
+**What**: O callback passa a validar `CONNECTOR_CALLBACK_TOKEN` (conector → app); as rotas de usuário continuam com `APP_INTERNAL_TOKEN`. Alinhar `connector-local/.env.example` e o conector para `CONNECTOR_CALLBACK_TOKEN`.
+**Where**: `src/shared/http/internal-auth.ts`
+**Depends on**: T2, T14, T16
+**Reuses**: Guarda de token (T2), rota de callback (T14), conector (T16).
+**Requirement**: INTG-20
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `tlc-spec-driven`, `seguranca-3e`
+
+**Done when**:
+
+- [ ] `requireCallbackToken` valida `CONNECTOR_CALLBACK_TOKEN`; `requireInternalToken` mantém `APP_INTERNAL_TOKEN`
+- [ ] Rota de callback usa `requireCallbackToken`
+- [ ] Conector e `.env.example` usam `CONNECTOR_CALLBACK_TOKEN`
+- [ ] Test count: +2 testes em `internal-auth.test.ts` (sem remoções silenciosas)
+- [ ] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
+
+**Tests**: unit, integration
+**Gate**: build
+
+**Commit**: `fix(shared): valida token de callback do conector`
+
+---
+
 ## Phase Execution Map
 
 Phases run in sequence; tasks within a phase run in order.
@@ -589,6 +768,11 @@ Phase 4: T13
 Phase 4: T14
 Phase 5: T15 -> T16
 Phase 6: T17
+Phase 7: T18
+Phase 7: T19 -> T20
+Phase 7: T21
+Phase 7: T22
+Phase 7: T23
 ```
 
 ---

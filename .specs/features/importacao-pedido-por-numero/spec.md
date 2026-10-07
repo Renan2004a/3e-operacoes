@@ -147,7 +147,7 @@ O acompanhamento dos pedidos depende hoje de controle manual e de comunicação 
 | INTG-15 | P2: Ressincronizar | Design | Done |
 | INTG-16 | P2: Ressincronizar | Design | Done |
 | INTG-17 | P3: Reprocessar | Design | Done |
-| INTG-18 | P3: Reprocessar | Design | Done |
+| INTG-18 | P3: Reprocessar | Design | Implementing |
 | INTG-19 | Edge: pedido inexistente | Design | Pending |
 | INTG-20 | Edge: callback inválido | Design | Done |
 | INTG-21 | Edge: callback duplicado | Design | Done |
