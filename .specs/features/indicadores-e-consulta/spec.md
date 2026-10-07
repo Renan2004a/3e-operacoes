@@ -101,13 +101,13 @@ O vendedor não tem uma visão dos pedidos e o gerente não tem um painel consol
 | IND-02 | P1: Consulta | Execute | T1, T5 | Done (T1, T5) |
 | IND-03 | P1: Consulta | Execute | T1, T5 | Done (T1, T5) |
 | IND-04 | P1: Consulta | Execute | T1, T6 | Done (T1, T6) |
-| IND-05 | P1: Painel | Execute | T2, T4, T7 | Done (T2) |
-| IND-06 | P1: Painel | Execute | T2, T7 | Done (T2) |
-| IND-07 | P2: PCP | Execute | T3, T4, T7 | Done (T3) |
-| IND-08 | P2: PCP | Execute | T3, T7 | Done (T3) |
+| IND-05 | P1: Painel | Execute | T2, T4, T7 | Done (T2, T7) |
+| IND-06 | P1: Painel | Execute | T2, T7 | Done (T2, T7) |
+| IND-07 | P2: PCP | Execute | T3, T4, T7 | Done (T3, T7) |
+| IND-08 | P2: PCP | Execute | T3, T7 | Done (T3, T7) |
 | IND-09 | P2: PCP | Execute | T3 | Done (T3) |
 | IND-10 | Edge: pedido inexistente | Execute | T1, T6 | Done (T1, T6) |
-| IND-11 | Edge: sem sessão | Execute | T5, T6, T7 | Done (T5, T6) |
+| IND-11 | Edge: sem sessão | Execute | T5, T6, T7 | Done (T5, T6, T7) |
 
 **Coverage:** 11 total, 11 mapped to tasks, 0 unmapped
 

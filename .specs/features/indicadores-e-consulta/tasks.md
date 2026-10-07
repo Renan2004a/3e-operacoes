@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/indicadores-e-consulta/design.md`
-**Status**: Draft
+**Status**: Done
 
 ---
 
@@ -245,10 +245,10 @@ T7
 
 **Done when**:
 
-- [ ] Retorna `200` com painel e PCP
-- [ ] Sem sessão `401`
-- [ ] Test count: 5 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm run lint && npm run typecheck && npm test`
+- [x] Retorna `200` com painel e PCP
+- [x] Sem sessão `401`
+- [x] Test count: 5 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm run lint && npm run typecheck && npm test`
 
 **Tests**: integration
 **Gate**: full
