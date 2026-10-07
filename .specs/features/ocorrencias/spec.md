@@ -101,19 +101,19 @@ O chão de fábrica precisa registrar o que dá errado durante a produção: pe�
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| OCO-01 | P1: Registrar | Design | Implemented |
-| OCO-02 | P1: Registrar | Design | Implemented |
-| OCO-03 | P1: Registrar | Design | Implemented |
-| OCO-04 | P1: Registrar | Design | Implemented |
-| OCO-05 | P1: Registrar | Design | Implemented |
-| OCO-06 | P1: Registrar | Design | Implemented |
-| OCO-07 | P1: Listar | Design | Implemented |
-| OCO-08 | P1: Motivos | Design | Implemented |
-| OCO-09 | P1: Motivos | Design | Implemented |
-| OCO-10 | Edge: atividade inexistente | Design | Implemented |
-| OCO-11 | Edge: setor do operador | Design | Implemented |
-| OCO-12 | Edge: pausa/parada | Design | Implemented |
-| OCO-13 | Edge: quantidade inválida | Design | Implemented |
+| OCO-01 | P1: Registrar | Design | Verified |
+| OCO-02 | P1: Registrar | Design | Verified |
+| OCO-03 | P1: Registrar | Design | Verified |
+| OCO-04 | P1: Registrar | Design | Verified |
+| OCO-05 | P1: Registrar | Design | Verified |
+| OCO-06 | P1: Registrar | Design | Verified |
+| OCO-07 | P1: Listar | Design | Verified |
+| OCO-08 | P1: Motivos | Design | Verified |
+| OCO-09 | P1: Motivos | Design | Verified |
+| OCO-10 | Edge: atividade inexistente | Design | Verified |
+| OCO-11 | Edge: setor do operador | Design | Verified |
+| OCO-12 | Edge: pausa/parada | Design | Verified |
+| OCO-13 | Edge: quantidade inválida | Design | Verified |
 
 **Coverage:** 13 total, 13 mapped to tasks, 0 unmapped ✅
 

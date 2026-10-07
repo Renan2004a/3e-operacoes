@@ -106,3 +106,35 @@ Fila de atividades por setor, registro de execução com validação de unidade,
 ### Riscos abertos
 - Códigos de unidade do legado não estão definidos na spec (allowlist de metro).
 - Revenda com indisponibilidade ainda depende de validação do "pedido atendido".
+
+---
+
+## Feature 4 — Ocorrências
+
+**Data**: 2026-10-07
+**Requisitos**: RF005; RN003, RN012, RN013, RN023, RN032
+**Artefatos**: `.specs/features/ocorrencias/{spec,design,tasks,validation}.md`
+
+### Objetivo
+Registrar perda (Corte e Dobra), refugo (Telhas) e indisponibilidade (Revenda) — mais pausa e parada — com motivo obrigatório por lista fechada, sem alterar o saldo de produção.
+
+### Como foi feito
+- **Specify**: 13 critérios EARS; `validate_spec.py` 0/0.
+- **Design**: nova entidade `MotivoOcorrencia`; `Occurrence.motivoId`; perda/refugo não tocam o saldo.
+- **Tasks**: 7 tarefas em 3 fases; `validate_tasks.py` 0 erros.
+- **Execute**: 1 batch (T1–T7), commit atômico por tarefa.
+- **Verify**: Verifier independente → **PASS** na primeira rodada.
+
+### Resultado
+- **7 tarefas** implementadas.
+- **246 testes** passando. Cobertura de ocorrências 100% linhas/funções, 97% branches.
+- **Verificação: PASS** — 13/13 ACs; 6/7 mutantes mortos (1 sobrevivente apenas no adapter, sancionado por AD-002). `validate_state.py`: 0 erros.
+
+### Decisões e desvios
+- Lista fechada via `MotivoOcorrencia`; sugestões iniciais de `docs/backlog/motivos-ocorrencia.md` (a validar com o Everton).
+- Motivo obrigatório só para perda, refugo e indisponibilidade.
+- Perda/refugo não alteram o saldo; indisponibilidade de Revenda fica sem efeito no saldo até validação.
+
+### Riscos abertos
+- Lista de motivos ainda não validada pelo cliente.
+- Efeito da indisponibilidade no saldo de Revenda pendente de definição.
