@@ -125,10 +125,10 @@ T15
 
 **Done when**:
 
-- [ ] Token válido verifica e retorna o usuário
-- [ ] Token adulterado ou expirado é rejeitado
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Token válido verifica e retorna o usuário
+- [x] Token adulterado ou expirado é rejeitado
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
