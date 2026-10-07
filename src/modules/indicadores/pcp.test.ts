@@ -134,6 +134,118 @@ describe('montarPcp', () => {
     })
   })
 
+  it('exclui do indicador a concluída sem execução (QF-08)', async () => {
+    const repo = createRepo({
+      atividades: [
+        atividade('a1', 'setor_telhas', {
+          deadlineAt: new Date('2026-06-10T00:00:00.000Z'),
+          completedAt: null,
+        }),
+      ],
+    })
+
+    const pcp = await montarPcp(repo)
+
+    expect(pcp.cumprimentoPrazo).toEqual({
+      concluidasComPrazo: 0,
+      concluidasNoPrazo: 0,
+      percentual: 0,
+    })
+  })
+
+  it('conta a última execução como conclusão no prazo (QF-08)', async () => {
+    const repo = createRepo({
+      atividades: [
+        atividade('a1', 'setor_telhas', {
+          deadlineAt: new Date('2026-06-10T00:00:00.000Z'),
+          completedAt: new Date('2026-06-09T00:00:00.000Z'),
+        }),
+      ],
+    })
+
+    const pcp = await montarPcp(repo)
+
+    expect(pcp.cumprimentoPrazo.concluidasComPrazo).toBe(1)
+    expect(pcp.cumprimentoPrazo.concluidasNoPrazo).toBe(1)
+    expect(pcp.cumprimentoPrazo.percentual).toBe(100)
+  })
+
+  it('concluída com execução após o prazo não conta no numerador (QF-08)', async () => {
+    const repo = createRepo({
+      atividades: [
+        atividade('a1', 'setor_corte', {
+          deadlineAt: new Date('2026-06-10T00:00:00.000Z'),
+          completedAt: new Date('2026-06-11T00:00:00.000Z'),
+        }),
+      ],
+    })
+
+    const pcp = await montarPcp(repo)
+
+    expect(pcp.cumprimentoPrazo.concluidasComPrazo).toBe(1)
+    expect(pcp.cumprimentoPrazo.concluidasNoPrazo).toBe(0)
+    expect(pcp.cumprimentoPrazo.percentual).toBe(0)
+  })
+
+  it('não trata como atrasada a concluída sem execução (QF-08)', async () => {
+    const repo = createRepo({
+      atividades: [
+        atividade('a1', 'setor_telhas', {
+          deadlineAt: new Date('2026-06-10T00:00:00.000Z'),
+          completedAt: new Date('2026-06-20T00:00:00.000Z'),
+        }),
+        atividade('a2', 'setor_telhas', {
+          deadlineAt: new Date('2026-06-10T00:00:00.000Z'),
+          completedAt: null,
+        }),
+      ],
+    })
+
+    const pcp = await montarPcp(repo)
+
+    expect(pcp.cumprimentoPrazo.concluidasComPrazo).toBe(1)
+    expect(pcp.cumprimentoPrazo.concluidasNoPrazo).toBe(0)
+    expect(pcp.cumprimentoPrazo.percentual).toBe(0)
+  })
+
+  it('não penaliza o percentual por concluída sem execução (QF-08)', async () => {
+    const repo = createRepo({
+      atividades: [
+        atividade('a1', 'setor_telhas', {
+          deadlineAt: new Date('2026-06-10T00:00:00.000Z'),
+          completedAt: new Date('2026-06-09T00:00:00.000Z'),
+        }),
+        atividade('a2', 'setor_corte', {
+          deadlineAt: new Date('2026-06-10T00:00:00.000Z'),
+          completedAt: null,
+        }),
+      ],
+    })
+
+    const pcp = await montarPcp(repo)
+
+    expect(pcp.cumprimentoPrazo.concluidasComPrazo).toBe(1)
+    expect(pcp.cumprimentoPrazo.concluidasNoPrazo).toBe(1)
+    expect(pcp.cumprimentoPrazo.percentual).toBe(100)
+  })
+
+  it('ignora atividade não concluída mesmo com execução (QF-08)', async () => {
+    const repo = createRepo({
+      atividades: [
+        atividade('a1', 'setor_telhas', {
+          status: 'PENDING',
+          deadlineAt: new Date('2026-06-10T00:00:00.000Z'),
+          completedAt: new Date('2026-06-09T00:00:00.000Z'),
+        }),
+      ],
+    })
+
+    const pcp = await montarPcp(repo)
+
+    expect(pcp.cumprimentoPrazo.concluidasComPrazo).toBe(0)
+    expect(pcp.cumprimentoPrazo.percentual).toBe(0)
+  })
+
   it('calcula os indicadores apenas com dados do banco do app (IND-09)', () => {
     const fonte = readFileSync(new URL('./pcp.ts', import.meta.url), 'utf8')
 

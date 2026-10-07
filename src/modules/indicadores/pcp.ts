@@ -11,7 +11,10 @@ export interface ExecucaoIndicador {
 /** Atividade com prazo e o momento da conclusão, quando houver (IND-08). */
 export interface AtividadeComPrazo extends AtividadeIndicador {
   deadlineAt: Date | null
-  /** Momento em que a atividade foi concluída; null sem execução registrada. */
+  /**
+   * Momento da última execução registrada; null quando não há execução. O
+   * adapter entrega a execução mais recente (`occurredAt` desc) (QF-08).
+   */
   completedAt: Date | null
 }
 
@@ -43,7 +46,9 @@ export interface Pcp {
 /**
  * Consolida os indicadores de PCP: produção por setor (soma das execuções) e
  * cumprimento de prazo sobre as atividades concluídas que possuem prazo
- * (IND-07, IND-08). Atividades sem prazo não entram no cálculo.
+ * (IND-07, IND-08). Atividades sem prazo não entram no cálculo. Uma atividade
+ * `COMPLETED` sem execução fica fora do indicador: sem execução não há atraso
+ * a atribuir (QF-08).
  *
  * SPEC_DEVIATION: `design.md` declara `montarPcp(agora)`; a fórmula do spec
  * ("concluídas no prazo ÷ concluídas com prazo") depende do momento de conclusão
@@ -60,7 +65,10 @@ export function montarPcpDe(
   }
 
   const concluidasComPrazo = atividades.filter(
-    (atividade) => atividade.deadlineAt !== null && atividade.status === 'COMPLETED',
+    (atividade) =>
+      atividade.deadlineAt !== null &&
+      atividade.status === 'COMPLETED' &&
+      atividade.completedAt !== null,
   )
   const concluidasNoPrazo = concluidasComPrazo.filter(
     (atividade) =>

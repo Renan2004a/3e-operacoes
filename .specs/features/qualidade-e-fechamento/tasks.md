@@ -113,10 +113,10 @@ T7
 
 **Done when**:
 
-- [ ] Concluída com prazo e execução usa a última execução
-- [ ] Concluída sem execução fica fora do indicador
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Concluída com prazo e execução usa a última execução
+- [x] Concluída sem execução fica fora do indicador
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

@@ -122,7 +122,7 @@ As features anteriores passaram em testes de unidade, mas faltam: verificação 
 | QF-05 | P1: A11y | Design | Pending |
 | QF-06 | P1: A11y | Design | Pending |
 | QF-07 | P1: Precisão | Design | Done |
-| QF-08 | P1: Precisão | Design | Pending |
+| QF-08 | P1: Precisão | Design | Done |
 | QF-09 | P1: Precisão | Design | Pending |
 | QF-10 | P1: Gerente | Design | Pending |
 | QF-11 | P2: Go-live | Design | Pending |
