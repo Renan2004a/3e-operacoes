@@ -130,7 +130,7 @@ O acompanhamento dos pedidos depende hoje de controle manual e de comunicação 
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| INTG-01 | P1: Importar pedido | Design | Implementing |
+| INTG-01 | P1: Importar pedido | Design | Done |
 | INTG-02 | P1: Importar pedido | Design | Implementing |
 | INTG-03 | P1: Importar pedido | Design | Implementing |
 | INTG-04 | P1: Importar pedido | Design | Implementing |
