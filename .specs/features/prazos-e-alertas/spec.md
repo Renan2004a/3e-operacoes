@@ -101,7 +101,7 @@ O pedido pode nascer sem data de entrega e, mesmo com data, não há como sinali
 | --- | --- | --- | --- | --- |
 | PRAZO-01 | P1: Definir | Execute | T1, T4, T5 | Done (T1) |
 | PRAZO-02 | P1: Definir | Execute | T1, T4, T6 | Done (T1) |
-| PRAZO-03 | P1: Definir | Execute | T5, T6 | Pending |
+| PRAZO-03 | P1: Definir | Execute | T5, T6 | Done (T5) |
 | PRAZO-04 | P1: Definir | Execute | T1, T5, T6 | Done (T1) |
 | PRAZO-05 | P1: Atraso | Execute | T2 | Done (T2) |
 | PRAZO-06 | P1: Atraso | Execute | T2 | Done (T2) |
