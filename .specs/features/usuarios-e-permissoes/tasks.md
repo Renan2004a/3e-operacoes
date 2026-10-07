@@ -293,8 +293,8 @@ T15
 
 **Done when**:
 
-- [ ] CRUD e associações N:N
-- [ ] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
+- [x] CRUD e associações N:N
+- [x] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
 
 **Tests**: none
 **Gate**: build
