@@ -6,13 +6,12 @@ import {
 } from '../../../../../../modules/setores/classificar-item'
 import { prismaClassificacaoRepository } from '../../../../../../modules/setores/adapters/prisma-classificacao-repository'
 import { prismaMapeamentoRepository } from '../../../../../../modules/setores/adapters/prisma-setores-repository'
-import { requireInternalToken } from '../../../../../../shared/http/internal-auth'
+import { autorizar } from '../../../../../../shared/http/autorizacao'
 
-/** POST /api/pedidos/itens/[itemId]/classificar — classificação manual do item. */
+/** POST /api/pedidos/itens/[itemId]/classificar — classificação manual do item (AUTH-14). */
 export async function POST(request: Request, context: { params: Promise<{ itemId: string }> }) {
-  if (!requireInternalToken(request)) {
-    return Response.json({ error: 'unauthorized' }, { status: 401 })
-  }
+  const auth = await autorizar(request, 'classificar_item')
+  if (!auth.autorizado) return auth.resposta
 
   const { itemId } = await context.params
 

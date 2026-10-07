@@ -1,7 +1,11 @@
+import type { RoleCode } from '@/generated/prisma/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { assinarSessao } from '../../../../../../modules/auth/sessao'
+import { SESSION_COOKIE } from '../../../../../../shared/http/auth-context'
 
 const mocks = vi.hoisted(() => {
   const NOW = new Date('2026-10-07T12:00:00.000Z')
+  const perfis: Record<string, RoleCode[]> = {}
   const items: Array<{
     id: string
     legacyCategory: string | null
@@ -91,7 +95,7 @@ const mocks = vi.hoisted(() => {
     actSeq = 0
   }
 
-  return { items, sectors, mappings, audits, classificacao, mapeamento, reset }
+  return { items, sectors, mappings, audits, classificacao, mapeamento, perfis, reset }
 })
 
 vi.mock('../../../../../../modules/setores/adapters/prisma-classificacao-repository', () => ({
@@ -100,6 +104,12 @@ vi.mock('../../../../../../modules/setores/adapters/prisma-classificacao-reposit
 
 vi.mock('../../../../../../modules/setores/adapters/prisma-setores-repository', () => ({
   prismaMapeamentoRepository: mocks.mapeamento,
+}))
+
+vi.mock('@/modules/usuarios/adapters/prisma-usuarios-repository', () => ({
+  prismaUsuariosRepository: {
+    findById: async (id: string) => ({ id, roles: [...(mocks.perfis[id] ?? [])] }),
+  },
 }))
 
 import { POST } from './route'
@@ -131,13 +141,21 @@ function seedSector(overrides: Partial<{ id: string; active: boolean }> = {}) {
   })
 }
 
-function request(itemId: string, body: unknown, token: string | null = 'segredo-interno'): Request {
+function request(
+  itemId: string,
+  body: unknown,
+  opts: { usuarioId?: string | null; xUserId?: string | null } = {},
+): Request {
+  const { usuarioId = 'user_mgr', xUserId = null } = opts
+  const headers: Record<string, string> = { 'content-type': 'application/json' }
+  if (usuarioId) {
+    const token = assinarSessao({ userId: usuarioId, expiraEm: new Date(Date.now() + 60_000) })
+    headers.cookie = `${SESSION_COOKIE}=${token}`
+  }
+  if (xUserId) headers['x-user-id'] = xUserId
   return new Request(`http://localhost/api/pedidos/itens/${itemId}/classificar`, {
     method: 'POST',
-    headers:
-      token === null
-        ? { 'content-type': 'application/json' }
-        : { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+    headers,
     body: JSON.stringify(body),
   })
 }
@@ -147,16 +165,19 @@ function context(itemId: string) {
 }
 
 describe('POST /api/pedidos/itens/[itemId]/classificar', () => {
-  const original = process.env.APP_INTERNAL_TOKEN
+  const original = process.env.SESSION_SECRET
 
   beforeEach(() => {
-    process.env.APP_INTERNAL_TOKEN = 'segredo-interno'
+    process.env.SESSION_SECRET = 'segredo-de-teste'
     mocks.reset()
+    mocks.perfis.user_mgr = ['PRODUCTION_MANAGER']
+    mocks.perfis.user_system = ['SYSTEM_RESPONSIBLE']
+    mocks.perfis.user_operador = ['OPERATOR']
   })
 
   afterEach(() => {
-    if (original === undefined) delete process.env.APP_INTERNAL_TOKEN
-    else process.env.APP_INTERNAL_TOKEN = original
+    if (original === undefined) delete process.env.SESSION_SECRET
+    else process.env.SESSION_SECRET = original
   })
 
   it('responde 200 e classifica o item no setor informado', async () => {
@@ -222,16 +243,43 @@ describe('POST /api/pedidos/itens/[itemId]/classificar', () => {
     expect(mocks.items[0].classificationStatus).toBe('PENDING_CLASSIFICATION')
   })
 
-  it('responde 401 sem token e não classifica', async () => {
+  it('responde 401 sem sessão e não classifica (AUTH-14)', async () => {
     seedItem()
     seedSector()
 
     const response = await POST(
-      request('item_1', { sectorId: 'setor_telhas' }, null),
+      request('item_1', { sectorId: 'setor_telhas' }, { usuarioId: null }),
       context('item_1'),
     )
 
     expect(response.status).toBe(401)
+    expect(mocks.items[0].classificationStatus).toBe('PENDING_CLASSIFICATION')
+  })
+
+  it('ignora o cabeçalho x-user-id quando não há sessão (AUTH-14)', async () => {
+    seedItem()
+    seedSector()
+
+    const response = await POST(
+      request('item_1', { sectorId: 'setor_telhas' }, { usuarioId: null, xUserId: 'user_mgr' }),
+      context('item_1'),
+    )
+
+    expect(response.status).toBe(401)
+    expect(mocks.items[0].classificationStatus).toBe('PENDING_CLASSIFICATION')
+  })
+
+  it('responde 403 quando o perfil não pode classificar (AUTH-14)', async () => {
+    seedItem()
+    seedSector()
+
+    const response = await POST(
+      request('item_1', { sectorId: 'setor_telhas' }, { usuarioId: 'user_operador' }),
+      context('item_1'),
+    )
+
+    expect(response.status).toBe(403)
+    expect((await response.json()).error).toBe('forbidden')
     expect(mocks.items[0].classificationStatus).toBe('PENDING_CLASSIFICATION')
   })
 })

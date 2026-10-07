@@ -3,13 +3,12 @@ import {
   PedidoNaoEncontradoError,
   saldoPedido,
 } from '../../../../../modules/expedicao/saldo-pedido'
-import { requireInternalToken } from '../../../../../shared/http/internal-auth'
+import { autorizar } from '../../../../../shared/http/autorizacao'
 
-/** GET /api/pedidos/[orderId]/saldo — saldo consolidado do pedido (RF011, EXP-10,12). */
+/** GET /api/pedidos/[orderId]/saldo — saldo consolidado do pedido (RF011, EXP-10,12, AUTH-14). */
 export async function GET(request: Request, context: { params: Promise<{ orderId: string }> }) {
-  if (!requireInternalToken(request)) {
-    return Response.json({ error: 'unauthorized' }, { status: 401 })
-  }
+  const auth = await autorizar(request, 'consultar_pedidos')
+  if (!auth.autorizado) return auth.resposta
 
   const { orderId } = await context.params
 

@@ -1,5 +1,8 @@
 import { Prisma } from '@/generated/prisma/client'
+import type { RoleCode } from '@/generated/prisma/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { assinarSessao } from '../../../../../modules/auth/sessao'
+import { SESSION_COOKIE } from '../../../../../shared/http/auth-context'
 import type {
   ItemDoPedido,
   SaldoPedidoRepository,
@@ -7,11 +10,18 @@ import type {
 
 const holder = vi.hoisted(() => ({
   repo: null as unknown as SaldoPedidoRepository,
+  perfis: {} as Record<string, RoleCode[]>,
 }))
 
 vi.mock('../../../../../modules/expedicao/adapters/prisma-expedicao-repository', () => ({
   prismaExpedicaoRepository: {
     buscarItensDoPedido: (orderId: string) => holder.repo.buscarItensDoPedido(orderId),
+  },
+}))
+
+vi.mock('@/modules/usuarios/adapters/prisma-usuarios-repository', () => ({
+  prismaUsuariosRepository: {
+    findById: async (id: string) => ({ id, roles: [...(holder.perfis[id] ?? [])] }),
   },
 }))
 
@@ -41,10 +51,14 @@ function item(
   }
 }
 
-function request(opts: { token?: string | null } = {}): Request {
-  const { token = 'segredo-interno' } = opts
+function request(opts: { usuarioId?: string | null; xUserId?: string | null } = {}): Request {
+  const { usuarioId = 'user_1', xUserId = null } = opts
   const headers: Record<string, string> = {}
-  if (token !== null) headers.authorization = `Bearer ${token}`
+  if (usuarioId) {
+    const token = assinarSessao({ userId: usuarioId, expiraEm: new Date(Date.now() + 60_000) })
+    headers.cookie = `${SESSION_COOKIE}=${token}`
+  }
+  if (xUserId) headers['x-user-id'] = xUserId
   return new Request('http://localhost/api/pedidos/ped_1/saldo', { headers })
 }
 
@@ -53,16 +67,18 @@ function context(orderId: string) {
 }
 
 describe('GET /api/pedidos/[orderId]/saldo', () => {
-  const original = process.env.APP_INTERNAL_TOKEN
+  const original = process.env.SESSION_SECRET
 
   beforeEach(() => {
-    process.env.APP_INTERNAL_TOKEN = 'segredo-interno'
+    process.env.SESSION_SECRET = 'segredo-de-teste'
     reset()
+    holder.perfis.user_1 = ['OPERATOR']
+    holder.perfis.user_sem_perfil = []
   })
 
   afterEach(() => {
-    if (original === undefined) delete process.env.APP_INTERNAL_TOKEN
-    else process.env.APP_INTERNAL_TOKEN = original
+    if (original === undefined) delete process.env.SESSION_SECRET
+    else process.env.SESSION_SECRET = original
   })
 
   it('responde 200 com os cinco valores por item (EXP-10)', async () => {
@@ -132,9 +148,25 @@ describe('GET /api/pedidos/[orderId]/saldo', () => {
     expect((await response.json()).error).toBe('order_not_found')
   })
 
-  it('responde 401 quando o token está ausente', async () => {
-    const response = await GET(request({ token: null }), context('ped_1'))
+  it('responde 401 sem sessão (AUTH-14)', async () => {
+    const response = await GET(request({ usuarioId: null }), context('ped_1'))
 
     expect(response.status).toBe(401)
+  })
+
+  it('ignora o cabeçalho x-user-id quando não há sessão (AUTH-14)', async () => {
+    const response = await GET(
+      request({ usuarioId: null, xUserId: 'user_1' }),
+      context('ped_1'),
+    )
+
+    expect(response.status).toBe(401)
+  })
+
+  it('responde 403 quando o perfil não pode consultar (AUTH-14)', async () => {
+    const response = await GET(request({ usuarioId: 'user_sem_perfil' }), context('ped_1'))
+
+    expect(response.status).toBe(403)
+    expect((await response.json()).error).toBe('forbidden')
   })
 })
