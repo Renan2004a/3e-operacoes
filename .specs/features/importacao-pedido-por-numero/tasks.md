@@ -384,10 +384,10 @@ T17
 
 **Done when**:
 
-- [ ] Envia `{ jobId, orderNumber }` com header de autorização
-- [ ] Timeout gera erro tratável `CONNECTOR_TIMEOUT`
-- [ ] Test count: 5 testes passam (sucesso, 401, timeout, 500, corpo inválido)
-- [ ] Gate check passa: `npm test`
+- [x] Envia `{ jobId, orderNumber }` com header de autorização
+- [x] Timeout gera erro tratável `CONNECTOR_TIMEOUT`
+- [x] Test count: 5 testes passam (sucesso, 401, timeout, 500, corpo inválido)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
