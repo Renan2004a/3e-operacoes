@@ -108,13 +108,13 @@ T7
 
 **Done when**:
 
-- [ ] Expedição/Gerente registram dentro do disponível
-- [ ] Outro papel é rejeitado
-- [ ] Acima do disponível é bloqueado sem exceção
-- [ ] Exceção de gerente com motivo grava auditoria
-- [ ] Parcial mantém parcial; atingir executado conclui
-- [ ] Test count: 11 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Expedição/Gerente registram dentro do disponível
+- [x] Outro papel é rejeitado
+- [x] Acima do disponível é bloqueado sem exceção
+- [x] Exceção de gerente com motivo grava auditoria
+- [x] Parcial mantém parcial; atingir executado conclui
+- [x] Test count: 11 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
