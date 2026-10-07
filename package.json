@@ -15,6 +15,10 @@
     "format:check": "prettier --check .",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
+    "prisma:seed": "tsx prisma/seed.ts",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
     "typecheck:connector": "npm --workspace connector-local run typecheck",
     "test:coverage": "vitest run --coverage"
   },

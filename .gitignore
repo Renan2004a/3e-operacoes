@@ -22,3 +22,6 @@ src/generated/prisma/
 *.sql
 *.dump
 *.bak
+
+# Migrations do Prisma são versionadas (o *.sql acima é para dumps locais)
+!prisma/migrations/**/*.sql
