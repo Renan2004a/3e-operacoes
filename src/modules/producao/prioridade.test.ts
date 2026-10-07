@@ -6,15 +6,15 @@ import { definirPrioridade, type PrioridadeRepository } from './prioridade'
 function atividade(
   overrides: Partial<Atividade> & Pick<Atividade, 'id' | 'sectorId'>,
 ): Atividade {
-  return {
+  const base: Atividade = {
     id: overrides.id,
     orderItemId: `item_${overrides.id}`,
     sectorId: overrides.sectorId,
     status: 'PENDING',
     priority: 0,
     createdAt: new Date('2026-10-07T12:00:00.000Z'),
-    ...overrides,
   }
+  return { ...base, ...overrides }
 }
 
 function createDeps(atividades: Atividade[]) {

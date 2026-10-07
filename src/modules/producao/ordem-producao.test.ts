@@ -11,7 +11,7 @@ import {
 function dados(
   overrides: Partial<DadosOrdemProducao> & Pick<DadosOrdemProducao, 'atividadeId'>,
 ): DadosOrdemProducao {
-  return {
+  const base: DadosOrdemProducao = {
     atividadeId: overrides.atividadeId,
     pedido: '70435',
     item: 'TELHA ONDULADA',
@@ -19,8 +19,8 @@ function dados(
     unidade: 'M',
     solicitado: new Prisma.Decimal(10),
     executado: new Prisma.Decimal(8),
-    ...overrides,
   }
+  return { ...base, ...overrides }
 }
 
 function createRepo(registros: DadosOrdemProducao[]): OrdemProducaoRepository {

@@ -16,13 +16,13 @@ const NOW = new Date('2026-10-07T12:00:00.000Z')
 function atividade(
   overrides: Partial<AtividadeParaExecucao> & Pick<AtividadeParaExecucao, 'id'>,
 ): AtividadeParaExecucao {
-  return {
+  const base: AtividadeParaExecucao = {
     id: overrides.id,
     sectorId: 'setor_telhas',
     unidade: 'M',
     solicitado: new Prisma.Decimal(10),
-    ...overrides,
   }
+  return { ...base, ...overrides }
 }
 
 function createDeps(

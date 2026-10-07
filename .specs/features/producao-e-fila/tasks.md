@@ -253,9 +253,9 @@ T11
 
 **Done when**:
 
-- [ ] Consulta de atividades por setor do usuário
-- [ ] Soma de execuções em transação
-- [ ] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
+- [x] Consulta de atividades por setor do usuário
+- [x] Soma de execuções em transação
+- [x] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
 
 **Tests**: none
 **Gate**: build
