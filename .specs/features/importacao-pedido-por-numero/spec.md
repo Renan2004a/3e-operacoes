@@ -131,7 +131,7 @@ O acompanhamento dos pedidos depende hoje de controle manual e de comunicação 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
 | INTG-01 | P1: Importar pedido | Design | Pending |
-| INTG-02 | P1: Importar pedido | Design | Pending |
+| INTG-02 | P1: Importar pedido | Design | Implementing |
 | INTG-03 | P1: Importar pedido | Design | Pending |
 | INTG-04 | P1: Importar pedido | Design | Pending |
 | INTG-05 | P1: Importar pedido | Design | Pending |
@@ -154,7 +154,7 @@ O acompanhamento dos pedidos depende hoje de controle manual e de comunicação 
 | INTG-22 | Edge: item cancelado | Design | Pending |
 | INTG-23 | Edge: importação concorrente | Design | Pending |
 
-**Coverage:** 23 total, 0 mapped to tasks, 23 unmapped ⚠️
+**Coverage:** 23 total, 22 mapped to tasks, 1 unmapped ⚠️
 
 ---
 

@@ -108,9 +108,9 @@ T17
 
 **Done when**:
 
-- [ ] Coluna `sellerLegacyCode String?` adicionada a `Order`
-- [ ] `npm run prisma:generate` executa sem erro
-- [ ] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
+- [x] Coluna `sellerLegacyCode String?` adicionada a `Order`
+- [x] `npm run prisma:generate` executa sem erro
+- [x] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
 
 **Tests**: none
 **Gate**: build

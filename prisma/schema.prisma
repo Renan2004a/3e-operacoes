@@ -114,6 +114,7 @@ model Order {
   legacyNumber   String
   customerName   String?
   sellerName     String?
+  sellerLegacyCode String?
   sourceUpdatedAt DateTime?
   lastSyncedAt   DateTime?
   createdAt      DateTime @default(now())
