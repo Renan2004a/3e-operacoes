@@ -80,11 +80,11 @@ T7
 
 **Done when**:
 
-- [ ] Lista com filtros de cliente, setor, status e período
-- [ ] Detalhe traz os cinco valores por item
-- [ ] Pedido inexistente rejeitado
-- [ ] Test count: 8 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Lista com filtros de cliente, setor, status e período
+- [x] Detalhe traz os cinco valores por item
+- [x] Pedido inexistente rejeitado
+- [x] Test count: 8 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

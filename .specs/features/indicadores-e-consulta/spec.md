@@ -95,21 +95,21 @@ O vendedor não tem uma visão dos pedidos e o gerente não tem um painel consol
 
 ## Requirement Traceability
 
-| Requirement ID | Story | Phase | Status |
-| --- | --- | --- | --- |
-| IND-01 | P1: Consulta | Design | Pending |
-| IND-02 | P1: Consulta | Design | Pending |
-| IND-03 | P1: Consulta | Design | Pending |
-| IND-04 | P1: Consulta | Design | Pending |
-| IND-05 | P1: Painel | Design | Pending |
-| IND-06 | P1: Painel | Design | Pending |
-| IND-07 | P2: PCP | Design | Pending |
-| IND-08 | P2: PCP | Design | Pending |
-| IND-09 | P2: PCP | Design | Pending |
-| IND-10 | Edge: pedido inexistente | Design | Pending |
-| IND-11 | Edge: sem sessão | Design | Pending |
+| Requirement ID | Story | Phase | Tasks | Status |
+| --- | --- | --- | --- | --- |
+| IND-01 | P1: Consulta | Execute | T1, T4, T5 | Done (T1) |
+| IND-02 | P1: Consulta | Execute | T1, T5 | Done (T1) |
+| IND-03 | P1: Consulta | Execute | T1, T5 | Done (T1) |
+| IND-04 | P1: Consulta | Execute | T1, T6 | Done (T1) |
+| IND-05 | P1: Painel | Design | T2, T4, T7 | Pending |
+| IND-06 | P1: Painel | Design | T2, T7 | Pending |
+| IND-07 | P2: PCP | Design | T3, T4, T7 | Pending |
+| IND-08 | P2: PCP | Design | T3, T7 | Pending |
+| IND-09 | P2: PCP | Design | T3 | Pending |
+| IND-10 | Edge: pedido inexistente | Execute | T1, T6 | Done (T1) |
+| IND-11 | Edge: sem sessão | Design | T5, T6, T7 | Pending |
 
-**Coverage:** 11 total, 0 mapped to tasks, 11 unmapped ⚠️
+**Coverage:** 11 total, 11 mapped to tasks, 0 unmapped
 
 ---
 
