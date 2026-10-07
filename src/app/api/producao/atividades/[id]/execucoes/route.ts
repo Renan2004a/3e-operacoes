@@ -5,20 +5,19 @@ import {
 } from '../../../../../../modules/producao/registrar-execucao'
 import { QuantidadeInvalidaError } from '../../../../../../modules/producao/unidades'
 import { prismaProducaoRepository } from '../../../../../../modules/producao/adapters/prisma-producao-repository'
-import { requireInternalToken } from '../../../../../../shared/http/internal-auth'
+import { autorizar } from '../../../../../../shared/http/autorizacao'
 
 /**
  * POST /api/producao/atividades/[id]/execucoes — registra a execução do operador
- * (PROD-04..07,14,15). Enquanto a feature de autenticação não existe, o usuário
- * atual vem do cabeçalho temporário `x-user-id`.
+ * (PROD-04..07,14,15, AUTH-14). O usuário vem da sessão; o cabeçalho temporário
+ * `x-user-id` é ignorado.
  */
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
-  if (!requireInternalToken(request)) {
-    return Response.json({ error: 'unauthorized' }, { status: 401 })
-  }
+  const auth = await autorizar(request, 'registrar_execucao')
+  if (!auth.autorizado) return auth.resposta
 
   const { id } = await context.params
-  const usuarioId = request.headers.get('x-user-id') ?? ''
+  const usuarioId = auth.usuario.userId
 
   let body: unknown
   try {

@@ -1,9 +1,13 @@
 import { Prisma } from '@/generated/prisma/client'
+import type { RoleCode } from '@/generated/prisma/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { assinarSessao } from '../../../../../../modules/auth/sessao'
+import { SESSION_COOKIE } from '../../../../../../shared/http/auth-context'
 import type { ExecucaoRepository } from '../../../../../../modules/producao/registrar-execucao'
 
 const holder = vi.hoisted(() => ({
   repo: null as unknown as ExecucaoRepository,
+  perfis: {} as Record<string, RoleCode[]>,
 }))
 
 vi.mock('../../../../../../modules/producao/adapters/prisma-producao-repository', () => ({
@@ -14,6 +18,12 @@ vi.mock('../../../../../../modules/producao/adapters/prisma-producao-repository'
       holder.repo.usuarioPertenceAoSetor(usuarioId, sectorId),
     registrarExecucao: (input: Parameters<ExecucaoRepository['registrarExecucao']>[0]) =>
       holder.repo.registrarExecucao(input),
+  },
+}))
+
+vi.mock('@/modules/usuarios/adapters/prisma-usuarios-repository', () => ({
+  prismaUsuariosRepository: {
+    findById: async (id: string) => ({ id, roles: [...(holder.perfis[id] ?? [])] }),
   },
 }))
 
@@ -90,12 +100,15 @@ function seedAtividade(
 
 function request(
   body: unknown,
-  opts: { usuarioId?: string | null; token?: string | null } = {},
+  opts: { usuarioId?: string | null; xUserId?: string | null } = {},
 ): Request {
-  const { usuarioId = 'user_1', token = 'segredo-interno' } = opts
+  const { usuarioId = 'user_1', xUserId = null } = opts
   const headers: Record<string, string> = { 'content-type': 'application/json' }
-  if (token !== null) headers.authorization = `Bearer ${token}`
-  if (usuarioId !== null) headers['x-user-id'] = usuarioId
+  if (usuarioId) {
+    const token = assinarSessao({ userId: usuarioId, expiraEm: new Date(Date.now() + 60_000) })
+    headers.cookie = `${SESSION_COOKIE}=${token}`
+  }
+  if (xUserId) headers['x-user-id'] = xUserId
   return new Request('http://localhost/api/producao/atividades/act_1/execucoes', {
     method: 'POST',
     headers,
@@ -108,17 +121,20 @@ function context(id: string) {
 }
 
 describe('POST /api/producao/atividades/[id]/execucoes', () => {
-  const original = process.env.APP_INTERNAL_TOKEN
+  const original = process.env.SESSION_SECRET
 
   beforeEach(() => {
-    process.env.APP_INTERNAL_TOKEN = 'segredo-interno'
+    process.env.SESSION_SECRET = 'segredo-de-teste'
     reset()
     state.vinculos.add('user_1:setor_telhas')
+    holder.perfis.user_1 = ['OPERATOR']
+    holder.perfis.user_2 = ['OPERATOR']
+    holder.perfis.user_vendedor = ['SELLER']
   })
 
   afterEach(() => {
-    if (original === undefined) delete process.env.APP_INTERNAL_TOKEN
-    else process.env.APP_INTERNAL_TOKEN = original
+    if (original === undefined) delete process.env.SESSION_SECRET
+    else process.env.SESSION_SECRET = original
   })
 
   it('responde 201 e persiste a execução com usuário e status', async () => {
@@ -172,12 +188,51 @@ describe('POST /api/producao/atividades/[id]/execucoes', () => {
     expect(state.execucoes).toHaveLength(0)
   })
 
-  it('responde 401 quando o token está ausente', async () => {
+  it('responde 401 sem sessão e não persiste (AUTH-14)', async () => {
     seedAtividade('act_1')
 
-    const response = await POST(request({ quantidade: '4' }, { token: null }), context('act_1'))
+    const response = await POST(request({ quantidade: '4' }, { usuarioId: null }), context('act_1'))
 
     expect(response.status).toBe(401)
+    expect(state.execucoes).toHaveLength(0)
+  })
+
+  it('ignora o cabeçalho x-user-id quando não há sessão (AUTH-14)', async () => {
+    seedAtividade('act_1')
+
+    const response = await POST(
+      request({ quantidade: '4' }, { usuarioId: null, xUserId: 'user_1' }),
+      context('act_1'),
+    )
+
+    expect(response.status).toBe(401)
+    expect(state.execucoes).toHaveLength(0)
+  })
+
+  it('usa o usuário da sessão e ignora o cabeçalho x-user-id (AUTH-14)', async () => {
+    seedAtividade('act_1')
+
+    const response = await POST(
+      request({ quantidade: '4' }, { usuarioId: 'user_1', xUserId: 'user_2' }),
+      context('act_1'),
+    )
+
+    expect(response.status).toBe(201)
+    const body = await response.json()
+    expect(body.execucao.userId).toBe('user_1')
+    expect(state.execucoes[0].userId).toBe('user_1')
+  })
+
+  it('responde 403 quando o perfil não pode registrar execução (AUTH-14)', async () => {
+    seedAtividade('act_1')
+
+    const response = await POST(
+      request({ quantidade: '4' }, { usuarioId: 'user_vendedor' }),
+      context('act_1'),
+    )
+
+    expect(response.status).toBe(403)
+    expect((await response.json()).error).toBe('forbidden')
     expect(state.execucoes).toHaveLength(0)
   })
 })
