@@ -527,11 +527,11 @@ T17
 
 **Done when**:
 
-- [ ] Token inválido responde `401`
-- [ ] Corpo inválido responde `400`
-- [ ] Sucesso dispara o callback autenticado e responde `202`
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Token inválido responde `401`
+- [x] Corpo inválido responde `400`
+- [x] Sucesso dispara o callback autenticado e responde `202`
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
