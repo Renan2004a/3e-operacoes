@@ -113,11 +113,11 @@ T9
 
 **Done when**:
 
-- [ ] Criação grava auditoria
-- [ ] Alteração grava antes/depois
-- [ ] Categoria duplicada é rejeitada com conflito
-- [ ] Test count: 7 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Criação grava auditoria
+- [x] Alteração grava antes/depois
+- [x] Categoria duplicada é rejeitada com conflito
+- [x] Test count: 7 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
