@@ -187,10 +187,10 @@ T8 -> T7
 
 **Done when**:
 
-- [ ] Navegação conforme o perfil
-- [ ] Menu acessível em 360 px; sem rolagem horizontal até 1440 px
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Navegação conforme o perfil
+- [x] Menu acessível em 360 px; sem rolagem horizontal até 1440 px
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
