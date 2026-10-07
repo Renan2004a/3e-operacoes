@@ -85,10 +85,10 @@ T7
 
 **Done when**:
 
-- [ ] `Metric`, `Badge` e `PageHead` exportados
-- [ ] Badge comunica estado por texto + cor
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] `Metric`, `Badge` e `PageHead` exportados
+- [x] Badge comunica estado por texto + cor
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

@@ -112,8 +112,8 @@ A interface funciona, mas está visualmente simples e distante da referência `f
 | VIS-04 | P1: Login | Design | Pending |
 | VIS-05 | P1: Login | Design | Pending |
 | VIS-06 | P1: Login | Design | Pending |
-| VIS-07 | P1: Componentes | Design | Pending |
-| VIS-08 | P1: Componentes | Design | Pending |
+| VIS-07 | P1: Componentes | Design | Done |
+| VIS-08 | P1: Componentes | Design | Done |
 | VIS-09 | P1: Telas | Design | Pending |
 | VIS-10 | P1: Telas | Design | Pending |
 | VIS-11 | P1: Telas | Design | Pending |
