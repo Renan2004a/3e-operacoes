@@ -234,3 +234,34 @@ Prazo opcional por item/setor (gerente ou vendedor), status `SEM_PRAZO`/`EM_DIA`
 ### Riscos abertos
 - Sem teste de rota com perfil Vendedor (coberto pela matriz de permissões) — observação menor.
 - Notificações de alerta ficam fora do escopo (aqui é consulta).
+
+---
+
+## Feature 8 — Indicadores e Consulta
+
+**Data**: 2026-10-07
+**Requisitos**: RF006, RF008
+**Artefatos**: `.specs/features/indicadores-e-consulta/{spec,design,tasks,validation}.md`
+
+### Objetivo
+Consulta de pedidos com filtros (vendedor e gerente), painel consolidado por setor/status e indicadores de PCP.
+
+### Como foi feito
+- **Specify**: 11 critérios EARS; `validate_spec.py` 0/0.
+- **Design**: domínio `src/modules/indicadores/`; somente leitura; reusa o saldo da expedição.
+- **Tasks**: 7 tarefas em 3 fases; `validate_tasks.py` 0 erros.
+- **Execute**: 1 batch (T1–T7), commit atômico por tarefa.
+- **Verify**: Verifier independente → **PASS** na primeira rodada.
+
+### Resultado
+- **7 tarefas** implementadas.
+- **429 testes** passando. Cobertura 96,4% linhas / 93,5% branches.
+- **Verificação: PASS** — 11/11 ACs com evidência; 6/6 mutantes mortos. `validate_state.py`: 0 erros.
+
+### Lacunas de precisão registradas (follow-up)
+- Paginação sem ordenação determinística e defaults não especificados (major).
+- Momento de conclusão para cumprimento de prazo inferido da última execução; atividade `COMPLETED` sem execução pode ser contada como atrasada (major).
+- Filtro de cliente e derivação de status do pedido sem definição na spec (minor).
+
+### Riscos abertos
+- Indicadores dependem de dados operacionais; revisar com volume real.
