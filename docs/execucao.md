@@ -329,3 +329,35 @@ Telas de gerente (painel/pedidos), vendedor (consulta/prazo), expedição (entre
 
 ### Decisão de produto pendente
 - O gerente não tem o atalho para a fila de produção (antes tinha). A matriz permite `registrar_execucao` ao gerente; decidir se o atalho volta.
+
+---
+
+## Feature 11 — Qualidade e Fechamento
+
+**Data**: 2026-10-07
+**Requisitos**: qualidade (E2E, acessibilidade, precisão) e go-live
+**Artefatos**: `.specs/features/qualidade-e-fechamento/{spec,design,tasks,validation}.md`
+
+### Objetivo
+E2E Playwright (login e responsividade), acessibilidade, fechamento das lacunas de precisão, atalho do gerente e documentação de go-live.
+
+### Como foi feito
+- **Specify**: 11 critérios EARS; `validate_spec.py` 0/0.
+- **Design**: correções no domínio de indicadores, navegação, a11y, E2E e doc.
+- **Tasks**: 7 tarefas em 4 fases; `validate_tasks.py` 0 erros.
+- **Execute**: 1 batch (T1–T7), commit atômico por tarefa. Chromium instalado.
+- **Verify**: Verifier independente → **PASS** na primeira rodada.
+
+### Resultado
+- **7 tarefas** implementadas.
+- **568 testes unitários** + **14 E2E** passando. Cobertura 96,7% linhas / 93,9% branches.
+- **Verificação: PASS** — 11/11 ACs; 6/6 mutantes mortos; viewport real verificado. `validate_state.py`: 0 erros.
+
+### Decisões e desvios
+- E2E em Chromium headless com API mockada (sem banco); viewports 360–1440 sem rolagem horizontal.
+- `playwright.config.ts` em `localhost` (Next 16 bloqueia dev em `127.0.0.1`); `tests/e2e/**` excluído do Vitest.
+- Fila devolvida ao gerente; ordenação determinística; prazo sem execução fora do indicador.
+
+### Riscos abertos
+- E2E de fluxos com banco depende de um MySQL de runtime.
+- Go-live depende de Cloudflare/conector no ambiente do cliente (documentado em `docs/go-live.md`).

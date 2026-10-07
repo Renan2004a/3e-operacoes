@@ -115,17 +115,17 @@ As features anteriores passaram em testes de unidade, mas faltam: verificação 
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| QF-01 | P1: E2E | Design | Done |
-| QF-02 | P1: E2E | Design | Done |
-| QF-03 | P1: E2E | Design | Done |
-| QF-04 | P1: A11y | Design | Done |
-| QF-05 | P1: A11y | Design | Done |
-| QF-06 | P1: A11y | Design | Done |
-| QF-07 | P1: Precisão | Design | Done |
-| QF-08 | P1: Precisão | Design | Done |
-| QF-09 | P1: Precisão | Design | Done |
-| QF-10 | P1: Gerente | Design | Done |
-| QF-11 | P2: Go-live | Design | Done |
+| QF-01 | P1: E2E | Design | Verified |
+| QF-02 | P1: E2E | Design | Verified |
+| QF-03 | P1: E2E | Design | Verified |
+| QF-04 | P1: A11y | Design | Verified |
+| QF-05 | P1: A11y | Design | Verified |
+| QF-06 | P1: A11y | Design | Verified |
+| QF-07 | P1: Precisão | Design | Verified |
+| QF-08 | P1: Precisão | Design | Verified |
+| QF-09 | P1: Precisão | Design | Verified |
+| QF-10 | P1: Gerente | Design | Verified |
+| QF-11 | P2: Go-live | Design | Verified |
 
 **Coverage:** 11 total, 11 mapped to tasks, 0 unmapped ✅
 
