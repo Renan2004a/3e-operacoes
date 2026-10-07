@@ -275,11 +275,11 @@ T17
 
 **Done when**:
 
-- [ ] Payload inválido não persiste dados
-- [ ] Callback duplicado não repete o upsert
-- [ ] Job termina `SUCCEEDED` e registra evento
-- [ ] Test count: 7 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Payload inválido não persiste dados
+- [x] Callback duplicado não repete o upsert
+- [x] Job termina `SUCCEEDED` e registra evento
+- [x] Test count: 7 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
