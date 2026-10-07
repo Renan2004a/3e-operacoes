@@ -209,7 +209,6 @@ export default function EntregasPage() {
 
   useEffect(() => {
     if (!orderId) return
-    setCarregandoPedido(true)
     void carregarPedido(orderId)
   }, [orderId, carregarPedido])
 
@@ -256,7 +255,10 @@ export default function EntregasPage() {
             aria-describedby={props['aria-describedby']}
             className={CLASSE_SELECT}
             value={orderId}
-            onChange={(evento) => setOrderId(evento.target.value)}
+            onChange={(evento) => {
+              setOrderId(evento.target.value)
+              setCarregandoPedido(evento.target.value !== '')
+            }}
           >
             <option value="">Selecione…</option>
             {(pedidos ?? []).map((opcao) => (
