@@ -177,12 +177,26 @@ model Occurrence {
   type        String
   quantity    Decimal? @db.Decimal(18, 3)
   durationMin Int?
-  reasonCode  String?
+  motivoId    String?
   note        String?
   occurredAt  DateTime @default(now())
   activity    Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
   user        User     @relation(fields: [userId], references: [id])
+  motivo      MotivoOcorrencia? @relation(fields: [motivoId], references: [id])
   @@index([activityId, occurredAt])
+  @@index([motivoId])
+}
+
+model MotivoOcorrencia {
+  id          String   @id @default(cuid())
+  tipo        String
+  codigo      String
+  descricao   String
+  ativo       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  occurrences Occurrence[]
+  @@unique([tipo, codigo])
 }
 
 model Delivery {

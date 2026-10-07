@@ -165,9 +165,9 @@ T7
 
 **Done when**:
 
-- [ ] Entidade `MotivoOcorrencia` com `@@unique([tipo, codigo])`
-- [ ] `Occurrence.motivoId` com relação; `reasonCode` removido
-- [ ] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
+- [x] Entidade `MotivoOcorrencia` com `@@unique([tipo, codigo])`
+- [x] `Occurrence.motivoId` com relação; `reasonCode` removido
+- [x] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
 
 **Tests**: none
 **Gate**: build
