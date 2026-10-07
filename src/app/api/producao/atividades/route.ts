@@ -1,18 +1,15 @@
 import { listarFila } from '../../../../modules/producao/fila'
 import { prismaProducaoRepository } from '../../../../modules/producao/adapters/prisma-producao-repository'
-import { requireInternalToken } from '../../../../shared/http/internal-auth'
+import { autorizar } from '../../../../shared/http/autorizacao'
 
 /**
- * GET /api/producao/atividades — fila de atividades dos setores do usuário
- * (PROD-01..03). Enquanto a feature de autenticação não existe, o usuário
- * atual vem do cabeçalho temporário `x-user-id`.
+ * GET /api/producao/atividades — fila de atividades dos setores do usuário da
+ * sessão (PROD-01..03, AUTH-14). O cabeçalho temporário `x-user-id` é ignorado.
  */
 export async function GET(request: Request) {
-  if (!requireInternalToken(request)) {
-    return Response.json({ error: 'unauthorized' }, { status: 401 })
-  }
+  const auth = await autorizar(request, 'registrar_execucao')
+  if (!auth.autorizado) return auth.resposta
 
-  const usuarioId = request.headers.get('x-user-id') ?? ''
-  const atividades = await listarFila(usuarioId, prismaProducaoRepository)
+  const atividades = await listarFila(auth.usuario.userId, prismaProducaoRepository)
   return Response.json({ atividades }, { status: 200 })
 }
