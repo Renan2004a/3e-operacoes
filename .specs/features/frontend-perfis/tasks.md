@@ -266,10 +266,10 @@ T9 -> T10
 
 **Done when**:
 
-- [ ] Cria usuário com perfis e setores
-- [ ] Trata conflito de e-mail e sem permissão
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Cria usuário com perfis e setores
+- [x] Trata conflito de e-mail e sem permissão
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

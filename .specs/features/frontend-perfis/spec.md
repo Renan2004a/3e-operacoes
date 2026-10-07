@@ -133,7 +133,7 @@ Só existe a fatia do operador. Gerente, vendedor, expedição e responsável pe
 | FEP-05 | P1: Prazo | Design | Verified |
 | FEP-06 | P1: Entregas | Design | Verified |
 | FEP-07 | P1: Entregas | Design | Verified |
-| FEP-08 | P1: Administração | Design | Pending |
+| FEP-08 | P1: Administração | Design | Verified |
 | FEP-09 | P1: Administração | Design | Pending |
 | FEP-10 | P1: Navegação | Design | Pending |
 | FEP-11 | P1: Navegação | Design | Pending |
