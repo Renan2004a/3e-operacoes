@@ -164,8 +164,8 @@ T7
 
 **Done when**:
 
-- [ ] Persistência de prazo e consulta de atrasadas
-- [ ] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
+- [x] Persistência de prazo e consulta de atrasadas
+- [x] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
 
 **Tests**: none
 **Gate**: build
