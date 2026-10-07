@@ -134,10 +134,10 @@ T17
 
 **Done when**:
 
-- [ ] `requireInternalToken(request): boolean` compara com `APP_INTERNAL_TOKEN`
-- [ ] Retorna falso quando o token falta ou diverge
-- [ ] Test count: 4 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] `requireInternalToken(request): boolean` compara com `APP_INTERNAL_TOKEN`
+- [x] Retorna falso quando o token falta ou diverge
+- [x] Test count: 4 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
