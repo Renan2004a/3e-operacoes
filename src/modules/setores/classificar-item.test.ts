@@ -163,6 +163,21 @@ describe('classificarPorMapeamento', () => {
     expect(activities).toHaveLength(0)
   })
 
+  it('mantém o item pendente quando o mapeamento está inativo', async () => {
+    const { deps, itemStore, activities } = createDeps({
+      items: [itemState({ id: 'item_1', legacyCategory: 'Telhas' })],
+      mappings: [mapping({ legacyCategory: 'Telhas', status: 'INACTIVE' })],
+    })
+
+    const result = await classificarPorMapeamento('item_1', deps)
+
+    expect(result.status).toBe('PENDING_CLASSIFICATION')
+    expect(result.sectorId).toBeNull()
+    expect(result.activityId).toBeNull()
+    expect(itemStore[0].classificationStatus).toBe('PENDING_CLASSIFICATION')
+    expect(activities).toHaveLength(0)
+  })
+
   it('mantém o item pendente quando a categoria é nula', async () => {
     const { deps, itemStore } = createDeps({
       items: [itemState({ id: 'item_1', legacyCategory: null })],
