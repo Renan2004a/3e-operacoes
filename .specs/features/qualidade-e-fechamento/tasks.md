@@ -253,9 +253,9 @@ T7
 
 **Done when**:
 
-- [ ] Passos de Cloudflare, conector e troca de fonte descritos
-- [ ] Sem credenciais no documento
-- [ ] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
+- [x] Passos de Cloudflare, conector e troca de fonte descritos
+- [x] Sem credenciais no documento
+- [x] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
 
 **Tests**: none
 **Gate**: build

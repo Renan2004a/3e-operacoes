@@ -6,11 +6,11 @@ As features anteriores passaram em testes de unidade, mas faltam: verificação 
 
 ## Goals
 
-- [ ] E2E com Playwright do login e da responsividade (360–1440 px).
-- [ ] Acessibilidade WCAG 2.1 AA nos componentes-chave.
-- [ ] Fechar as lacunas de precisão (ordenação, conclusão do prazo, filtro de cliente).
-- [ ] Devolver o atalho do gerente para a fila.
-- [ ] Documentar o go-live.
+- [x] E2E com Playwright do login e da responsividade (360–1440 px).
+- [x] Acessibilidade WCAG 2.1 AA nos componentes-chave.
+- [x] Fechar as lacunas de precisão (ordenação, conclusão do prazo, filtro de cliente).
+- [x] Devolver o atalho do gerente para a fila.
+- [x] Documentar o go-live.
 
 ## Out of Scope
 
@@ -125,15 +125,15 @@ As features anteriores passaram em testes de unidade, mas faltam: verificação 
 | QF-08 | P1: Precisão | Design | Done |
 | QF-09 | P1: Precisão | Design | Done |
 | QF-10 | P1: Gerente | Design | Done |
-| QF-11 | P2: Go-live | Design | Pending |
+| QF-11 | P2: Go-live | Design | Done |
 
-**Coverage:** 11 total, 0 mapped to tasks, 11 unmapped ⚠️
+**Coverage:** 11 total, 11 mapped to tasks, 0 unmapped ✅
 
 ---
 
 ## Success Criteria
 
-- [ ] `npm run test:e2e` verde no login e na responsividade.
-- [ ] Componentes-chave acessíveis por teclado.
-- [ ] Indicadores e listas determinísticos.
-- [ ] Documento de go-live publicado.
+- [x] `npm run test:e2e` verde no login e na responsividade.
+- [x] Componentes-chave acessíveis por teclado.
+- [x] Indicadores e listas determinísticos.
+- [x] Documento de go-live publicado.
