@@ -79,9 +79,9 @@ T8 -> T7
 
 **Done when**:
 
-- [ ] Tokens de cor e tipografia definidos
-- [ ] Contraste adequado (WCAG AA)
-- [ ] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
+- [x] Tokens de cor e tipografia definidos
+- [x] Contraste adequado (WCAG AA)
+- [x] Gate check passa: `npm run prisma:generate && npm run lint && npm run typecheck && npm run typecheck:connector && npm run test:coverage && npm run build`
 
 **Tests**: none
 **Gate**: build
