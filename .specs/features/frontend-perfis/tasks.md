@@ -237,10 +237,10 @@ T9 -> T10
 
 **Done when**:
 
-- [ ] Registra entrega dentro do disponível e atualiza o saldo
-- [ ] Exige gerente e motivo quando excede o disponível
-- [ ] Test count: 7 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Registra entrega dentro do disponível e atualiza o saldo
+- [x] Exige gerente e motivo quando excede o disponível
+- [x] Test count: 7 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
