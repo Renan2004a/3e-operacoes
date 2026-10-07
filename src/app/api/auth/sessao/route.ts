@@ -1,8 +1,12 @@
+import { prismaUsuariosRepository } from '@/modules/usuarios/adapters/prisma-usuarios-repository'
 import { obterUsuario, serializarCookieSessaoExpirado } from '../../../../shared/http/auth-context'
 
 /**
- * GET /api/auth/sessao — devolve o usuário da sessão (AUTH-04). Sem sessão
- * válida responde `401`, cobrindo também token adulterado ou expirado (AUTH-16).
+ * GET /api/auth/sessao — devolve o usuário da sessão com os perfis (AUTH-04).
+ * O cookie carrega apenas o id; os perfis vêm do repositório, como no layout.
+ * O cliente usa os perfis para escolher a navegação e a tela inicial (FEP-11).
+ * Sem sessão válida responde `401`, cobrindo também token adulterado ou
+ * expirado (AUTH-16).
  */
 export async function GET(request: Request) {
   const usuario = obterUsuario(request)
@@ -10,8 +14,11 @@ export async function GET(request: Request) {
     return Response.json({ error: 'unauthorized' }, { status: 401 })
   }
 
+  const registro = await prismaUsuariosRepository.findById(usuario.userId)
+  const roles = registro?.roles ?? []
+
   return Response.json(
-    { usuario: { id: usuario.userId, expiraEm: usuario.expiraEm } },
+    { usuario: { id: usuario.userId, expiraEm: usuario.expiraEm, roles } },
     { status: 200 },
   )
 }

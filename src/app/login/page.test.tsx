@@ -2,9 +2,11 @@
 import '@testing-library/jest-dom/vitest'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import type { RoleCode } from '@/generated/prisma/client'
 
 const mocks = vi.hoisted(() => ({
   push: vi.fn(),
+  apiGet: vi.fn(),
   apiPost: vi.fn(),
   ApiError: class ApiError extends Error {
     status: number
@@ -22,7 +24,7 @@ vi.mock('next/navigation', () => ({
 }))
 
 vi.mock('@/shared/http/api-client', () => ({
-  apiGet: vi.fn(),
+  apiGet: mocks.apiGet,
   apiPost: mocks.apiPost,
   apiPatch: vi.fn(),
   ApiError: mocks.ApiError,
@@ -36,12 +38,25 @@ function preencher(email: string, senha: string) {
   fireEvent.click(screen.getByRole('button', { name: 'Entrar' }))
 }
 
+function sessaoCom(roles: RoleCode[]) {
+  return { usuario: { id: 'u1', roles } }
+}
+
 beforeEach(() => {
   mocks.push.mockReset()
+  mocks.apiGet.mockReset()
   mocks.apiPost.mockReset()
 })
 
 afterEach(cleanup)
+
+/** Tela inicial esperada por perfil (FEP-11). */
+const DESTINOS: Array<{ perfil: RoleCode; rota: string }> = [
+  { perfil: 'PRODUCTION_MANAGER', rota: '/gerente/painel' },
+  { perfil: 'SELLER', rota: '/vendedor/pedidos' },
+  { perfil: 'SHIPPING', rota: '/expedicao/entregas' },
+  { perfil: 'SYSTEM_RESPONSIBLE', rota: '/admin/usuarios' },
+]
 
 describe('LoginPage', () => {
   it('associa rótulos e usa tipos de input corretos (FE-03)', () => {
@@ -53,6 +68,7 @@ describe('LoginPage', () => {
 
   it('com credenciais válidas navega para a tela do perfil (FE-01)', async () => {
     mocks.apiPost.mockResolvedValue({ usuario: { id: 'u1' } })
+    mocks.apiGet.mockResolvedValue(sessaoCom(['OPERATOR']))
     render(<LoginPage />)
 
     preencher('ana@example.com', 'segredo')
@@ -64,6 +80,33 @@ describe('LoginPage', () => {
       { redirectOnUnauthorized: false },
     )
   })
+
+  it('resolve o perfil pelo endpoint de sessão (FEP-11)', async () => {
+    mocks.apiPost.mockResolvedValue({ usuario: { id: 'u1' } })
+    mocks.apiGet.mockResolvedValue(sessaoCom(['OPERATOR']))
+    render(<LoginPage />)
+
+    preencher('ana@example.com', 'segredo')
+
+    await waitFor(() =>
+      expect(mocks.apiGet).toHaveBeenCalledWith('/api/auth/sessao', {
+        redirectOnUnauthorized: false,
+      }),
+    )
+  })
+
+  it.each(DESTINOS)(
+    'navega para a tela inicial do perfil $perfil (FEP-11)',
+    async ({ perfil, rota }) => {
+      mocks.apiPost.mockResolvedValue({ usuario: { id: 'u1' } })
+      mocks.apiGet.mockResolvedValue(sessaoCom([perfil]))
+      render(<LoginPage />)
+
+      preencher('ana@example.com', 'segredo')
+
+      await waitFor(() => expect(mocks.push).toHaveBeenCalledWith(rota))
+    },
+  )
 
   it('com credenciais inválidas mostra erro acessível e não navega (FE-02)', async () => {
     mocks.apiPost.mockRejectedValue(new mocks.ApiError(401, 'invalid_credentials'))

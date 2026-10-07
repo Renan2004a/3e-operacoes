@@ -2,14 +2,17 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import type { RoleCode } from '@/generated/prisma/client'
 import { Alert } from '@/shared/ui/alert'
 import { Button } from '@/shared/ui/button'
 import { Field } from '@/shared/ui/field'
 import { Input } from '@/shared/ui/input'
-import { ApiError, apiPost } from '@/shared/http/api-client'
+import { rotaInicialDoPerfil } from '@/shared/ui/navegacao-perfil'
+import { ApiError, apiGet, apiPost } from '@/shared/http/api-client'
 
-/** Tela do perfil entregue nesta fatia (operador). */
-const TELA_DO_PERFIL = '/operador/fila'
+interface RespostaSessao {
+  usuario: { id: string; roles: RoleCode[] }
+}
 
 export default function LoginPage() {
   const router = useRouter()
@@ -29,7 +32,13 @@ export default function LoginPage() {
         { email, senha },
         { redirectOnUnauthorized: false },
       )
-      router.push(TELA_DO_PERFIL)
+      // A sessão guarda só o id; os perfis vêm do endpoint de sessão para
+      // escolher a tela inicial do perfil (FEP-11).
+      const sessao = await apiGet<RespostaSessao>('/api/auth/sessao', {
+        redirectOnUnauthorized: false,
+      })
+      const perfil = sessao.usuario.roles[0]
+      router.push(perfil ? rotaInicialDoPerfil(perfil) : '/')
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         setErro('E-mail ou senha inválidos. Verifique e tente novamente.')

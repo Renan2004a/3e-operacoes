@@ -136,11 +136,11 @@ Só existe a fatia do operador. Gerente, vendedor, expedição e responsável pe
 | FEP-08 | P1: Administração | Design | Verified |
 | FEP-09 | P1: Administração | Design | Verified |
 | FEP-10 | P1: Navegação | Design | Verified |
-| FEP-11 | P1: Navegação | Design | Pending |
+| FEP-11 | P1: Navegação | Design | Verified |
 | FEP-12 | Edge: 401 | Design | Verified |
 | FEP-13 | Edge: falha de API | Design | Verified |
 
-**Coverage:** 13 total, 0 mapped to tasks, 13 unmapped ⚠️
+**Coverage:** 13 total, 13 mapped to tasks, 0 unmapped
 
 ---
 

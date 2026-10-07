@@ -349,9 +349,9 @@ T9 -> T10
 
 **Done when**:
 
-- [ ] Gerente cai no painel; vendedor na consulta; operador na fila
-- [ ] Test count: 5 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Gerente cai no painel; vendedor na consulta; operador na fila
+- [x] Test count: 11 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

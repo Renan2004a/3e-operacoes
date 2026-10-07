@@ -1,6 +1,13 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { assinarSessao } from '../../../../modules/auth/sessao'
 import { SESSION_COOKIE } from '../../../../shared/http/auth-context'
+
+const mocks = vi.hoisted(() => ({ findById: vi.fn() }))
+
+vi.mock('@/modules/usuarios/adapters/prisma-usuarios-repository', () => ({
+  prismaUsuariosRepository: { findById: mocks.findById },
+}))
+
 import { DELETE, GET } from './route'
 
 const ORIGINAL_SECRET = process.env.SESSION_SECRET
@@ -23,6 +30,7 @@ function cookieDaResposta(response: Response): string {
 describe('/api/auth/sessao', () => {
   beforeEach(() => {
     process.env.SESSION_SECRET = 'segredo-de-teste'
+    mocks.findById.mockReset()
   })
 
   afterEach(() => {
@@ -30,12 +38,16 @@ describe('/api/auth/sessao', () => {
     else process.env.SESSION_SECRET = ORIGINAL_SECRET
   })
 
-  it('GET responde 200 com o usuário da sessão (AUTH-04)', async () => {
+  it('GET responde 200 com o usuário e os perfis da sessão (AUTH-04, FEP-11)', async () => {
+    mocks.findById.mockResolvedValue({ id: 'user_1', roles: ['PRODUCTION_MANAGER'] })
+
     const response = await GET(getRequest(`${SESSION_COOKIE}=${tokenValido()}`))
 
     expect(response.status).toBe(200)
     const body = await response.json()
     expect(body.usuario.id).toBe('user_1')
+    expect(body.usuario.roles).toEqual(['PRODUCTION_MANAGER'])
+    expect(mocks.findById).toHaveBeenCalledWith('user_1')
   })
 
   it('GET responde 401 sem sessão (AUTH-04)', async () => {
@@ -43,6 +55,12 @@ describe('/api/auth/sessao', () => {
 
     expect(response.status).toBe(401)
     expect((await response.json()).error).toBe('unauthorized')
+  })
+
+  it('GET não consulta os perfis sem sessão (AUTH-04)', async () => {
+    await GET(getRequest(`${SESSION_COOKIE}=token-adulterado`))
+
+    expect(mocks.findById).not.toHaveBeenCalled()
   })
 
   it('GET responde 401 com token adulterado (AUTH-16)', async () => {
