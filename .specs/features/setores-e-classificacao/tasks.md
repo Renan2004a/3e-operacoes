@@ -66,7 +66,7 @@ T9
 ### Phase 4: Correções de verificação
 
 ```
-T10
+T10 -> T13
 T11
 T12
 ```
@@ -415,6 +415,33 @@ T12
 
 ---
 
+#### T13: Reimportação não reclassifica item já classificado
+
+**What**: Cobrir o ramo do adaptador que ignora itens já `CLASSIFIED`, garantindo que a reimportação não falha nem duplica `Activity`.
+**Where**: `src/app/api/integracao/callback/route.test.ts`
+**Depends on**: T10
+**Reuses**: Teste de integração do callback (T10).
+**Requirement**: SET-09
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `tlc-spec-driven`, `tdd-3e`
+
+**Done when**:
+
+- [x] Item já `CLASSIFIED` permanece `CLASSIFIED` na reimportação
+- [x] Nenhuma `Activity` duplicada; o job conclui `SUCCEEDED`
+- [x] Test count: 7 testes passam em `callback/route.test.ts` (sem remoções silenciosas)
+- [x] Gate check passa: `npm run lint && npm run typecheck && npm test`
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `test(api): preserva item classificado na reimportacao`
+
+---
+
 ## Phase Execution Map
 
 ```
@@ -428,6 +455,7 @@ Phase 3: T9
 Phase 4: T10
 Phase 4: T11
 Phase 4: T12
+Phase 4: T10 -> T13
 ```
 
 ---
@@ -448,6 +476,7 @@ Phase 4: T12
 | T10: auto-classificação fim a fim | 1 porta + fiação | ⚠️ Multi-arquivo (deliverable atômico) |
 | T11: mapeamento inativo | 1 teste | ✅ Granular |
 | T12: contrato do GET | 1 doc + 1 teste | ✅ Granular |
+| T13: reimportação | 1 teste | ✅ Granular |
 
 ## Diagram-Definition Cross-Check
 
@@ -463,6 +492,7 @@ Phase 4: T12
 | T10 | T3, T4, T5, T6 | (sem seta intra-fase) | ✅ Match |
 | T11 | T3 | (sem seta intra-fase) | ✅ Match |
 | T12 | T8 | (sem seta intra-fase) | ✅ Match |
+| T13 | T10 | T10 -> T13 | ✅ Match |
 
 ## Test Co-location Validation
 
@@ -480,6 +510,7 @@ Phase 4: T12
 | T10: auto-classificação fim a fim | Adapter + domain + route | none/unit/integration | unit + integration | ✅ OK |
 | T11: mapeamento inativo | Domain | unit | unit | ✅ OK |
 | T12: contrato do GET | Route handler | integration | integration | ✅ OK |
+| T13: reimportação | Route handler | integration | integration | ✅ OK |
 
 ---
 

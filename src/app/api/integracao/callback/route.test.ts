@@ -88,14 +88,19 @@ const mocks = vi.hoisted(() => {
     upsertOrder: async (input: { items: Array<{ legacyItemKey: string; legacyCategory: string | null }> }) => {
       upsertCalls.push(input)
       for (const item of input.items) {
-        seq += 1
-        orderItems.push({
-          id: `item_${seq}`,
-          orderId: 'order_1',
-          legacyItemKey: item.legacyItemKey,
-          legacyCategory: item.legacyCategory,
-          classificationStatus: 'PENDING_CLASSIFICATION',
-        })
+        const existing = orderItems.find((candidate) => candidate.legacyItemKey === item.legacyItemKey)
+        if (existing) {
+          existing.legacyCategory = item.legacyCategory
+        } else {
+          seq += 1
+          orderItems.push({
+            id: `item_${seq}`,
+            orderId: 'order_1',
+            legacyItemKey: item.legacyItemKey,
+            legacyCategory: item.legacyCategory,
+            classificationStatus: 'PENDING_CLASSIFICATION',
+          })
+        }
       }
       return { orderId: 'order_1' }
     },
@@ -352,5 +357,46 @@ describe('POST /api/integracao/callback', () => {
     expect(mocks.activities).toEqual([
       { id: 'act_1', orderItemId: mocks.orderItems[0].id, sectorId: 'setor_telhas' },
     ])
+  })
+
+  it('não reclassifica nem duplica atividade para item já classificado na reimportação', async () => {
+    mocks.jobs.push(makeJob('job_1', 'RUNNING'))
+    mocks.mappings.push({
+      id: 'map_1',
+      legacyCategory: 'Telhas',
+      sectorId: 'setor_telhas',
+      status: 'ACTIVE',
+      createdAt: NOW,
+      updatedAt: NOW,
+    })
+    mocks.orderItems.push({
+      id: 'item_existente',
+      orderId: 'order_1',
+      legacyItemKey: '1',
+      legacyCategory: 'Telhas',
+      classificationStatus: 'CLASSIFIED',
+    })
+
+    const response = await POST(
+      request(
+        validPayload({
+          items: [
+            {
+              seq: 1,
+              productCode: 'P001',
+              description: 'TELHA',
+              unit: 'UN',
+              requestedQuantity: '5.000',
+              legacyCategory: 'Telhas',
+            },
+          ],
+        }),
+      ),
+    )
+
+    expect(response.status).toBe(200)
+    expect(mocks.orderItems).toHaveLength(1)
+    expect(mocks.orderItems[0].classificationStatus).toBe('CLASSIFIED')
+    expect(mocks.activities).toHaveLength(0)
   })
 })
