@@ -97,22 +97,22 @@ O pedido pode nascer sem data de entrega e, mesmo com data, não há como sinali
 
 ## Requirement Traceability
 
-| Requirement ID | Story | Phase | Status |
-| --- | --- | --- | --- |
-| PRAZO-01 | P1: Definir | Design | Pending |
-| PRAZO-02 | P1: Definir | Design | Pending |
-| PRAZO-03 | P1: Definir | Design | Pending |
-| PRAZO-04 | P1: Definir | Design | Pending |
-| PRAZO-05 | P1: Atraso | Design | Pending |
-| PRAZO-06 | P1: Atraso | Design | Pending |
-| PRAZO-07 | P1: Atraso | Design | Pending |
-| PRAZO-08 | P1: Atraso | Design | Pending |
-| PRAZO-09 | P1: Atraso | Design | Pending |
-| PRAZO-10 | P1: Alertas | Design | Pending |
-| PRAZO-11 | Edge: atividade inexistente | Design | Pending |
-| PRAZO-12 | Edge: item inexistente | Design | Pending |
+| Requirement ID | Story | Phase | Tasks | Status |
+| --- | --- | --- | --- | --- |
+| PRAZO-01 | P1: Definir | Execute | T1, T5 | Done (T1) |
+| PRAZO-02 | P1: Definir | Execute | T1, T6 | Done (T1) |
+| PRAZO-03 | P1: Definir | Execute | T5, T6 | Pending |
+| PRAZO-04 | P1: Definir | Execute | T1, T5, T6 | Done (T1) |
+| PRAZO-05 | P1: Atraso | Design | T2 | Pending |
+| PRAZO-06 | P1: Atraso | Design | T2 | Pending |
+| PRAZO-07 | P1: Atraso | Design | T2 | Pending |
+| PRAZO-08 | P1: Atraso | Design | T2 | Pending |
+| PRAZO-09 | P1: Atraso | Design | T2 | Pending |
+| PRAZO-10 | P1: Alertas | Design | T3, T7 | Pending |
+| PRAZO-11 | Edge: atividade inexistente | Execute | T1, T6 | Done (T1) |
+| PRAZO-12 | Edge: item inexistente | Execute | T1, T5 | Done (T1) |
 
-**Coverage:** 12 total, 0 mapped to tasks, 12 unmapped ⚠️
+**Coverage:** 12 total, 12 mapped to tasks, 0 unmapped
 
 ---
 

@@ -79,11 +79,11 @@ T7
 
 **Done when**:
 
-- [ ] Prazo de item e de atividade persistido
-- [ ] Data inválida rejeitada
-- [ ] Item/atividade inexistente rejeitado
-- [ ] Test count: 7 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Prazo de item e de atividade persistido
+- [x] Data inválida rejeitada
+- [x] Item/atividade inexistente rejeitado
+- [x] Test count: 7 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
