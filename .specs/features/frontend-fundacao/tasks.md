@@ -271,10 +271,10 @@ T8 -> T7
 
 **Done when**:
 
-- [ ] Motivo obrigatório para perda, refugo e indisponibilidade
-- [ ] Motivos vêm da API
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Motivo obrigatório para perda, refugo e indisponibilidade
+- [x] Motivos vêm da API
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

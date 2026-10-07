@@ -131,8 +131,8 @@ O sistema só tem APIs; não há interface. O operador de produção precisa reg
 | FE-08 | P1: Fila | Execute | Done |
 | FE-09 | P1: Executar | Design | Pending |
 | FE-10 | P1: Executar | Design | Pending |
-| FE-11 | P1: Ocorrência | Design | Pending |
-| FE-12 | P1: Ocorrência | Design | Pending |
+| FE-11 | P1: Ocorrência | Execute | Done |
+| FE-12 | P1: Ocorrência | Execute | Done |
 | FE-13 | Edge: 401 | Execute | Done |
 | FE-14 | Edge: falha de API | Execute | Done |
 
