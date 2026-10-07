@@ -95,10 +95,17 @@ const mocks = vi.hoisted(() => {
     listEvents: async (jobId: string) => events.filter((event) => event.jobId === jobId),
   }
 
+  let dispatchError: unknown = null
+
   const conector = {
     despachar: async (input: { jobId: string; orderNumber: string }) => {
       dispatchCalls.push(input)
+      if (dispatchError) throw dispatchError
     },
+  }
+
+  function setDispatchError(error: unknown) {
+    dispatchError = error
   }
 
   function reset() {
@@ -106,10 +113,11 @@ const mocks = vi.hoisted(() => {
     events.length = 0
     dispatchCalls.length = 0
     scheduled.length = 0
+    dispatchError = null
     seq = 0
   }
 
-  return { jobs, events, dispatchCalls, scheduled, repo, conector, reset }
+  return { jobs, events, dispatchCalls, scheduled, repo, conector, setDispatchError, reset }
 })
 
 vi.mock('next/server', () => ({
@@ -129,6 +137,7 @@ vi.mock('../../../../modules/integracao/adapters/http-conector-legado', async (i
 })
 
 import { POST } from './route'
+import { ConectorLegadoError } from '../../../../modules/integracao/adapters/http-conector-legado'
 
 function request(body: unknown, token: string | null = 'segredo-interno'): Request {
   return new Request('http://localhost/api/integracao/pedidos', {
@@ -201,6 +210,20 @@ describe('POST /api/integracao/pedidos', () => {
     expect(mocks.dispatchCalls).toEqual([{ jobId: 'job_1', orderNumber: '70435' }])
     expect(mocks.jobs[0].status).toBe('RUNNING')
     expect(mocks.events.map((event) => event.type)).toEqual(['DISPATCHED'])
+  })
+
+  it('marca o job como FAILED com ORDER_NOT_FOUND quando o pedido não existe no legado', async () => {
+    mocks.setDispatchError(
+      new ConectorLegadoError('ORDER_NOT_FOUND', 'Pedido não encontrado no Top Gerente'),
+    )
+
+    await POST(request({ orderNumber: '70435' }))
+    await mocks.scheduled[0]()
+
+    expect(mocks.jobs[0].status).toBe('FAILED')
+    expect(mocks.jobs[0].errorCode).toBe('ORDER_NOT_FOUND')
+    expect(mocks.events.map((event) => event.type)).toEqual(['DISPATCHED', 'FAILED'])
+    expect(mocks.events[1].detail).toBe('ORDER_NOT_FOUND')
   })
 
   it('reutiliza o job dentro da janela e não agenda novo despacho', async () => {

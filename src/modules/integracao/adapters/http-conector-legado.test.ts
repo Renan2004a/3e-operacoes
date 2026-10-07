@@ -42,6 +42,19 @@ describe('createHttpConectorLegado', () => {
     })
   })
 
+  it('falha com ORDER_NOT_FOUND quando o conector responde 404', async () => {
+    const conector = createHttpConectorLegado({
+      baseUrl: BASE,
+      token: TOKEN,
+      fetchImpl: async () => jsonResponse({ error: 'order_not_found' }, 404),
+    })
+
+    await expect(conector.despachar({ jobId: 'job_1', orderNumber: '70435' })).rejects.toMatchObject({
+      name: 'ConectorLegadoError',
+      code: 'ORDER_NOT_FOUND',
+    })
+  })
+
   it('falha com CONNECTOR_TIMEOUT quando o conector não responde no tempo limite', async () => {
     const fetchImpl: FetchLike = (_url, init) =>
       new Promise((_resolve, reject) => {

@@ -500,7 +500,7 @@ T23
 **Where**: `connector-local/src/topgerente.ts`
 **Depends on**: None
 **Reuses**: `mysql2` e schema em `docs/legado/`.
-**Requirement**: INTG-02, INTG-03, INTG-22
+**Requirement**: INTG-02, INTG-03, INTG-19, INTG-22
 
 **Tools**:
 
@@ -528,7 +528,7 @@ T23
 **Where**: `connector-local/src/index.ts`
 **Depends on**: T15
 **Reuses**: Esqueleto existente em `connector-local/src/index.ts`.
-**Requirement**: INTG-02, INTG-06
+**Requirement**: INTG-02, INTG-06, INTG-19
 
 **Tools**:
 
@@ -624,11 +624,11 @@ T23
 
 **Done when**:
 
-- [ ] Adapter: resposta `404` do conector rejeita com `code = ORDER_NOT_FOUND`
-- [ ] Rota: despacho agendado com conector lançando `ORDER_NOT_FOUND` termina o job `FAILED` com `errorCode = ORDER_NOT_FOUND`
-- [ ] Evento `FAILED` registrado com detalhe `ORDER_NOT_FOUND`
-- [ ] Test count: +2 testes (sem remoções silenciosas)
-- [ ] Gate check passa: `npm run lint && npm run typecheck && npm test`
+- [x] Adapter: resposta `404` do conector rejeita com `code = ORDER_NOT_FOUND`
+- [x] Rota: despacho agendado com conector lançando `ORDER_NOT_FOUND` termina o job `FAILED` com `errorCode = ORDER_NOT_FOUND`
+- [x] Evento `FAILED` registrado com detalhe `ORDER_NOT_FOUND`
+- [x] Test count: +2 testes (sem remoções silenciosas)
+- [x] Gate check passa: `npm run lint && npm run typecheck && npm test`
 
 **Tests**: unit, integration
 **Gate**: full
