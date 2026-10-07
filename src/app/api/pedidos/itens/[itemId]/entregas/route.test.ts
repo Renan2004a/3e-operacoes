@@ -1,5 +1,7 @@
 import { Prisma } from '@/generated/prisma/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { assinarSessao } from '../../../../../../modules/auth/sessao'
+import { SESSION_COOKIE } from '../../../../../../shared/http/auth-context'
 import type { ExpedicaoRepository } from '../../../../../../modules/expedicao/adapters/prisma-expedicao-repository'
 import type { EntregaHistorico } from '../../../../../../modules/expedicao/historico-entregas'
 import type {
@@ -20,6 +22,12 @@ vi.mock('../../../../../../modules/expedicao/adapters/prisma-expedicao-repositor
     buscarItensDoPedido: (orderId: string) => holder.repo.buscarItensDoPedido(orderId),
     buscarItemParaHistorico: (itemId: string) => holder.repo.buscarItemParaHistorico(itemId),
     listarEntregas: (itemId: string) => holder.repo.listarEntregas(itemId),
+  },
+}))
+
+vi.mock('@/modules/usuarios/adapters/prisma-usuarios-repository', () => ({
+  prismaUsuariosRepository: {
+    findById: async (id: string) => ({ id, roles: await holder.repo.papeisDoUsuario(id) }),
   },
 }))
 
@@ -127,12 +135,15 @@ function seedEntrega(itemId: string, quantidade: number | string, excecao = fals
 
 function postRequest(
   body: unknown,
-  opts: { usuarioId?: string | null; token?: string | null } = {},
+  opts: { usuarioId?: string | null; xUserId?: string | null } = {},
 ): Request {
-  const { usuarioId = 'user_exp', token = 'segredo-interno' } = opts
+  const { usuarioId = 'user_exp', xUserId = null } = opts
   const headers: Record<string, string> = { 'content-type': 'application/json' }
-  if (token !== null) headers.authorization = `Bearer ${token}`
-  if (usuarioId !== null) headers['x-user-id'] = usuarioId
+  if (usuarioId) {
+    const token = assinarSessao({ userId: usuarioId, expiraEm: new Date(Date.now() + 60_000) })
+    headers.cookie = `${SESSION_COOKIE}=${token}`
+  }
+  if (xUserId) headers['x-user-id'] = xUserId
   return new Request('http://localhost/api/pedidos/itens/item_1/entregas', {
     method: 'POST',
     headers,
@@ -140,10 +151,13 @@ function postRequest(
   })
 }
 
-function getRequest(opts: { token?: string | null } = {}): Request {
-  const { token = 'segredo-interno' } = opts
+function getRequest(opts: { usuarioId?: string | null } = {}): Request {
+  const { usuarioId = 'user_exp' } = opts
   const headers: Record<string, string> = {}
-  if (token !== null) headers.authorization = `Bearer ${token}`
+  if (usuarioId) {
+    const token = assinarSessao({ userId: usuarioId, expiraEm: new Date(Date.now() + 60_000) })
+    headers.cookie = `${SESSION_COOKIE}=${token}`
+  }
   return new Request('http://localhost/api/pedidos/itens/item_1/entregas', { headers })
 }
 
@@ -152,10 +166,10 @@ function context(itemId: string) {
 }
 
 describe('/api/pedidos/itens/[itemId]/entregas', () => {
-  const original = process.env.APP_INTERNAL_TOKEN
+  const original = process.env.SESSION_SECRET
 
   beforeEach(() => {
-    process.env.APP_INTERNAL_TOKEN = 'segredo-interno'
+    process.env.SESSION_SECRET = 'segredo-de-teste'
     reset()
     state.papeis.user_exp = ['SHIPPING']
     state.papeis.user_mgr = ['PRODUCTION_MANAGER']
@@ -163,14 +177,17 @@ describe('/api/pedidos/itens/[itemId]/entregas', () => {
   })
 
   afterEach(() => {
-    if (original === undefined) delete process.env.APP_INTERNAL_TOKEN
-    else process.env.APP_INTERNAL_TOKEN = original
+    if (original === undefined) delete process.env.SESSION_SECRET
+    else process.env.SESSION_SECRET = original
   })
 
   it('responde 201 e persiste a entrega válida (EXP-03)', async () => {
     seedItem('item_1', 8)
 
-    const response = await POST(postRequest({ quantidade: '3' }), context('item_1'))
+    const response = await POST(
+      postRequest({ quantidade: '3' }, { xUserId: 'user_mgr' }),
+      context('item_1'),
+    )
 
     expect(response.status).toBe(201)
     const body = await response.json()
@@ -260,13 +277,16 @@ describe('/api/pedidos/itens/[itemId]/entregas', () => {
     expect(get.status).toBe(404)
   })
 
-  it('responde 401 sem token no POST e no GET', async () => {
+  it('responde 401 sem sessão no POST e no GET (AUTH-14)', async () => {
     seedItem('item_1', 8)
 
-    const post = await POST(postRequest({ quantidade: '1' }, { token: null }), context('item_1'))
+    const post = await POST(
+      postRequest({ quantidade: '1' }, { usuarioId: null }),
+      context('item_1'),
+    )
     expect(post.status).toBe(401)
 
-    const get = await GET(getRequest({ token: null }), context('item_1'))
+    const get = await GET(getRequest({ usuarioId: null }), context('item_1'))
     expect(get.status).toBe(401)
   })
 })

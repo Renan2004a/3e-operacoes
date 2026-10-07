@@ -130,7 +130,7 @@ Todas as rotas usam um cabeçalho temporário `x-user-id`, sem login nem autoriz
 | AUTH-11 | P1: Usuários | Design | Done |
 | AUTH-12 | P1: Usuários | Design | Done |
 | AUTH-13 | P1: Usuários | Design | Done |
-| AUTH-14 | P2: Sessão nas rotas | Design | Pending |
+| AUTH-14 | P2: Sessão nas rotas | Design | Done |
 | AUTH-15 | Edge: usuário inativo | Design | Done |
 | AUTH-16 | Edge: token adulterado | Design | Done |
 

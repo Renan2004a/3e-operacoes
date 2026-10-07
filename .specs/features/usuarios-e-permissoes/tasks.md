@@ -483,9 +483,9 @@ T15
 
 **Done when**:
 
-- [ ] Sem sessão `401`; sem perfil `403`
-- [ ] Test count: 5 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm run lint && npm run typecheck && npm test`
+- [x] Sem sessão `401`; sem perfil `403`
+- [x] Test count: 5 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm run lint && npm run typecheck && npm test`
 
 **Tests**: integration
 **Gate**: full

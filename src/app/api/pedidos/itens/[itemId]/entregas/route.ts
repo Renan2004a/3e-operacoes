@@ -8,7 +8,7 @@ import {
   registrarEntrega,
 } from '../../../../../../modules/expedicao/registrar-entrega'
 import { QuantidadeInvalidaError } from '../../../../../../modules/producao/unidades'
-import { requireInternalToken } from '../../../../../../shared/http/internal-auth'
+import { autorizar } from '../../../../../../shared/http/autorizacao'
 
 interface EntregaBody {
   quantidade?: unknown
@@ -18,17 +18,16 @@ interface EntregaBody {
 
 /**
  * POST /api/pedidos/itens/[itemId]/entregas — registra entrega total ou
- * parcial (EXP-03..07,13). Restrita à Expedição e ao Gerente; acima do
+ * parcial (EXP-03..07,13, AUTH-14). Restrita à Expedição e ao Gerente; acima do
  * disponível é bloqueada, exceto com exceção do gerente com motivo e auditoria.
- * Enquanto a autenticação não existe, o usuário atual vem de `x-user-id`.
+ * O usuário vem da sessão; o cabeçalho `x-user-id` é ignorado.
  */
 export async function POST(request: Request, context: { params: Promise<{ itemId: string }> }) {
-  if (!requireInternalToken(request)) {
-    return Response.json({ error: 'unauthorized' }, { status: 401 })
-  }
+  const auth = await autorizar(request, 'registrar_entrega')
+  if (!auth.autorizado) return auth.resposta
 
   const { itemId } = await context.params
-  const usuarioId = request.headers.get('x-user-id') ?? ''
+  const usuarioId = auth.usuario.userId
 
   let body: unknown
   try {
@@ -80,11 +79,10 @@ export async function POST(request: Request, context: { params: Promise<{ itemId
   }
 }
 
-/** GET /api/pedidos/itens/[itemId]/entregas — histórico de entregas do item (EXP-11,12). */
+/** GET /api/pedidos/itens/[itemId]/entregas — histórico de entregas do item (EXP-11,12, AUTH-14). */
 export async function GET(request: Request, context: { params: Promise<{ itemId: string }> }) {
-  if (!requireInternalToken(request)) {
-    return Response.json({ error: 'unauthorized' }, { status: 401 })
-  }
+  const auth = await autorizar(request, 'registrar_entrega')
+  if (!auth.autorizado) return auth.resposta
 
   const { itemId } = await context.params
 
