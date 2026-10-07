@@ -130,9 +130,9 @@ A classificação cria as atividades por setor, mas não existe fila para o oper
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| PROD-01 | P1: Fila | Design | Pending |
-| PROD-02 | P1: Fila | Design | Pending |
-| PROD-03 | P1: Fila | Design | Pending |
+| PROD-01 | P1: Fila | Design | Done |
+| PROD-02 | P1: Fila | Design | Done |
+| PROD-03 | P1: Fila | Design | Done |
 | PROD-04 | P1: Execução | Design | Done |
 | PROD-05 | P1: Execução | Design | Done |
 | PROD-06 | P1: Execução | Design | Done |
@@ -146,7 +146,7 @@ A classificação cria as atividades por setor, mas não existe fila para o oper
 | PROD-14 | Edge: setor do operador | Design | Done |
 | PROD-15 | Edge: quantidade inválida | Design | Done |
 
-**Coverage:** 15 total, 9 mapped to tasks, 6 unmapped ⚠️
+**Coverage:** 15 total, 12 mapped to tasks, 3 unmapped ⚠️
 
 ---
 

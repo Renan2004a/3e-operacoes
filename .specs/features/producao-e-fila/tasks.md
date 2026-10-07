@@ -169,11 +169,11 @@ T11
 
 **Done when**:
 
-- [ ] Só retorna atividades dos setores do usuário
-- [ ] Ordena por prioridade decrescente e criação
-- [ ] Usuário sem setor retorna lista vazia
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Só retorna atividades dos setores do usuário
+- [x] Ordena por prioridade decrescente e criação
+- [x] Usuário sem setor retorna lista vazia
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
