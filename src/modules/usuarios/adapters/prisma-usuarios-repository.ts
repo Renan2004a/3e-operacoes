@@ -39,8 +39,14 @@ function setoresCreate(sectorIds: string[]) {
   return sectorIds.map((sectorId) => ({ sectorId }))
 }
 
+/** Leitura administrativa de usuários (AUTH-07). */
+export interface UsuariosLeituraRepository {
+  /** Lista os usuários cadastrados com perfis e setores. */
+  listar(): Promise<Usuario[]>
+}
+
 /** Implementação Prisma da porta `UsuariosRepository` (AUTH-10, AUTH-12, AUTH-13). */
-export const prismaUsuariosRepository: UsuariosRepository = {
+export const prismaUsuariosRepository: UsuariosRepository & UsuariosLeituraRepository = {
   async findByEmail(email) {
     const row = await prisma.user.findUnique({
       where: { email },
@@ -55,6 +61,14 @@ export const prismaUsuariosRepository: UsuariosRepository = {
       include: INCLUDE_PERFIS_SETORES,
     })
     return row ? toUsuario(row) : null
+  },
+
+  async listar() {
+    const rows = await prisma.user.findMany({
+      include: INCLUDE_PERFIS_SETORES,
+      orderBy: { createdAt: 'asc' },
+    })
+    return rows.map(toUsuario)
   },
 
   async create(input) {
