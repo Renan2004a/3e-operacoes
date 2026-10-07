@@ -160,4 +160,13 @@ describe('ExecutarAtividadePage', () => {
 
     expect(await screen.findByLabelText('Tipo de ocorrência')).toBeInTheDocument()
   })
+
+  it('usa o cabeçalho de página com o título da atividade (VIS-09)', async () => {
+    configurarApiGet([ordem()])
+    render(<ExecutarAtividadePage />)
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Executar atividade' }),
+    ).toBeInTheDocument()
+  })
 })

@@ -96,4 +96,11 @@ describe('FilaPage', () => {
     const link = await screen.findByRole('link', { name: 'Abrir' })
     expect(link).toHaveAttribute('href', '/operador/atividades/atv_1')
   })
+
+  it('usa o cabeçalho de página com o título da fila (VIS-09)', async () => {
+    mocks.apiGet.mockResolvedValue({ atividades: [atividade()] })
+    render(<FilaPage />)
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Minha fila' })).toBeInTheDocument()
+  })
 })

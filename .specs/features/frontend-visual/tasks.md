@@ -171,11 +171,11 @@ T7
 
 **Done when**:
 
-- [ ] Fila e atividade usam o padrão visual
-- [ ] Estados de carregando/erro/vazio mantidos
-- [ ] Comportamento (API) inalterado
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Fila e atividade usam o padrão visual
+- [x] Estados de carregando/erro/vazio mantidos
+- [x] Comportamento (API) inalterado
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

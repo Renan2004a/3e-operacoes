@@ -9,7 +9,9 @@ import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardTitle } from '@/shared/ui/card'
 import { EmptyState } from '@/shared/ui/empty-state'
+import { PageHead } from '@/shared/ui/page-head'
 import { Spinner } from '@/shared/ui/spinner'
+import { cn, FOCO_VISIVEL } from '@/shared/ui/utils'
 
 interface Atividade {
   id: string
@@ -93,16 +95,13 @@ export default function FilaPage() {
 
   return (
     <section className="grid gap-4">
-      <header>
-        <h1 className="text-2xl font-semibold text-ink">Minha fila</h1>
-        <p className="text-sm text-muted">Atividades dos seus setores.</p>
-      </header>
+      <PageHead title="Minha fila" description="Atividades dos seus setores." />
 
-      <ul className="grid gap-3">
+      <ul aria-label="Atividades" className="grid gap-3">
         {atividades.map((atividade) => (
           <li key={atividade.id}>
             <Card>
-              <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-4">
+              <CardContent className="flex flex-col gap-3 pt-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                   <CardTitle className="text-base">Atividade {atividade.id}</CardTitle>
                   <p className="text-sm text-muted">
@@ -114,7 +113,10 @@ export default function FilaPage() {
                 </div>
                 <Link
                   href={`/operador/atividades/${atividade.id}`}
-                  className="inline-flex min-h-11 items-center rounded-lg bg-accent px-4 font-semibold text-white hover:bg-accent-dark"
+                  className={cn(
+                    'inline-flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 font-semibold text-white hover:bg-accent-dark',
+                    FOCO_VISIVEL,
+                  )}
                 >
                   Abrir
                 </Link>

@@ -10,7 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import { Field } from '@/shared/ui/field'
 import { Input } from '@/shared/ui/input'
 import { OcorrenciaForm } from '@/shared/ui/ocorrencia-form'
+import { PageHead } from '@/shared/ui/page-head'
 import { Spinner } from '@/shared/ui/spinner'
+import { cn, FOCO_VISIVEL } from '@/shared/ui/utils'
 
 interface Ordem {
   atividadeId: string
@@ -116,11 +118,14 @@ export default function ExecutarAtividadePage() {
 
   return (
     <section className="grid gap-4">
-      <div>
-        <Link href="/operador/fila" className="text-sm font-medium text-accent">
+      <div className="grid gap-2">
+        <Link
+          href="/operador/fila"
+          className={cn('text-sm font-medium text-accent', FOCO_VISIVEL)}
+        >
           ← Voltar para a fila
         </Link>
-        <h1 className="mt-1 text-2xl font-semibold text-ink">Executar atividade</h1>
+        <PageHead title="Executar atividade" />
       </div>
 
       <Card>
