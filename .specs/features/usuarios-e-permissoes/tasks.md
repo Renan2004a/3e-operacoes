@@ -98,10 +98,10 @@ T15
 
 **Done when**:
 
-- [ ] Hash diferente para a mesma senha (sal)
-- [ ] Verificação correta e incorreta
-- [ ] Test count: 4 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Hash diferente para a mesma senha (sal)
+- [x] Verificação correta e incorreta
+- [x] Test count: 4 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
