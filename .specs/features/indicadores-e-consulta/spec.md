@@ -101,8 +101,8 @@ O vendedor não tem uma visão dos pedidos e o gerente não tem um painel consol
 | IND-02 | P1: Consulta | Execute | T1, T5 | Done (T1) |
 | IND-03 | P1: Consulta | Execute | T1, T5 | Done (T1) |
 | IND-04 | P1: Consulta | Execute | T1, T6 | Done (T1) |
-| IND-05 | P1: Painel | Design | T2, T4, T7 | Pending |
-| IND-06 | P1: Painel | Design | T2, T7 | Pending |
+| IND-05 | P1: Painel | Execute | T2, T4, T7 | Done (T2) |
+| IND-06 | P1: Painel | Execute | T2, T7 | Done (T2) |
 | IND-07 | P2: PCP | Design | T3, T4, T7 | Pending |
 | IND-08 | P2: PCP | Design | T3, T7 | Pending |
 | IND-09 | P2: PCP | Design | T3 | Pending |

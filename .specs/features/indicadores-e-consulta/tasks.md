@@ -108,10 +108,10 @@ T7
 
 **Done when**:
 
-- [ ] Contagem por setor e por status
-- [ ] Pendências = atividades não concluídas
-- [ ] Test count: 5 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Contagem por setor e por status
+- [x] Pendências = atividades não concluídas
+- [x] Test count: 5 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
