@@ -265,3 +265,36 @@ Consulta de pedidos com filtros (vendedor e gerente), painel consolidado por set
 
 ### Riscos abertos
 - Indicadores dependem de dados operacionais; revisar com volume real.
+
+---
+
+## Feature 9 — Frontend (Fundação e Chão de Fábrica)
+
+**Data**: 2026-10-07
+**Requisitos**: RF013 (login/perfil), RF003/RF004/RF005 (operador)
+**Artefatos**: `.specs/features/frontend-fundacao/{spec,design,tasks,validation}.md`
+
+### Objetivo
+Design system responsivo (celular, tablet, notebook, desktop), shell por perfil, tela de login e a fatia do operador (fila, execução, ocorrência).
+
+### Como foi feito
+- **Specify**: 14 critérios EARS; `validate_spec.py` 0/0.
+- **Design**: App Router + Tailwind/shadcn; componentes client consomem as APIs com a sessão.
+- **Tasks**: 8 tarefas em 3 fases + 1 correção (T9); `validate_tasks.py` 0 erros.
+- **Execute**: 1 batch (T1–T8). A verificação apontou um *fail-open* de perfil (major).
+- **Verify**: iteração 1 = PASS com ressalva; correção T9; iteração 2 = **PASS**.
+
+### Resultado
+- **9 tarefas** implementadas (8 + 1 correção).
+- **482 testes** passando. Cobertura 96,6% linhas / 93,8% branches.
+- **Verificação: PASS** — 12/14 ACs com evidência; 7/7 mutantes mortos; fail-open fechado.
+- `validate_state.py`: 0 erros.
+
+### Decisões e desvios
+- Perfil resolvido no servidor pelo repositório de usuários; sem perfil → redireciona ao login (sem fail-open).
+- Testes de componente com Testing Library + jsdom; E2E (Playwright) deferido.
+
+### Riscos abertos
+- FE-06 (sem rolagem horizontal 360–1440 px) só verificável em navegador real; E2E fica para a feature de qualidade.
+- FE-03 (operabilidade por teclado) coberto por rótulos/tipos, sem teste de Tab/Enter.
+- Telas de gerente, vendedor, expedição e responsável ficam para a próxima feature.

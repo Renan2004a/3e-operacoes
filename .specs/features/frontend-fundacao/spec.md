@@ -121,20 +121,20 @@ O sistema só tem APIs; não há interface. O operador de produção precisa reg
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| FE-01 | P1: Login | Execute | Done |
-| FE-02 | P1: Login | Execute | Done |
-| FE-03 | P1: Login | Execute | Done |
-| FE-04 | P1: Shell | Execute | Done |
-| FE-05 | P1: Shell | Execute | Done |
-| FE-06 | P1: Shell | Execute | Done |
-| FE-07 | P1: Fila | Execute | Done |
-| FE-08 | P1: Fila | Execute | Done |
-| FE-09 | P1: Executar | Execute | Done |
-| FE-10 | P1: Executar | Execute | Done |
-| FE-11 | P1: Ocorrência | Execute | Done |
-| FE-12 | P1: Ocorrência | Execute | Done |
-| FE-13 | Edge: 401 | Execute | Done |
-| FE-14 | Edge: falha de API | Execute | Done |
+| FE-01 | P1: Login | Execute | Verified |
+| FE-02 | P1: Login | Execute | Verified |
+| FE-03 | P1: Login | Execute | Verified |
+| FE-04 | P1: Shell | Execute | Verified |
+| FE-05 | P1: Shell | Execute | Verified |
+| FE-06 | P1: Shell | Execute | Verified |
+| FE-07 | P1: Fila | Execute | Verified |
+| FE-08 | P1: Fila | Execute | Verified |
+| FE-09 | P1: Executar | Execute | Verified |
+| FE-10 | P1: Executar | Execute | Verified |
+| FE-11 | P1: Ocorrência | Execute | Verified |
+| FE-12 | P1: Ocorrência | Execute | Verified |
+| FE-13 | Edge: 401 | Execute | Verified |
+| FE-14 | Edge: falha de API | Execute | Verified |
 
 **Coverage:** 14 total, 14 mapped to tasks, 0 unmapped ✅
 
