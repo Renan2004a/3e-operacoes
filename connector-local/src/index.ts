@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import { pathToFileURL } from 'node:url'
 import express from 'express'
 import mysql from 'mysql2/promise'

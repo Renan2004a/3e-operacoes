@@ -7,6 +7,7 @@
  * Os motivos são SUGESTÕES iniciais (docs/backlog/motivos-ocorrencia.md), ainda
  * sujeitas à validação do time; podem ser ajustados depois pela administração.
  */
+import 'dotenv/config'
 import { randomBytes, scrypt } from 'node:crypto'
 import { PrismaMariaDb } from '@prisma/adapter-mariadb'
 import { PrismaClient } from '../src/generated/prisma/client'
@@ -41,6 +42,38 @@ const SETORES = [
   { code: 'CORTE_DOBRA' as const, name: 'Corte e Dobra' },
   { code: 'TELHAS' as const, name: 'Telhas' },
   { code: 'REVENDA' as const, name: 'Revenda' },
+]
+
+/** Usuários de demonstração, um por perfil. Trocar as senhas em produção. */
+const USUARIOS_DEMO = [
+  {
+    email: 'operador@3e.local',
+    nome: 'Operador',
+    senha: 'operador123',
+    roles: ['OPERATOR'] as const,
+    setores: ['CORTE_DOBRA', 'TELHAS'] as const,
+  },
+  {
+    email: 'gerente@3e.local',
+    nome: 'Gerente de Produção',
+    senha: 'gerente123',
+    roles: ['PRODUCTION_MANAGER'] as const,
+    setores: [] as const,
+  },
+  {
+    email: 'vendedor@3e.local',
+    nome: 'Vendedor',
+    senha: 'vendedor123',
+    roles: ['SELLER'] as const,
+    setores: [] as const,
+  },
+  {
+    email: 'expedicao@3e.local',
+    nome: 'Expedição',
+    senha: 'expedicao123',
+    roles: ['SHIPPING'] as const,
+    setores: [] as const,
+  },
 ]
 
 const MOTIVOS = [
@@ -94,7 +127,35 @@ async function main() {
     create: { userId: admin.id, role: 'SYSTEM_RESPONSIBLE' },
   })
 
-  console.log(`Seed concluído: ${SETORES.length} setores, ${MOTIVOS.length} motivos, admin ${email}.`)
+  for (const demo of USUARIOS_DEMO) {
+    const hash = await hashSenha(demo.senha)
+    const usuario = await prisma.user.upsert({
+      where: { email: demo.email },
+      update: { name: demo.nome, status: 'ACTIVE' },
+      create: { name: demo.nome, email: demo.email, passwordHash: hash, status: 'ACTIVE' },
+    })
+    for (const role of demo.roles) {
+      await prisma.userRole.upsert({
+        where: { userId_role: { userId: usuario.id, role } },
+        update: {},
+        create: { userId: usuario.id, role },
+      })
+    }
+    for (const code of demo.setores) {
+      const setor = await prisma.sector.findUnique({ where: { code } })
+      if (setor) {
+        await prisma.userSector.upsert({
+          where: { userId_sectorId: { userId: usuario.id, sectorId: setor.id } },
+          update: {},
+          create: { userId: usuario.id, sectorId: setor.id },
+        })
+      }
+    }
+  }
+
+  console.log(
+    `Seed concluído: ${SETORES.length} setores, ${MOTIVOS.length} motivos, ${USUARIOS_DEMO.length + 1} usuários (admin ${email}).`,
+  )
   await prisma.$disconnect()
 }
 
