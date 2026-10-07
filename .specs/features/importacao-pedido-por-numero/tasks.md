@@ -499,11 +499,11 @@ T17
 
 **Done when**:
 
-- [ ] Join `orcamento` + `orcamento_itens` parametrizado por `Emp`/`Orc`
-- [ ] Itens com `cancelado = 'S'` são excluídos
-- [ ] Pedido inexistente retorna `not_found`
-- [ ] Test count: 7 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Join `orcamento` + `orcamento_itens` parametrizado por `Emp`/`Orc`
+- [x] Itens com `cancelado = 'S'` são excluídos
+- [x] Pedido inexistente retorna `not_found`
+- [x] Test count: 7 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
