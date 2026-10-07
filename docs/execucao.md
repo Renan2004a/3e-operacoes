@@ -203,3 +203,34 @@ Autenticação com sessão, autorização no servidor pela matriz de perfis, ges
 ### Riscos abertos
 - Recuperação de senha, MFA e tela de login ficam para o frontend.
 - Permissões ambíguas (classificação/importação) registradas como suposição.
+
+---
+
+## Feature 7 — Prazos e Alertas
+
+**Data**: 2026-10-07
+**Requisitos**: RF012
+**Artefatos**: `.specs/features/prazos-e-alertas/{spec,design,tasks,validation}.md`
+
+### Objetivo
+Prazo opcional por item/setor (gerente ou vendedor), status `SEM_PRAZO`/`EM_DIA`/`ATRASADO` e lista de atividades atrasadas.
+
+### Como foi feito
+- **Specify**: 12 critérios EARS; `validate_spec.py` 0/0.
+- **Design**: domínio `src/modules/prazos/`; prazo em `OrderItem.deadlineAt` e `Activity.deadlineAt`; status derivado.
+- **Tasks**: 7 tarefas em 3 fases; `validate_tasks.py` 0 erros.
+- **Execute**: 1 batch (T1–T7), commit atômico por tarefa.
+- **Verify**: Verifier independente → **PASS** na primeira rodada.
+
+### Resultado
+- **7 tarefas** implementadas.
+- **394 testes** passando. Cobertura 96% linhas / 93% branches.
+- **Verificação: PASS** — 12/12 ACs; 6/6 mutantes mortos. `validate_state.py`: 0 erros.
+
+### Decisões e desvios
+- Sem prazo nunca é atrasado; atraso só com prazo ultrapassado e não concluído.
+- `definir_prazo` restrito a gerente e vendedor (matriz existente).
+
+### Riscos abertos
+- Sem teste de rota com perfil Vendedor (coberto pela matriz de permissões) — observação menor.
+- Notificações de alerta ficam fora do escopo (aqui é consulta).
