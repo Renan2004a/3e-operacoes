@@ -226,6 +226,20 @@ describe('POST /api/integracao/pedidos', () => {
     expect(mocks.events[1].detail).toBe('ORDER_NOT_FOUND')
   })
 
+  it('marca o job como FAILED com CONNECTOR_TIMEOUT quando o conector não responde', async () => {
+    mocks.setDispatchError(
+      new ConectorLegadoError('CONNECTOR_TIMEOUT', 'Conector não respondeu no tempo limite'),
+    )
+
+    await POST(request({ orderNumber: '70435' }))
+    await mocks.scheduled[0]()
+
+    expect(mocks.jobs[0].status).toBe('FAILED')
+    expect(mocks.jobs[0].errorCode).toBe('CONNECTOR_TIMEOUT')
+    expect(mocks.events.map((event) => event.type)).toEqual(['DISPATCHED', 'FAILED'])
+    expect(mocks.events[1].detail).toBe('CONNECTOR_TIMEOUT')
+  })
+
   it('reutiliza o job dentro da janela e não agenda novo despacho', async () => {
     await POST(request({ orderNumber: '70435' }))
     mocks.scheduled.length = 0

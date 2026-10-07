@@ -652,11 +652,11 @@ T23
 
 **Done when**:
 
-- [ ] Despacho agendado com conector lançando `CONNECTOR_TIMEOUT` termina o job `FAILED`
-- [ ] `errorCode` do job é `CONNECTOR_TIMEOUT`
-- [ ] Evento `FAILED` registrado com detalhe `CONNECTOR_TIMEOUT`
-- [ ] Test count: +1 teste (sem remoções silenciosas)
-- [ ] Gate check passa: `npm run lint && npm run typecheck && npm test`
+- [x] Despacho agendado com conector lançando `CONNECTOR_TIMEOUT` termina o job `FAILED`
+- [x] `errorCode` do job é `CONNECTOR_TIMEOUT`
+- [x] Evento `FAILED` registrado com detalhe `CONNECTOR_TIMEOUT`
+- [x] Test count: +1 teste (sem remoções silenciosas)
+- [x] Gate check passa: `npm run lint && npm run typecheck && npm test`
 
 **Tests**: integration
 **Gate**: full

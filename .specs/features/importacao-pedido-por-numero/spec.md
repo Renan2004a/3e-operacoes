@@ -135,7 +135,7 @@ O acompanhamento dos pedidos depende hoje de controle manual e de comunicação 
 | INTG-03 | P1: Importar pedido | Design | Done |
 | INTG-04 | P1: Importar pedido | Design | Done |
 | INTG-05 | P1: Importar pedido | Design | Done |
-| INTG-06 | P1: Importar pedido | Design | Done |
+| INTG-06 | P1: Importar pedido | Design | Implementing |
 | INTG-07 | P1: Importar pedido | Design | Done |
 | INTG-08 | P1: Status | Design | Done |
 | INTG-09 | P1: Status | Design | Done |
