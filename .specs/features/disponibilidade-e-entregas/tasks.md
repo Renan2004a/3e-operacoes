@@ -80,11 +80,11 @@ T7
 
 **Done when**:
 
-- [ ] Disponível = executado − entregue
-- [ ] Item sem produção tem disponível zero
-- [ ] Disponível nunca é negativo
-- [ ] Test count: 5 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Disponível = executado − entregue
+- [x] Item sem produção tem disponível zero
+- [x] Disponível nunca é negativo
+- [x] Test count: 5 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

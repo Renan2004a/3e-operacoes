@@ -113,8 +113,8 @@ A produção já é registrada, mas a Expedição não tem como saber o que est�
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| EXP-01 | P1: Disponibilidade | Design | Pending |
-| EXP-02 | P1: Disponibilidade | Design | Pending |
+| EXP-01 | P1: Disponibilidade | Design | Implemented |
+| EXP-02 | P1: Disponibilidade | Design | Implemented |
 | EXP-03 | P1: Entrega | Design | Pending |
 | EXP-04 | P1: Entrega | Design | Pending |
 | EXP-05 | P1: Entrega | Design | Pending |
@@ -126,7 +126,7 @@ A produção já é registrada, mas a Expedição não tem como saber o que est�
 | EXP-11 | P1: Histórico | Design | Pending |
 | EXP-12 | Edge: item inexistente | Design | Pending |
 | EXP-13 | Edge: quantidade inválida | Design | Pending |
-| EXP-14 | Edge: sem produção | Design | Pending |
+| EXP-14 | Edge: sem produção | Design | Implemented |
 
 **Coverage:** 14 total, 0 mapped to tasks, 14 unmapped ⚠️
 
