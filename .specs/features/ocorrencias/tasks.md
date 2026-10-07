@@ -218,12 +218,12 @@ T7
 
 **Done when**:
 
-- [ ] Registro válido responde `201`
-- [ ] Sem motivo responde `400`
-- [ ] Operador fora do setor responde `403`
-- [ ] Listagem responde `200`
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm run lint && npm run typecheck && npm test`
+- [x] Registro válido responde `201`
+- [x] Sem motivo responde `400`
+- [x] Operador fora do setor responde `403`
+- [x] Listagem responde `200`
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm run lint && npm run typecheck && npm test`
 
 **Tests**: integration
 **Gate**: full
