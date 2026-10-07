@@ -106,9 +106,9 @@ A interface funciona, mas está visualmente simples e distante da referência `f
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| VIS-01 | P1: Shell | Design | Pending |
-| VIS-02 | P1: Shell | Design | Pending |
-| VIS-03 | P1: Shell | Design | Pending |
+| VIS-01 | P1: Shell | Design | Done |
+| VIS-02 | P1: Shell | Design | Done |
+| VIS-03 | P1: Shell | Design | Done |
 | VIS-04 | P1: Login | Design | Pending |
 | VIS-05 | P1: Login | Design | Pending |
 | VIS-06 | P1: Login | Design | Pending |

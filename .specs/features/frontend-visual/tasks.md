@@ -112,11 +112,11 @@ T7
 
 **Done when**:
 
-- [ ] Sidebar visível em ≥ 768 px; menu no celular
-- [ ] Sem rolagem horizontal 360–1440 px
-- [ ] Testes existentes do shell continuam verdes
-- [ ] Test count: 7 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Sidebar visível em ≥ 768 px; menu no celular
+- [x] Sem rolagem horizontal 360–1440 px
+- [x] Testes existentes do shell continuam verdes
+- [x] Test count: 7 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

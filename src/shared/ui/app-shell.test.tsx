@@ -146,3 +146,35 @@ describe('AppShell', () => {
     expect(screen.queryByRole('link', { name: 'Usuários' })).not.toBeInTheDocument()
   })
 })
+
+describe('AppShell responsivo (VIS-01, VIS-02, VIS-03)', () => {
+  it('mostra a navegação lateral a partir de 768px e a esconde no celular (VIS-01, VIS-02)', () => {
+    render(<AppShell perfil="OPERATOR">{conteudo}</AppShell>)
+
+    const nav = screen.getByRole('navigation', { name: 'Navegação principal' })
+    expect(nav).toHaveClass('md:block')
+    expect(nav).toHaveClass('hidden')
+  })
+
+  it('expõe a marca e o perfil no topbar (VIS-01)', () => {
+    render(<AppShell perfil="PRODUCTION_MANAGER">{conteudo}</AppShell>)
+
+    expect(screen.getByRole('banner')).toBeInTheDocument()
+    expect(screen.getByText('3E Operações')).toBeInTheDocument()
+    expect(screen.getAllByText('Gerente de Produção').length).toBeGreaterThan(0)
+  })
+
+  it('não cria rolagem horizontal: lateral com largura fixa e main que pode encolher (VIS-03)', () => {
+    const { container } = render(<AppShell perfil="OPERATOR">{conteudo}</AppShell>)
+
+    expect(screen.getByRole('navigation', { name: 'Navegação principal' })).toHaveClass('md:w-60')
+    expect(screen.getByRole('main')).toHaveClass('min-w-0')
+    expect(container.firstElementChild).toHaveClass('overflow-x-hidden')
+  })
+
+  it('usa alvos de toque grandes nos links da lateral (VIS-01)', () => {
+    render(<AppShell perfil="OPERATOR">{conteudo}</AppShell>)
+
+    expect(screen.getByRole('link', { name: 'Fila' })).toHaveClass('min-h-11')
+  })
+})
