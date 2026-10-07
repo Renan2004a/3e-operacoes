@@ -138,3 +138,35 @@ Registrar perda (Corte e Dobra), refugo (Telhas) e indisponibilidade (Revenda) �
 ### Riscos abertos
 - Lista de motivos ainda não validada pelo cliente.
 - Efeito da indisponibilidade no saldo de Revenda pendente de definição.
+
+---
+
+## Feature 5 — Disponibilidade e Entregas
+
+**Data**: 2026-10-07
+**Requisitos**: RF009, RF010, RF011; RN002, RN004, RN005
+**Artefatos**: `.specs/features/disponibilidade-e-entregas/{spec,design,tasks,validation}.md`
+
+### Objetivo
+Calcular disponível = executado − entregue; registrar entrega total/parcial restrita a Expedição e Gerente; bloquear entrega acima do disponível com exceção autorizada pelo gerente e auditoria; expor saldo do pedido e histórico.
+
+### Como foi feito
+- **Specify**: 14 critérios EARS; `validate_spec.py` 0/0.
+- **Design**: domínio `src/modules/expedicao/`; papéis de `UserRole`; status de entrega derivado.
+- **Tasks**: 7 tarefas em 3 fases; `validate_tasks.py` 0 erros.
+- **Execute**: 1 batch (T1–T7), commit atômico por tarefa.
+- **Verify**: Verifier independente → **PASS** na primeira rodada.
+
+### Resultado
+- **7 tarefas** implementadas.
+- **285 testes** passando. Cobertura 97,4% linhas / 94,4% branches.
+- **Verificação: PASS** — 14/14 ACs; 6/7 mutantes mortos (1 sobrevivente apenas no adapter, AD-002). `validate_state.py`: 0 erros.
+
+### Decisões e desvios
+- Entrega acima do disponível bloqueada (`409`); exceção de gerente com motivo e `AuditLog`.
+- Status de entrega derivado (parcial/concluído), sem novo campo.
+- Saldo do pedido resolve `Order.id`.
+
+### Riscos abertos
+- Persistência da auditoria da exceção só será coberta por teste de integração quando houver MySQL.
+- Indisponibilidade de Revenda ainda sem efeito no saldo.

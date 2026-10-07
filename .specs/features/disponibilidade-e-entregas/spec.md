@@ -113,20 +113,20 @@ A produção já é registrada, mas a Expedição não tem como saber o que est�
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| EXP-01 | P1: Disponibilidade | Design | Implemented |
-| EXP-02 | P1: Disponibilidade | Design | Implemented |
-| EXP-03 | P1: Entrega | Design | Implemented |
-| EXP-04 | P1: Entrega | Design | Implemented |
-| EXP-05 | P1: Entrega | Design | Implemented |
-| EXP-06 | P1: Entrega | Design | Implemented |
-| EXP-07 | P1: Entrega | Design | Implemented |
-| EXP-08 | P1: Entrega | Design | Implemented |
-| EXP-09 | P1: Entrega | Design | Implemented |
-| EXP-10 | P1: Saldo | Design | Implemented |
-| EXP-11 | P1: Histórico | Design | Implemented |
-| EXP-12 | Edge: item inexistente | Design | Implemented |
-| EXP-13 | Edge: quantidade inválida | Design | Implemented |
-| EXP-14 | Edge: sem produção | Design | Implemented |
+| EXP-01 | P1: Disponibilidade | Design | Verified |
+| EXP-02 | P1: Disponibilidade | Design | Verified |
+| EXP-03 | P1: Entrega | Design | Verified |
+| EXP-04 | P1: Entrega | Design | Verified |
+| EXP-05 | P1: Entrega | Design | Verified |
+| EXP-06 | P1: Entrega | Design | Verified |
+| EXP-07 | P1: Entrega | Design | Verified |
+| EXP-08 | P1: Entrega | Design | Verified |
+| EXP-09 | P1: Entrega | Design | Verified |
+| EXP-10 | P1: Saldo | Design | Verified |
+| EXP-11 | P1: Histórico | Design | Verified |
+| EXP-12 | Edge: item inexistente | Design | Verified |
+| EXP-13 | Edge: quantidade inválida | Design | Verified |
+| EXP-14 | Edge: sem produção | Design | Verified |
 
 **Coverage:** 14 total, 0 mapped to tasks, 14 unmapped ⚠️
 
