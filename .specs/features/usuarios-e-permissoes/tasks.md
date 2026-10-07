@@ -179,11 +179,11 @@ T15
 
 **Done when**:
 
-- [ ] Sem sessão → não autorizado
-- [ ] Sessão válida expõe o usuário
-- [ ] Ação sem perfil → proibido
-- [ ] Test count: 5 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Sem sessão → não autorizado
+- [x] Sessão válida expõe o usuário
+- [x] Ação sem perfil → proibido
+- [x] Test count: 5 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
