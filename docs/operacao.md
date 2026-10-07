@@ -24,6 +24,8 @@ npm run prisma:generate
 
 ## 3. Configurar o ambiente
 
+> ⚠️ **Só faça isto em um clone novo.** O `Copy-Item` **sobrescreve** o `.env`. Se o `.env` já existir e estiver configurado (ex.: apontando para a AWS), **não copie por cima**.
+
 Copie `.env.example` para `.env` e ajuste se necessário:
 
 ```powershell

@@ -24,6 +24,9 @@ npm run prisma:seed              # setores, motivos e usuários de demonstraçã
 npm run dev                      # http://localhost:3000
 ```
 
+> ⚠️ **Atenção:** o `Copy-Item .env.example .env` **sobrescreve** o arquivo. Só rode isso em um clone novo, quando o `.env` **não** existir. Se o `.env` já estiver configurado (ex.: apontando para a AWS), **não copie por cima**.
+> Se você usa o banco da AWS (`3e_operacoes`), **pule** `db:up`, `prisma:migrate` e `prisma:seed` — ele já está migrado e com seed.
+
 Logins de demonstração (seed): `admin@3e.local`, `operador@3e.local`, `gerente@3e.local`, `vendedor@3e.local`, `expedicao@3e.local` (senhas terminam em `123`; trocar em produção).
 
 ## Estrutura
