@@ -1,14 +1,13 @@
 import { InvalidOrderNumberError } from '../../../../modules/integracao/contratos'
 import { solicitarImportacao } from '../../../../modules/integracao/solicitar-importacao'
 import { prismaIntegracaoRepository } from '../../../../modules/integracao/adapters/prisma-integracao-repository'
-import { requireInternalToken } from '../../../../shared/http/internal-auth'
+import { autorizar } from '../../../../shared/http/autorizacao'
 import { agendarDespacho } from '../despacho'
 
-/** POST /api/integracao/pedidos — cria o job idempotente e responde 202. */
+/** POST /api/integracao/pedidos — cria o job idempotente e responde 202 (AUTH-14). */
 export async function POST(request: Request) {
-  if (!requireInternalToken(request)) {
-    return Response.json({ error: 'unauthorized' }, { status: 401 })
-  }
+  const auth = await autorizar(request, 'solicitar_importacao')
+  if (!auth.autorizado) return auth.resposta
 
   let body: unknown
   try {

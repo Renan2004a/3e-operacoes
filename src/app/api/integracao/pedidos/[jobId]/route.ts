@@ -1,13 +1,12 @@
 import { JobNotFoundError } from '../../../../../modules/integracao/contratos'
 import { consultarStatus } from '../../../../../modules/integracao/consultar-status'
 import { prismaIntegracaoRepository } from '../../../../../modules/integracao/adapters/prisma-integracao-repository'
-import { requireInternalToken } from '../../../../../shared/http/internal-auth'
+import { autorizar } from '../../../../../shared/http/autorizacao'
 
-/** GET /api/integracao/pedidos/[jobId] — status e eventos do job. */
+/** GET /api/integracao/pedidos/[jobId] — status e eventos do job (AUTH-14). */
 export async function GET(request: Request, context: { params: Promise<{ jobId: string }> }) {
-  if (!requireInternalToken(request)) {
-    return Response.json({ error: 'unauthorized' }, { status: 401 })
-  }
+  const auth = await autorizar(request, 'consultar_pedidos')
+  if (!auth.autorizado) return auth.resposta
 
   const { jobId } = await context.params
 

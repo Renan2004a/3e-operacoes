@@ -1,3 +1,4 @@
+import type { RoleCode } from '@/generated/prisma/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => {
@@ -19,6 +20,7 @@ const mocks = vi.hoisted(() => {
   const dispatchCalls: Array<{ jobId: string; orderNumber: string }> = []
   const scheduled: Array<() => unknown> = []
   let seq = 0
+  const perfis: Record<string, RoleCode[]> = {}
 
   const repo = {
     findRecentByIdempotencyKey: async (idempotencyKey: string, since: Date) =>
@@ -115,9 +117,10 @@ const mocks = vi.hoisted(() => {
     scheduled.length = 0
     dispatchError = null
     seq = 0
+    for (const key of Object.keys(perfis)) delete perfis[key]
   }
 
-  return { jobs, events, dispatchCalls, scheduled, repo, conector, setDispatchError, reset }
+  return { jobs, events, dispatchCalls, scheduled, repo, conector, setDispatchError, reset, perfis }
 })
 
 vi.mock('next/server', () => ({
@@ -130,6 +133,12 @@ vi.mock('../../../../modules/integracao/adapters/prisma-integracao-repository', 
   prismaIntegracaoRepository: mocks.repo,
 }))
 
+vi.mock('@/modules/usuarios/adapters/prisma-usuarios-repository', () => ({
+  prismaUsuariosRepository: {
+    findById: async (id: string) => ({ id, roles: [...(mocks.perfis[id] ?? [])] }),
+  },
+}))
+
 vi.mock('../../../../modules/integracao/adapters/http-conector-legado', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('../../../../modules/integracao/adapters/http-conector-legado')>()
@@ -138,29 +147,35 @@ vi.mock('../../../../modules/integracao/adapters/http-conector-legado', async (i
 
 import { POST } from './route'
 import { ConectorLegadoError } from '../../../../modules/integracao/adapters/http-conector-legado'
+import { assinarSessao } from '../../../../modules/auth/sessao'
+import { SESSION_COOKIE } from '../../../../shared/http/auth-context'
 
-function request(body: unknown, token: string | null = 'segredo-interno'): Request {
+function request(body: unknown, opts: { usuarioId?: string | null } = {}): Request {
+  const { usuarioId = 'user_import' } = opts
+  const headers: Record<string, string> = { 'content-type': 'application/json' }
+  if (usuarioId) {
+    const token = assinarSessao({ userId: usuarioId, expiraEm: new Date(Date.now() + 60_000) })
+    headers.cookie = `${SESSION_COOKIE}=${token}`
+  }
   return new Request('http://localhost/api/integracao/pedidos', {
     method: 'POST',
-    headers:
-      token === null
-        ? { 'content-type': 'application/json' }
-        : { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+    headers,
     body: JSON.stringify(body),
   })
 }
 
 describe('POST /api/integracao/pedidos', () => {
-  const original = process.env.APP_INTERNAL_TOKEN
+  const original = process.env.SESSION_SECRET
 
   beforeEach(() => {
-    process.env.APP_INTERNAL_TOKEN = 'segredo-interno'
+    process.env.SESSION_SECRET = 'segredo-de-teste'
     mocks.reset()
+    mocks.perfis.user_import = ['PRODUCTION_MANAGER']
   })
 
   afterEach(() => {
-    if (original === undefined) delete process.env.APP_INTERNAL_TOKEN
-    else process.env.APP_INTERNAL_TOKEN = original
+    if (original === undefined) delete process.env.SESSION_SECRET
+    else process.env.SESSION_SECRET = original
   })
 
   it('responde 202 com o jobId e cria um job PENDING para número válido', async () => {
@@ -173,17 +188,21 @@ describe('POST /api/integracao/pedidos', () => {
     expect(mocks.jobs[0].status).toBe('PENDING')
   })
 
-  it('responde 401 e não cria job quando o token está ausente', async () => {
-    const response = await POST(request({ orderNumber: '70435' }, null))
+  it('responde 401 e não cria job quando não há sessão', async () => {
+    const response = await POST(request({ orderNumber: '70435' }, { usuarioId: null }))
 
     expect(response.status).toBe(401)
     expect(mocks.jobs).toHaveLength(0)
   })
 
-  it('responde 401 e não cria job quando o token diverge', async () => {
-    const response = await POST(request({ orderNumber: '70435' }, 'outro-token'))
+  it('responde 403 e não cria job quando o perfil não é autorizado', async () => {
+    mocks.perfis.user_vendedor = ['SELLER']
 
-    expect(response.status).toBe(401)
+    const response = await POST(
+      request({ orderNumber: '70435' }, { usuarioId: 'user_vendedor' }),
+    )
+
+    expect(response.status).toBe(403)
     expect(mocks.jobs).toHaveLength(0)
   })
 

@@ -1,3 +1,4 @@
+import type { RoleCode } from '@/generated/prisma/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => {
@@ -14,6 +15,7 @@ const mocks = vi.hoisted(() => {
     completedAt: Date | null
   }> = []
   const events: Array<{ id: string; jobId: string; type: string; detail: string | null; createdAt: Date }> = []
+  const perfis: Record<string, RoleCode[]> = {}
 
   const repo = {
     findRecentByIdempotencyKey: async () => null,
@@ -35,14 +37,22 @@ const mocks = vi.hoisted(() => {
     events.length = 0
   }
 
-  return { jobs, events, repo, reset }
+  return { jobs, events, repo, reset, perfis }
 })
 
 vi.mock('../../../../../modules/integracao/adapters/prisma-integracao-repository', () => ({
   prismaIntegracaoRepository: mocks.repo,
 }))
 
+vi.mock('@/modules/usuarios/adapters/prisma-usuarios-repository', () => ({
+  prismaUsuariosRepository: {
+    findById: async (id: string) => ({ id, roles: [...(mocks.perfis[id] ?? [])] }),
+  },
+}))
+
 import { GET } from './route'
+import { assinarSessao } from '../../../../../modules/auth/sessao'
+import { SESSION_COOKIE } from '../../../../../shared/http/auth-context'
 
 const NOW = new Date('2026-10-06T12:00:00.000Z')
 
@@ -61,10 +71,14 @@ function makeJob(id: string, status: string) {
   }
 }
 
-function request(token: string | null = 'segredo-interno'): Request {
-  return new Request('http://localhost/api/integracao/pedidos/job_1', {
-    headers: token === null ? {} : { authorization: `Bearer ${token}` },
-  })
+function request(opts: { usuarioId?: string | null } = {}): Request {
+  const { usuarioId = 'user_view' } = opts
+  const headers: Record<string, string> = {}
+  if (usuarioId) {
+    const token = assinarSessao({ userId: usuarioId, expiraEm: new Date(Date.now() + 60_000) })
+    headers.cookie = `${SESSION_COOKIE}=${token}`
+  }
+  return new Request('http://localhost/api/integracao/pedidos/job_1', { headers })
 }
 
 function context(jobId: string) {
@@ -72,16 +86,17 @@ function context(jobId: string) {
 }
 
 describe('GET /api/integracao/pedidos/[jobId]', () => {
-  const original = process.env.APP_INTERNAL_TOKEN
+  const original = process.env.SESSION_SECRET
 
   beforeEach(() => {
-    process.env.APP_INTERNAL_TOKEN = 'segredo-interno'
+    process.env.SESSION_SECRET = 'segredo-de-teste'
     mocks.reset()
+    mocks.perfis.user_view = ['OPERATOR']
   })
 
   afterEach(() => {
-    if (original === undefined) delete process.env.APP_INTERNAL_TOKEN
-    else process.env.APP_INTERNAL_TOKEN = original
+    if (original === undefined) delete process.env.SESSION_SECRET
+    else process.env.SESSION_SECRET = original
   })
 
   it('responde 404 quando o job não existe', async () => {
@@ -114,8 +129,8 @@ describe('GET /api/integracao/pedidos/[jobId]', () => {
     }
   })
 
-  it('responde 401 quando o token está ausente', async () => {
-    const response = await GET(request(null), context('job_1'))
+  it('responde 401 quando não há sessão', async () => {
+    const response = await GET(request({ usuarioId: null }), context('job_1'))
 
     expect(response.status).toBe(401)
   })

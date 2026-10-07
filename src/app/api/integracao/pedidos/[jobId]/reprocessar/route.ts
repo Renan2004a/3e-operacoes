@@ -1,14 +1,13 @@
 import { JobNotFailedError, JobNotFoundError } from '../../../../../../modules/integracao/contratos'
 import { reprocessar } from '../../../../../../modules/integracao/reprocessar'
 import { prismaIntegracaoRepository } from '../../../../../../modules/integracao/adapters/prisma-integracao-repository'
-import { requireInternalToken } from '../../../../../../shared/http/internal-auth'
+import { autorizar } from '../../../../../../shared/http/autorizacao'
 import { agendarDespacho } from '../../../despacho'
 
-/** POST /api/integracao/pedidos/[jobId]/reprocessar — reprocessa um job FAILED. */
+/** POST /api/integracao/pedidos/[jobId]/reprocessar — reprocessa um job FAILED (AUTH-14). */
 export async function POST(request: Request, context: { params: Promise<{ jobId: string }> }) {
-  if (!requireInternalToken(request)) {
-    return Response.json({ error: 'unauthorized' }, { status: 401 })
-  }
+  const auth = await autorizar(request, 'solicitar_importacao')
+  if (!auth.autorizado) return auth.resposta
 
   const { jobId } = await context.params
 
