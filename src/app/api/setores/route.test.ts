@@ -83,6 +83,8 @@ describe('/api/setores', () => {
     process.env.SESSION_SECRET = 'segredo-de-teste'
     mocks.reset()
     mocks.perfis.user_admin = ['SYSTEM_RESPONSIBLE']
+    mocks.perfis.user_operador = ['OPERATOR']
+    mocks.perfis.user_sem_perfil = []
   })
 
   afterEach(() => {
@@ -115,6 +117,30 @@ describe('/api/setores', () => {
     expect(response.status).toBe(200)
     const body = await response.json()
     expect(body.sectors.map((sector: { code: string }) => sector.code)).toEqual(['TELHAS'])
+  })
+
+  it('responde 200 na listagem para perfil que só consulta pedidos (LAC-04)', async () => {
+    mocks.sectors.push({
+      id: 'sector_1',
+      code: 'TELHAS',
+      name: 'Telhas',
+      active: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+
+    const response = await GET(request('GET', undefined, { usuarioId: 'user_operador' }))
+
+    expect(response.status).toBe(200)
+    expect((await response.json()).sectors.map((sector: { code: string }) => sector.code)).toEqual([
+      'TELHAS',
+    ])
+  })
+
+  it('responde 403 na listagem para usuário sem perfil (LAC-04)', async () => {
+    const response = await GET(request('GET', undefined, { usuarioId: 'user_sem_perfil' }))
+
+    expect(response.status).toBe(403)
   })
 
   it('responde 201 ao criar um setor ativo', async () => {
@@ -160,6 +186,15 @@ describe('/api/setores', () => {
 
     const response = await POST(
       request('POST', { code: 'TELHAS', name: 'Telhas' }, { usuarioId: 'user_vendedor' }),
+    )
+
+    expect(response.status).toBe(403)
+    expect(mocks.sectors).toHaveLength(0)
+  })
+
+  it('mantém a criação restrita a gerenciar_setores mesmo com leitura liberada (LAC-04)', async () => {
+    const response = await POST(
+      request('POST', { code: 'TELHAS', name: 'Telhas' }, { usuarioId: 'user_operador' }),
     )
 
     expect(response.status).toBe(403)

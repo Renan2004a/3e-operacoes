@@ -135,9 +135,9 @@ T8
 
 **Done when**:
 
-- [ ] `GET` liberado para `consultar_pedidos`; `POST` segue `gerenciar_setores`
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm run lint && npm run typecheck && npm test`
+- [x] `GET` liberado para `consultar_pedidos`; `POST` segue `gerenciar_setores`
+- [x] Test count: 9 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm run lint && npm run typecheck && npm test`
 
 **Tests**: integration
 **Gate**: full

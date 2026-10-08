@@ -7,9 +7,9 @@ import {
 import { prismaSectorRepository } from '../../../modules/setores/adapters/prisma-setores-repository'
 import { autorizar } from '../../../shared/http/autorizacao'
 
-/** GET /api/setores — lista os setores ativos (AUTH-14). */
+/** GET /api/setores — lista os setores ativos para classificação (LAC-04). */
 export async function GET(request: Request) {
-  const auth = await autorizar(request, 'gerenciar_setores')
+  const auth = await autorizar(request, 'consultar_pedidos')
   if (!auth.autorizado) return auth.resposta
 
   const sectors = await listarSetores(prismaSectorRepository)

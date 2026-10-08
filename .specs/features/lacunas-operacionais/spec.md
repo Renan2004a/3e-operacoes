@@ -91,7 +91,7 @@ O sistema está funcional, mas quatro pontos impedem o uso 100% pela interface e
 | LAC-01 | P1: Importar | Design | Pending |
 | LAC-02 | P1: Importar | Design | Pending |
 | LAC-03 | P1: Importar | Design | Pending |
-| LAC-04 | P1: Classificar | Design | Pending |
+| LAC-04 | P1: Classificar | Design | Done |
 | LAC-05 | P1: Classificar | Design | Pending |
 | LAC-06 | P1: Classificar | Design | Pending |
 | LAC-07 | P1: Ordem | Design | Pending |
