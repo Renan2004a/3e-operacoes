@@ -97,10 +97,10 @@ describe('EntregasPage', () => {
     render(<EntregasPage />)
 
     await selecionarPedido()
-    fireEvent.change(await screen.findByLabelText('Quantidade do item item_1'), {
+    fireEvent.change(await screen.findByLabelText('Quantidade do item 1'), {
       target: { value: '3' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Registrar entrega do item item_1' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar entrega do item 1' }))
 
     await waitFor(() =>
       expect(mocks.apiPost).toHaveBeenCalledWith('/api/pedidos/itens/item_1/entregas', {
@@ -117,10 +117,10 @@ describe('EntregasPage', () => {
     render(<EntregasPage />)
 
     await selecionarPedido()
-    fireEvent.change(await screen.findByLabelText('Quantidade do item item_1'), {
+    fireEvent.change(await screen.findByLabelText('Quantidade do item 1'), {
       target: { value: '9' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Registrar entrega do item item_1' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar entrega do item 1' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       /autorização de gerente com motivo/i,
@@ -133,11 +133,11 @@ describe('EntregasPage', () => {
     render(<EntregasPage />)
 
     await selecionarPedido()
-    fireEvent.change(await screen.findByLabelText('Quantidade do item item_1'), {
+    fireEvent.change(await screen.findByLabelText('Quantidade do item 1'), {
       target: { value: '9' },
     })
     fireEvent.click(await screen.findByLabelText('Autorizar acima do disponível'))
-    fireEvent.click(screen.getByRole('button', { name: 'Registrar entrega do item item_1' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar entrega do item 1' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/informe o motivo/i)
     expect(mocks.apiPost).not.toHaveBeenCalled()
@@ -148,14 +148,14 @@ describe('EntregasPage', () => {
     render(<EntregasPage />)
 
     await selecionarPedido()
-    fireEvent.change(await screen.findByLabelText('Quantidade do item item_1'), {
+    fireEvent.change(await screen.findByLabelText('Quantidade do item 1'), {
       target: { value: '9' },
     })
     fireEvent.click(await screen.findByLabelText('Autorizar acima do disponível'))
-    fireEvent.change(screen.getByLabelText('Motivo da exceção do item item_1'), {
+    fireEvent.change(screen.getByLabelText('Motivo da exceção do item 1'), {
       target: { value: 'Cliente pediu urgente' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Registrar entrega do item item_1' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar entrega do item 1' }))
 
     await waitFor(() =>
       expect(mocks.apiPost).toHaveBeenCalledWith('/api/pedidos/itens/item_1/entregas', {

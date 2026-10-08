@@ -74,8 +74,24 @@ export const prismaProducaoRepository: ProducaoRepository = {
     const rows = await prisma.activity.findMany({
       where: { sectorId: { in: sectorIds } },
       orderBy: { createdAt: 'asc' },
+      include: {
+        sector: { select: { name: true } },
+        orderItem: {
+          select: {
+            description: true,
+            productCode: true,
+            order: { select: { legacyNumber: true } },
+          },
+        },
+      },
     })
-    return rows.map(toAtividade)
+    return rows.map((row) => ({
+      ...toAtividade(row),
+      itemDescription: row.orderItem.description,
+      productCode: row.orderItem.productCode,
+      orderNumber: row.orderItem.order.legacyNumber,
+      sectorName: row.sector.name,
+    }))
   },
 
   async buscarAtividadeParaExecucao(atividadeId): Promise<AtividadeParaExecucao | null> {

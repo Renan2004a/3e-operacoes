@@ -19,6 +19,10 @@ interface Atividade {
   sectorId: string
   status: ActivityStatus
   priority: number
+  itemDescription?: string | null
+  productCode?: string | null
+  orderNumber?: string | null
+  sectorName?: string | null
 }
 
 const ROTULO_STATUS: Record<ActivityStatus, string> = {
@@ -105,10 +109,12 @@ export default function FilaPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-                      Prioridade {atividade.priority} · {atividade.sectorId}
+                      Prioridade {atividade.priority} · {atividade.sectorName ?? 'Setor'}
                     </p>
-                    <CardTitle className="mt-1 text-base">Atividade {atividade.id}</CardTitle>
-                    <p className="mt-1 text-sm text-muted">Item {atividade.orderItemId}</p>
+                    <CardTitle className="mt-1 text-base">
+                      {atividade.itemDescription ?? atividade.productCode ?? 'Item sem descrição'}
+                    </CardTitle>
+                    <p className="mt-1 text-sm text-muted">Pedido {atividade.orderNumber ?? '—'}</p>
                   </div>
                   <Badge variant={VARIANTE_STATUS[atividade.status]}>
                     {ROTULO_STATUS[atividade.status]}

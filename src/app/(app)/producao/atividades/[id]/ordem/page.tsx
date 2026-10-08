@@ -97,7 +97,7 @@ export default function OrdemProducaoPage() {
         </Link>
         <PageHead
           title={`Ordem de produção`}
-          description={`Atividade ${ordem.atividadeId}`}
+          description={`Pedido ${ordem.pedido}`}
           actions={
             <Button onClick={() => window.print()} aria-label="Imprimir ordem de produção">
               Imprimir

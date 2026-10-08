@@ -48,6 +48,8 @@ function somar(itens: ItemSaldo[], campo: 'disponivel' | 'pendente'): number {
 
 interface EntregaFormProps {
   item: ItemSaldo
+  /** Rótulo humano do item na tela (posição), no lugar do CUID. */
+  rotulo: string
   onRegistrada: () => void
 }
 
@@ -55,7 +57,7 @@ interface EntregaFormProps {
  * Formulário de entrega de um item (FEP-06, FEP-07). Dentro do disponível
  * registra direto; acima do disponível exige autorização de gerente com motivo.
  */
-function EntregaForm({ item, onRegistrada }: EntregaFormProps) {
+function EntregaForm({ item, rotulo, onRegistrada }: EntregaFormProps) {
   const [quantidade, setQuantidade] = useState('')
   const [excecao, setExcecao] = useState(false)
   const [motivo, setMotivo] = useState('')
@@ -125,7 +127,7 @@ function EntregaForm({ item, onRegistrada }: EntregaFormProps) {
         </Alert>
       ) : null}
 
-      <Field label={`Quantidade do item ${item.itemId}`} required>
+      <Field label={`Quantidade do ${rotulo}`} required>
         {(props) => (
           <Input
             {...props}
@@ -153,7 +155,7 @@ function EntregaForm({ item, onRegistrada }: EntregaFormProps) {
             />
             Autorizar acima do disponível
           </label>
-          <Field label={`Motivo da exceção do item ${item.itemId}`} required>
+          <Field label={`Motivo da exceção do ${rotulo}`} required>
             {(props) => (
               <Input
                 {...props}
@@ -168,7 +170,7 @@ function EntregaForm({ item, onRegistrada }: EntregaFormProps) {
       <Button
         type="submit"
         disabled={enviando}
-        aria-label={`Registrar entrega do item ${item.itemId}`}
+        aria-label={`Registrar entrega do ${rotulo}`}
       >
         {enviando ? 'Registrando…' : 'Registrar entrega'}
       </Button>
@@ -300,11 +302,11 @@ export default function EntregasPage() {
             />
           </div>
 
-          {pedido.itens.map((item) => (
+          {pedido.itens.map((item, indice) => (
             <Card key={item.itemId}>
               <CardHeader>
                 <div>
-                  <CardTitle className="text-base">Item {item.itemId}</CardTitle>
+                  <CardTitle className="text-base">Item {indice + 1}</CardTitle>
                   <p className="mt-1 text-sm text-ink">Disponível: {item.disponivel}</p>
                 </div>
                 <Badge variant={numero(item.disponivel) > 0 ? 'success' : 'neutral'}>
@@ -316,7 +318,11 @@ export default function EntregasPage() {
                   Solicitado: {item.solicitado} · Executado: {item.executado} · Entregue:{' '}
                   {item.entregue} · Pendente: {item.pendente}
                 </p>
-                <EntregaForm item={item} onRegistrada={() => void carregarPedido(orderId)} />
+                <EntregaForm
+                  item={item}
+                  rotulo={`item ${indice + 1}`}
+                  onRegistrada={() => void carregarPedido(orderId)}
+                />
               </CardContent>
             </Card>
           ))}

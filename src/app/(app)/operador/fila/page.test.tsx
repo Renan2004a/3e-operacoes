@@ -34,6 +34,10 @@ function atividade(overrides: Record<string, unknown> = {}) {
     sectorId: 'setor_1',
     status: 'PENDING',
     priority: 1,
+    itemDescription: 'Chapa dobrada',
+    productCode: 'PRD-1',
+    orderNumber: '100',
+    sectorName: 'Corte e Dobra',
     ...overrides,
   }
 }
@@ -56,7 +60,7 @@ describe('FilaPage', () => {
     mocks.apiGet.mockResolvedValue({ atividades: [atividade()] })
     render(<FilaPage />)
 
-    expect(await screen.findByText('Atividade atv_1')).toBeInTheDocument()
+    expect(await screen.findByText('Chapa dobrada')).toBeInTheDocument()
     expect(screen.getByText('Pendente')).toBeInTheDocument()
     expect(mocks.apiGet).toHaveBeenCalledWith('/api/producao/atividades')
   })
@@ -85,7 +89,7 @@ describe('FilaPage', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Tentar de novo' }))
 
-    expect(await screen.findByText('Atividade atv_1')).toBeInTheDocument()
+    expect(await screen.findByText('Chapa dobrada')).toBeInTheDocument()
     expect(mocks.apiGet).toHaveBeenCalledTimes(2)
   })
 
@@ -106,11 +110,11 @@ describe('FilaPage', () => {
 
   it('mostra setor e prioridade no card da atividade (PROT-05)', async () => {
     mocks.apiGet.mockResolvedValue({
-      atividades: [atividade({ priority: 2, sectorId: 'setor_corte' })],
+      atividades: [atividade({ priority: 2, sectorId: 'setor_corte', sectorName: 'Corte e Dobra' })],
     })
     render(<FilaPage />)
 
     expect(await screen.findByText(/prioridade 2/i)).toBeInTheDocument()
-    expect(screen.getByText(/setor_corte/i)).toBeInTheDocument()
+    expect(screen.getByText(/corte e dobra/i)).toBeInTheDocument()
   })
 })

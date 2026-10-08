@@ -7,6 +7,14 @@ export interface Atividade {
   status: ActivityStatus
   priority: number
   createdAt: Date
+  /** Descrição do item, para exibição (evita mostrar o CUID). */
+  itemDescription?: string | null
+  /** Código do produto, fallback de exibição. */
+  productCode?: string | null
+  /** Número do pedido no legado, para exibição. */
+  orderNumber?: string | null
+  /** Nome do setor, para exibição. */
+  sectorName?: string | null
 }
 
 export interface FilaRepository {
