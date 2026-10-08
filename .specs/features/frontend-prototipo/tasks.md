@@ -252,10 +252,10 @@ T7
 
 **Done when**:
 
-- [ ] Nenhum texto de demonstração
-- [ ] E2E sem rolagem horizontal 360–1440 px
-- [ ] Test count: 5 testes E2E passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm run test:e2e`
+- [x] Nenhum texto de demonstração
+- [x] E2E sem rolagem horizontal 360–1440 px
+- [x] Test count: 5 testes E2E passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm run test:e2e`
 
 **Tests**: e2e
 **Gate**: e2e

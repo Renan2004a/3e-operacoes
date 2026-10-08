@@ -6,10 +6,10 @@ A interface atual já usa a linguagem visual da referência, mas **não replica 
 
 ## Goals
 
-- [ ] Login, shell e telas **fiéis à estrutura do protótipo**.
-- [ ] Remover **todo texto de demonstração**.
-- [ ] Usável em **celular, tablet, notebook e desktop**.
-- [ ] Comportamento, APIs e contratos **inalterados**.
+- [x] Login, shell e telas **fiéis à estrutura do protótipo**.
+- [x] Remover **todo texto de demonstração**.
+- [x] Usável em **celular, tablet, notebook e desktop**.
+- [x] Comportamento, APIs e contratos **inalterados**.
 
 ## Out of Scope
 
@@ -92,16 +92,16 @@ A interface atual já usa a linguagem visual da referência, mas **não replica 
 | PROT-05 | P1: Telas | Design | Done (T4, T5, T6) |
 | PROT-06 | P1: Telas | Design | Done (T4, T5, T6) |
 | PROT-07 | P1: Telas | Design | Done (T1, T5) |
-| PROT-08 | P1: Sem demo | Design | Done (T2) |
-| PROT-09 | P1: Responsivo | Design | Pending |
+| PROT-08 | P1: Sem demo | Design | Done (T2, T7) |
+| PROT-09 | P1: Responsivo | Design | Done (T7) |
 
-**Coverage:** 9 total, 6 mapped to tasks, 3 unmapped ⚠️
+**Coverage:** 9 total, 9 mapped to tasks, 0 unmapped ✅
 
 ---
 
 ## Success Criteria
 
-- [ ] Telas visualmente fiéis ao protótipo.
-- [ ] Nenhum texto de demonstração.
-- [ ] Itens com descrição/código/unidade/vendedor.
-- [ ] Testes e E2E verdes.
+- [x] Telas visualmente fiéis ao protótipo.
+- [x] Nenhum texto de demonstração.
+- [x] Itens com descrição/código/unidade/vendedor.
+- [x] Testes e E2E verdes.
