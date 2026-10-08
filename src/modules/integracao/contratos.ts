@@ -100,6 +100,12 @@ export interface IntegracaoRepository {
   listEvents(jobId: string): Promise<IntegrationJobEventRecord[]>
 }
 
+/** Porta de listagem de jobs para o responsável técnico (LAC-09). */
+export interface ListaJobsRepository {
+  /** Lista os jobs de integração, do mais recente para o mais antigo. */
+  listJobs(): Promise<IntegrationJob[]>
+}
+
 export interface ConectorLegadoPort {
   /** Envia o pedido ao conector local. Erros de transporte/timeout são lançados. */
   despachar(input: { jobId: string; orderNumber: string }): Promise<void>

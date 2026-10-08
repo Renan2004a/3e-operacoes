@@ -3,6 +3,7 @@ import type {
   IntegracaoRepository,
   IntegrationJob,
   IntegrationJobEventRecord,
+  ListaJobsRepository,
 } from '../contratos'
 
 interface IntegrationJobRow {
@@ -52,7 +53,7 @@ function toEvent(row: IntegrationJobEventRow): IntegrationJobEventRecord {
 }
 
 /** Implementação Prisma da porta `IntegracaoRepository`. */
-export const prismaIntegracaoRepository: IntegracaoRepository = {
+export const prismaIntegracaoRepository: IntegracaoRepository & ListaJobsRepository = {
   async findRecentByIdempotencyKey(idempotencyKey, since) {
     const row = await prisma.integrationJob.findFirst({
       where: { idempotencyKey, createdAt: { gte: since } },
@@ -109,5 +110,10 @@ export const prismaIntegracaoRepository: IntegracaoRepository = {
       orderBy: { createdAt: 'asc' },
     })
     return rows.map(toEvent)
+  },
+
+  async listJobs() {
+    const rows = await prisma.integrationJob.findMany({ orderBy: { createdAt: 'desc' } })
+    return rows.map(toJob)
   },
 }
