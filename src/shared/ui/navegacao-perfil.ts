@@ -28,7 +28,10 @@ export const NAV_POR_PERFIL: Record<RoleCode, readonly ItemNav[]> = {
     { href: '/admin/setores', label: 'Setores' },
     { href: '/integracao', label: 'Importar' },
   ],
-  TECHNICAL_RESPONSIBLE: [{ href: '/integracao', label: 'Importar' }],
+  TECHNICAL_RESPONSIBLE: [
+    { href: '/tecnico/integracao', label: 'Integração' },
+    { href: '/integracao', label: 'Importar' },
+  ],
 }
 
 /**

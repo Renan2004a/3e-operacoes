@@ -243,10 +243,10 @@ T8
 
 **Done when**:
 
-- [ ] Lista jobs e mostra eventos do selecionado
-- [ ] Estado vazio quando não há jobs
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Lista jobs e mostra eventos do selecionado
+- [x] Estado vazio quando não há jobs
+- [x] Test count: 7 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

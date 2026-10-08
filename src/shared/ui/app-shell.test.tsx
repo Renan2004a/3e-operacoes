@@ -56,7 +56,13 @@ const PERFIS: Array<{ perfil: RoleCode; itens: Array<{ nome: string; href: strin
       { nome: 'Importar', href: '/integracao' },
     ],
   },
-  { perfil: 'TECHNICAL_RESPONSIBLE', itens: [{ nome: 'Importar', href: '/integracao' }] },
+  {
+    perfil: 'TECHNICAL_RESPONSIBLE',
+    itens: [
+      { nome: 'Integração', href: '/tecnico/integracao' },
+      { nome: 'Importar', href: '/integracao' },
+    ],
+  },
 ]
 
 describe('AppShell', () => {

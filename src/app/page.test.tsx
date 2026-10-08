@@ -56,9 +56,9 @@ describe('Home (/)', () => {
     await expect(Home()).rejects.toThrow('REDIRECT:/gerente/painel')
   })
 
-  it('leva o responsável técnico para a importação (LAC-01)', async () => {
+  it('leva o responsável técnico para a integração (LAC-09)', async () => {
     mocks.getCookie.mockReturnValue({ value: tokenValido() })
     mocks.findById.mockResolvedValue({ id: 'u1', roles: ['TECHNICAL_RESPONSIBLE'] })
-    await expect(Home()).rejects.toThrow('REDIRECT:/integracao')
+    await expect(Home()).rejects.toThrow('REDIRECT:/tecnico/integracao')
   })
 })
