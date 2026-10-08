@@ -106,17 +106,17 @@ A interface funciona, mas está visualmente simples e distante da referência `f
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| VIS-01 | P1: Shell | Design | Done |
-| VIS-02 | P1: Shell | Design | Done |
-| VIS-03 | P1: Shell | Design | Done |
-| VIS-04 | P1: Login | Design | Done |
-| VIS-05 | P1: Login | Design | Done |
-| VIS-06 | P1: Login | Design | Done |
-| VIS-07 | P1: Componentes | Design | Done |
-| VIS-08 | P1: Componentes | Design | Done |
-| VIS-09 | P1: Telas | Design | Done |
-| VIS-10 | P1: Telas | Design | Done |
-| VIS-11 | P1: Telas | Design | Done |
+| VIS-01 | P1: Shell | Design | Verified |
+| VIS-02 | P1: Shell | Design | Verified |
+| VIS-03 | P1: Shell | Design | Verified |
+| VIS-04 | P1: Login | Design | Verified |
+| VIS-05 | P1: Login | Design | Verified |
+| VIS-06 | P1: Login | Design | Verified |
+| VIS-07 | P1: Componentes | Design | Verified |
+| VIS-08 | P1: Componentes | Design | Verified |
+| VIS-09 | P1: Telas | Design | Verified |
+| VIS-10 | P1: Telas | Design | Verified |
+| VIS-11 | P1: Telas | Design | Verified |
 
 **Coverage:** 11 total, 11 mapped to tasks, 0 unmapped ✅
 

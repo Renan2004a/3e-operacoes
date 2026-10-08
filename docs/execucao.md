@@ -391,3 +391,34 @@ E2E Playwright (login e responsividade), acessibilidade, fechamento das lacunas 
 ### Riscos abertos
 - Usar **usuário somente leitura** no `topgerente` (hoje é o `admin`) e **rotacionar a senha**.
 - Callback após `CONNECTOR_TIMEOUT` ainda conclui o job (`FAILED` → `SUCCEEDED`); revisar a máquina de estados.
+
+---
+
+## Feature 12 — Refino Visual do Frontend
+
+**Data**: 2026-10-07
+**Requisitos**: qualidade visual/UX (referência `frontend-v4`)
+**Artefatos**: `.specs/features/frontend-visual/{spec,design,tasks,validation}.md`
+
+### Objetivo
+Aproximar a interface da referência visual (`design/inspiracoes/frontend-v4/`), mantendo comportamento, responsividade e acessibilidade.
+
+### Como foi feito
+- **Specify**: 11 critérios EARS; `validate_spec.py` 0/0.
+- **Design**: componentes `Metric`/`Badge`/`PageHead`, shell topbar+sidebar, login com hero.
+- **Tasks**: 7 tarefas em 4 fases; `validate_tasks.py` 0 erros.
+- **Execute**: 1 batch (T1–T7), commit atômico por tarefa.
+- **Verify**: Verifier independente → **PASS** (comportamento inalterado).
+
+### Resultado
+- **7 tarefas** implementadas.
+- **598 testes unitários + 24 E2E** passando.
+- **Verificação: PASS** — 11/11 ACs; 5/5 mutantes mortos; APIs/contratos inalterados. `validate_state.py`: 0 erros.
+
+### Decisões e desvios
+- Shell com sidebar no desktop (≥768 px) e menu no celular; login com hero (≥780 px).
+- Tabelas com rolagem interna; estado por texto + cor; foco visível.
+- E2E cobre a superfície pública; a shell autenticada é coberta por testes de unidade (depende de sessão+banco).
+
+### Riscos abertos
+- Verificação geométrica pixel-a-pixel da shell autenticada depende de um E2E com banco.

@@ -58,11 +58,11 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 
 ## Handoff
 
-- **Feature**: qualidade-e-fechamento (concluída e verificada) + validação operacional contra a AWS
-- **Phase / Task**: projeto com o backlog implementado e rodando contra o banco AWS
-- **Completed**: 11 features; importação real (70435) e fluxo operacional completo validados
+- **Feature**: frontend-visual (refino visual) — concluída e verificada
+- **Phase / Task**: projeto com o backlog + refino visual implementados e no GitHub
+- **Completed**: 12 features; importação real e fluxo operacional validados; interface refinada
 - **In-progress** (file:line): nenhum
-- **Next step**: criar remote e push; go-live (Cloudflare/conector no cliente); usuário read-only e rotação de senha
+- **Next step**: (opcional) telas de importar pedido/classificar; revisar máquina de estados do job; go-live
 - **Blockers**: nenhum para desenvolvimento
-- **Uncommitted files**: docs/execucao.md, .specs/STATE.md
+- **Uncommitted files**: validation.md, spec.md, tasks.md, docs/execucao.md, .specs/STATE.md
 - **Branch**: main
