@@ -6,6 +6,8 @@ import type { AtividadeIndicador } from './painel'
 export interface ExecucaoIndicador {
   sectorId: string
   quantidade: Quantidade
+  /** Nome do setor, para exibição. */
+  sectorName?: string | null
 }
 
 /** Atividade com prazo e o momento da conclusão, quando houver (IND-08). */
@@ -27,6 +29,8 @@ export interface PcpRepository {
 export interface ProducaoPorSetor {
   sectorId: string
   quantidade: Quantidade
+  /** Nome do setor, para exibição. */
+  sectorName?: string | null
 }
 
 export interface CumprimentoPrazo {
@@ -59,9 +63,13 @@ export function montarPcpDe(
   atividades: readonly AtividadeComPrazo[],
 ): Pcp {
   const producao = new Map<string, Quantidade>()
+  const nomeDoSetor = new Map<string, string | null>()
   for (const execucao of execucoes) {
     const acumulado = producao.get(execucao.sectorId) ?? new Prisma.Decimal(0)
     producao.set(execucao.sectorId, acumulado.plus(execucao.quantidade))
+    if (execucao.sectorName && !nomeDoSetor.has(execucao.sectorId)) {
+      nomeDoSetor.set(execucao.sectorId, execucao.sectorName)
+    }
   }
 
   const concluidasComPrazo = atividades.filter(
@@ -83,7 +91,11 @@ export function montarPcpDe(
 
   return {
     producaoPorSetor: [...producao.entries()]
-      .map(([sectorId, quantidade]) => ({ sectorId, quantidade }))
+      .map(([sectorId, quantidade]) => ({
+        sectorId,
+        quantidade,
+        sectorName: nomeDoSetor.get(sectorId),
+      }))
       .sort((a, b) => a.sectorId.localeCompare(b.sectorId)),
     cumprimentoPrazo: {
       concluidasComPrazo: concluidasComPrazo.length,

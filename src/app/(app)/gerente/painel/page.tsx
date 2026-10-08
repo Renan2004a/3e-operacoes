@@ -14,6 +14,7 @@ import { Spinner } from '@/shared/ui/spinner'
 interface ContagemPorSetor {
   sectorId: string
   total: number
+  sectorName?: string | null
 }
 
 interface ContagemPorStatus {
@@ -30,6 +31,7 @@ interface Painel {
 interface ProducaoPorSetor {
   sectorId: string
   quantidade: string | number
+  sectorName?: string | null
 }
 
 interface CumprimentoPrazo {
@@ -167,17 +169,17 @@ export default function PainelPage() {
                 {pcp.producaoPorSetor.map((producao) => (
                   <li key={producao.sectorId} className="grid gap-1">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-ink">{producao.sectorId}</span>
+                      <span className="text-ink">{producao.sectorName ?? producao.sectorId}</span>
                       <span className="font-semibold text-ink">{producao.quantidade}</span>
                     </div>
                     <progress
                       className="h-3 w-full"
-                      aria-label={`Produção do setor ${producao.sectorId}`}
+                      aria-label={`Produção do setor ${producao.sectorName ?? producao.sectorId}`}
                       value={percentualProducao(producao.quantidade)}
                       max={100}
                     />
                     <span className="text-xs text-muted">
-                      {producao.sectorId}: {producao.quantidade}
+                      {producao.sectorName ?? producao.sectorId}: {producao.quantidade}
                     </span>
                   </li>
                 ))}
@@ -223,7 +225,7 @@ export default function PainelPage() {
             <ul aria-label="Atividades por setor" className="grid gap-1">
               {painel.porSetor.map((contagem) => (
                 <li key={contagem.sectorId} className="text-sm text-ink">
-                  {contagem.sectorId}: {contagem.total}
+                  {contagem.sectorName ?? contagem.sectorId}: {contagem.total}
                 </li>
               ))}
             </ul>

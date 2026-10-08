@@ -94,18 +94,27 @@ export const prismaIndicadoresRepository: IndicadoresRepository = {
 
   async listarAtividades(): Promise<AtividadeIndicador[]> {
     const rows = await prisma.activity.findMany({
-      select: { id: true, sectorId: true, status: true },
+      select: { id: true, sectorId: true, status: true, sector: { select: { name: true } } },
     })
-    return rows.map((row) => ({ id: row.id, sectorId: row.sectorId, status: row.status }))
+    return rows.map((row) => ({
+      id: row.id,
+      sectorId: row.sectorId,
+      status: row.status,
+      sectorName: row.sector.name,
+    }))
   },
 
   async listarExecucoes(): Promise<ExecucaoIndicador[]> {
     const rows = await prisma.execution.findMany({
-      select: { quantity: true, activity: { select: { sectorId: true } } },
+      select: {
+        quantity: true,
+        activity: { select: { sectorId: true, sector: { select: { name: true } } } },
+      },
     })
     return rows.map((row) => ({
       sectorId: row.activity.sectorId,
       quantidade: row.quantity,
+      sectorName: row.activity.sector.name,
     }))
   },
 
