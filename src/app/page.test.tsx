@@ -56,11 +56,9 @@ describe('Home (/)', () => {
     await expect(Home()).rejects.toThrow('REDIRECT:/gerente/painel')
   })
 
-  it('não redireciona (página neutra) para perfil sem telas', async () => {
+  it('leva o responsável técnico para a importação (LAC-01)', async () => {
     mocks.getCookie.mockReturnValue({ value: tokenValido() })
     mocks.findById.mockResolvedValue({ id: 'u1', roles: ['TECHNICAL_RESPONSIBLE'] })
-    const resultado = await Home()
-    expect(resultado).toBeTruthy()
-    expect(mocks.redirect).not.toHaveBeenCalled()
+    await expect(Home()).rejects.toThrow('REDIRECT:/integracao')
   })
 })

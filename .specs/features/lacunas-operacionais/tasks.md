@@ -163,9 +163,9 @@ T8
 
 **Done when**:
 
-- [ ] Número válido importa e mostra o status; inválido mostra erro
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Número válido importa e mostra o status; inválido mostra erro
+- [x] Test count: 7 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

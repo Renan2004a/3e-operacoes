@@ -42,6 +42,7 @@ const PERFIS: Array<{ perfil: RoleCode; itens: Array<{ nome: string; href: strin
     itens: [
       { nome: 'Painel', href: '/gerente/painel' },
       { nome: 'Pedidos', href: '/gerente/pedidos' },
+      { nome: 'Importar', href: '/integracao' },
       { nome: 'Fila', href: '/operador/fila' },
     ],
   },
@@ -52,9 +53,10 @@ const PERFIS: Array<{ perfil: RoleCode; itens: Array<{ nome: string; href: strin
     itens: [
       { nome: 'Usuários', href: '/admin/usuarios' },
       { nome: 'Setores', href: '/admin/setores' },
+      { nome: 'Importar', href: '/integracao' },
     ],
   },
-  { perfil: 'TECHNICAL_RESPONSIBLE', itens: [] },
+  { perfil: 'TECHNICAL_RESPONSIBLE', itens: [{ nome: 'Importar', href: '/integracao' }] },
 ]
 
 describe('AppShell', () => {
@@ -163,10 +165,9 @@ describe('AppShell', () => {
   it('não mostra rotas de outros perfis para o responsável técnico (FEP-10)', () => {
     render(<AppShell perfil="TECHNICAL_RESPONSIBLE">{conteudo}</AppShell>)
 
-    expect(screen.queryAllByRole('link')).toHaveLength(0)
-    expect(
-      screen.getByText('Sem telas disponíveis para o seu perfil.'),
-    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Importar' })).toHaveAttribute('href', '/integracao')
+    expect(screen.queryByRole('link', { name: 'Fila' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Usuários' })).not.toBeInTheDocument()
   })
 
   it('o gerente vê a fila e não vê rotas de expedição ou administração (FEP-10, QF-10)', () => {
