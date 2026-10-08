@@ -166,9 +166,12 @@ function request(body: unknown, opts: { usuarioId?: string | null } = {}): Reque
 
 describe('POST /api/integracao/pedidos', () => {
   const original = process.env.SESSION_SECRET
+  const originalBackoff = process.env.CONNECTOR_RETRY_BACKOFF_MS
 
   beforeEach(() => {
     process.env.SESSION_SECRET = 'segredo-de-teste'
+    // O despacho agora repete falhas transitórias; sem espera o teste fica rápido.
+    process.env.CONNECTOR_RETRY_BACKOFF_MS = '0'
     mocks.reset()
     mocks.perfis.user_import = ['PRODUCTION_MANAGER']
   })
@@ -176,6 +179,8 @@ describe('POST /api/integracao/pedidos', () => {
   afterEach(() => {
     if (original === undefined) delete process.env.SESSION_SECRET
     else process.env.SESSION_SECRET = original
+    if (originalBackoff === undefined) delete process.env.CONNECTOR_RETRY_BACKOFF_MS
+    else process.env.CONNECTOR_RETRY_BACKOFF_MS = originalBackoff
   })
 
   it('responde 202 com o jobId e cria um job PENDING para número válido', async () => {
@@ -245,7 +250,7 @@ describe('POST /api/integracao/pedidos', () => {
     expect(mocks.events[1].detail).toBe('ORDER_NOT_FOUND')
   })
 
-  it('marca o job como FAILED com CONNECTOR_TIMEOUT quando o conector não responde', async () => {
+  it('repete a falha transitória antes de marcar FAILED com CONNECTOR_TIMEOUT (LAC-11)', async () => {
     mocks.setDispatchError(
       new ConectorLegadoError('CONNECTOR_TIMEOUT', 'Conector não respondeu no tempo limite'),
     )
@@ -253,10 +258,16 @@ describe('POST /api/integracao/pedidos', () => {
     await POST(request({ orderNumber: '70435' }))
     await mocks.scheduled[0]()
 
+    expect(mocks.dispatchCalls).toHaveLength(3)
     expect(mocks.jobs[0].status).toBe('FAILED')
     expect(mocks.jobs[0].errorCode).toBe('CONNECTOR_TIMEOUT')
-    expect(mocks.events.map((event) => event.type)).toEqual(['DISPATCHED', 'FAILED'])
-    expect(mocks.events[1].detail).toBe('CONNECTOR_TIMEOUT')
+    expect(mocks.events.map((event) => event.type)).toEqual([
+      'DISPATCHED',
+      'RETRY',
+      'RETRY',
+      'FAILED',
+    ])
+    expect(mocks.events[3].detail).toBe('CONNECTOR_TIMEOUT')
   })
 
   it('reutiliza o job dentro da janela e não agenda novo despacho', async () => {

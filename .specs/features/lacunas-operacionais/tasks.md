@@ -81,11 +81,11 @@ T8
 
 **Done when**:
 
-- [ ] Erros transitórios são repetidos até o limite (env `CONNECTOR_MAX_ATTEMPTS`)
-- [ ] Erro definitivo (`ORDER_NOT_FOUND`) não repete
-- [ ] Tentativas registradas em evento
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Erros transitórios são repetidos até o limite (env `CONNECTOR_MAX_ATTEMPTS`)
+- [x] Erro definitivo (`ORDER_NOT_FOUND`) não repete
+- [x] Tentativas registradas em evento
+- [x] Test count: 11 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

@@ -98,11 +98,11 @@ O sistema está funcional, mas quatro pontos impedem o uso 100% pela interface e
 | LAC-08 | P1: Ordem | Design | Pending |
 | LAC-09 | P1: Técnico | Design | Pending |
 | LAC-10 | P1: Técnico | Design | Pending |
-| LAC-11 | P1: Retry | Design | Pending |
-| LAC-12 | P1: Retry | Design | Pending |
-| LAC-13 | P1: Retry | Design | Pending |
+| LAC-11 | P1: Retry | Design | Done |
+| LAC-12 | P1: Retry | Design | Done |
+| LAC-13 | P1: Retry | Design | Done |
 
-**Coverage:** 13 total, 0 mapped to tasks, 13 unmapped ⚠️
+**Coverage:** 3 total, 3 mapped to tasks, 0 unmapped ✅ (T1)
 
 ---
 
