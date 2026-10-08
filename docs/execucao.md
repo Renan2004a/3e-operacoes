@@ -485,3 +485,28 @@ Fechar as lacunas que impediam o uso 100% pela interface e a robustez da integra
 ### Riscos abertos
 - E2E das telas autenticadas depende de sessão+banco (coberto por testes de unidade).
 - `print:hidden` do shell sem teste dedicado (observação menor).
+
+---
+
+## Feature 15 — Desmembramento do vendedor e ajustes de UI
+
+**Data**: 2026-10-08
+**Requisitos**: RF (desmembramento por setor), HU (vendedor separa/desmembra), feedback do professor Rodrigo
+**Artefatos**: `.specs/STATE.md` (AD-003)
+
+### Objetivo
+O vendedor registra o desmembramento (classificação dos itens por setor) de cada pedido; a tela de detalhe deixa de exibir o CUID do item e passa a mostrar o desmembramento por setor; guia de deploy Railway/Vercel.
+
+### Como foi feito
+- Permissão `classificar_item` passa a incluir `SELLER`; tela do vendedor habilita `permitirClassificacao`.
+- Detalhe do pedido: rótulos humanos (posição do item) no lugar do CUID; setor e situação da atividade por item; resumo "Desmembramento por setor" (itens, solicitado, pendente).
+- `detalharPedido`/adapter passam a devolver `sectorCode`/`sectorName`/`activityStatus` por item.
+- `docs/deploy.md` com Railway (recomendado) e Vercel.
+
+### Resultado
+- **659 testes unitários** passando; typecheck, lint e build OK.
+- Decisão registrada em AD-003.
+
+### Riscos abertos
+- Confirmar se o vendedor também registra a **separação** (execução de Revenda) — hoje só o desmembramento.
+- Deploy real depende de conta Railway/Vercel do cliente.

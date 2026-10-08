@@ -8,9 +8,10 @@ describe('pode', () => {
     }
   })
 
-  it('Vendedor só consulta e define prazo, não registra execução', () => {
+  it('Vendedor consulta, define prazo e desmembra itens, mas não registra execução', () => {
     expect(pode(['SELLER'], 'consultar_pedidos')).toBe(true)
     expect(pode(['SELLER'], 'definir_prazo')).toBe(true)
+    expect(pode(['SELLER'], 'classificar_item')).toBe(true)
     expect(pode(['SELLER'], 'registrar_execucao')).toBe(false)
     expect(pode(['SELLER'], 'registrar_entrega')).toBe(false)
   })

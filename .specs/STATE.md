@@ -16,7 +16,7 @@ Projeto em bootstrap. A estrutura inicial, documentação, skills locais e subag
 - Sincronização: assíncrona e disparada por requisição de usuário a partir do número do pedido.
 - Setores usados agora: Corte e Dobra, Telhas e Revenda.
 - Usuário pode pertencer a mais de um setor.
-- Vendedor consulta todos os pedidos e pode definir/alterar prazo de entrega; não altera produção.
+- Vendedor consulta todos os pedidos, pode definir/alterar prazo de entrega e fazer o desmembramento (classificar itens por setor); não altera produção.
 - Expedição e gerente registram entregas.
 - Operação offline foi adiada; não faz parte do escopo atual.
 - Referências visuais são inspiração, não especificação e não obrigam reaproveitamento de código.
@@ -56,13 +56,22 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Date**: 2026-10-06
 - **Status**: active
 
+### AD-003
+
+- **Decision**: O vendedor passa a poder fazer o **desmembramento** do pedido (classificar itens por setor), além de definir prazo. A tela de detalhe do pedido não exibe mais o CUID do item (usa posição/descrição) e mostra o desmembramento por setor.
+- **Reason**: Pedido do cliente/professor; o vendedor conhece o pedido e faz a separação/desmembramento hoje no papel.
+- **Trade-off**: Amplia a matriz de permissões do vendedor; as demais ações de produção continuam negadas.
+- **Scope**: permissões, pedidos (vendedor/gerente), indicadores.
+- **Date**: 2026-10-08
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: lacunas-operacionais — concluída e verificada
-- **Phase / Task**: próximo: (opcional) E2E com banco, PWA offline (opção B), go-live
-- **Completed**: 14 features; telas de importar/classificar/ordem/técnico; retry na integração
+- **Feature**: desmembramento-do-vendedor (ajuste de permissão + UI)
+- **Phase / Task**: concluído; próximo: confirmar separação de Revenda, E2E com banco, deploy
+- **Completed**: vendedor classifica itens; detalhe sem CUID; desmembramento por setor; docs de deploy
 - **In-progress** (file:line): nenhum
-- **Next step**: decidir próximos itens (E2E com banco, PWA, go-live) ou implantar on-premise
+- **Next step**: confirmar se o vendedor também registra a separação (execução de Revenda); deploy Railway/Vercel
 - **Blockers**: nenhum para desenvolvimento
-- **Uncommitted files**: validation.md, spec.md, tasks.md, docs/execucao.md, .specs/STATE.md
+- **Uncommitted files**: (atualizado no commit)
 - **Branch**: main

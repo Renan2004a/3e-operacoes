@@ -37,7 +37,7 @@ A decisão mais recente substitui a formulação anterior que descontava perda/r
 
 - Operador: vê/atua nos setores aos quais está associado.
 - Gerente: também altera status e prioridades.
-- Vendedor: consulta todos os pedidos; não altera produção, quantidades executadas, ocorrências ou entregas. Exceção: pode definir/alterar prazo de entrega.
+- Vendedor: consulta todos os pedidos; não altera produção, quantidades executadas, ocorrências ou entregas. Exceções: pode definir/alterar prazo de entrega e fazer o **desmembramento** (classificar itens por setor) do pedido.
 - Expedição e gerente podem registrar entregas.
 - Entrega acima do disponível exige gerente, motivo obrigatório e auditoria completa do valor anterior, valor solicitado, usuário e data/hora.
 

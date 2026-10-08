@@ -34,6 +34,11 @@ import VendedorPedidosPage from './page'
 
 const PEDIDO = { id: 'p1', numero: '100', cliente: 'Ana', status: 'PENDING' as const }
 
+const SETORES = [
+  { id: 'setor_telhas', code: 'TELHAS', name: 'Telhas', active: true },
+  { id: 'setor_corte', code: 'CORTE_DOBRA', name: 'Corte e Dobra', active: true },
+]
+
 function detalhe() {
   return {
     id: 'p1',
@@ -56,6 +61,7 @@ function configurarApi() {
   mocks.apiGet.mockImplementation((url: string) => {
     if (url === '/api/pedidos') return Promise.resolve({ pedidos: [PEDIDO] })
     if (url === '/api/pedidos/p1') return Promise.resolve({ pedido: detalhe() })
+    if (url === '/api/setores') return Promise.resolve({ sectors: SETORES })
     return Promise.reject(new Error(`url inesperada: ${url}`))
   })
 }
@@ -107,15 +113,15 @@ describe('VendedorPedidosPage', () => {
     )
   })
 
-  it('não expõe ações de produção: somente leitura além do prazo (FEP-04)', async () => {
+  it('permite definir prazo e desmembrar (classificar) o item, sem ações de execução (FEP-04)', async () => {
     configurarApi()
     render(<VendedorPedidosPage />)
 
     fireEvent.click(await screen.findByRole('button', { name: 'Abrir pedido 100' }))
 
     expect(await screen.findByRole('button', { name: 'Salvar prazo do item 1' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Classificar item 1' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /registrar execução/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /classificar/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /prioridade/i })).not.toBeInTheDocument()
   })
 
