@@ -89,8 +89,8 @@ A interface atual já usa a linguagem visual da referência, mas **não replica 
 | PROT-02 | P1: Login | Design | Done (T2) |
 | PROT-03 | P1: Shell | Design | Done (T3) |
 | PROT-04 | P1: Shell | Design | Done (T3) |
-| PROT-05 | P1: Telas | Design | Pending |
-| PROT-06 | P1: Telas | Design | Pending |
+| PROT-05 | P1: Telas | Design | In progress (T4) |
+| PROT-06 | P1: Telas | Design | In progress (T4) |
 | PROT-07 | P1: Telas | Design | Done (T1) |
 | PROT-08 | P1: Sem demo | Design | Done (T2) |
 | PROT-09 | P1: Responsivo | Design | Pending |

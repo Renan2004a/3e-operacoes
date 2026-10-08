@@ -103,4 +103,14 @@ describe('FilaPage', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Minha fila' })).toBeInTheDocument()
   })
+
+  it('mostra setor e prioridade no card da atividade (PROT-05)', async () => {
+    mocks.apiGet.mockResolvedValue({
+      atividades: [atividade({ priority: 2, sectorId: 'setor_corte' })],
+    })
+    render(<FilaPage />)
+
+    expect(await screen.findByText(/prioridade 2/i)).toBeInTheDocument()
+    expect(screen.getByText(/setor_corte/i)).toBeInTheDocument()
+  })
 })

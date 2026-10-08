@@ -95,31 +95,36 @@ export default function FilaPage() {
 
   return (
     <section className="grid gap-4">
-      <PageHead title="Minha fila" description="Atividades dos seus setores." />
+      <PageHead title="Minha fila" description="Atividades dos seus setores, ordenadas para execução." />
 
       <ul aria-label="Atividades" className="grid gap-3">
         {atividades.map((atividade) => (
           <li key={atividade.id}>
             <Card>
-              <CardContent className="flex flex-col gap-3 pt-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <CardTitle className="text-base">Atividade {atividade.id}</CardTitle>
-                  <p className="text-sm text-muted">
-                    Item {atividade.orderItemId} · Setor {atividade.sectorId}
-                  </p>
-                  <Badge variant={VARIANTE_STATUS[atividade.status]} className="mt-2">
+              <CardContent className="grid gap-3 pt-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                      Prioridade {atividade.priority} · {atividade.sectorId}
+                    </p>
+                    <CardTitle className="mt-1 text-base">Atividade {atividade.id}</CardTitle>
+                    <p className="mt-1 text-sm text-muted">Item {atividade.orderItemId}</p>
+                  </div>
+                  <Badge variant={VARIANTE_STATUS[atividade.status]}>
                     {ROTULO_STATUS[atividade.status]}
                   </Badge>
                 </div>
-                <Link
-                  href={`/operador/atividades/${atividade.id}`}
-                  className={cn(
-                    'inline-flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 font-semibold text-white hover:bg-accent-dark',
-                    FOCO_VISIVEL,
-                  )}
-                >
-                  Abrir
-                </Link>
+                <div className="flex flex-wrap gap-2">
+                  <Link
+                    href={`/operador/atividades/${atividade.id}`}
+                    className={cn(
+                      'inline-flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 font-semibold text-white hover:bg-accent-dark',
+                      FOCO_VISIVEL,
+                    )}
+                  >
+                    Abrir
+                  </Link>
+                </div>
               </CardContent>
             </Card>
           </li>

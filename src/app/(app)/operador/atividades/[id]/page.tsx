@@ -25,6 +25,14 @@ interface Ordem {
   pendente: string | number
 }
 
+/** Percentual executado do item, limitado a 100 (PROT-05). */
+function percentualExecutado(ordem: Ordem): number {
+  const solicitado = Number(ordem.solicitado)
+  const executado = Number(ordem.executado)
+  if (!Number.isFinite(solicitado) || solicitado <= 0) return 0
+  return Math.min(100, Math.round((executado / solicitado) * 100))
+}
+
 export default function ExecutarAtividadePage() {
   const params = useParams<{ id: string }>()
   const atividadeId = params.id
@@ -130,15 +138,39 @@ export default function ExecutarAtividadePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>{ordem.item}</CardTitle>
+          <div>
+            <CardTitle>{ordem.item}</CardTitle>
+            <p className="mt-1 text-sm text-muted">
+              Pedido {ordem.pedido} · Setor {ordem.setor}
+            </p>
+          </div>
         </CardHeader>
-        <CardContent className="grid gap-1 text-sm text-muted">
-          <p>Pedido {ordem.pedido} · Setor {ordem.setor}</p>
-          <p>Solicitado: {ordem.solicitado} {ordem.unidade}</p>
-          <p>Executado: {ordem.executado} {ordem.unidade}</p>
-          <p className="font-semibold text-ink">
-            Pendente: {ordem.pendente} {ordem.unidade}
-          </p>
+        <CardContent className="grid gap-3">
+          <div className="grid gap-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted">Executado</span>
+              <span className="font-semibold text-ink">
+                {ordem.executado} de {ordem.solicitado} {ordem.unidade}
+              </span>
+            </div>
+            <progress
+              className="h-3 w-full"
+              aria-label="Progresso da atividade"
+              value={percentualExecutado(ordem)}
+              max={100}
+            />
+          </div>
+          <ul aria-label="Valores da atividade" className="grid gap-1 text-sm text-muted">
+            <li>
+              Solicitado: {ordem.solicitado} {ordem.unidade}
+            </li>
+            <li>
+              Executado: {ordem.executado} {ordem.unidade}
+            </li>
+            <li className="font-semibold text-ink">
+              Pendente: {ordem.pendente} {ordem.unidade}
+            </li>
+          </ul>
         </CardContent>
       </Card>
 

@@ -169,4 +169,12 @@ describe('ExecutarAtividadePage', () => {
       await screen.findByRole('heading', { level: 1, name: 'Executar atividade' }),
     ).toBeInTheDocument()
   })
+
+  it('mostra o progresso de execução da atividade (PROT-05)', async () => {
+    configurarApiGet([ordem({ solicitado: 10, executado: 2, pendente: 8 })])
+    render(<ExecutarAtividadePage />)
+
+    const progresso = await screen.findByRole('progressbar', { name: 'Progresso da atividade' })
+    expect(progresso).toHaveAttribute('value', '20')
+  })
 })
