@@ -58,11 +58,11 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 
 ## Handoff
 
-- **Feature**: frontend-visual (refino visual) — concluída e verificada
-- **Phase / Task**: projeto com o backlog + refino visual implementados e no GitHub
-- **Completed**: 12 features; importação real e fluxo operacional validados; interface refinada
+- **Feature**: frontend-prototipo (fiel ao protótipo) — concluída e verificada
+- **Phase / Task**: próximo: offline on-premise (opção A) — servidor local na empresa
+- **Completed**: 13 features; frontend fiel ao protótipo; itens com descrição/código/vendedor
 - **In-progress** (file:line): nenhum
-- **Next step**: (opcional) telas de importar pedido/classificar; revisar máquina de estados do job; go-live
+- **Next step**: implementar a opção A (on-premise): Dockerfile do app + docker-compose (app+mysql+conector) + guia
 - **Blockers**: nenhum para desenvolvimento
 - **Uncommitted files**: validation.md, spec.md, tasks.md, docs/execucao.md, .specs/STATE.md
 - **Branch**: main

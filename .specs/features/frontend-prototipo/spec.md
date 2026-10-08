@@ -85,15 +85,15 @@ A interface atual já usa a linguagem visual da referência, mas **não replica 
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| PROT-01 | P1: Login | Design | Done (T2) |
-| PROT-02 | P1: Login | Design | Done (T2) |
-| PROT-03 | P1: Shell | Design | Done (T3) |
-| PROT-04 | P1: Shell | Design | Done (T3) |
-| PROT-05 | P1: Telas | Design | Done (T4, T5, T6) |
-| PROT-06 | P1: Telas | Design | Done (T4, T5, T6) |
-| PROT-07 | P1: Telas | Design | Done (T1, T5) |
-| PROT-08 | P1: Sem demo | Design | Done (T2, T7) |
-| PROT-09 | P1: Responsivo | Design | Done (T7) |
+| PROT-01 | P1: Login | Design | Verified (T2) |
+| PROT-02 | P1: Login | Design | Verified (T2) |
+| PROT-03 | P1: Shell | Design | Verified (T3) |
+| PROT-04 | P1: Shell | Design | Verified (T3) |
+| PROT-05 | P1: Telas | Design | Verified (T4, T5, T6) |
+| PROT-06 | P1: Telas | Design | Verified (T4, T5, T6) |
+| PROT-07 | P1: Telas | Design | Verified (T1, T5) |
+| PROT-08 | P1: Sem demo | Design | Verified (T2, T7) |
+| PROT-09 | P1: Responsivo | Design | Verified (T7) |
 
 **Coverage:** 9 total, 9 mapped to tasks, 0 unmapped ✅
 

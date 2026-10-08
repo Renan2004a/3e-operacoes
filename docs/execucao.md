@@ -422,3 +422,34 @@ Aproximar a interface da referência visual (`design/inspiracoes/frontend-v4/`),
 
 ### Riscos abertos
 - Verificação geométrica pixel-a-pixel da shell autenticada depende de um E2E com banco.
+
+---
+
+## Feature 13 — Frontend fiel ao protótipo
+
+**Data**: 2026-10-07
+**Requisitos**: fidelidade ao protótipo `frontend-v4`, sem textos de demonstração, responsivo
+**Artefatos**: `.specs/features/frontend-prototipo/{spec,design,tasks,validation}.md`
+
+### Objetivo
+Replicar a estrutura do protótipo (login hero, shell topbar+sidebar, painel/tabelas/badges), remover textos de demonstração e exibir especificações do item (descrição/código/unidade) e vendedor.
+
+### Como foi feito
+- **Specify**: 9 critérios EARS; `validate_spec.py` 0/0.
+- **Design**: enriquecimento aditivo da consulta + fidelidade visual.
+- **Tasks**: 7 tarefas em 4 fases; `validate_tasks.py` 0 erros.
+- **Execute**: 1 batch (T1–T7), commit atômico por tarefa.
+- **Verify**: Verifier independente → **PASS**.
+
+### Resultado
+- **7 tarefas** implementadas.
+- **612 testes unitários + 34 E2E** passando.
+- **Verificação: PASS** — 9/9 ACs; sem textos de demonstração; comportamento/APIs preservados. `validate_state.py`: 0 erros.
+
+### Correção do item (#3)
+- `GET /api/pedidos/[orderId]` agora traz **descrição, código, unidade** por item e **cliente/vendedor** no pedido (aditivo).
+- O vendedor aparece como **código** (`cad_vendedor` vazio na AWS).
+
+### Riscos abertos
+- Tom de badge por página não é assertado (coberto no componente).
+- Verificação geométrica da shell autenticada depende de E2E com banco.
