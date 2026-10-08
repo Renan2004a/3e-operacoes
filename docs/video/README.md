@@ -1,25 +1,33 @@
-# Vídeo de demonstração
+# Vídeos de demonstração
 
-`demo-3e.mp4` — gravação automática do fluxo principal do 3E Operações
-(Playwright + Chromium), com legendas. Não altera dados: apenas navega e exibe
-as telas.
+Gravações automáticas do fluxo do 3E Operações (Playwright + Chromium), com
+legendas. Não alteram dados: navegam, exibem as telas e, em alguns pontos,
+preenchem campos apenas para mostrar o formulário (nada é enviado).
 
-## Roteiro do vídeo
+| Arquivo | Duração | Conteúdo |
+| --- | --- | --- |
+| `demo-3e.mp4` | ~1min27 | Versão curta: login, vendedor (pedido + desmembramento), painel, operador, expedição, admin e responsividade. |
+| `demo-3e-completo.mp4` | ~2min54 | Versão completa e mais lenta, com cartões de seção, cobrindo todas as telas. |
 
-1. Login por perfil (o servidor decide o que cada um vê).
-2. Vendedor: lista de pedidos, pedido `70435`, os cinco valores por item e o
-   **desmembramento por setor**.
-3. Gerente: painel (produção/atividades por setor) e importação por número.
-4. Operador: fila, execução da atividade e ordem de produção (impressão).
-5. Expedição: itens disponíveis e registro de entrega.
-6. Sistema: usuários e setores.
-7. Responsividade: as mesmas telas no celular.
+## Roteiro do vídeo completo
+
+1. Abertura e login por perfil.
+2. **Vendedor**: lista de pedidos, pedido `70435`, cinco valores por item,
+   **desmembramento por setor**, prazo e classificação.
+3. **Gerente de Produção**: painel (produção/atividades por setor), pedidos,
+   detalhe do pedido, fila e importação.
+4. **Operador**: fila, execução da atividade, ocorrência e ordem de produção.
+5. **Expedição**: entregas e o fluxo de exceção (entrega acima do disponível).
+6. **Responsável de Sistema**: usuários, setores e mapeamento de categoria.
+7. **Responsável Técnico**: jobs de integração e eventos.
+8. Responsividade (celular) e logout.
 
 ## Como regenerar
 
 ```bash
-npm run dev            # em outro terminal (porta 3000)
-npm run video:demo     # grava e gera docs/video/demo-3e.mp4
+npm run dev                 # em outro terminal (porta 3000)
+npm run video:demo          # versão curta  -> docs/video/demo-3e.mp4
+npm run video:demo:completo # versão completa -> docs/video/demo-3e-completo.mp4
 ```
 
 Requisitos:
@@ -29,4 +37,4 @@ Requisitos:
 - Playwright instalado (browsers) e um `ffmpeg` no PATH para o `.mp4`
   (sem ele, gera apenas o `.webm`, que abre no navegador).
 
-Os screenshots de cada passo ficam em `docs/video/steps/` (não versionados).
+Os screenshots de cada passo ficam em `docs/video/steps*/` (não versionados).

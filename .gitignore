@@ -26,7 +26,9 @@ src/generated/prisma/
 # Migrations do Prisma são versionadas (o *.sql acima é para dumps locais)
 !prisma/migrations/**/*.sql
 
-# Vídeo da demonstração (gerado por scripts/gravar-demo.mjs)
+# Vídeo da demonstração (gerado por scripts/gravar-demo*.mjs)
 docs/video/raw/
 docs/video/steps/
+docs/video/raw-completo/
+docs/video/steps-completo/
 docs/video/*.webm
