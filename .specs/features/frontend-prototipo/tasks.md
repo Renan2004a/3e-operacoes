@@ -197,10 +197,10 @@ T7
 
 **Done when**:
 
-- [ ] Painel com métricas/alertas; pedidos em tabela com filtros
-- [ ] Detalhe mostra descrição, código, unidade e vendedor (código)
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Painel com métricas/alertas; pedidos em tabela com filtros
+- [x] Detalhe mostra descrição, código, unidade e vendedor (código)
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

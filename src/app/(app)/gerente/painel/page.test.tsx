@@ -107,4 +107,14 @@ describe('PainelPage', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Painel' })).toBeInTheDocument()
   })
+
+  it('mostra métricas de produção e o progresso por setor (PROT-05)', async () => {
+    mocks.apiGet.mockResolvedValue(indicadores())
+    render(<PainelPage />)
+
+    expect(await screen.findByText('Concluídas')).toBeInTheDocument()
+    expect(
+      screen.getByRole('progressbar', { name: 'Produção do setor setor-corte' }),
+    ).toBeInTheDocument()
+  })
 })

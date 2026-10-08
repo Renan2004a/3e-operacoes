@@ -20,12 +20,17 @@ interface ItemSaldo {
   disponivel: string | number
   entregue: string | number
   pendente: string | number
+  description: string | null
+  productCode: string | null
+  unit: string
 }
 
 interface PedidoDetalhado {
   id: string
   numero: string
   cliente: string | null
+  customerName: string | null
+  sellerLegacyCode: string | null
   itens: ItemSaldo[]
 }
 
@@ -134,6 +139,11 @@ export function PedidoDetalhe({ orderId, basePath = '/gerente/pedidos' }: Pedido
         <PageHead
           title={`Pedido ${pedido.numero}`}
           description={pedido.cliente ?? 'Sem cliente'}
+          actions={
+            pedido.sellerLegacyCode ? (
+              <Badge variant="info">Vendedor {pedido.sellerLegacyCode}</Badge>
+            ) : null
+          }
         />
       </div>
 
@@ -151,7 +161,15 @@ export function PedidoDetalhe({ orderId, basePath = '/gerente/pedidos' }: Pedido
         pedido.itens.map((item) => (
           <Card key={item.itemId}>
             <CardHeader>
-              <CardTitle className="text-base">Item {item.itemId}</CardTitle>
+              <div className="min-w-0">
+                <CardTitle className="text-base">
+                  {item.description ?? `Item ${item.itemId}`}
+                </CardTitle>
+                <p className="mt-1 text-sm text-muted">
+                  Código {item.productCode ?? '—'} · Item {item.itemId}
+                </p>
+              </div>
+              {item.unit ? <Badge variant="neutral">{item.unit}</Badge> : null}
             </CardHeader>
             <CardContent className="grid gap-4">
               <ul aria-label={`Valores do item ${item.itemId}`} className="grid gap-1 text-sm text-ink">
@@ -160,6 +178,7 @@ export function PedidoDetalhe({ orderId, basePath = '/gerente/pedidos' }: Pedido
                 <li>Disponível: {item.disponivel}</li>
                 <li>Entregue: {item.entregue}</li>
                 <li className="font-semibold">Pendente: {item.pendente}</li>
+                <li>Unidade: {item.unit}</li>
               </ul>
 
               <form

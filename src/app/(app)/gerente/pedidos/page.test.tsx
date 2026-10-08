@@ -68,4 +68,13 @@ describe('PedidosGerentePage', () => {
 
     expect(await screen.findByText('Sem pedidos')).toBeInTheDocument()
   })
+
+  it('mostra a tabela com os filtros da consulta (PROT-06)', async () => {
+    mocks.apiGet.mockResolvedValue({ pedidos: [PEDIDO] })
+    render(<PedidosGerentePage />)
+
+    expect(await screen.findByRole('table', { name: 'Pedidos' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Cliente')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Filtrar' })).toBeInTheDocument()
+  })
 })

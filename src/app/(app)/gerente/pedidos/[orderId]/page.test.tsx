@@ -49,6 +49,8 @@ function pedido() {
     id: 'p1',
     numero: '100',
     cliente: 'Ana',
+    customerName: 'Ana',
+    sellerLegacyCode: 'V-77',
     itens: [
       {
         itemId: 'item_1',
@@ -57,6 +59,9 @@ function pedido() {
         disponivel: '5',
         entregue: '3',
         pendente: '2',
+        description: 'Chapa dobrada',
+        productCode: 'PRD-77',
+        unit: 'peca',
       },
     ],
   }
@@ -141,5 +146,15 @@ describe('PedidoGerentePage', () => {
     render(<PedidoGerentePage />)
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Pedido 100' })).toBeInTheDocument()
+  })
+
+  it('mostra descrição, código, unidade do item e vendedor do pedido (PROT-07)', async () => {
+    mocks.apiGet.mockResolvedValue({ pedido: pedido() })
+    render(<PedidoGerentePage />)
+
+    expect(await screen.findByText('Chapa dobrada')).toBeInTheDocument()
+    expect(screen.getByText(/PRD-77/)).toBeInTheDocument()
+    expect(screen.getByText('Unidade: peca')).toBeInTheDocument()
+    expect(screen.getByText(/V-77/)).toBeInTheDocument()
   })
 })

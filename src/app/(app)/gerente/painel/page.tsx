@@ -115,11 +115,17 @@ export default function PainelPage() {
   const { painel, pcp } = dados
   const { cumprimentoPrazo } = pcp
 
+  const totalPorStatus = (status: ActivityStatus) =>
+    painel.porStatus.find((contagem) => contagem.status === status)?.total ?? 0
+  const maxProducao = Math.max(...pcp.producaoPorSetor.map((linha) => Number(linha.quantidade)), 0)
+  const percentualProducao = (quantidade: string | number) =>
+    maxProducao > 0 ? Math.min(100, Math.round((Number(quantidade) / maxProducao) * 100)) : 0
+
   return (
     <section className="grid gap-4">
       <PageHead title="Painel" description="Andamento da produção por setor e status." />
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Metric
           label="Pendências"
           value={painel.pendencias}
@@ -127,10 +133,83 @@ export default function PainelPage() {
         />
 
         <Metric
+          label="Em andamento"
+          value={totalPorStatus('IN_PROGRESS')}
+          tone="info"
+          helper="Em execução."
+        />
+
+        <Metric
+          label="Concluídas"
+          value={totalPorStatus('COMPLETED')}
+          tone="success"
+          helper="Finalizadas."
+        />
+
+        <Metric
           label="Cumprimento de prazo"
           value={`${cumprimentoPrazo.percentual}%`}
+          tone="success"
           helper={`${cumprimentoPrazo.concluidasNoPrazo} de ${cumprimentoPrazo.concluidasComPrazo} no prazo.`}
         />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Produção por setor</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {pcp.producaoPorSetor.length === 0 ? (
+              <p className="text-sm text-muted">Sem produção registrada.</p>
+            ) : (
+              <ul aria-label="Produção por setor" className="grid gap-3">
+                {pcp.producaoPorSetor.map((producao) => (
+                  <li key={producao.sectorId} className="grid gap-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-ink">{producao.sectorId}</span>
+                      <span className="font-semibold text-ink">{producao.quantidade}</span>
+                    </div>
+                    <progress
+                      className="h-3 w-full"
+                      aria-label={`Produção do setor ${producao.sectorId}`}
+                      value={percentualProducao(producao.quantidade)}
+                      max={100}
+                    />
+                    <span className="text-xs text-muted">
+                      {producao.sectorId}: {producao.quantidade}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Atividades por status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {painel.porStatus.length === 0 ? (
+              <p className="text-sm text-muted">Sem atividades por status.</p>
+            ) : (
+              <ul aria-label="Atividades por status" className="grid gap-2">
+                {painel.porStatus.map((contagem) => (
+                  <li
+                    key={contagem.status}
+                    className="flex items-center justify-between gap-2 text-sm"
+                  >
+                    <Badge variant={VARIANTE_STATUS[contagem.status]}>
+                      {ROTULO_STATUS[contagem.status]}
+                    </Badge>
+                    <span className="text-ink">Total: {contagem.total}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
@@ -145,50 +224,6 @@ export default function PainelPage() {
               {painel.porSetor.map((contagem) => (
                 <li key={contagem.sectorId} className="text-sm text-ink">
                   {contagem.sectorId}: {contagem.total}
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Atividades por status</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {painel.porStatus.length === 0 ? (
-            <p className="text-sm text-muted">Sem atividades por status.</p>
-          ) : (
-            <ul aria-label="Atividades por status" className="grid gap-2">
-              {painel.porStatus.map((contagem) => (
-                <li
-                  key={contagem.status}
-                  className="flex items-center justify-between gap-2 text-sm"
-                >
-                  <Badge variant={VARIANTE_STATUS[contagem.status]}>
-                    {ROTULO_STATUS[contagem.status]}
-                  </Badge>
-                  <span className="text-ink">Total: {contagem.total}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Produção por setor</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {pcp.producaoPorSetor.length === 0 ? (
-            <p className="text-sm text-muted">Sem produção registrada.</p>
-          ) : (
-            <ul aria-label="Produção por setor" className="grid gap-1">
-              {pcp.producaoPorSetor.map((producao) => (
-                <li key={producao.sectorId} className="text-sm text-ink">
-                  {producao.sectorId}: {producao.quantidade}
                 </li>
               ))}
             </ul>
