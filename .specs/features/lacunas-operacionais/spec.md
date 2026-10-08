@@ -94,8 +94,8 @@ O sistema está funcional, mas quatro pontos impedem o uso 100% pela interface e
 | LAC-04 | P1: Classificar | Design | Done |
 | LAC-05 | P1: Classificar | Design | Done |
 | LAC-06 | P1: Classificar | Design | Done |
-| LAC-07 | P1: Ordem | Design | Pending |
-| LAC-08 | P1: Ordem | Design | Pending |
+| LAC-07 | P1: Ordem | Design | Done |
+| LAC-08 | P1: Ordem | Design | Done |
 | LAC-09 | P1: Técnico | Design | Done |
 | LAC-10 | P1: Técnico | Design | Pending |
 | LAC-11 | P1: Retry | Design | Done |

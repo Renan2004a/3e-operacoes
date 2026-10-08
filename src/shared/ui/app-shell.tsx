@@ -57,7 +57,7 @@ export function AppShell({ perfil, usuarioNome, onLogout, children }: AppShellPr
 
   return (
     <div className="flex min-h-screen flex-col overflow-x-hidden bg-bg">
-      <header className="sticky top-0 z-20 flex min-h-[68px] items-center justify-between gap-3 border-b border-line bg-surface px-4 sm:px-6">
+      <header className="sticky top-0 z-20 flex min-h-[68px] items-center justify-between gap-3 border-b border-line bg-surface px-4 sm:px-6 print:hidden">
         <div className="flex items-center gap-3">
           <span
             aria-hidden="true"
@@ -99,7 +99,7 @@ export function AppShell({ perfil, usuarioNome, onLogout, children }: AppShellPr
           id="nav-principal"
           aria-label="Navegação principal"
           className={cn(
-            'border-b border-line bg-brand-900 p-3 md:w-60 md:shrink-0 md:border-b-0 md:border-r md:border-brand-800',
+            'border-b border-line bg-brand-900 p-3 md:w-60 md:shrink-0 md:border-b-0 md:border-r md:border-brand-800 print:hidden',
             menuAberto ? 'block' : 'hidden md:block',
           )}
         >

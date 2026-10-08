@@ -134,6 +134,12 @@ export default function ExecutarAtividadePage() {
           ← Voltar para a fila
         </Link>
         <PageHead title="Executar atividade" />
+        <Link
+          href={`/producao/atividades/${atividadeId}/ordem`}
+          className={cn('text-sm font-medium text-accent', FOCO_VISIVEL)}
+        >
+          Ver ordem de produção
+        </Link>
       </div>
 
       <Card>

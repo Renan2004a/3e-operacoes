@@ -216,10 +216,10 @@ T8
 
 **Done when**:
 
-- [ ] Mostra pedido, item, setor, solicitado, executado e pendente
-- [ ] Imprime sem menu (media print)
-- [ ] Test count: 5 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Mostra pedido, item, setor, solicitado, executado e pendente
+- [x] Imprime sem menu (media print)
+- [x] Test count: 7 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
