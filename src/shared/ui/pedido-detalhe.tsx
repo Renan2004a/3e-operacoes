@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ApiError, apiGet, apiPatch } from '@/shared/http/api-client'
+import { ApiError, apiGet, apiPatch, apiPost } from '@/shared/http/api-client'
 import { Alert } from './alert'
 import { Badge } from './badge'
 import { Button } from './button'
@@ -23,7 +23,18 @@ interface ItemSaldo {
   description: string | null
   productCode: string | null
   unit: string
+  classificationStatus: 'CLASSIFIED' | 'PENDING_CLASSIFICATION'
 }
+
+interface Setor {
+  id: string
+  code: string
+  name: string
+  active: boolean
+}
+
+const CLASSE_SELECT =
+  'min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base text-ink'
 
 interface PedidoDetalhado {
   id: string
@@ -38,14 +49,21 @@ export interface PedidoDetalheProps {
   orderId: string
   /** Rota da lista, usada no link de voltar. */
   basePath?: string
+  /** Habilita a classificação manual dos itens pendentes (LAC-04, LAC-05, LAC-06). */
+  permitirClassificacao?: boolean
 }
 
 /**
  * Detalhe do pedido com os cinco valores por item e a definição de prazo
  * (FEP-04, FEP-05). Reutilizado pelo gerente e pelo vendedor; o vendedor apenas
- * consulta a produção e define prazo.
+ * consulta a produção e define prazo. Com `permitirClassificacao`, o gerente
+ * classifica itens pendentes escolhendo o setor (LAC-04, LAC-05, LAC-06).
  */
-export function PedidoDetalhe({ orderId, basePath = '/gerente/pedidos' }: PedidoDetalheProps) {
+export function PedidoDetalhe({
+  orderId,
+  basePath = '/gerente/pedidos',
+  permitirClassificacao = false,
+}: PedidoDetalheProps) {
   const [pedido, setPedido] = useState<PedidoDetalhado | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState<'falha' | 'nao_encontrado' | null>(null)
@@ -54,6 +72,11 @@ export function PedidoDetalhe({ orderId, basePath = '/gerente/pedidos' }: Pedido
   const [salvos, setSalvos] = useState<Record<string, string>>({})
   const [salvando, setSalvando] = useState<string | null>(null)
   const [erroPrazo, setErroPrazo] = useState<string | null>(null)
+
+  const [setores, setSetores] = useState<Setor[]>([])
+  const [escolhas, setEscolhas] = useState<Record<string, string>>({})
+  const [classificando, setClassificando] = useState<string | null>(null)
+  const [erroClassificacao, setErroClassificacao] = useState<string | null>(null)
 
   const buscar = useCallback(
     () =>
@@ -100,6 +123,52 @@ export function PedidoDetalhe({ orderId, basePath = '/gerente/pedidos' }: Pedido
     } finally {
       setSalvando(null)
     }
+  }
+
+  useEffect(() => {
+    if (!permitirClassificacao) return
+    apiGet<{ sectors: Setor[] }>('/api/setores')
+      .then((dados) => setSetores(dados.sectors))
+      .catch(() => setErroClassificacao('Não foi possível carregar os setores.'))
+  }, [permitirClassificacao])
+
+  async function classificar(itemId: string) {
+    const sectorId = escolhas[itemId] ?? ''
+    setErroClassificacao(null)
+    if (sectorId === '') {
+      setErroClassificacao('Escolha o setor do item.')
+      return
+    }
+
+    setClassificando(itemId)
+    try {
+      await apiPost(`/api/pedidos/itens/${itemId}/classificar`, { sectorId })
+      marcarClassificado(itemId)
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 409) {
+        marcarClassificado(itemId)
+        setErroClassificacao('O item já estava classificado.')
+      } else if (error instanceof ApiError && error.status === 400) {
+        setErroClassificacao('Setor inválido. Escolha outro.')
+      } else {
+        setErroClassificacao('Não foi possível classificar o item. Tente novamente.')
+      }
+    } finally {
+      setClassificando(null)
+    }
+  }
+
+  function marcarClassificado(itemId: string) {
+    setPedido((atual) =>
+      atual
+        ? {
+            ...atual,
+            itens: atual.itens.map((item) =>
+              item.itemId === itemId ? { ...item, classificationStatus: 'CLASSIFIED' } : item,
+            ),
+          }
+        : atual,
+    )
   }
 
   if (carregando) {
@@ -150,6 +219,12 @@ export function PedidoDetalhe({ orderId, basePath = '/gerente/pedidos' }: Pedido
       {erroPrazo ? (
         <Alert variant="error" title="Não foi possível salvar o prazo">
           {erroPrazo}
+        </Alert>
+      ) : null}
+
+      {erroClassificacao ? (
+        <Alert variant="error" title="Não foi possível classificar">
+          {erroClassificacao}
         </Alert>
       ) : null}
 
@@ -212,6 +287,55 @@ export function PedidoDetalhe({ orderId, basePath = '/gerente/pedidos' }: Pedido
 
               {salvos[item.itemId] ? (
                 <Badge variant="success">Prazo definido: {salvos[item.itemId]}</Badge>
+              ) : null}
+
+              {permitirClassificacao ? (
+                <div className="grid gap-3 border-t border-line pt-4">
+                  <p className="text-sm font-semibold text-ink">Classificação</p>
+                  {item.classificationStatus === 'CLASSIFIED' ? (
+                    <Badge variant="success">Item classificado</Badge>
+                  ) : (
+                    <form
+                      className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end"
+                      onSubmit={(evento) => {
+                        evento.preventDefault()
+                        void classificar(item.itemId)
+                      }}
+                      noValidate
+                    >
+                      <Field label={`Setor do item ${item.itemId}`}>
+                        {(props) => (
+                          <select
+                            id={props.id}
+                            aria-describedby={props['aria-describedby']}
+                            className={CLASSE_SELECT}
+                            value={escolhas[item.itemId] ?? ''}
+                            onChange={(evento) =>
+                              setEscolhas((atual) => ({
+                                ...atual,
+                                [item.itemId]: evento.target.value,
+                              }))
+                            }
+                          >
+                            <option value="">Selecione…</option>
+                            {setores.map((setor) => (
+                              <option key={setor.id} value={setor.id}>
+                                {setor.name}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </Field>
+                      <Button
+                        type="submit"
+                        disabled={classificando === item.itemId}
+                        aria-label={`Classificar item ${item.itemId}`}
+                      >
+                        Classificar
+                      </Button>
+                    </form>
+                  )}
+                </div>
               ) : null}
             </CardContent>
           </Card>

@@ -189,10 +189,10 @@ T8
 
 **Done when**:
 
-- [ ] Item pendente pode ser classificado; já classificado é indicado
-- [ ] Lista reflete a classificação
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Item pendente pode ser classificado; já classificado é indicado
+- [x] Lista reflete a classificação
+- [x] Test count: 13 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

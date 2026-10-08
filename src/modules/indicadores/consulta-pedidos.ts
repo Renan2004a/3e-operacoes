@@ -12,6 +12,9 @@ import {
  */
 export type StatusPedido = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED'
 
+/** Situação de classificação do item (LAC-04, LAC-05). */
+export type StatusClassificacaoItem = 'CLASSIFIED' | 'PENDING_CLASSIFICATION'
+
 export interface AtividadeDoPedido {
   sectorId: string
   status: ActivityStatus
@@ -61,6 +64,8 @@ export interface EspecificacaoItem {
   description: string | null
   productCode: string | null
   unit: string
+  /** Situação de classificação do item, base da classificação manual (LAC-04). */
+  classificationStatus: StatusClassificacaoItem
 }
 
 /** Item do detalhe: saldo consolidado + descrição, código e unidade (IND-04). */
@@ -68,6 +73,7 @@ export interface ItemDetalhado extends ItemSaldo {
   description: string | null
   productCode: string | null
   unit: string
+  classificationStatus: StatusClassificacaoItem
 }
 
 export interface PedidoDetalhado extends CabecalhoPedido {
@@ -188,6 +194,7 @@ export async function detalharPedido(
         description: especificacao?.description ?? null,
         productCode: especificacao?.productCode ?? null,
         unit: especificacao?.unit ?? '',
+        classificationStatus: especificacao?.classificationStatus ?? 'PENDING_CLASSIFICATION',
       }
     }),
   }

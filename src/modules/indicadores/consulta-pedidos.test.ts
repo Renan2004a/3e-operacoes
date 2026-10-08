@@ -303,7 +303,13 @@ describe('detalharPedido', () => {
         cliente: 'Construtora X',
         itens: [item({ id: 'item_1' })],
         especificacoes: [
-          { itemId: 'item_1', description: 'Chapa dobrada', productCode: 'PRD-77', unit: 'peca' },
+          {
+            itemId: 'item_1',
+            description: 'Chapa dobrada',
+            productCode: 'PRD-77',
+            unit: 'peca',
+            classificationStatus: 'PENDING_CLASSIFICATION',
+          },
         ],
       }),
     ])
@@ -313,6 +319,7 @@ describe('detalharPedido', () => {
     expect(detalhe.itens[0].description).toBe('Chapa dobrada')
     expect(detalhe.itens[0].productCode).toBe('PRD-77')
     expect(detalhe.itens[0].unit).toBe('peca')
+    expect(detalhe.itens[0].classificationStatus).toBe('PENDING_CLASSIFICATION')
   })
 
   it('inclui customerName e sellerLegacyCode no pedido (IND-04)', async () => {

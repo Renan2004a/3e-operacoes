@@ -6,6 +6,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 
 const mocks = vi.hoisted(() => ({
   apiGet: vi.fn(),
+  apiPost: vi.fn(),
   apiPatch: vi.fn(),
   ApiError: class ApiError extends Error {
     status: number
@@ -20,7 +21,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@/shared/http/api-client', () => ({
   apiGet: mocks.apiGet,
-  apiPost: vi.fn(),
+  apiPost: mocks.apiPost,
   apiPatch: mocks.apiPatch,
   ApiError: mocks.ApiError,
 }))
@@ -44,7 +45,12 @@ vi.mock('next/link', () => ({
 
 import PedidoGerentePage from './page'
 
-function pedido() {
+const SETORES = [
+  { id: 'setor_telhas', code: 'TELHAS', name: 'Telhas', active: true },
+  { id: 'setor_corte', code: 'CORTE_DOBRA', name: 'Corte e Dobra', active: true },
+]
+
+function pedido(classificationStatus: 'CLASSIFIED' | 'PENDING_CLASSIFICATION' = 'PENDING_CLASSIFICATION') {
   return {
     id: 'p1',
     numero: '100',
@@ -62,13 +68,22 @@ function pedido() {
         description: 'Chapa dobrada',
         productCode: 'PRD-77',
         unit: 'peca',
+        classificationStatus,
       },
     ],
   }
 }
 
+function configurarApi(pedidoData = pedido()) {
+  mocks.apiGet.mockImplementation((url: string) => {
+    if (url === '/api/setores') return Promise.resolve({ sectors: SETORES })
+    return Promise.resolve({ pedido: pedidoData })
+  })
+}
+
 beforeEach(() => {
   mocks.apiGet.mockReset()
+  mocks.apiPost.mockReset()
   mocks.apiPatch.mockReset()
 })
 
@@ -83,7 +98,7 @@ describe('PedidoGerentePage', () => {
   })
 
   it('mostra os cinco valores por item (FEP-04)', async () => {
-    mocks.apiGet.mockResolvedValue({ pedido: pedido() })
+    configurarApi()
     render(<PedidoGerentePage />)
 
     expect(await screen.findByText('Solicitado: 10')).toBeInTheDocument()
@@ -104,7 +119,7 @@ describe('PedidoGerentePage', () => {
   })
 
   it('define o prazo do item e envia a data para a API (FEP-05)', async () => {
-    mocks.apiGet.mockResolvedValue({ pedido: pedido() })
+    configurarApi()
     mocks.apiPatch.mockResolvedValue({ item: { id: 'item_1', deadlineAt: '2026-02-01T00:00:00.000Z' } })
     render(<PedidoGerentePage />)
 
@@ -121,7 +136,7 @@ describe('PedidoGerentePage', () => {
   })
 
   it('reflete o status de prazo após salvar (FEP-05)', async () => {
-    mocks.apiGet.mockResolvedValue({ pedido: pedido() })
+    configurarApi()
     mocks.apiPatch.mockResolvedValue({ item: { id: 'item_1', deadlineAt: '2026-02-01T00:00:00.000Z' } })
     render(<PedidoGerentePage />)
 
@@ -142,19 +157,89 @@ describe('PedidoGerentePage', () => {
   })
 
   it('usa o cabeçalho de página com o número do pedido (VIS-09)', async () => {
-    mocks.apiGet.mockResolvedValue({ pedido: pedido() })
+    configurarApi()
     render(<PedidoGerentePage />)
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Pedido 100' })).toBeInTheDocument()
   })
 
   it('mostra descrição, código, unidade do item e vendedor do pedido (PROT-07)', async () => {
-    mocks.apiGet.mockResolvedValue({ pedido: pedido() })
+    configurarApi()
     render(<PedidoGerentePage />)
 
     expect(await screen.findByText('Chapa dobrada')).toBeInTheDocument()
     expect(screen.getByText(/PRD-77/)).toBeInTheDocument()
     expect(screen.getByText('Unidade: peca')).toBeInTheDocument()
     expect(screen.getByText(/V-77/)).toBeInTheDocument()
+  })
+
+  it('carrega os setores da API para classificar (LAC-04)', async () => {
+    configurarApi()
+    render(<PedidoGerentePage />)
+
+    expect(await screen.findByRole('option', { name: 'Telhas' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Corte e Dobra' })).toBeInTheDocument()
+    expect(mocks.apiGet).toHaveBeenCalledWith('/api/setores')
+  })
+
+  it('permite classificar item pendente escolhendo o setor (LAC-04)', async () => {
+    configurarApi()
+    mocks.apiPost.mockResolvedValue({
+      status: 'CLASSIFIED',
+      sectorId: 'setor_telhas',
+      activityId: 'act_1',
+    })
+    render(<PedidoGerentePage />)
+
+    fireEvent.change(await screen.findByLabelText('Setor do item item_1'), {
+      target: { value: 'setor_telhas' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Classificar item item_1' }))
+
+    await waitFor(() =>
+      expect(mocks.apiPost).toHaveBeenCalledWith('/api/pedidos/itens/item_1/classificar', {
+        sectorId: 'setor_telhas',
+      }),
+    )
+  })
+
+  it('reflete o item classificado após a ação (LAC-06)', async () => {
+    configurarApi()
+    mocks.apiPost.mockResolvedValue({
+      status: 'CLASSIFIED',
+      sectorId: 'setor_telhas',
+      activityId: 'act_1',
+    })
+    render(<PedidoGerentePage />)
+
+    fireEvent.change(await screen.findByLabelText('Setor do item item_1'), {
+      target: { value: 'setor_telhas' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Classificar item item_1' }))
+
+    expect(await screen.findByText('Item classificado')).toBeInTheDocument()
+  })
+
+  it('indica o item já classificado e não oferece classificar de novo (LAC-05)', async () => {
+    configurarApi(pedido('CLASSIFIED'))
+    render(<PedidoGerentePage />)
+
+    expect(await screen.findByText('Item classificado')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Classificar item item_1' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('marca como classificado quando a API responde 409 (LAC-05)', async () => {
+    configurarApi()
+    mocks.apiPost.mockRejectedValue(new mocks.ApiError(409, 'item_already_classified'))
+    render(<PedidoGerentePage />)
+
+    fireEvent.change(await screen.findByLabelText('Setor do item item_1'), {
+      target: { value: 'setor_telhas' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Classificar item item_1' }))
+
+    expect(await screen.findByText('Item classificado')).toBeInTheDocument()
   })
 })

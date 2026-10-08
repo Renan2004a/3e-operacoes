@@ -65,6 +65,7 @@ holder.repo = {
       description: item.description ?? null,
       productCode: item.productCode ?? null,
       unit: item.unit ?? 'un',
+      classificationStatus: 'PENDING_CLASSIFICATION' as const,
     }))
   },
   async buscarItensDoPedido(orderId) {
@@ -138,6 +139,7 @@ describe('GET /api/pedidos/[orderId]', () => {
       description: null,
       productCode: null,
       unit: 'un',
+      classificationStatus: 'PENDING_CLASSIFICATION',
     })
   })
 
