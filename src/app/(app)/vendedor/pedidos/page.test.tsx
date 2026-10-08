@@ -138,4 +138,13 @@ describe('VendedorPedidosPage', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Pedidos' })).toBeInTheDocument()
   })
+
+  it('mostra a tabela com os filtros da consulta (PROT-06)', async () => {
+    configurarApi()
+    render(<VendedorPedidosPage />)
+
+    expect(await screen.findByRole('table', { name: 'Pedidos' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Cliente')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Filtrar' })).toBeInTheDocument()
+  })
 })

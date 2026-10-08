@@ -255,29 +255,56 @@ export default function UsuariosPage() {
           {usuarios.length === 0 ? (
             <p className="text-sm text-muted">Nenhum usuário cadastrado.</p>
           ) : (
-            <ul aria-label="Usuários" className="grid gap-3">
-              {usuarios.map((usuario) => (
-                <li
-                  key={usuario.id}
-                  className="grid gap-1 rounded-lg border border-line bg-surface-2 p-3"
-                >
-                  <p className="font-semibold text-ink">{usuario.name}</p>
-                  <p className="text-sm text-muted">{usuario.email}</p>
-                  <div className="flex flex-wrap gap-1">
-                    {usuario.roles.map((perfil) => (
-                      <Badge key={perfil} variant="info">
-                        {ROTULO_PERFIL[perfil]}
-                      </Badge>
-                    ))}
-                  </div>
-                  {usuario.sectorIds.length > 0 ? (
-                    <p className="text-sm text-muted">
-                      Setores: {usuario.sectorIds.map(nomeDoSetor).join(', ')}
-                    </p>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
+            <div className="overflow-x-auto">
+              <table aria-label="Usuários" className="w-full border-collapse text-left text-sm">
+                <thead>
+                  <tr className="border-b border-line text-xs uppercase tracking-wide text-muted">
+                    <th scope="col" className="px-3 py-3 font-semibold">
+                      Usuário
+                    </th>
+                    <th scope="col" className="px-3 py-3 font-semibold">
+                      Perfil
+                    </th>
+                    <th scope="col" className="px-3 py-3 font-semibold">
+                      Setor
+                    </th>
+                    <th scope="col" className="px-3 py-3 font-semibold">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {usuarios.map((usuario) => (
+                    <tr
+                      key={usuario.id}
+                      className="border-b border-line last:border-b-0 hover:bg-surface-2"
+                    >
+                      <td className="px-3 py-3">
+                        <p className="font-semibold text-ink">{usuario.name}</p>
+                        <p className="text-muted">{usuario.email}</p>
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="flex flex-wrap gap-1">
+                          {usuario.roles.map((perfil) => (
+                            <Badge key={perfil} variant="info">
+                              {ROTULO_PERFIL[perfil]}
+                            </Badge>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-3 text-muted">
+                        Setores: {usuario.sectorIds.map(nomeDoSetor).join(', ')}
+                      </td>
+                      <td className="px-3 py-3">
+                        <Badge variant={usuario.status === 'ACTIVE' ? 'success' : 'neutral'}>
+                          {usuario.status === 'ACTIVE' ? 'Ativo' : usuario.status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </CardContent>
       </Card>

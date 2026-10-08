@@ -74,11 +74,20 @@ describe('UsuariosPage', () => {
     configurarApi([USUARIO])
     render(<UsuariosPage />)
 
-    const lista = await screen.findByRole('list', { name: 'Usuários' })
-    expect(within(lista).getByText('Ana')).toBeInTheDocument()
-    expect(within(lista).getByText('ana@x.com')).toBeInTheDocument()
-    expect(within(lista).getByText('Vendedor')).toBeInTheDocument()
-    expect(within(lista).getByText('Setores: Corte e Dobra')).toBeInTheDocument()
+    const tabela = await screen.findByRole('table', { name: 'Usuários' })
+    expect(within(tabela).getByText('Ana')).toBeInTheDocument()
+    expect(within(tabela).getByText('ana@x.com')).toBeInTheDocument()
+    expect(within(tabela).getByText('Vendedor')).toBeInTheDocument()
+    expect(within(tabela).getByText('Setores: Corte e Dobra')).toBeInTheDocument()
+  })
+
+  it('mostra os usuários em tabela com perfil e situação (PROT-06)', async () => {
+    configurarApi([USUARIO])
+    render(<UsuariosPage />)
+
+    const tabela = await screen.findByRole('table', { name: 'Usuários' })
+    expect(within(tabela).getByText('Vendedor')).toBeInTheDocument()
+    expect(within(tabela).getByText('Ativo')).toBeInTheDocument()
   })
 
   it('cria um usuário com perfis e setores (FEP-08)', async () => {

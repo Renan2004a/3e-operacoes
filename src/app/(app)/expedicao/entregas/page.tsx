@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ApiError, apiGet, apiPost } from '@/shared/http/api-client'
 import { Alert } from '@/shared/ui/alert'
+import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import { Field } from '@/shared/ui/field'
 import { Input } from '@/shared/ui/input'
+import { Metric } from '@/shared/ui/metric'
 import { PageHead } from '@/shared/ui/page-head'
 import { Spinner } from '@/shared/ui/spinner'
 
@@ -37,6 +39,11 @@ const CLASSE_SELECT =
 
 function numero(valor: string | number): number {
   return Number(String(valor).replace(',', '.'))
+}
+
+/** Soma um campo numérico dos itens, para o resumo do pedido (PROT-05). */
+function somar(itens: ItemSaldo[], campo: 'disponivel' | 'pendente'): number {
+  return itens.reduce((total, item) => total + numero(item[campo]), 0)
 }
 
 interface EntregaFormProps {
@@ -276,14 +283,35 @@ export default function EntregasPage() {
         </Alert>
       ) : null}
 
-      {!carregandoPedido && pedido
-        ? pedido.itens.map((item) => (
+      {!carregandoPedido && pedido ? (
+        <>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Metric label="Itens" value={pedido.itens.length} helper="No pedido." />
+            <Metric
+              label="Disponíveis"
+              value={somar(pedido.itens, 'disponivel')}
+              tone="success"
+              helper="Para entrega."
+            />
+            <Metric
+              label="Pendentes"
+              value={somar(pedido.itens, 'pendente')}
+              helper="A produzir."
+            />
+          </div>
+
+          {pedido.itens.map((item) => (
             <Card key={item.itemId}>
               <CardHeader>
-                <CardTitle className="text-base">Item {item.itemId}</CardTitle>
+                <div>
+                  <CardTitle className="text-base">Item {item.itemId}</CardTitle>
+                  <p className="mt-1 text-sm text-ink">Disponível: {item.disponivel}</p>
+                </div>
+                <Badge variant={numero(item.disponivel) > 0 ? 'success' : 'neutral'}>
+                  {numero(item.disponivel) > 0 ? 'Disponível' : 'Sem saldo'}
+                </Badge>
               </CardHeader>
               <CardContent className="grid gap-4">
-                <p className="text-sm text-ink">Disponível: {item.disponivel}</p>
                 <p className="text-sm text-muted">
                   Solicitado: {item.solicitado} · Executado: {item.executado} · Entregue:{' '}
                   {item.entregue} · Pendente: {item.pendente}
@@ -291,8 +319,9 @@ export default function EntregasPage() {
                 <EntregaForm item={item} onRegistrada={() => void carregarPedido(orderId)} />
               </CardContent>
             </Card>
-          ))
-        : null}
+          ))}
+        </>
+      ) : null}
     </section>
   )
 }

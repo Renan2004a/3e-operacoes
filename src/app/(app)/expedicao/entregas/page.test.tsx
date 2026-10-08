@@ -186,4 +186,15 @@ describe('EntregasPage', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Entregas' })).toBeInTheDocument()
   })
+
+  it('resume o pedido selecionado em métricas (PROT-05)', async () => {
+    configurarApi([detalhe(5)])
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+
+    expect(await screen.findByText('Disponíveis')).toBeInTheDocument()
+    expect(screen.getByText('Disponíveis').closest('div.rounded-card')).toHaveTextContent('5')
+    expect(screen.getByText('Pendentes')).toBeInTheDocument()
+  })
 })
