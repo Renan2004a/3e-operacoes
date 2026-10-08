@@ -88,19 +88,19 @@ O sistema está funcional, mas quatro pontos impedem o uso 100% pela interface e
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| LAC-01 | P1: Importar | Design | Done |
-| LAC-02 | P1: Importar | Design | Done |
-| LAC-03 | P1: Importar | Design | Done |
-| LAC-04 | P1: Classificar | Design | Done |
-| LAC-05 | P1: Classificar | Design | Done |
-| LAC-06 | P1: Classificar | Design | Done |
-| LAC-07 | P1: Ordem | Design | Done |
-| LAC-08 | P1: Ordem | Design | Done |
-| LAC-09 | P1: Técnico | Design | Done |
-| LAC-10 | P1: Técnico | Design | Done |
-| LAC-11 | P1: Retry | Design | Done |
-| LAC-12 | P1: Retry | Design | Done |
-| LAC-13 | P1: Retry | Design | Done |
+| LAC-01 | P1: Importar | Design | Verified |
+| LAC-02 | P1: Importar | Design | Verified |
+| LAC-03 | P1: Importar | Design | Verified |
+| LAC-04 | P1: Classificar | Design | Verified |
+| LAC-05 | P1: Classificar | Design | Verified |
+| LAC-06 | P1: Classificar | Design | Verified |
+| LAC-07 | P1: Ordem | Design | Verified |
+| LAC-08 | P1: Ordem | Design | Verified |
+| LAC-09 | P1: Técnico | Design | Verified |
+| LAC-10 | P1: Técnico | Design | Verified |
+| LAC-11 | P1: Retry | Design | Verified |
+| LAC-12 | P1: Retry | Design | Verified |
+| LAC-13 | P1: Retry | Design | Verified |
 
 **Coverage:** 13 total, 13 mapped to tasks, 0 unmapped ✅ (T1–T8; LAC-01/LAC-07/LAC-09 com E2E do guarda de sessão)
 

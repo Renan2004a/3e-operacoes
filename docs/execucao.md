@@ -453,3 +453,35 @@ Replicar a estrutura do protótipo (login hero, shell topbar+sidebar, painel/tab
 ### Riscos abertos
 - Tom de badge por página não é assertado (coberto no componente).
 - Verificação geométrica da shell autenticada depende de E2E com banco.
+
+---
+
+## Feature 14 — Lacunas Operacionais
+
+**Data**: 2026-10-07
+**Requisitos**: RF018 (ordem/impressão), RF016/RF017 (técnico), robustez da integração
+**Artefatos**: `.specs/features/lacunas-operacionais/{spec,design,tasks,validation}.md`
+
+### Objetivo
+Fechar as lacunas que impediam o uso 100% pela interface e a robustez da integração: telas de **importar**, **classificar**, **ordem/impressão** e **técnico**, e **retry** no despacho.
+
+### Como foi feito
+- **Specify**: 13 critérios EARS; `validate_spec.py` 0/0.
+- **Design**: telas + 2 ajustes de API (listar jobs; leitura de setores) + retry.
+- **Tasks**: 8 tarefas em 3 fases; `validate_tasks.py` 0 erros.
+- **Execute**: 2 batches (T1–T7, T8), commit atômico por tarefa.
+- **Verify**: Verifier independente → **PASS**.
+
+### Resultado
+- **8 tarefas** implementadas.
+- **658 testes unitários + 44 E2E** passando.
+- **Verificação: PASS** — 13/13 ACs; 7/7 mutantes mortos. `validate_state.py`: 0 erros.
+
+### Decisões e desvios
+- Retry só em erros transitórios (3 tentativas, backoff 1s; `CONNECTOR_MAX_ATTEMPTS`/`CONNECTOR_RETRY_BACKOFF_MS`).
+- `GET /api/integracao/jobs` para o técnico; `GET /api/setores` (leitura) liberado para `consultar_pedidos`.
+- Detalhe do pedido traz `classificationStatus`; impressão via `@media print`.
+
+### Riscos abertos
+- E2E das telas autenticadas depende de sessão+banco (coberto por testes de unidade).
+- `print:hidden` do shell sem teste dedicado (observação menor).
