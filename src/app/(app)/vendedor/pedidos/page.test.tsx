@@ -95,10 +95,10 @@ describe('VendedorPedidosPage', () => {
     render(<VendedorPedidosPage />)
 
     fireEvent.click(await screen.findByRole('button', { name: 'Abrir pedido 100' }))
-    fireEvent.change(await screen.findByLabelText('Prazo do item item_1'), {
+    fireEvent.change(await screen.findByLabelText('Prazo do item 1'), {
       target: { value: '2026-02-01' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar prazo do item item_1' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar prazo do item 1' }))
 
     await waitFor(() =>
       expect(mocks.apiPatch).toHaveBeenCalledWith('/api/pedidos/itens/item_1/prazo', {
@@ -113,7 +113,7 @@ describe('VendedorPedidosPage', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Abrir pedido 100' }))
 
-    expect(await screen.findByRole('button', { name: 'Salvar prazo do item item_1' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Salvar prazo do item 1' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /registrar execução/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /classificar/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /prioridade/i })).not.toBeInTheDocument()

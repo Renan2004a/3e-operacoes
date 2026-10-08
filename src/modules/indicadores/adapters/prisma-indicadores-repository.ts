@@ -63,7 +63,17 @@ export const prismaIndicadoresRepository: IndicadoresRepository = {
   async buscarEspecificacoesDosItens(orderId): Promise<EspecificacaoItem[]> {
     const rows = await prisma.orderItem.findMany({
       where: { orderId },
-      select: { id: true, description: true, productCode: true, unit: true, classificationStatus: true },
+      select: {
+        id: true,
+        description: true,
+        productCode: true,
+        unit: true,
+        classificationStatus: true,
+        activities: {
+          select: { status: true, sector: { select: { code: true, name: true } } },
+          take: 1,
+        },
+      },
       orderBy: { createdAt: 'asc' },
     })
     return rows.map((row) => ({
@@ -72,6 +82,9 @@ export const prismaIndicadoresRepository: IndicadoresRepository = {
       productCode: row.productCode,
       unit: row.unit,
       classificationStatus: row.classificationStatus,
+      sectorCode: row.activities[0]?.sector.code ?? null,
+      sectorName: row.activities[0]?.sector.name ?? null,
+      activityStatus: row.activities[0]?.status ?? null,
     }))
   },
 

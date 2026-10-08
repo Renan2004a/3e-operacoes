@@ -24,6 +24,9 @@ interface ItemSaldo {
   productCode: string | null
   unit: string
   classificationStatus: 'CLASSIFIED' | 'PENDING_CLASSIFICATION'
+  sectorCode?: string | null
+  sectorName?: string | null
+  activityStatus?: string | null
 }
 
 interface Setor {
@@ -35,6 +38,28 @@ interface Setor {
 
 const CLASSE_SELECT =
   'min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base text-ink'
+
+const ROTULO_SITUACAO: Record<string, string> = {
+  PENDING: 'Pendente',
+  IN_PROGRESS: 'Em execução',
+  PAUSED: 'Pausada',
+  COMPLETED: 'Concluída',
+  DIVERGENT: 'Divergente',
+}
+
+/** Agrupa os itens por setor para o desmembramento operacional. */
+function agruparPorSetor(itens: ItemSaldo[]) {
+  const mapa = new Map<string, { itens: number; solicitado: number; pendente: number }>()
+  for (const item of itens) {
+    const chave = item.sectorName ?? 'Não classificado'
+    const atual = mapa.get(chave) ?? { itens: 0, solicitado: 0, pendente: 0 }
+    atual.itens += 1
+    atual.solicitado += Number(item.solicitado) || 0
+    atual.pendente += Number(item.pendente) || 0
+    mapa.set(chave, atual)
+  }
+  return Array.from(mapa.entries()).map(([setor, dados]) => ({ setor, ...dados }))
+}
 
 interface PedidoDetalhado {
   id: string
@@ -233,21 +258,40 @@ export function PedidoDetalhe({
           Este pedido não possui itens.
         </Alert>
       ) : (
-        pedido.itens.map((item) => (
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Desmembramento por setor</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="grid gap-2 text-sm text-ink">
+                {agruparPorSetor(pedido.itens).map((grupo) => (
+                  <li key={grupo.setor} className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-medium">{grupo.setor}</span>
+                    <span className="text-muted">
+                      {grupo.itens} item(ns) · solicitado {grupo.solicitado} · pendente {grupo.pendente}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+
+          {pedido.itens.map((item, indice) => (
           <Card key={item.itemId}>
             <CardHeader>
               <div className="min-w-0">
                 <CardTitle className="text-base">
-                  {item.description ?? `Item ${item.itemId}`}
+                  {item.description ?? 'Item sem descrição'}
                 </CardTitle>
                 <p className="mt-1 text-sm text-muted">
-                  Código {item.productCode ?? '—'} · Item {item.itemId}
+                  Item {indice + 1} · Código {item.productCode ?? '—'} · {item.unit}
                 </p>
               </div>
               {item.unit ? <Badge variant="neutral">{item.unit}</Badge> : null}
             </CardHeader>
             <CardContent className="grid gap-4">
-              <ul aria-label={`Valores do item ${item.itemId}`} className="grid gap-1 text-sm text-ink">
+              <ul aria-label={`Valores do item ${indice + 1}`} className="grid gap-1 text-sm text-ink">
                 <li>Solicitado: {item.solicitado}</li>
                 <li>Executado: {item.executado}</li>
                 <li>Disponível: {item.disponivel}</li>
@@ -255,6 +299,13 @@ export function PedidoDetalhe({
                 <li className="font-semibold">Pendente: {item.pendente}</li>
                 <li>Unidade: {item.unit}</li>
               </ul>
+
+              <p className="text-sm text-muted">
+                Setor: {item.sectorName ?? 'Não classificado'}
+                {item.activityStatus
+                  ? ` · ${ROTULO_SITUACAO[item.activityStatus] ?? item.activityStatus}`
+                  : ''}
+              </p>
 
               <form
                 className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end"
@@ -264,7 +315,7 @@ export function PedidoDetalhe({
                 }}
                 noValidate
               >
-                <Field label={`Prazo do item ${item.itemId}`}>
+                <Field label={`Prazo do item ${indice + 1}`}>
                   {(props) => (
                     <Input
                       {...props}
@@ -279,7 +330,7 @@ export function PedidoDetalhe({
                 <Button
                   type="submit"
                   disabled={salvando === item.itemId}
-                  aria-label={`Salvar prazo do item ${item.itemId}`}
+                  aria-label={`Salvar prazo do item ${indice + 1}`}
                 >
                   Salvar prazo
                 </Button>
@@ -303,7 +354,7 @@ export function PedidoDetalhe({
                       }}
                       noValidate
                     >
-                      <Field label={`Setor do item ${item.itemId}`}>
+                      <Field label={`Setor do item ${indice + 1}`}>
                         {(props) => (
                           <select
                             id={props.id}
@@ -329,7 +380,7 @@ export function PedidoDetalhe({
                       <Button
                         type="submit"
                         disabled={classificando === item.itemId}
-                        aria-label={`Classificar item ${item.itemId}`}
+                        aria-label={`Classificar item ${indice + 1}`}
                       >
                         Classificar
                       </Button>
@@ -339,7 +390,8 @@ export function PedidoDetalhe({
               ) : null}
             </CardContent>
           </Card>
-        ))
+          ))}
+        </>
       )}
     </section>
   )

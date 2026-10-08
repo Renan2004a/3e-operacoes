@@ -66,6 +66,10 @@ export interface EspecificacaoItem {
   unit: string
   /** Situação de classificação do item, base da classificação manual (LAC-04). */
   classificationStatus: StatusClassificacaoItem
+  /** Setor da atividade do item, para o desmembramento. */
+  sectorCode?: string | null
+  sectorName?: string | null
+  activityStatus?: ActivityStatus | null
 }
 
 /** Item do detalhe: saldo consolidado + descrição, código e unidade (IND-04). */
@@ -74,6 +78,9 @@ export interface ItemDetalhado extends ItemSaldo {
   productCode: string | null
   unit: string
   classificationStatus: StatusClassificacaoItem
+  sectorCode?: string | null
+  sectorName?: string | null
+  activityStatus?: ActivityStatus | null
 }
 
 export interface PedidoDetalhado extends CabecalhoPedido {
@@ -195,6 +202,9 @@ export async function detalharPedido(
         productCode: especificacao?.productCode ?? null,
         unit: especificacao?.unit ?? '',
         classificationStatus: especificacao?.classificationStatus ?? 'PENDING_CLASSIFICATION',
+        sectorCode: especificacao?.sectorCode ?? null,
+        sectorName: especificacao?.sectorName ?? null,
+        activityStatus: especificacao?.activityStatus ?? null,
       }
     }),
   }

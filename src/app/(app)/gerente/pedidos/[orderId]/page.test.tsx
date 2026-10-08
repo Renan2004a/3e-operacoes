@@ -109,6 +109,19 @@ describe('PedidoGerentePage', () => {
     expect(mocks.apiGet).toHaveBeenCalledWith('/api/pedidos/p1')
   })
 
+  it('mostra o desmembramento por setor e o setor do item', async () => {
+    const comSetor = {
+      ...pedido(),
+      itens: [{ ...pedido().itens[0], sectorName: 'Telhas', activityStatus: 'IN_PROGRESS' }],
+    }
+    configurarApi(comSetor)
+    render(<PedidoGerentePage />)
+
+    expect(await screen.findByText('Desmembramento por setor')).toBeInTheDocument()
+    expect(screen.getAllByText('Telhas').length).toBeGreaterThan(0)
+    expect(screen.getByText(/1 item\(ns\).*solicitado 10.*pendente 2/)).toBeInTheDocument()
+  })
+
   it('mostra erro acessível e permite tentar de novo (FEP-13)', async () => {
     mocks.apiGet.mockRejectedValue(new Error('falha'))
     render(<PedidoGerentePage />)
@@ -123,10 +136,10 @@ describe('PedidoGerentePage', () => {
     mocks.apiPatch.mockResolvedValue({ item: { id: 'item_1', deadlineAt: '2026-02-01T00:00:00.000Z' } })
     render(<PedidoGerentePage />)
 
-    fireEvent.change(await screen.findByLabelText('Prazo do item item_1'), {
+    fireEvent.change(await screen.findByLabelText('Prazo do item 1'), {
       target: { value: '2026-02-01' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar prazo do item item_1' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar prazo do item 1' }))
 
     await waitFor(() =>
       expect(mocks.apiPatch).toHaveBeenCalledWith('/api/pedidos/itens/item_1/prazo', {
@@ -140,10 +153,10 @@ describe('PedidoGerentePage', () => {
     mocks.apiPatch.mockResolvedValue({ item: { id: 'item_1', deadlineAt: '2026-02-01T00:00:00.000Z' } })
     render(<PedidoGerentePage />)
 
-    fireEvent.change(await screen.findByLabelText('Prazo do item item_1'), {
+    fireEvent.change(await screen.findByLabelText('Prazo do item 1'), {
       target: { value: '2026-02-01' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar prazo do item item_1' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar prazo do item 1' }))
 
     expect(await screen.findByText('Prazo definido: 2026-02-01')).toBeInTheDocument()
   })
@@ -191,10 +204,10 @@ describe('PedidoGerentePage', () => {
     })
     render(<PedidoGerentePage />)
 
-    fireEvent.change(await screen.findByLabelText('Setor do item item_1'), {
+    fireEvent.change(await screen.findByLabelText('Setor do item 1'), {
       target: { value: 'setor_telhas' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Classificar item item_1' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Classificar item 1' }))
 
     await waitFor(() =>
       expect(mocks.apiPost).toHaveBeenCalledWith('/api/pedidos/itens/item_1/classificar', {
@@ -212,10 +225,10 @@ describe('PedidoGerentePage', () => {
     })
     render(<PedidoGerentePage />)
 
-    fireEvent.change(await screen.findByLabelText('Setor do item item_1'), {
+    fireEvent.change(await screen.findByLabelText('Setor do item 1'), {
       target: { value: 'setor_telhas' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Classificar item item_1' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Classificar item 1' }))
 
     expect(await screen.findByText('Item classificado')).toBeInTheDocument()
   })
@@ -226,7 +239,7 @@ describe('PedidoGerentePage', () => {
 
     expect(await screen.findByText('Item classificado')).toBeInTheDocument()
     expect(
-      screen.queryByRole('button', { name: 'Classificar item item_1' }),
+      screen.queryByRole('button', { name: 'Classificar item 1' }),
     ).not.toBeInTheDocument()
   })
 
@@ -235,10 +248,10 @@ describe('PedidoGerentePage', () => {
     mocks.apiPost.mockRejectedValue(new mocks.ApiError(409, 'item_already_classified'))
     render(<PedidoGerentePage />)
 
-    fireEvent.change(await screen.findByLabelText('Setor do item item_1'), {
+    fireEvent.change(await screen.findByLabelText('Setor do item 1'), {
       target: { value: 'setor_telhas' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Classificar item item_1' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Classificar item 1' }))
 
     expect(await screen.findByText('Item classificado')).toBeInTheDocument()
   })
