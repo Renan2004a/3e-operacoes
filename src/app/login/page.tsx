@@ -70,16 +70,27 @@ export default function LoginPage() {
             Planejamento e Controle da Produção.
           </p>
         </div>
-        <small className="text-xs text-white/60">
-          Os dados exibidos nesta versão são demonstrativos.
-        </small>
       </section>
 
       <section className="grid place-items-center p-4 sm:p-8 min-[780px]:bg-bg">
         <div className="w-full max-w-md rounded-card border border-line bg-surface p-6 shadow-lg sm:p-8">
-          <p className="text-sm font-semibold uppercase tracking-wide text-accent">3E Ferro e Aço</p>
-          <h1 className="mt-1 text-2xl font-semibold text-ink">3E Operações</h1>
-          <p className="mt-1 text-sm text-muted">Entre para acessar suas telas.</p>
+          <div className="flex items-center gap-3">
+            <span
+              aria-hidden="true"
+              className="grid h-11 w-11 place-items-center rounded-lg bg-accent font-extrabold text-white"
+            >
+              3E
+            </span>
+            <div className="leading-tight">
+              <h1 className="text-base font-semibold text-ink">3E Operações</h1>
+              <p className="text-xs text-muted">Acesso ao sistema</p>
+            </div>
+          </div>
+
+          <h2 className="mt-6 text-2xl font-semibold text-ink">Entrar</h2>
+          <p className="mt-1 text-sm text-muted">
+            Use suas credenciais para acessar as funcionalidades do seu perfil.
+          </p>
 
           <form className="mt-6 grid gap-4" onSubmit={aoEnviar} noValidate>
             {erro ? (

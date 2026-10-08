@@ -85,17 +85,17 @@ A interface atual já usa a linguagem visual da referência, mas **não replica 
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| PROT-01 | P1: Login | Design | Pending |
-| PROT-02 | P1: Login | Design | Pending |
+| PROT-01 | P1: Login | Design | Done (T2) |
+| PROT-02 | P1: Login | Design | Done (T2) |
 | PROT-03 | P1: Shell | Design | Pending |
 | PROT-04 | P1: Shell | Design | Pending |
 | PROT-05 | P1: Telas | Design | Pending |
 | PROT-06 | P1: Telas | Design | Pending |
 | PROT-07 | P1: Telas | Design | Done (T1) |
-| PROT-08 | P1: Sem demo | Design | Pending |
+| PROT-08 | P1: Sem demo | Design | Done (T2) |
 | PROT-09 | P1: Responsivo | Design | Pending |
 
-**Coverage:** 9 total, 1 mapped to tasks, 8 unmapped ⚠️
+**Coverage:** 9 total, 4 mapped to tasks, 5 unmapped ⚠️
 
 ---
 

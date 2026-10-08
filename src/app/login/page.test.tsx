@@ -177,4 +177,18 @@ describe('LoginPage layout (VIS-04, VIS-05, VIS-06)', () => {
 
     expect(screen.getByRole('button', { name: 'Entrar' })).toHaveClass('focus-visible:ring-2')
   })
+
+  it('não exibe textos de demonstração (PROT-08)', () => {
+    render(<LoginPage />)
+
+    expect(screen.queryByText(/demonstrativ/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/protótipo visual/i)).not.toBeInTheDocument()
+  })
+
+  it('usa a caixa de acesso com a marca e o título Entrar (PROT-01)', () => {
+    render(<LoginPage />)
+
+    expect(screen.getByRole('heading', { level: 2, name: 'Entrar' })).toBeInTheDocument()
+    expect(screen.getByText('Acesso ao sistema')).toBeInTheDocument()
+  })
 })
