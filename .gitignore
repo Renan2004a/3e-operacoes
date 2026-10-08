@@ -27,8 +27,6 @@ src/generated/prisma/
 !prisma/migrations/**/*.sql
 
 # Vídeo da demonstração (gerado por scripts/gravar-demo*.mjs)
-docs/video/raw/
-docs/video/steps/
-docs/video/raw-completo/
-docs/video/steps-completo/
+docs/video/raw*/
+docs/video/steps*/
 docs/video/*.webm

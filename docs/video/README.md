@@ -1,40 +1,55 @@
 # Vídeos de demonstração
 
 Gravações automáticas do fluxo do 3E Operações (Playwright + Chromium), com
-legendas. Não alteram dados: navegam, exibem as telas e, em alguns pontos,
-preenchem campos apenas para mostrar o formulário (nada é enviado).
+legendas que ficam visíveis por tempo proporcional ao texto.
 
-| Arquivo | Duração | Conteúdo |
-| --- | --- | --- |
-| `demo-3e.mp4` | ~1min27 | Versão curta: login, vendedor (pedido + desmembramento), painel, operador, expedição, admin e responsividade. |
-| `demo-3e-completo.mp4` | ~2min54 | Versão completa e mais lenta, com cartões de seção, cobrindo todas as telas. |
+| Arquivo | Duração | Modo | Conteúdo |
+| --- | --- | --- | --- |
+| `demo-3e.mp4` | ~1min27 | navegação | Versão curta. |
+| `demo-3e-completo.mp4` | ~4min35 | navegação | Todas as telas, com cartões de seção e legendas lentas. |
+| `demo-3e-execucao.mp4` | ~5min37 | **execução real** | Importa o pedido e **registra execução, ocorrência e entrega** (grava no banco do app). |
 
-## Roteiro do vídeo completo
+Os modos "navegação" não alteram dados: navegam e exibem as telas (em um ponto
+preenchem um campo apenas para mostrar o formulário). O modo "execução real"
+**grava** no banco próprio do app; o Top Gerente permanece somente leitura.
+
+## Roteiro (versão completa / execução)
 
 1. Abertura e login por perfil.
-2. **Vendedor**: lista de pedidos, pedido `70435`, cinco valores por item,
-   **desmembramento por setor**, prazo e classificação.
-3. **Gerente de Produção**: painel (produção/atividades por setor), pedidos,
-   detalhe do pedido, fila e importação.
-4. **Operador**: fila, execução da atividade, ocorrência e ordem de produção.
-5. **Expedição**: entregas e o fluxo de exceção (entrega acima do disponível).
+2. **Vendedor**: lista, pedido `70435`, cinco valores, desmembramento por setor,
+   prazo e classificação.
+3. **Gerente de Produção**: painel, pedidos, detalhe, fila e **importação**
+   (na versão de execução, a importação é disparada e confirmada).
+4. **Operador**: fila, **execução** (registra 5 un.), **ocorrência** (perda com
+   motivo) e ordem de produção.
+5. **Expedição**: entregas — na versão de execução, **registra a entrega**; na
+   de navegação, mostra o fluxo de exceção (acima do disponível).
 6. **Responsável de Sistema**: usuários, setores e mapeamento de categoria.
 7. **Responsável Técnico**: jobs de integração e eventos.
-8. Responsividade (celular) e logout.
+8. Saldo atualizado, responsividade (celular) e logout.
 
 ## Como regenerar
 
 ```bash
-npm run dev                 # em outro terminal (porta 3000)
-npm run video:demo          # versão curta  -> docs/video/demo-3e.mp4
-npm run video:demo:completo # versão completa -> docs/video/demo-3e-completo.mp4
+npm run dev            # em outro terminal (porta 3000)
+
+# versão de navegação (não grava dados)
+npm run video:demo:completo
+
+# versão de execução real (precisa do conector local no ar; GRAVA dados)
+# PowerShell:
+$env:MODO='execucao'; npm run video:demo:completo
+
+# versão curta
+npm run video:demo
 ```
 
 Requisitos:
 
 - app rodando em `http://localhost:3000` (banco configurado em `.env`);
 - pedido `PEDIDO_DEMO` (padrão `70435`) já importado;
-- Playwright instalado (browsers) e um `ffmpeg` no PATH para o `.mp4`
-  (sem ele, gera apenas o `.webm`, que abre no navegador).
+- para o modo `execucao`, o **conector local** no ar
+  (`npm --workspace connector-local run start`, porta 8787);
+- Playwright instalado (browsers) e um `ffmpeg` no PATH para o `.mp4`.
 
 Os screenshots de cada passo ficam em `docs/video/steps*/` (não versionados).

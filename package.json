@@ -13,6 +13,7 @@
     "test:e2e": "playwright test",
     "video:demo": "node scripts/gravar-demo.mjs",
     "video:demo:completo": "node scripts/gravar-demo-completo.mjs",
+    "video:demo:execucao": "set MODO=execucao&& node scripts/gravar-demo-completo.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prisma:generate": "prisma generate",

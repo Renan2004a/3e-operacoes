@@ -1,15 +1,18 @@
-// Gravador da demonstração COMPLETA do 3E Operações (Playwright).
+// Gravador da demonstração do 3E Operações (Playwright), em dois modos:
 //
-// Versão mais lenta e cobrindo todas as telas entregues. Faz login real em cada
-// perfil (banco do .env), navega o fluxo e grava a tela do navegador. Não altera
-// dados: navega, exibe as telas e preenche campos apenas para mostrar o
-// formulário (nada é enviado).
+//   MODO=demo      (padrão)  -> só navega e exibe as telas (não grava dados)
+//   MODO=execucao            -> executa de verdade: importa o pedido e registra
+//                               execução, ocorrência e entrega (GRAVA no banco
+//                               do app; o Top Gerente continua somente leitura)
 //
-// Uso:
-//   npm run dev                    # em outro terminal (porta 3000)
-//   node scripts/gravar-demo-completo.mjs
+// As legendas ficam visíveis por tempo proporcional ao texto (leitura confortável).
 //
-// Saída: docs/video/demo-3e-completo.webm (+ .mp4 se houver ffmpeg no PATH).
+// Uso (PowerShell):
+//   npm run dev
+//   node scripts/gravar-demo-completo.mjs                 # demo  -> docs/video/demo-3e-completo.mp4
+//   $env:MODO='execucao'; node scripts/gravar-demo-completo.mjs  # -> docs/video/demo-3e-execucao.mp4
+//
+// Requer o app em http://localhost:3000 e, no modo execucao, o conector local no ar.
 // Não substitui docs/video/demo-3e.mp4 (vídeo curto anterior).
 
 import { chromium } from '@playwright/test'
@@ -19,10 +22,12 @@ import { join } from 'node:path'
 const BASE = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000'
 const RAIZ = process.cwd()
 const DIR_VIDEO = join(RAIZ, 'docs', 'video')
-const DIR_RAW = join(DIR_VIDEO, 'raw-completo')
-const DIR_STEPS = join(DIR_VIDEO, 'steps-completo')
 const NUMERO_PEDIDO = process.env.PEDIDO_DEMO ?? '70435'
-const PAUSA_MS = Number(process.env.PAUSA_MS ?? 1800)
+const MODO = (process.env.MODO ?? 'demo').toLowerCase()
+const REAL = MODO === 'execucao'
+const NOME = REAL ? 'demo-3e-execucao' : 'demo-3e-completo'
+const DIR_RAW = join(DIR_VIDEO, `raw-${NOME}`)
+const DIR_STEPS = join(DIR_VIDEO, `steps-${NOME}`)
 
 const CRED = {
   vendedor: { email: 'vendedor@3e.local', senha: 'vendedor123' },
@@ -36,7 +41,13 @@ rmSync(DIR_RAW, { recursive: true, force: true })
 mkdirSync(DIR_RAW, { recursive: true })
 mkdirSync(DIR_STEPS, { recursive: true })
 
-const pausa = (page, ms = PAUSA_MS) => page.waitForTimeout(ms)
+const pausa = (page, ms) => page.waitForTimeout(ms)
+
+/** Tempo de leitura da legenda (proporcional ao texto), entre 3,5 s e 9 s. */
+function tempoLeitura(texto) {
+  const ms = Math.round(String(texto).length * 72)
+  return Math.min(9000, Math.max(3500, ms))
+}
 
 /** Faixa de legenda fixa no rodapé. */
 async function legenda(page, texto) {
@@ -54,8 +65,8 @@ async function legenda(page, texto) {
           'z-index:2147483646',
           'background:rgba(15,23,42,.92)',
           'color:#fff',
-          'font:600 20px/1.45 system-ui,Segoe UI,sans-serif',
-          'padding:14px 24px',
+          'font:600 21px/1.5 system-ui,Segoe UI,sans-serif',
+          'padding:16px 26px',
           'text-align:center',
           'pointer-events:none',
           'box-shadow:0 -2px 14px rgba(0,0,0,.4)',
@@ -101,7 +112,7 @@ async function cursor(page) {
     .catch(() => {})
 }
 
-/** Cartão de seção em tela cheia (some sozinho). */
+/** Cartão de seção em tela cheia (tempo de leitura pelo tamanho do texto). */
 async function cartao(page, titulo, subtitulo) {
   await page
     .evaluate(
@@ -119,17 +130,17 @@ async function cartao(page, titulo, subtitulo) {
           'flex-direction:column',
           'align-items:center',
           'justify-content:center',
-          'gap:16px',
+          'gap:18px',
           'text-align:center',
           'padding:48px',
           'font-family:system-ui,Segoe UI,sans-serif',
         ].join(';')
         const a = document.createElement('div')
         a.textContent = t
-        a.style.cssText = 'font-size:46px;font-weight:800;letter-spacing:-.5px'
+        a.style.cssText = 'font-size:48px;font-weight:800;letter-spacing:-.5px'
         const b = document.createElement('div')
         b.textContent = s
-        b.style.cssText = 'font-size:20px;opacity:.85;max-width:860px;line-height:1.5'
+        b.style.cssText = 'font-size:21px;opacity:.88;max-width:900px;line-height:1.6'
         el.appendChild(a)
         el.appendChild(b)
         document.body.appendChild(el)
@@ -137,12 +148,12 @@ async function cartao(page, titulo, subtitulo) {
       { t: titulo, s: subtitulo },
     )
     .catch(() => {})
-  await page.waitForTimeout(2200)
+  await page.waitForTimeout(Math.min(9000, Math.max(3500, (titulo.length + subtitulo.length) * 60)))
   await page.evaluate(() => document.getElementById('__cartao')?.remove()).catch(() => {})
-  await pausa(page, 400)
+  await pausa(page, 600)
 }
 
-/** Executa um passo: legenda + cursor + ação + screenshot + pausa. */
+/** Executa um passo: legenda + cursor + ação + screenshot + pausa de leitura. */
 async function passo(page, nome, texto, fn) {
   await legenda(page, texto)
   await cursor(page)
@@ -152,7 +163,7 @@ async function passo(page, nome, texto, fn) {
     console.warn(`[passo ${nome}] ${erro.message}`)
   }
   await page.screenshot({ path: join(DIR_STEPS, `${nome}.png`) }).catch(() => {})
-  await pausa(page)
+  await pausa(page, tempoLeitura(texto))
 }
 
 async function login(context, page, perfil) {
@@ -195,7 +206,6 @@ async function aquecer(browser) {
       await page.waitForTimeout(500)
     }
   }
-  // Rotas dinâmicas com ids reais.
   try {
     await login(ctx, page, 'gerente')
     const pedidos = await (await page.request.get(`${BASE}/api/pedidos`)).json()
@@ -208,7 +218,9 @@ async function aquecer(browser) {
     const fila = await (await page.request.get(`${BASE}/api/producao/atividades`)).json()
     const atividadeId = fila?.atividades?.[0]?.id
     if (atividadeId) {
-      await page.goto(`${BASE}/operador/atividades/${atividadeId}`, { waitUntil: 'domcontentloaded' })
+      await page.goto(`${BASE}/operador/atividades/${atividadeId}`, {
+        waitUntil: 'domcontentloaded',
+      })
       await page.waitForTimeout(900)
       await page.goto(`${BASE}/producao/atividades/${atividadeId}/ordem`, {
         waitUntil: 'domcontentloaded',
@@ -222,7 +234,7 @@ async function aquecer(browser) {
 }
 
 const browser = await chromium.launch()
-console.log('Aquecendo rotas (pré-compilação)...')
+console.log(`Aquecendo rotas... (modo ${MODO})`)
 await aquecer(browser)
 const context = await browser.newContext({
   viewport: { width: 1280, height: 720 },
@@ -249,15 +261,13 @@ try {
     },
   )
   await login(context, page, 'vendedor')
-  await passo(page, '02-login', 'Login por perfil: o servidor decide o que cada um vê.', async () => {
-    await pausa(page)
-  })
+  await passo(page, '02-login', 'Login por perfil: o servidor decide o que cada um vê.', async () => {})
 
   // ---- Vendedor -------------------------------------------------------------
   await passo(
     page,
     '03-vendedor-lista',
-    'Vendedor — consulta de pedidos com filtros (cliente, setor, status, período).',
+    'Vendedor — consulta de pedidos, com filtros de cliente, setor, status e período.',
     async () => {
       await irPara(page, '/vendedor/pedidos')
       await page.getByText(`Pedido ${NUMERO_PEDIDO}`).first().waitFor({ timeout: 30000 })
@@ -266,7 +276,7 @@ try {
   await passo(
     page,
     '04-vendedor-valores',
-    `Pedido ${NUMERO_PEDIDO}: os cinco valores por item (solicitado, executado, disponível, entregue, pendente).`,
+    `Pedido ${NUMERO_PEDIDO}: os cinco valores por item — solicitado, executado, disponível, entregue e pendente.`,
     async () => {
       await page.getByRole('button', { name: `Abrir pedido ${NUMERO_PEDIDO}` }).click()
       await page.getByText('Solicitado:').first().waitFor({ timeout: 30000 })
@@ -276,7 +286,7 @@ try {
   await passo(
     page,
     '05-vendedor-desmembramento',
-    'Desmembramento por setor: o pedido dividido por setor (o que o papel não tem).',
+    'Desmembramento por setor: o pedido dividido por setor, algo que o papel não mostra.',
     async () => {
       await page.getByText('Desmembramento por setor').first().scrollIntoViewIfNeeded()
     },
@@ -284,7 +294,7 @@ try {
   await passo(
     page,
     '06-vendedor-prazo',
-    'Prazo do item e classificação: o vendedor desmembra o item por setor.',
+    'Prazo do item e classificação: o vendedor define o prazo e desmembra o item por setor.',
     async () => {
       await page.getByText('Prazo do item 1').first().scrollIntoViewIfNeeded()
     },
@@ -295,7 +305,7 @@ try {
   await passo(
     page,
     '07-gerente-painel',
-    'Gerente de Produção — painel: pendências, em andamento, concluídas e cumprimento de prazo.',
+    'Gerente de Produção — painel com pendências, em andamento, concluídas e cumprimento de prazo.',
     async () => {
       await irPara(page, '/gerente/painel')
       await page.getByText('Produção por setor').first().waitFor({ timeout: 30000 })
@@ -305,7 +315,7 @@ try {
   await passo(
     page,
     '08-gerente-setores',
-    'Indicadores por setor e por status (nomes dos setores, sem códigos internos).',
+    'Indicadores por setor e por status, com o nome dos setores (sem códigos internos).',
     async () => {
       await page.getByText('Atividades por setor').first().scrollIntoViewIfNeeded()
     },
@@ -317,42 +327,62 @@ try {
   await passo(
     page,
     '10-gerente-detalhe',
-    'Detalhe do pedido do gerente: desmembramento e classificação por setor.',
+    'Detalhe do pedido do gerente, com desmembramento e classificação por setor.',
     async () => {
       await page.getByRole('button', { name: `Abrir pedido ${NUMERO_PEDIDO}` }).click()
       await page.getByText('Desmembramento por setor').first().waitFor({ timeout: 30000 })
     },
   )
-  await passo(
-    page,
-    '11-gerente-fila',
-    'Fila de produção também acessível ao gerente (aqui sem atividades nos setores dele).',
-    async () => {
-      await irPara(page, '/operador/fila')
-      await page
-        .getByRole('heading', { name: 'Minha fila' })
-        .or(page.getByText('Sem atividades na fila'))
-        .first()
-        .waitFor({ timeout: 30000 })
-        .catch(() => {})
-    },
-  )
-  await passo(
-    page,
-    '12-importar',
-    'Importar pedido do Top Gerente pelo número (job assíncrono, sem escrita no legado).',
-    async () => {
-      await irPara(page, '/integracao')
-      await page.getByText('Número do pedido').first().waitFor({ timeout: 30000 })
-    },
-  )
+  await passo(page, '11-gerente-fila', 'Fila de produção, também acessível ao gerente.', async () => {
+    await irPara(page, '/operador/fila')
+    await page
+      .getByRole('heading', { name: 'Minha fila' })
+      .or(page.getByText('Sem atividades na fila'))
+      .first()
+      .waitFor({ timeout: 30000 })
+      .catch(() => {})
+  })
+
+  if (REAL) {
+    await passo(
+      page,
+      '12-importar',
+      'Importar pedido do Top Gerente: informar o número do pedido e iniciar a importação.',
+      async () => {
+        await irPara(page, '/integracao')
+        await page.getByLabel('Número do pedido').click()
+        await page.getByLabel('Número do pedido').pressSequentially(NUMERO_PEDIDO, { delay: 140 })
+        await pausa(page, 700)
+        await page.getByRole('button', { name: 'Importar pedido' }).click()
+        await page.getByText('Status da importação').first().waitFor({ timeout: 30000 })
+      },
+    )
+    await passo(
+      page,
+      '13-importar-status',
+      'Acompanhamento do job: o sistema despacha ao conector local e confirma a importação.',
+      async () => {
+        await page.getByText('Importação concluída').first().waitFor({ timeout: 45000 }).catch(() => {})
+      },
+    )
+  } else {
+    await passo(
+      page,
+      '12-importar',
+      'Importar pedido do Top Gerente pelo número (job assíncrono, sem escrita no legado).',
+      async () => {
+        await irPara(page, '/integracao')
+        await page.getByText('Número do pedido').first().waitFor({ timeout: 30000 })
+      },
+    )
+  }
 
   // ---- Operador -------------------------------------------------------------
   await login(context, page, 'operador')
   await passo(
     page,
-    '13-operador-fila',
-    'Operador — fila: item, pedido, setor e prioridade.',
+    '14-operador-fila',
+    'Operador — fila com item, pedido, setor e prioridade.',
     async () => {
       await irPara(page, '/operador/fila')
       await page.getByRole('heading', { name: 'Minha fila' }).waitFor({ timeout: 30000 })
@@ -364,15 +394,18 @@ try {
   let atividadeId = null
   try {
     const resposta = await page.request.get(`${BASE}/api/producao/atividades`)
-    atividadeId = (await resposta.json())?.atividades?.[0]?.id ?? null
+    const lista = (await resposta.json())?.atividades ?? []
+    atividadeId = (lista.find((a) => a.sectorName === 'Corte e Dobra') ?? lista[0])?.id ?? null
   } catch {
     // sem id, os passos seguintes do operador são ignorados
   }
 
   await passo(
     page,
-    '14-operador-executar',
-    'Executar atividade: progresso, valores e registro de execução.',
+    '15-operador-executar',
+    REAL
+      ? 'Executar atividade: registrar 5 unidades produzidas no item.'
+      : 'Executar atividade: progresso, valores e registro de execução.',
     async () => {
       if (!atividadeId) return
       await page.goto(`${BASE}/operador/atividades/${atividadeId}`, {
@@ -380,17 +413,53 @@ try {
       })
       await page.getByRole('heading', { name: 'Executar atividade' }).waitFor({ timeout: 30000 })
       await page.getByText('Registrar execução').first().waitFor({ timeout: 30000 })
+      if (REAL) {
+        await page.getByLabel('Quantidade produzida').click()
+        await page.getByLabel('Quantidade produzida').pressSequentially('5', { delay: 220 })
+        await pausa(page, 700)
+        await page.getByRole('button', { name: 'Registrar execução' }).click()
+      }
     },
   )
+  if (REAL) {
+    await passo(
+      page,
+      '16-operador-executado',
+      'Execução registrada: o saldo do item é atualizado na hora.',
+      async () => {
+        await page.getByText('Execução registrada.').first().waitFor({ timeout: 30000 }).catch(() => {})
+        await pausa(page, 1200)
+      },
+    )
+  }
   await passo(
     page,
-    '15-operador-ocorrencia',
-    'Registrar ocorrência: perda/refugo com motivo obrigatório.',
+    '17-operador-ocorrencia',
+    REAL
+      ? 'Registrar ocorrência: perda de 1 unidade com o motivo obrigatório.'
+      : 'Registrar ocorrência: perda e refugo com motivo obrigatório.',
     async () => {
       await page.getByText('Registrar ocorrência').first().scrollIntoViewIfNeeded()
+      if (REAL) {
+        await page.getByLabel('Tipo de ocorrência').selectOption('PERDA').catch(() => {})
+        await page.getByLabel('Motivo', { exact: true }).selectOption({ index: 1 }).catch(() => {})
+        await page.getByLabel('Quantidade', { exact: true }).fill('1')
+        await pausa(page, 700)
+        await page.getByRole('button', { name: 'Registrar ocorrência' }).click()
+      }
     },
   )
-  await passo(page, '16-operador-ordem', 'Ordem de produção, pronta para imprimir.', async () => {
+  if (REAL) {
+    await passo(
+      page,
+      '18-operador-ocorrencia-ok',
+      'Ocorrência registrada e rastreada (a perda não abate a obrigação de produzir).',
+      async () => {
+        await page.getByText('Ocorrência registrada').first().waitFor({ timeout: 30000 }).catch(() => {})
+      },
+    )
+  }
+  await passo(page, '19-operador-ordem', 'Ordem de produção, pronta para imprimir.', async () => {
     if (!atividadeId) return
     await page.goto(`${BASE}/producao/atividades/${atividadeId}/ordem`, {
       waitUntil: 'domcontentloaded',
@@ -400,10 +469,26 @@ try {
   })
 
   // ---- Expedição ------------------------------------------------------------
+  let itemEntrega = null
+  if (REAL) {
+    try {
+      const lista = await (await page.request.get(`${BASE}/api/pedidos`)).json()
+      const pedidoId = lista?.pedidos?.find((p) => p.numero === NUMERO_PEDIDO)?.id
+      if (pedidoId) {
+        const detalhe = await (await page.request.get(`${BASE}/api/pedidos/${pedidoId}`)).json()
+        const itens = detalhe?.pedido?.itens ?? []
+        const idx = itens.findIndex((item) => Number(item.disponivel) > 0)
+        itemEntrega = idx >= 0 ? idx + 1 : null
+      }
+    } catch {
+      // sem item, a entrega real é ignorada
+    }
+  }
+
   await login(context, page, 'expedicao')
   await passo(
     page,
-    '17-expedicao-entregas',
+    '20-expedicao-entregas',
     'Expedição — entregas: itens disponíveis e registro de entrega.',
     async () => {
       await irPara(page, '/expedicao/entregas')
@@ -417,35 +502,59 @@ try {
       await cartao(page, 'Expedição', 'Entrega dentro do disponível; acima dele exige gerente + motivo.')
     },
   )
-  await passo(
-    page,
-    '18-expedicao-excecao',
-    'Entrega acima do disponível: exige autorização de gerente e motivo (auditado).',
-    async () => {
-      const campo = page.getByLabel('Quantidade do item 1')
-      if (await campo.count()) {
+  if (REAL && itemEntrega) {
+    await passo(
+      page,
+      '21-expedicao-entrega',
+      `Registrar a entrega de 1 unidade do item ${itemEntrega} (dentro do disponível).`,
+      async () => {
+        const campo = page.getByLabel(`Quantidade do item ${itemEntrega}`)
+        await campo.waitFor({ timeout: 30000 })
         await campo.click()
-        await campo.pressSequentially('9999', { delay: 140 })
-        await page
-          .getByText('acima do disponível', { exact: false })
-          .first()
-          .waitFor({ timeout: 10000 })
-          .catch(() => {})
-        await page
-          .getByText('Autorizar acima do disponível')
-          .first()
-          .scrollIntoViewIfNeeded()
-          .catch(() => {})
-        await pausa(page, 1400)
-      }
-    },
-  )
+        await campo.pressSequentially('1', { delay: 220 })
+        await pausa(page, 700)
+        await page.getByRole('button', { name: `Registrar entrega do item ${itemEntrega}` }).click()
+      },
+    )
+    await passo(
+      page,
+      '22-expedicao-entrega-ok',
+      'Entrega registrada: o disponível diminui e a expedição confirma o saldo.',
+      async () => {
+        await page.getByText('Entrega registrada').first().waitFor({ timeout: 30000 }).catch(() => {})
+      },
+    )
+  } else {
+    await passo(
+      page,
+      '21-expedicao-excecao',
+      'Entrega acima do disponível: exige autorização de gerente e motivo (auditado).',
+      async () => {
+        const campo = page.getByLabel('Quantidade do item 1')
+        if (await campo.count()) {
+          await campo.click()
+          await campo.pressSequentially('9999', { delay: 140 })
+          await page
+            .getByText('acima do disponível', { exact: false })
+            .first()
+            .waitFor({ timeout: 10000 })
+            .catch(() => {})
+          await page
+            .getByText('Autorizar acima do disponível')
+            .first()
+            .scrollIntoViewIfNeeded()
+            .catch(() => {})
+          await pausa(page, 1400)
+        }
+      },
+    )
+  }
 
   // ---- Sistema --------------------------------------------------------------
   await login(context, page, 'admin')
   await passo(
     page,
-    '19-admin-usuarios',
+    '23-admin-usuarios',
     'Responsável de Sistema — usuários, perfis e setores por usuário.',
     async () => {
       await irPara(page, '/admin/usuarios')
@@ -455,21 +564,21 @@ try {
   )
   await passo(
     page,
-    '20-admin-setores',
-    'Setores e mapeamento categoria → setor (a categoria do legado vira setor).',
+    '24-admin-setores',
+    'Setores e mapeamento categoria → setor: a categoria do legado vira setor operacional.',
     async () => {
       await irPara(page, '/admin/setores')
       await page.getByText('Mapeamento de categoria').first().waitFor({ timeout: 30000 })
     },
   )
-  await passo(page, '21-admin-setores-lista', 'Setores cadastrados.', async () => {
+  await passo(page, '25-admin-setores-lista', 'Setores cadastrados.', async () => {
     await page.getByText('Setores cadastrados').first().scrollIntoViewIfNeeded()
   })
 
-  // ---- Técnico (jobs de integração) ----------------------------------------
+  // ---- Técnico --------------------------------------------------------------
   await passo(
     page,
-    '22-tecnico-jobs',
+    '26-tecnico-jobs',
     'Responsável Técnico — jobs de integração com o Top Gerente.',
     async () => {
       await irPara(page, '/tecnico/integracao')
@@ -477,7 +586,7 @@ try {
       await cartao(page, 'Responsável Técnico', 'Jobs de integração, status, erros e eventos.')
     },
   )
-  await passo(page, '23-tecnico-eventos', 'Eventos do job selecionado.', async () => {
+  await passo(page, '27-tecnico-eventos', 'Eventos do job selecionado.', async () => {
     const lista = page.getByRole('list', { name: 'Jobs de integração' })
     const botao = lista.getByRole('button').first()
     if (await botao.count()) {
@@ -493,12 +602,28 @@ try {
     }
   })
 
+  // ---- Saldo atualizado (modo execucao) ------------------------------------
+  if (REAL) {
+    await login(context, page, 'vendedor')
+    await passo(
+      page,
+      '28-vendedor-saldo',
+      'Vendedor confere o saldo do item já atualizado pela execução e pela entrega.',
+      async () => {
+        await irPara(page, '/vendedor/pedidos')
+        await page.getByRole('button', { name: `Abrir pedido ${NUMERO_PEDIDO}` }).click()
+        await page.getByText('Solicitado:').first().waitFor({ timeout: 30000 })
+        await page.getByText('Solicitado:').first().scrollIntoViewIfNeeded()
+      },
+    )
+  }
+
   // ---- Responsividade e logout ---------------------------------------------
   await login(context, page, 'vendedor')
   await passo(
     page,
-    '24-mobile-lista',
-    'Responsividade: as mesmas telas no celular (390 px).',
+    '29-mobile-lista',
+    'Responsividade: as mesmas telas funcionam no celular (390 px).',
     async () => {
       await page.setViewportSize({ width: 390, height: 780 })
       await irPara(page, '/vendedor/pedidos')
@@ -509,14 +634,14 @@ try {
         .catch(() => {})
     },
   )
-  await passo(page, '25-mobile-detalhe', 'Detalhe do pedido no celular.', async () => {
+  await passo(page, '30-mobile-detalhe', 'Detalhe do pedido no celular.', async () => {
     const abrir = page.getByRole('button', { name: `Abrir pedido ${NUMERO_PEDIDO}` })
     if (await abrir.count()) {
       await abrir.click()
       await page.getByText('Desmembramento por setor').first().waitFor({ timeout: 30000 })
     }
   })
-  await passo(page, '26-logout', 'Sair encerra a sessão e volta ao login.', async () => {
+  await passo(page, '31-logout', 'Sair encerra a sessão e volta para o login.', async () => {
     await page.setViewportSize({ width: 1280, height: 720 })
     const sair = page.getByRole('button', { name: 'Sair' }).first()
     if (await sair.count()) {
@@ -526,7 +651,7 @@ try {
   })
   await passo(
     page,
-    '27-final',
+    '32-final',
     '3E Operações — leitura do Top Gerente, banco próprio e fluxo por setor.',
     async () => {
       await irPara(page, '/login')
@@ -536,12 +661,12 @@ try {
 } finally {
   await context.close()
   const bruto = await video.path()
-  const destinoWebm = join(DIR_VIDEO, 'demo-3e-completo.webm')
+  const destinoWebm = join(DIR_VIDEO, `${NOME}.webm`)
   renameSync(bruto, destinoWebm)
   console.log(`Vídeo gravado: ${destinoWebm}`)
 
   const { spawnSync } = await import('node:child_process')
-  const destinoMp4 = join(DIR_VIDEO, 'demo-3e-completo.mp4')
+  const destinoMp4 = join(DIR_VIDEO, `${NOME}.mp4`)
   const argsMp4 = [
     '-y',
     '-i',
