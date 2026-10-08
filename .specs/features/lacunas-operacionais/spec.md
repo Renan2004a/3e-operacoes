@@ -102,7 +102,7 @@ O sistema está funcional, mas quatro pontos impedem o uso 100% pela interface e
 | LAC-12 | P1: Retry | Design | Done |
 | LAC-13 | P1: Retry | Design | Done |
 
-**Coverage:** 13 total, 13 mapped to tasks, 0 unmapped ✅ (T1–T7; T8 pendente para E2E)
+**Coverage:** 13 total, 13 mapped to tasks, 0 unmapped ✅ (T1–T8; LAC-01/LAC-07/LAC-09 com E2E do guarda de sessão)
 
 ---
 

@@ -272,10 +272,10 @@ T8
 
 **Done when**:
 
-- [ ] Navegação inclui as novas telas nos perfis certos
-- [ ] E2E verde
-- [ ] Test count: 5 testes E2E passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm run test:e2e`
+- [x] Navegação inclui as novas telas nos perfis certos
+- [x] E2E verde
+- [x] Test count: 5 testes E2E passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm run test:e2e`
 
 **Tests**: e2e
 **Gate**: e2e
