@@ -51,10 +51,27 @@ export interface CabecalhoPedido {
   id: string
   numero: string
   cliente: string | null
+  customerName: string | null
+  sellerLegacyCode: string | null
+}
+
+/** Especificações de exibição do item, além do saldo (IND-04). */
+export interface EspecificacaoItem {
+  itemId: string
+  description: string | null
+  productCode: string | null
+  unit: string
+}
+
+/** Item do detalhe: saldo consolidado + descrição, código e unidade (IND-04). */
+export interface ItemDetalhado extends ItemSaldo {
+  description: string | null
+  productCode: string | null
+  unit: string
 }
 
 export interface PedidoDetalhado extends CabecalhoPedido {
-  itens: ItemSaldo[]
+  itens: ItemDetalhado[]
 }
 
 /**
@@ -66,6 +83,8 @@ export interface ConsultaPedidosRepository extends SaldoPedidoRepository {
   listarPedidosParaConsulta(): Promise<PedidoConsultado[]>
   /** Cabeçalho do pedido, ou null se não existir (IND-10). */
   buscarCabecalhoPedido(orderId: string): Promise<CabecalhoPedido | null>
+  /** Descrição, código e unidade de cada item, para exibição no detalhe (IND-04). */
+  buscarEspecificacoesDosItens(orderId: string): Promise<EspecificacaoItem[]>
 }
 
 /** Limite padrão quando o filtro não informa um valor (QF-07). */
@@ -145,8 +164,9 @@ export async function listarPedidos(
 }
 
 /**
- * Detalha um pedido com os cinco valores por item (IND-04). Reusa o saldo da
- * expedição; pedido inexistente é rejeitado (IND-10).
+ * Detalha um pedido com os cinco valores por item e as especificações de
+ * exibição: descrição, código e unidade por item e cliente/vendedor do pedido
+ * (IND-04). Reusa o saldo da expedição; pedido inexistente é rejeitado (IND-10).
  */
 export async function detalharPedido(
   orderId: string,
@@ -155,5 +175,20 @@ export async function detalharPedido(
   const itens = await saldoPedido(orderId, repo)
   const cabecalho = await repo.buscarCabecalhoPedido(orderId)
   if (!cabecalho) throw new PedidoNaoEncontradoError(orderId)
-  return { ...cabecalho, itens }
+
+  const especificacoes = await repo.buscarEspecificacoesDosItens(orderId)
+  const porItem = new Map(especificacoes.map((especificacao) => [especificacao.itemId, especificacao]))
+
+  return {
+    ...cabecalho,
+    itens: itens.map((item) => {
+      const especificacao = porItem.get(item.itemId)
+      return {
+        ...item,
+        description: especificacao?.description ?? null,
+        productCode: especificacao?.productCode ?? null,
+        unit: especificacao?.unit ?? '',
+      }
+    }),
+  }
 }

@@ -10,6 +10,9 @@ interface ItemSeed {
   solicitado: string
   executado: string
   entregue: string
+  description?: string | null
+  productCode?: string | null
+  unit?: string
 }
 
 const holder = vi.hoisted(() => ({
@@ -24,6 +27,8 @@ const holder = vi.hoisted(() => ({
 vi.mock('../../../../modules/indicadores/adapters/prisma-indicadores-repository', () => ({
   prismaIndicadoresRepository: {
     buscarCabecalhoPedido: (orderId: string) => holder.repo.buscarCabecalhoPedido(orderId),
+    buscarEspecificacoesDosItens: (orderId: string) =>
+      holder.repo.buscarEspecificacoesDosItens(orderId),
     buscarItensDoPedido: (orderId: string) => holder.repo.buscarItensDoPedido(orderId),
   },
 }))
@@ -42,7 +47,25 @@ holder.repo = {
   },
   async buscarCabecalhoPedido(orderId) {
     const pedido = holder.pedidos[orderId]
-    return pedido ? { id: orderId, numero: pedido.numero, cliente: pedido.cliente } : null
+    return pedido
+      ? {
+          id: orderId,
+          numero: pedido.numero,
+          cliente: pedido.cliente,
+          customerName: pedido.cliente,
+          sellerLegacyCode: null,
+        }
+      : null
+  },
+  async buscarEspecificacoesDosItens(orderId) {
+    const pedido = holder.pedidos[orderId]
+    if (!pedido) return []
+    return pedido.itens.map((item) => ({
+      itemId: item.id,
+      description: item.description ?? null,
+      productCode: item.productCode ?? null,
+      unit: item.unit ?? 'un',
+    }))
   },
   async buscarItensDoPedido(orderId) {
     const pedido = holder.pedidos[orderId]
@@ -103,6 +126,8 @@ describe('GET /api/pedidos/[orderId]', () => {
     const body = await response.json()
     expect(body.pedido.numero).toBe('1001')
     expect(body.pedido.cliente).toBe('Construtora X')
+    expect(body.pedido.customerName).toBe('Construtora X')
+    expect(body.pedido.sellerLegacyCode).toBeNull()
     expect(body.pedido.itens[0]).toEqual({
       itemId: 'item_1',
       solicitado: '10',
@@ -110,6 +135,9 @@ describe('GET /api/pedidos/[orderId]', () => {
       disponivel: '5',
       entregue: '3',
       pendente: '2',
+      description: null,
+      productCode: null,
+      unit: 'un',
     })
   })
 

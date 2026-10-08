@@ -4,6 +4,7 @@ import type { ItemDoPedido } from '@/modules/expedicao/saldo-pedido'
 import type {
   CabecalhoPedido,
   ConsultaPedidosRepository,
+  EspecificacaoItem,
   PedidoConsultado,
 } from '../consulta-pedidos'
 import type { AtividadeIndicador, PainelRepository } from '../painel'
@@ -47,10 +48,30 @@ export const prismaIndicadoresRepository: IndicadoresRepository = {
   async buscarCabecalhoPedido(orderId): Promise<CabecalhoPedido | null> {
     const row = await prisma.order.findUnique({
       where: { id: orderId },
-      select: { id: true, legacyNumber: true, customerName: true },
+      select: { id: true, legacyNumber: true, customerName: true, sellerLegacyCode: true },
     })
     if (!row) return null
-    return { id: row.id, numero: row.legacyNumber, cliente: row.customerName }
+    return {
+      id: row.id,
+      numero: row.legacyNumber,
+      cliente: row.customerName,
+      customerName: row.customerName,
+      sellerLegacyCode: row.sellerLegacyCode,
+    }
+  },
+
+  async buscarEspecificacoesDosItens(orderId): Promise<EspecificacaoItem[]> {
+    const rows = await prisma.orderItem.findMany({
+      where: { orderId },
+      select: { id: true, description: true, productCode: true, unit: true },
+      orderBy: { createdAt: 'asc' },
+    })
+    return rows.map((row) => ({
+      itemId: row.id,
+      description: row.description,
+      productCode: row.productCode,
+      unit: row.unit,
+    }))
   },
 
   async buscarItensDoPedido(orderId): Promise<ItemDoPedido[] | null> {

@@ -60,6 +60,9 @@ holder.repo = {
   async buscarCabecalhoPedido() {
     return null
   },
+  async buscarEspecificacoesDosItens() {
+    return []
+  },
   async buscarItensDoPedido() {
     return null
   },

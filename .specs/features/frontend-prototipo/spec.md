@@ -91,11 +91,11 @@ A interface atual já usa a linguagem visual da referência, mas **não replica 
 | PROT-04 | P1: Shell | Design | Pending |
 | PROT-05 | P1: Telas | Design | Pending |
 | PROT-06 | P1: Telas | Design | Pending |
-| PROT-07 | P1: Telas | Design | Pending |
+| PROT-07 | P1: Telas | Design | Done (T1) |
 | PROT-08 | P1: Sem demo | Design | Pending |
 | PROT-09 | P1: Responsivo | Design | Pending |
 
-**Coverage:** 9 total, 0 mapped to tasks, 9 unmapped ⚠️
+**Coverage:** 9 total, 1 mapped to tasks, 8 unmapped ⚠️
 
 ---
 

@@ -85,11 +85,11 @@ T7
 
 **Done when**:
 
-- [ ] Detalhe traz `description`, `productCode`, `unit` por item
-- [ ] Detalhe traz `customerName` e `sellerLegacyCode`
-- [ ] Contrato anterior preservado (campos adicionais)
-- [ ] Test count: 6 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Detalhe traz `description`, `productCode`, `unit` por item
+- [x] Detalhe traz `customerName` e `sellerLegacyCode`
+- [x] Contrato anterior preservado (campos adicionais)
+- [x] Test count: 6 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick

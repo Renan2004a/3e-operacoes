@@ -6,6 +6,7 @@ import {
   listarPedidos,
   type AtividadeDoPedido,
   type ConsultaPedidosRepository,
+  type EspecificacaoItem,
   type PedidoConsultado,
 } from './consulta-pedidos'
 
@@ -13,9 +14,12 @@ interface PedidoSeed {
   id: string
   numero: string
   cliente: string | null
+  customerName?: string | null
+  sellerLegacyCode?: string | null
   criadoEm: Date
   atividades: AtividadeDoPedido[]
   itens?: ItemDoPedido[]
+  especificacoes?: EspecificacaoItem[]
 }
 
 function pedido(overrides: Partial<PedidoSeed> & Pick<PedidoSeed, 'id' | 'numero'>): PedidoSeed {
@@ -23,9 +27,12 @@ function pedido(overrides: Partial<PedidoSeed> & Pick<PedidoSeed, 'id' | 'numero
     id: overrides.id,
     numero: overrides.numero,
     cliente: overrides.cliente ?? null,
+    customerName: overrides.customerName,
+    sellerLegacyCode: overrides.sellerLegacyCode,
     criadoEm: overrides.criadoEm ?? new Date('2026-10-07T12:00:00.000Z'),
     atividades: overrides.atividades ?? [],
     itens: overrides.itens,
+    especificacoes: overrides.especificacoes,
   }
 }
 
@@ -43,13 +50,23 @@ function createRepo(pedidos: PedidoSeed[]): ConsultaPedidosRepository {
     async buscarCabecalhoPedido(orderId) {
       const encontrado = pedidos.find((p) => p.id === orderId)
       return encontrado
-        ? { id: encontrado.id, numero: encontrado.numero, cliente: encontrado.cliente }
+        ? {
+            id: encontrado.id,
+            numero: encontrado.numero,
+            cliente: encontrado.cliente,
+            customerName: encontrado.customerName ?? encontrado.cliente,
+            sellerLegacyCode: encontrado.sellerLegacyCode ?? null,
+          }
         : null
     },
     async buscarItensDoPedido(orderId) {
       const encontrado = pedidos.find((p) => p.id === orderId)
       if (!encontrado || encontrado.itens === undefined) return null
       return encontrado.itens.map((item) => ({ ...item }))
+    },
+    async buscarEspecificacoesDosItens(orderId) {
+      const encontrado = pedidos.find((p) => p.id === orderId)
+      return encontrado?.especificacoes?.map((especificacao) => ({ ...especificacao })) ?? []
     },
   }
 }
@@ -276,6 +293,60 @@ describe('detalharPedido', () => {
     expect(detalhe.itens[0].disponivel.toString()).toBe('5')
     expect(detalhe.itens[0].entregue.toString()).toBe('3')
     expect(detalhe.itens[0].pendente.toString()).toBe('2')
+  })
+
+  it('inclui descrição, código e unidade por item (IND-04)', async () => {
+    const repo = createRepo([
+      pedido({
+        id: 'ped_1',
+        numero: '1001',
+        cliente: 'Construtora X',
+        itens: [item({ id: 'item_1' })],
+        especificacoes: [
+          { itemId: 'item_1', description: 'Chapa dobrada', productCode: 'PRD-77', unit: 'peca' },
+        ],
+      }),
+    ])
+
+    const detalhe = await detalharPedido('ped_1', repo)
+
+    expect(detalhe.itens[0].description).toBe('Chapa dobrada')
+    expect(detalhe.itens[0].productCode).toBe('PRD-77')
+    expect(detalhe.itens[0].unit).toBe('peca')
+  })
+
+  it('inclui customerName e sellerLegacyCode no pedido (IND-04)', async () => {
+    const repo = createRepo([
+      pedido({
+        id: 'ped_1',
+        numero: '1001',
+        cliente: 'Construtora X',
+        sellerLegacyCode: 'V-77',
+        itens: [item({ id: 'item_1' })],
+      }),
+    ])
+
+    const detalhe = await detalharPedido('ped_1', repo)
+
+    expect(detalhe.customerName).toBe('Construtora X')
+    expect(detalhe.sellerLegacyCode).toBe('V-77')
+  })
+
+  it('usa null/vazio quando o item não tem especificação (IND-04)', async () => {
+    const repo = createRepo([
+      pedido({
+        id: 'ped_1',
+        numero: '1001',
+        cliente: 'Construtora X',
+        itens: [item({ id: 'item_1' })],
+      }),
+    ])
+
+    const detalhe = await detalharPedido('ped_1', repo)
+
+    expect(detalhe.itens[0].description).toBeNull()
+    expect(detalhe.itens[0].productCode).toBeNull()
+    expect(detalhe.itens[0].unit).toBe('')
   })
 
   it('rejeita pedido inexistente (IND-10)', async () => {
