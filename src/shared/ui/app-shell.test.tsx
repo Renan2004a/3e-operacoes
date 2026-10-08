@@ -17,10 +17,15 @@ vi.mock('next/link', () => ({
   ),
 }))
 
-const navegacao = vi.hoisted(() => ({ usePathname: vi.fn(() => '/operador/fila') }))
+const navegacao = vi.hoisted(() => ({
+  usePathname: vi.fn(() => '/operador/fila'),
+  push: vi.fn(),
+  refresh: vi.fn(),
+}))
 
 vi.mock('next/navigation', () => ({
   usePathname: navegacao.usePathname,
+  useRouter: () => ({ push: navegacao.push, refresh: navegacao.refresh }),
 }))
 
 import { AppShell } from './app-shell'
@@ -127,6 +132,19 @@ describe('AppShell', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Sair' }))
     expect(onLogout).toHaveBeenCalledTimes(1)
+  })
+
+  it('sem onLogout, encerra a sessão e volta ao login (FE-04)', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true })
+    vi.stubGlobal('fetch', fetchMock)
+    navegacao.push.mockClear()
+    render(<AppShell perfil="OPERATOR">{conteudo}</AppShell>)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sair' }))
+
+    await vi.waitFor(() => expect(navegacao.push).toHaveBeenCalledWith('/login'))
+    expect(fetchMock).toHaveBeenCalledWith('/api/auth/sessao', { method: 'DELETE' })
+    vi.unstubAllGlobals()
   })
 
   it.each(PERFIS)(

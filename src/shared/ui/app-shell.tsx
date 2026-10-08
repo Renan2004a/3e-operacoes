@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import type { RoleCode } from '@/generated/prisma/client'
 import { cn, FOCO_VISIVEL } from './utils'
 import { Button } from './button'
@@ -32,9 +32,28 @@ export interface AppShellProps {
  */
 export function AppShell({ perfil, usuarioNome, onLogout, children }: AppShellProps) {
   const [menuAberto, setMenuAberto] = useState(false)
+  const [saindo, setSaindo] = useState(false)
   const caminho = usePathname()
+  const router = useRouter()
   const itens = NAV_POR_PERFIL[perfil]
   const rotuloPerfil = ROTULO_PERFIL[perfil]
+
+  /** Encerra a sessão e volta ao login (usa `onLogout` quando fornecido). */
+  async function sair() {
+    if (onLogout) {
+      onLogout()
+      return
+    }
+    setSaindo(true)
+    try {
+      await fetch('/api/auth/sessao', { method: 'DELETE' })
+    } catch {
+      // segue para o login mesmo se a chamada falhar
+    } finally {
+      router.push('/login')
+      router.refresh()
+    }
+  }
 
   return (
     <div className="flex min-h-screen flex-col overflow-x-hidden bg-bg">
@@ -56,11 +75,9 @@ export function AppShell({ perfil, usuarioNome, onLogout, children }: AppShellPr
           {usuarioNome ? (
             <span className="hidden text-sm text-muted sm:inline">{usuarioNome}</span>
           ) : null}
-          {onLogout ? (
-            <Button variant="outline" size="sm" onClick={onLogout}>
-              Sair
-            </Button>
-          ) : null}
+          <Button variant="outline" size="sm" onClick={sair} disabled={saindo}>
+            {saindo ? 'Saindo…' : 'Sair'}
+          </Button>
           <button
             type="button"
             className={cn(
