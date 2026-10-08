@@ -1,0 +1,56 @@
+# On-premise: MySQL + app Next.js + conector local, tudo na rede da empresa.
+# Uso: docker compose -f docker-compose.onpremise.yml up -d --build
+# (Ajuste as variáveis de ambiente conforme docs/offline-on-premise.md.)
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: 3e_operacoes
+      MYSQL_USER: app
+      MYSQL_PASSWORD: app
+    volumes:
+      - 3e-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: mysql://app:app@mysql:3306/3e_operacoes
+      LOCAL_CONNECTOR_BASE_URL: http://connector:8787
+      LOCAL_CONNECTOR_TOKEN: ${LOCAL_CONNECTOR_TOKEN:-dev-token}
+      CONNECTOR_CALLBACK_TOKEN: ${CONNECTOR_CALLBACK_TOKEN:-dev-token}
+      APP_INTERNAL_TOKEN: ${APP_INTERNAL_TOKEN:-dev-internal-token}
+      SESSION_SECRET: ${SESSION_SECRET:-dev-session-secret-trocar}
+      APP_TIMEZONE: America/Sao_Paulo
+      PORT: 3000
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+
+  connector:
+    build: ./connector-local
+    restart: unless-stopped
+    environment:
+      TOPGERENTE_HOST: ${TOPGERENTE_HOST:-127.0.0.1}
+      TOPGERENTE_PORT: ${TOPGERENTE_PORT:-3306}
+      TOPGERENTE_DATABASE: ${TOPGERENTE_DATABASE:-topgerente}
+      TOPGERENTE_USER: ${TOPGERENTE_USER:-3e_readonly}
+      TOPGERENTE_PASSWORD: ${TOPGERENTE_PASSWORD:-trocar}
+      CONNECTOR_SHARED_TOKEN: ${LOCAL_CONNECTOR_TOKEN:-dev-token}
+      RAILWAY_CALLBACK_URL: http://app:3000/api/integracao/callback
+      CONNECTOR_CALLBACK_TOKEN: ${CONNECTOR_CALLBACK_TOKEN:-dev-token}
+      PORT: 8787
+    ports:
+      - "8787:8787"
+
+volumes:
+  3e-mysql-data:
