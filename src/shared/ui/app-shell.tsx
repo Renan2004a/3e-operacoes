@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import type { RoleCode } from '@/generated/prisma/client'
 import { cn, FOCO_VISIVEL } from './utils'
 import { Button } from './button'
@@ -25,22 +26,23 @@ export interface AppShellProps {
 
 /**
  * Shell responsivo: topbar fixo com marca, usuário e sair, e navegação lateral
- * do perfil. Em ≥ 768 px a lateral fica visível; no celular vira menu acessível
- * acionado pelo topbar (VIS-01, VIS-02). O contêiner raiz evita rolagem
- * horizontal (VIS-03).
+ * do perfil no padrão do protótipo. Em ≥ 768 px a lateral fica visível; no
+ * celular vira menu acessível acionado pelo topbar (VIS-01, VIS-02). O link da
+ * rota atual fica marcado. O contêiner raiz evita rolagem horizontal (VIS-03).
  */
 export function AppShell({ perfil, usuarioNome, onLogout, children }: AppShellProps) {
   const [menuAberto, setMenuAberto] = useState(false)
+  const caminho = usePathname()
   const itens = NAV_POR_PERFIL[perfil]
   const rotuloPerfil = ROTULO_PERFIL[perfil]
 
   return (
     <div className="flex min-h-screen flex-col overflow-x-hidden bg-bg">
-      <header className="sticky top-0 z-20 flex min-h-16 items-center justify-between gap-3 border-b border-line bg-surface px-4 sm:px-6">
-        <div className="flex items-center gap-2">
+      <header className="sticky top-0 z-20 flex min-h-[68px] items-center justify-between gap-3 border-b border-line bg-surface px-4 sm:px-6">
+        <div className="flex items-center gap-3">
           <span
             aria-hidden="true"
-            className="grid h-9 w-9 place-items-center rounded-lg bg-accent font-extrabold text-white"
+            className="grid h-10 w-10 place-items-center rounded-lg bg-accent font-extrabold text-white"
           >
             3E
           </span>
@@ -93,19 +95,24 @@ export function AppShell({ perfil, usuarioNome, onLogout, children }: AppShellPr
                 Sem telas disponíveis para o seu perfil.
               </p>
             ) : (
-              itens.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    'inline-flex min-h-11 items-center rounded-lg px-3 font-medium text-white hover:bg-brand-700',
-                    FOCO_VISIVEL,
-                  )}
-                  onClick={() => setMenuAberto(false)}
-                >
-                  {item.label}
-                </Link>
-              ))
+              itens.map((item) => {
+                const ativo = caminho === item.href
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    aria-current={ativo ? 'page' : undefined}
+                    className={cn(
+                      'inline-flex min-h-11 items-center rounded-lg px-3 font-medium',
+                      ativo ? 'bg-brand-700 text-white' : 'text-white hover:bg-brand-700',
+                      FOCO_VISIVEL,
+                    )}
+                    onClick={() => setMenuAberto(false)}
+                  >
+                    {item.label}
+                  </Link>
+                )
+              })
             )}
           </div>
         </nav>

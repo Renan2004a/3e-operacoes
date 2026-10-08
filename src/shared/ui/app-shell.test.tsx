@@ -17,6 +17,12 @@ vi.mock('next/link', () => ({
   ),
 }))
 
+const navegacao = vi.hoisted(() => ({ usePathname: vi.fn(() => '/operador/fila') }))
+
+vi.mock('next/navigation', () => ({
+  usePathname: navegacao.usePathname,
+}))
+
 import { AppShell } from './app-shell'
 
 afterEach(cleanup)
@@ -96,6 +102,13 @@ describe('AppShell', () => {
     render(<AppShell perfil="OPERATOR">{conteudo}</AppShell>)
 
     expect(screen.getByRole('button', { name: 'Abrir menu' })).toHaveClass('focus-visible:ring-2')
+  })
+
+  it('marca o link da rota atual como ativo (VIS-01)', () => {
+    navegacao.usePathname.mockReturnValue('/operador/fila')
+    render(<AppShell perfil="OPERATOR">{conteudo}</AppShell>)
+
+    expect(screen.getByRole('link', { name: 'Fila' })).toHaveAttribute('aria-current', 'page')
   })
 
   it('usa overflow-x-hidden no contêiner raiz para evitar rolagem horizontal (FE-06)', () => {

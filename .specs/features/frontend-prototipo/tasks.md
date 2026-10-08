@@ -142,10 +142,10 @@ T7
 
 **Done when**:
 
-- [ ] Topbar + sidebar como o protótipo; menu no celular
-- [ ] Sem rolagem horizontal 360–1440 px
-- [ ] Test count: 7 testes passam (sem remoções silenciosas)
-- [ ] Gate check passa: `npm test`
+- [x] Topbar + sidebar como o protótipo; menu no celular
+- [x] Sem rolagem horizontal 360–1440 px
+- [x] Test count: 7 testes passam (sem remoções silenciosas)
+- [x] Gate check passa: `npm test`
 
 **Tests**: unit
 **Gate**: quick
