@@ -45,7 +45,7 @@ Seção 9, da segurança; e a Seção 10, das métricas e da entrega contínua. 
 A qualidade de um sistema de software depende, em larga medida, da qualidade de
 sua especificação de requisitos. Requisitos ambíguos, incompletos ou não
 testáveis estão entre as principais causas de retrabalho e de insucesso em
-projetos (SOMMERVILLE, 2019; PRESSMAN; MAXIM, 2021). Para reduzir essa
+projetos (SOMMERVILLE, 2018; PRESSMAN; MAXIM, 2021). Para reduzir essa
 ambiguidade, a literatura propõe notações estruturadas que restringem a forma de
 expressão dos requisitos a padrões verificáveis.
 
@@ -68,7 +68,7 @@ requisito fundamental para a validação do sistema junto aos usuários.
 
 Métodos iterativos e incrementais, consolidados a partir do final da década de
 1990, propõem o desenvolvimento em ciclos curtos, com entregas frequentes de
-partes funcionais do sistema (BECK, 2000; SOMMERVILLE, 2019). Essa abordagem
+partes funcionais do sistema (BECK, 2000; SOMMERVILLE, 2018). Essa abordagem
 reduz o risco do projeto ao permitir ajustes contínuos com base em retorno real,
 em oposição a modelos sequenciais nos quais o produto só é avaliado ao final.
 
@@ -299,7 +299,7 @@ COCKBURN, A. **Hexagonal Architecture (Ports and Adapters)**. 2005.
 CONVENTIONAL COMMITS. **Conventional Commits 1.0.0**. 2019. Disponível em:
 <https://www.conventionalcommits.org>. Acesso em: 2026.
 
-CORRÊA, H. L.; CORRÊA, C. A. **Administração de Produção e Operações**. 2. ed.
+CORRÊA, H. L.; CORRÊA, C. A. **Administração de Produção e Operações**. 3. ed.
 São Paulo: Atlas, 2012.
 
 EVANS, E. **Domain-Driven Design: Tackling Complexity in the Heart of
@@ -386,7 +386,7 @@ PRESTON-WERNER, T. **Semantic Versioning 2.0.0**. 2010. Disponível em:
 SLACK, N.; BRANDON-JONES, A.; JOHNSTON, R. **Administração da Produção**. 8. ed.
 São Paulo: Atlas, 2018.
 
-SOMMERVILLE, I. **Engenharia de Software**. 10. ed. São Paulo: Pearson, 2019.
+SOMMERVILLE, I. **Engenharia de Software**. 10. ed. São Paulo: Pearson, 2018.
 
 VERNON, V. **Implementing Domain-Driven Design**. Boston: Addison-Wesley, 2013.
 

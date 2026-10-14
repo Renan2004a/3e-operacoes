@@ -47,7 +47,7 @@ prazos, exceções).
   Engineering Conference (RE)*, 2009.
 - ISO/IEC/IEEE **29148:2018** — *Systems and software engineering — Life cycle
   processes — Requirements engineering*.
-- SOMMERVILLE, I. **Engenharia de Software**. 10. ed. Pearson, 2019.
+- SOMMERVILLE, I. **Engenharia de Software**. 10. ed. Pearson, 2018.
 - PRESSMAN, R. S.; MAXIM, B. R. **Engenharia de Software: uma abordagem
   profissional**. 9. ed. McGraw-Hill, 2021.
 
@@ -71,7 +71,7 @@ pequenas e frequentes com melhor desempenho de entrega e qualidade.
   2000.
 - FORSGREN, N.; HUMBLE, J.; KIM, G. **Accelerate: The Science of Lean Software
   and DevOps**. IT Revolution, 2018.
-- SOMMERVILLE, I. **Engenharia de Software**. 10. ed. Pearson, 2019.
+- SOMMERVILLE, I. **Engenharia de Software**. 10. ed. Pearson, 2018.
 
 ---
 
@@ -322,7 +322,7 @@ COCKBURN, A. **Hexagonal Architecture (Ports and Adapters)**. 2005.
 CONVENTIONAL COMMITS. **Conventional Commits 1.0.0**.
 Disponível em: <https://www.conventionalcommits.org/en/v1.0.0/>.
 
-CORRÊA, H. L.; CORRÊA, C. A. **Administração de Produção e Operações**. 2. ed.
+CORRÊA, H. L.; CORRÊA, C. A. **Administração de Produção e Operações**. 3. ed.
 Atlas, 2012.
 
 EVANS, E. **Domain-Driven Design: Tackling Complexity in the Heart of
@@ -398,7 +398,7 @@ profissional**. 9. ed. McGraw-Hill, 2021.
 SLACK, N.; BRANDON-JONES, A.; JOHNSTON, R. **Administração da Produção**. Atlas,
 2018.
 
-SOMMERVILLE, I. **Engenharia de Software**. 10. ed. Pearson, 2019.
+SOMMERVILLE, I. **Engenharia de Software**. 10. ed. Pearson, 2018.
 
 VERNON, V. **Implementing Domain-Driven Design**. Addison-Wesley, 2013.
 
