@@ -16,6 +16,7 @@
     "video:demo:execucao": "set MODO=execucao&& node scripts/gravar-demo-completo.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",

@@ -24,9 +24,7 @@ O Railway roda processo Node de longa duração e tem MySQL gerenciado — combi
 1. **Crie o projeto** no Railway e conecte o repositório GitHub (`main`).
 2. **Adicione um MySQL** (plugin) e copie a `DATABASE_URL` para as variáveis do serviço do app.
 3. **Defina as variáveis** da tabela acima. Em `LOCAL_CONNECTOR_BASE_URL`, use a URL do túnel do conector.
-4. **Build/Start**: o Railway detecta Next.js. Se precisar, defina:
-   - Build: `npm ci && npx prisma generate && npm run build`
-   - Start: `npx prisma migrate deploy && npm start`
+4. **Build/Start**: já configurados no **`railway.json`** (o Railway o usa automaticamente): build `npm ci && npx prisma generate && npm run build`; start `npx prisma migrate deploy && npm start`; healthcheck em `/api/health`.
 5. **Migrations e seed** (uma vez): no shell do serviço, rode `npx prisma migrate deploy` e `npx prisma seed` (ou `npm run prisma:seed`).
 6. O **conector** continua na empresa (ver `docs/offline-on-premise.md`), exposto por Cloudflare Tunnel; ajuste `RAILWAY_CALLBACK_URL` do conector para a URL pública do app.
 
@@ -34,7 +32,7 @@ O Railway roda processo Node de longa duração e tem MySQL gerenciado — combi
 
 A Vercel hospeda o Next.js muito bem, mas é **serverless** e **não** hospeda MySQL nem o conector.
 
-1. Importe o repositório na Vercel (framework Next.js).
+1. Importe o repositório na Vercel (framework Next.js). O **`vercel.json`** já define o build (`prisma generate && next build`).
 2. Use um **MySQL externo** (Railway, PlanetScale, etc.) e configure `DATABASE_URL` + as demais variáveis nas *Environment Variables*.
 3. Rode `prisma migrate deploy` e o seed **fora** da Vercel (do seu computador, apontando para o MySQL da nuvem) — a Vercel não roda migrations no build.
 4. O conector fica na empresa (Cloudflare Tunnel) e o callback aponta para `https://<app>.vercel.app/api/integracao/callback`.
@@ -50,7 +48,7 @@ DATABASE_URL="<url-da-nuvem>" npm run prisma:seed
 ## Checklist pós-deploy
 
 - [ ] Abrir `/login` e entrar com um usuário do seed.
-- [ ] `/api/health` responde `200`.
+- [ ] `/api/health` responde `200` (`{"status":"ok"}`).
 - [ ] Importar um pedido de teste (com o conector na empresa e o túnel ativo).
 - [ ] Conferir `SESSION_SECRET` forte e `CONNECTOR_CALLBACK_TOKEN` igual nos dois lados.
 - [ ] Trocar as senhas do seed e cadastrar usuários reais.
