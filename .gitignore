@@ -33,3 +33,6 @@ docs/video/*.webm
 
 # Pacote portátil gerado (scripts/gerar-portatil.mjs)
 dist/
+
+# Vínculo local do Railway (não versionar)
+.railway/

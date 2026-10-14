@@ -21,7 +21,8 @@ entregar a um avaliador.
 ## Como gerar
 
 ```bash
-npm run build                    # gera .next/standalone
+# PowerShell: define a saída standalone só para o pacote portátil
+$env:NEXT_OUTPUT='standalone'; npm run build
 node scripts/gerar-portatil.mjs  # monta dist/3e-operacoes-portatil
 # compactar (PowerShell):
 Compress-Archive -Path dist\3e-operacoes-portatil\* -DestinationPath dist\3e-operacoes-portatil.zip -Force
