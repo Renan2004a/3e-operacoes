@@ -7,7 +7,7 @@ ENV NODE_ENV=production
 # Dependências (usa o lockfile; inclui o workspace connector-local).
 COPY package.json package-lock.json ./
 COPY connector-local/package.json ./connector-local/package.json
-RUN npm ci
+RUN npm ci --include=dev
 
 # Código + Prisma + build.
 COPY . .

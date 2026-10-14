@@ -69,6 +69,10 @@ DATABASE_URL="<url-da-nuvem>" npm run prisma:seed
   `"build": "prisma generate && next build"`.
 - **O start falha em `prisma migrate deploy`:** falta `DATABASE_URL`. Adicione o
   **MySQL** e a variável `DATABASE_URL = ${{MySQL.MYSQL_URL}}`.
+- **O build falha no PostCSS/Tailwind (`@tailwindcss/postcss`)**: a plataforma
+  pode instalar apenas dependências de produção. Como Tailwind/PostCSS são
+  *devDependencies*, o build força `npm ci --include=dev` (já configurado no
+  `railway.json` e no `Dockerfile`).
 - **O `npm ci` reclama do workspace `connector-local`:** o app não precisa do
   conector para buildar; se ocorrer, me avise para isolar o install.
 
