@@ -1,0 +1,33 @@
+3E Operacoes - pacote portatil (Windows)
+========================================
+
+COMO USAR
+---------
+1. Copie o arquivo "config.env.example" para "config.env" e preencha os valores
+   (principalmente DATABASE_URL e SESSION_SECRET).
+2. De dois cliques em "Iniciar.bat".
+3. O navegador abrira automaticamente em http://localhost:3000.
+   Para encerrar, feche a janela preta (ou pressione Ctrl+C).
+
+REQUISITOS
+----------
+- Um banco MySQL acessivel (ja migrado e populado). Para preparar o banco a
+  partir do repositorio do projeto:
+      npx prisma migrate deploy
+      npm run prisma:seed
+- Windows de 64 bits. O Node.js ja vem embutido na pasta "runtime".
+
+ESTRUTURA
+---------
+  Iniciar.bat           -> inicia o sistema
+  config.env            -> sua configuracao (nao versionar)
+  config.env.example    -> modelo
+  runtime\node.exe      -> runtime Node embutido
+  app\                  -> aplicacao (Next.js standalone)
+
+INTEGRACAO COM O TOP GERENTE
+----------------------------
+A importacao de pedidos usa o "conector local", que le o Top Gerente. Com o
+conector ativo na rede (ex.: http://localhost:8787), a importacao funciona;
+sem ele, as demais telas (consulta, producao, expedicao, indicadores) continuam
+funcionando normalmente.

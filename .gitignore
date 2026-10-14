@@ -30,3 +30,6 @@ src/generated/prisma/
 docs/video/raw*/
 docs/video/steps*/
 docs/video/*.webm
+
+# Pacote portátil gerado (scripts/gerar-portatil.mjs)
+dist/
