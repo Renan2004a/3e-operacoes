@@ -59,3 +59,16 @@ DATABASE_URL="<url-da-nuvem>" npm run prisma:seed
 - Cloudflare Access/mTLS entre o app e o conector.
 - Nunca expor a porta do MySQL legado.
 - Rotacionar credenciais que já circularam.
+
+## Solução de problemas
+
+- **`prisma generate` falha no `npm ci` — "Could not find Prisma Schema":** o
+  client **não** deve ser gerado no `postinstall` (roda antes de o código ser
+  copiado). Aqui o `npm run build` já executa `prisma generate` **depois** da
+  cópia. Confirme que o deploy está no commit com
+  `"build": "prisma generate && next build"`.
+- **O start falha em `prisma migrate deploy`:** falta `DATABASE_URL`. Adicione o
+  **MySQL** e a variável `DATABASE_URL = ${{MySQL.MYSQL_URL}}`.
+- **O `npm ci` reclama do workspace `connector-local`:** o app não precisa do
+  conector para buildar; se ocorrer, me avise para isolar o install.
+
