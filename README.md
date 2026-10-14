@@ -42,7 +42,7 @@ Logins de demonstração (seed): `admin@3e.local`, `operador@3e.local`, `gerente
 
 ## Documentação
 
-- **Relatório técnico**: [`docs/relatorio-tecnico.md`](docs/relatorio-tecnico.md)
+- **Relatório técnico**: [`docs/relatorio-tecnico.md`](docs/relatorio-tecnico.md) · Referencial teórico: [`docs/referencial-teorico.md`](docs/referencial-teorico.md)
 - Requisitos: [`docs/requisitos.md`](docs/requisitos.md) · Regras de negócio: [`docs/regras-negocio.md`](docs/regras-negocio.md)
 - Arquitetura: [`docs/arquitetura.md`](docs/arquitetura.md) · Integração: [`docs/integracao-top-gerente.md`](docs/integracao-top-gerente.md)
 - Perfis e permissões: [`docs/perfis-permissoes.md`](docs/perfis-permissoes.md) · Frontend: [`docs/frontend.md`](docs/frontend.md) · Testes: [`docs/testes.md`](docs/testes.md)

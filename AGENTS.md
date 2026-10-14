@@ -14,6 +14,7 @@ Leia e aplique os arquivos abaixo conforme a tarefa. Este arquivo Ã© apenas um Ã
 - `docs/perfis-permissoes.md`
 - `docs/frontend.md`
 - `docs/testes.md`
+- `docs/referencial-teorico.md`
 
 ## Skills locais do projeto
 
