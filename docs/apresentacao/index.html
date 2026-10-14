@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<title>Marco Solução — 3E Operações</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+:root{
+  --azul:#2f5fd0;
+  --navy:#0f1b33;
+  --cinza:#4a5568;
+  --linha:#d7dce5;
+  --azul-claro:#eef2fb;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:#fff;font-family:'Inter','Segoe UI',system-ui,sans-serif;color:var(--navy);-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+
+.slide{
+  position:relative;
+  width:1280px;height:720px;
+  background:#fff url('fundo.png') center/100% 100% no-repeat;
+  page-break-after:always;
+  overflow:hidden;
+  padding:60px 72px 78px 72px;
+}
+.slide:last-child{page-break-after:auto;}
+
+.numero{position:absolute;right:46px;bottom:40px;font-size:18px;color:var(--navy);}
+.kicker{color:var(--azul);font-weight:700;letter-spacing:1px;}
+
+/* ---------- CAPA ---------- */
+.capa{padding:38px 60px 46px 60px;}
+.capa-topo{display:flex;justify-content:space-between;align-items:flex-start;gap:30px;}
+.logos{display:flex;align-items:center;}
+.logos-img{width:690px;height:auto;}
+.cursos{text-align:right;font-size:19px;line-height:1.45;}
+.cursos p+p{margin-top:16px;}
+.capa-centro{margin-top:150px;}
+.capa-centro .kicker{font-size:30px;margin-bottom:8px;}
+.capa-centro h1{font-family:'Poppins',sans-serif;font-weight:800;font-size:96px;letter-spacing:-1.5px;color:var(--navy);}
+.capa-autores{position:absolute;right:60px;bottom:48px;text-align:right;font-size:20px;line-height:1.5;font-weight:500;}
+
+/* ---------- ROTEIRO ---------- */
+.roteiro-grid{display:grid;grid-template-columns:1.25fr 2px 1fr;gap:54px;height:100%;align-items:center;}
+.roteiro ol{list-style:none;display:grid;gap:19px;}
+.roteiro ol li{font-size:23px;color:var(--navy);}
+.divisor{background:var(--navy);height:82%;align-self:center;justify-self:center;width:2px;}
+.roteiro-titulo{font-family:'Poppins',sans-serif;font-weight:800;font-size:46px;text-align:center;letter-spacing:1px;}
+
+/* ---------- CONTEÚDO ---------- */
+.titulo{font-family:'Poppins',sans-serif;font-weight:700;font-size:38px;text-align:center;text-transform:uppercase;letter-spacing:.4px;margin-bottom:30px;}
+.sub{text-align:center;color:var(--cinza);font-size:20px;margin:-18px 0 26px;}
+
+ul.lista{list-style:none;display:grid;gap:18px;margin-top:6px;}
+ul.lista li{position:relative;padding-left:30px;font-size:22px;line-height:1.5;}
+ul.lista li::before{content:'';position:absolute;left:0;top:11px;width:11px;height:11px;border-radius:50%;background:var(--azul);}
+ul.lista li b{color:var(--navy);}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:26px 40px;}
+.card{border:1px solid var(--linha);border-radius:12px;padding:20px 22px;background:#fff;}
+.card h3{font-family:'Poppins',sans-serif;font-size:20px;color:var(--azul);margin-bottom:8px;}
+.card p{font-size:18px;line-height:1.45;color:var(--cinza);}
+
+table{width:100%;border-collapse:collapse;font-size:18px;margin-top:4px;}
+th{background:var(--azul);color:#fff;font-weight:600;text-align:left;padding:11px 15px;font-size:18px;}
+td{padding:10px 15px;border-bottom:1px solid var(--linha);vertical-align:top;line-height:1.4;}
+tbody tr:nth-child(even) td{background:var(--azul-claro);}
+table.compacta td,table.compacta th{font-size:16.5px;padding:8px 13px;}
+
+.formula{background:var(--azul-claro);border-left:6px solid var(--azul);border-radius:8px;padding:16px 22px;font-size:21px;margin:14px 0;}
+.formula b{color:var(--azul);}
+
+.destaque{font-size:22px;line-height:1.55;}
+.destaque b{color:var(--azul);}
+</style>
+</head>
+<body>
+
+<!-- 1 — CAPA -->
+<section class="slide capa">
+  <div class="capa-topo">
+    <div class="logos">
+      <img class="logos-img" src="logos.png" alt="3E Ferro e Aço · UFLA · ICTIN|UFLA" />
+    </div>
+    <div class="cursos">
+      <p>GCT100 - Tópicos em Engenharia de Software<br>Prof. Dr. Jean Clemisson Santos Rosa</p>
+      <p>NCT027 - Práticas Profissionais em Engenharia de Software<br>Prof. Dr. Rodrigo Aparecido da Silva Braga</p>
+    </div>
+  </div>
+  <div class="capa-centro">
+    <p class="kicker">SEMINÁRIO</p>
+    <h1>Marco Solução</h1>
+  </div>
+  <div class="capa-autores">
+    MARCELO FIUZA PEREIRA<br>
+    RENAN ALVES TAVARES<br>
+    SAUL DE SOUZA DUARTE<br>
+    VANUSA RODRIGUES DE OLIVEIRA<br>
+    VANESSA RODRIGUES DE OLIVEIRA
+  </div>
+</section>
+
+<!-- 2 — ROTEIRO -->
+<section class="slide roteiro">
+  <div class="roteiro-grid">
+    <ol>
+      <li>1. CONTEXTUALIZAÇÃO, PROBLEMA E VISÃO GERAL</li>
+      <li>2. REFERENCIAL TEÓRICO</li>
+      <li>3. ARQUITETURA DE SOFTWARE E TECNOLOGIAS</li>
+      <li>4. INTEGRAÇÃO COM SISTEMA LEGADO</li>
+      <li>5. MODELAGENS E REGRAS DE NEGÓCIO</li>
+      <li>6. FUNCIONALIDADES E INTERFACES</li>
+      <li>7. API'S, QUALIDADE E RISCOS</li>
+      <li>8. PRÓXIMOS PASSOS E CONCLUSÃO</li>
+    </ol>
+    <div class="divisor"></div>
+    <div class="roteiro-titulo">ROTEIRO</div>
+  </div>
+  <span class="numero">2</span>
+</section>
+
+<!-- 3 — 1. CONTEXTUALIZAÇÃO E PROBLEMA -->
+<section class="slide conteudo">
+  <h2 class="titulo">1. Contextualização e Problema</h2>
+  <ul class="lista">
+    <li>A <b>3E Ferro e Aço</b> (São Sebastião do Paraíso/MG) comercializa ferro e aço, fabrica telhas e faz corte e dobra.</li>
+    <li>Os dados comerciais (pedidos, clientes, produtos) ficam no sistema <b>Top Gerente</b>.</li>
+    <li>O <b>acompanhamento operacional</b> — produção, separação e expedição — ainda depende de controles manuais e da comunicação entre setores.</li>
+    <li>Um único pedido pode ter itens de setores diferentes (<b>Corte e Dobra, Telhas e Revenda</b>) e precisa ser <b>desmembrado</b>.</li>
+    <li>A falta de registros confiáveis dificulta rastrear atrasos, gargalos e indicadores de <b>PCP</b>.</li>
+  </ul>
+  <span class="numero">3</span>
+</section>
+
+<!-- 4 — 1. VISÃO GERAL -->
+<section class="slide conteudo">
+  <h2 class="titulo">1. Visão Geral da Solução</h2>
+  <p class="sub">3E Operações — camada de controle operacional complementar ao Top Gerente</p>
+  <div class="grid2">
+    <div class="card"><h3>Importação</h3><p>Pedidos do Top Gerente importados sob demanda, por número, de forma assíncrona e idempotente.</p></div>
+    <div class="card"><h3>Desmembramento</h3><p>Itens organizados por setor responsável; itens sem categoria ficam pendentes de classificação.</p></div>
+    <div class="card"><h3>Execução</h3><p>Filas de trabalho, registro de quantidades produzidas/separadas, perdas e ocorrências.</p></div>
+    <div class="card"><h3>Expedição</h3><p>Controle de disponibilidade, entregas totais/parciais e saldos pendentes.</p></div>
+    <div class="card"><h3>Gestão</h3><p>Indicadores de produção, prazos e ocorrências para apoio ao PCP.</p></div>
+    <div class="card"><h3>Acesso</h3><p>Perfis e permissões por função, com validação no servidor.</p></div>
+  </div>
+  <span class="numero">4</span>
+</section>
+
+<!-- 5 — 1. OBJETIVOS -->
+<section class="slide conteudo">
+  <h2 class="titulo">1. Objetivos da Solução</h2>
+  <ul class="lista">
+    <li><b>Integrar</b> informações comerciais do Top Gerente, preservando os dados de origem.</li>
+    <li><b>Organizar</b> os itens dos pedidos por setor responsável.</li>
+    <li><b>Acompanhar</b> a execução das atividades (pendentes, em andamento, pausadas, concluídas).</li>
+    <li><b>Digitalizar</b> registros operacionais: quantidades, perdas, refugos, pausas e interrupções.</li>
+    <li><b>Controlar</b> disponibilidade e entregas, incluindo entregas parciais.</li>
+    <li><b>Disponibilizar</b> informações gerenciais e indicadores de desempenho.</li>
+    <li><b>Garantir</b> rastreabilidade das operações e usabilidade para os diferentes perfis.</li>
+  </ul>
+  <span class="numero">5</span>
+</section>
+
+<!-- 6 — 1. ESCOPO E MVP -->
+<section class="slide conteudo">
+  <h2 class="titulo">1. Escopo e Funcionalidades do MVP</h2>
+  <table class="compacta">
+    <thead><tr><th style="width:38%">Funcionalidade</th><th>Resultado esperado</th></tr></thead>
+    <tbody>
+      <tr><td>Autenticação e controle de acesso</td><td>Acesso conforme perfil e permissões.</td></tr>
+      <tr><td>Importação de pedidos</td><td>Obter e registrar pedidos via integração.</td></tr>
+      <tr><td>Classificação dos itens</td><td>Associar itens aos setores responsáveis.</td></tr>
+      <tr><td>Acompanhamento das atividades</td><td>Disponibilizar atividades e seus estados.</td></tr>
+      <tr><td>Registro da execução</td><td>Registrar quantidades produzidas ou separadas.</td></tr>
+      <tr><td>Registro de ocorrências</td><td>Registrar perdas, interrupções e outras situações.</td></tr>
+      <tr><td>Controle de expedição</td><td>Registrar entregas e atualizar saldos.</td></tr>
+      <tr><td>Acompanhamento gerencial</td><td>Consulta consolidada de pedidos e indicadores.</td></tr>
+    </tbody>
+  </table>
+  <span class="numero">6</span>
+</section>
+
+<!-- 7 — 2. REFERENCIAL TEÓRICO -->
+<section class="slide conteudo">
+  <h2 class="titulo">2. Referencial Teórico</h2>
+  <p class="sub">Fundamentação em Engenharia de Software e Gestão da Produção (artigos com DOI e normas)</p>
+  <div class="grid2">
+    <div class="card"><h3>Requisitos</h3><p>EARS e ISO/IEC/IEEE 29148 — requisitos testáveis e rastreáveis.</p></div>
+    <div class="card"><h3>Processo e testes</h3><p>Iterativo/incremental, TDD, dublês de teste e métricas de software.</p></div>
+    <div class="card"><h3>Arquitetura e domínio</h3><p>Ocultamento de informação (Parnas), DDD, portas e adaptadores, padrões.</p></div>
+    <div class="card"><h3>Integração</h3><p>Modernização incremental, idempotência, HTTP/REST e ISA-95 (IEC 62264).</p></div>
+    <div class="card"><h3>Gestão da produção</h3><p>PCP e available-to-promise — base para os saldos.</p></div>
+    <div class="card"><h3>Usabilidade e segurança</h3><p>WCAG 2.1, ISO 9241, heurísticas de Nielsen, NR-17; OWASP e scrypt.</p></div>
+  </div>
+  <span class="numero">7</span>
+</section>
+
+<!-- 8 — 2. REFERENCIAL APLICADO -->
+<section class="slide conteudo">
+  <h2 class="titulo">2. Referencial Aplicado ao Projeto</h2>
+  <ul class="lista">
+    <li>Requisitos escritos como <b>critérios verificáveis</b> (EARS), ligados a tarefas e testes.</li>
+    <li>Domínio isolado da infraestrutura (<b>DDD + portas e adaptadores</b>), com fakes nos testes.</li>
+    <li>Integração ao legado por <b>conector somente leitura</b>, idempotente e com retentativas (backoff).</li>
+    <li>Saldos baseados em <b>PCP/available-to-promise</b>: pendente = solicitado − executado.</li>
+    <li>Interfaces <b>acessíveis</b> (WCAG 2.1 AA) e linguagem do negócio.</li>
+    <li>Segurança por <b>sessão httpOnly, scrypt e matriz de permissões no servidor</b>.</li>
+  </ul>
+  <span class="numero">8</span>
+</section>
+
+<!-- 9 — 3. ARQUITETURA -->
+<section class="slide conteudo">
+  <h2 class="titulo">3. Arquitetura de Software</h2>
+  <p class="sub">Monólito modular — uma aplicação implantável, organizada em módulos</p>
+  <div class="grid2">
+    <div class="card"><h3>Apresentação e comunicação</h3><p>Interfaces e rotas HTTP (Next.js App Router + TypeScript).</p></div>
+    <div class="card"><h3>Módulos de domínio</h3><p>Regras de pedidos, setores, produção, ocorrências, expedição, prazos e indicadores.</p></div>
+    <div class="card"><h3>Infraestrutura</h3><p>Persistência (MySQL + Prisma ORM), validação (Zod) e recursos compartilhados.</p></div>
+    <div class="card"><h3>Integração isolada</h3><p>Conector local separa o legado; a aplicação não acessa o banco do Top Gerente diretamente.</p></div>
+  </div>
+  <span class="numero">9</span>
+</section>
+
+<!-- 10 — 3. TRADE-OFFS -->
+<section class="slide conteudo">
+  <h2 class="titulo">3. Justificativa e Trade-offs</h2>
+  <table class="compacta">
+    <thead><tr><th>Critério</th><th>Monólito tradicional</th><th>Monólito modular</th><th>Microsserviços</th></tr></thead>
+    <tbody>
+      <tr><td>Complexidade</td><td>Baixa no início; cresce com o sistema.</td><td>Moderada (módulos bem definidos).</td><td>Elevada (distribuição e comunicação).</td></tr>
+      <tr><td>Implantação</td><td>Simples (aplicação única).</td><td>Simples, organizada por módulos.</td><td>Complexa (vários serviços).</td></tr>
+      <tr><td>Manutenção</td><td>Difícil com alto acoplamento.</td><td>Facilitada pela separação.</td><td>Independente, com mais controle.</td></tr>
+      <tr><td>Adequação ao MVP</td><td>Alta em apps pequenos.</td><td><b>Alta</b> — equilíbrio e evolução.</td><td>Menor no contexto inicial.</td></tr>
+    </tbody>
+  </table>
+  <span class="numero">10</span>
+</section>
+
+<!-- 11 — 3. MÓDULOS -->
+<section class="slide conteudo">
+  <h2 class="titulo">3. Módulos do Sistema</h2>
+  <div class="grid2">
+    <div class="card"><h3>Autenticação</h3><p>Credenciais, senhas (scrypt) e sessões protegidas.</p></div>
+    <div class="card"><h3>Pedidos</h3><p>Pedidos importados, itens e referências de origem.</p></div>
+    <div class="card"><h3>Setores</h3><p>Corte e Dobra, Telhas e Revenda; mapeamento de categorias.</p></div>
+    <div class="card"><h3>Produção</h3><p>Filas de trabalho e registro de quantidades.</p></div>
+    <div class="card"><h3>Ocorrências</h3><p>Perdas, refugos, pausas e indisponibilidades.</p></div>
+    <div class="card"><h3>Expedição</h3><p>Disponibilidade, entregas e saldos.</p></div>
+    <div class="card"><h3>Usuários</h3><p>Contas, perfis, permissões e vínculos com setores.</p></div>
+    <div class="card"><h3>Integração</h3><p>Importações, atualizações e registro de falhas.</p></div>
+    <div class="card"><h3>Indicadores</h3><p>Pedidos, produção, entregas e prazos.</p></div>
+    <div class="card"><h3>Prazos</h3><p>Prazos por pedido/item/atividade (opcional).</p></div>
+  </div>
+  <span class="numero">11</span>
+</section>
+
+<!-- 12 — 3. TECNOLOGIAS -->
+<section class="slide conteudo">
+  <h2 class="titulo">3. Tecnologias e Ferramentas</h2>
+  <table class="compacta">
+    <thead><tr><th style="width:42%">Tecnologia</th><th>Finalidade</th></tr></thead>
+    <tbody>
+      <tr><td>Next.js 16 · React 19 · TypeScript</td><td>Aplicação web, interfaces e rotas HTTP.</td></tr>
+      <tr><td>Tailwind CSS · shadcn/ui</td><td>Estilização, responsividade e componentes.</td></tr>
+      <tr><td>MySQL · Prisma ORM 7</td><td>Banco operacional próprio e acesso a dados.</td></tr>
+      <tr><td>Zod</td><td>Validação de entradas e contratos.</td></tr>
+      <tr><td>Git · GitHub · OpenCode</td><td>Versionamento, colaboração e apoio de agentes de IA.</td></tr>
+      <tr><td>ESLint · Prettier</td><td>Análise estática e padronização.</td></tr>
+      <tr><td>Vitest · Playwright</td><td>Testes unitários e de ponta a ponta.</td></tr>
+      <tr><td>GitHub Actions</td><td>Integração contínua (lint, tipos, testes, build).</td></tr>
+      <tr><td>Railway · Cloudflare Tunnel/Access</td><td>Hospedagem e comunicação segura com o conector local.</td></tr>
+    </tbody>
+  </table>
+  <span class="numero">12</span>
+</section>
+
+<!-- 13 — 3. INFRAESTRUTURA -->
+<section class="slide conteudo">
+  <h2 class="titulo">3. Infraestrutura e Implantação</h2>
+  <ul class="lista">
+    <li>Aplicação web hospedada em <b>nuvem (Railway)</b>, com banco <b>MySQL próprio</b> (esquema <b>3e_operacoes</b>).</li>
+    <li><b>Conector local</b> executado na rede da empresa, com acesso <b>somente leitura</b> ao banco do Top Gerente.</li>
+    <li>Comunicação por <b>HTTPS autenticado</b> via <b>Cloudflare Tunnel/Access</b> — sem expor o banco legado à internet.</li>
+    <li>Importação <b>sob demanda e assíncrona</b>; atualizações idempotentes evitam duplicações.</li>
+    <li>Deploy validado com URL pública e verificação de saúde (<b>/api/health</b>).</li>
+  </ul>
+  <span class="numero">13</span>
+</section>
+
+<!-- 14 — 4. INTEGRAÇÃO -->
+<section class="slide conteudo">
+  <h2 class="titulo">4. Integração com o Sistema Legado</h2>
+  <ul class="lista">
+    <li>O <b>Top Gerente permanece a fonte oficial</b> dos dados comerciais (pedidos, clientes, produtos).</li>
+    <li>O 3E Operações atua como <b>camada operacional complementar</b>, sem substituir o sistema.</li>
+    <li>Um <b>conector local</b> consulta o banco legado e envia os dados normalizados à aplicação.</li>
+    <li>Acesso com <b>permissão somente leitura</b> e consultas parametrizadas.</li>
+    <li>Atualizações comerciais <b>preservam o histórico operacional</b> (produção, ocorrências, entregas).</li>
+  </ul>
+  <span class="numero">14</span>
+</section>
+
+<!-- 15 — 4. FLUXO DE IMPORTAÇÃO -->
+<section class="slide conteudo">
+  <h2 class="titulo">4. Fluxo de Importação e Atualização</h2>
+  <ul class="lista">
+    <li>Usuário informa o <b>número do pedido</b> na interface.</li>
+    <li><b>POST /api/integracao/pedidos</b> registra a operação e retorna <b>202 + jobId</b> (processamento assíncrono).</li>
+    <li>O <b>conector local</b> consulta o MySQL do Top Gerente (somente leitura) e normaliza os dados.</li>
+    <li><b>POST /api/integracao/callback</b> valida (Zod) e persiste: cria o pedido ou atualiza os dados de origem.</li>
+    <li>Itens são associados aos setores por <b>mapeamento de categoria</b>; sem mapeamento, ficam <b>pendentes</b>.</li>
+    <li>Itens classificados geram <b>atividades nas filas</b> de cada setor.</li>
+  </ul>
+  <span class="numero">15</span>
+</section>
+
+<!-- 16 — 4. SEGURANÇA E FALHAS -->
+<section class="slide conteudo">
+  <h2 class="titulo">4. Segurança, Integridade e Falhas</h2>
+  <div class="grid2">
+    <div class="card"><h3>Acesso e comunicação</h3><p>Conta somente leitura, SQL parametrizado, HTTPS + Cloudflare Tunnel/Access e segredos fora do código.</p></div>
+    <div class="card"><h3>Integridade</h3><p>Validação por contratos, idempotência e divergências registradas para análise.</p></div>
+    <div class="card"><h3>Tratamento de falhas</h3><p>Indisponibilidade do conector, autenticação, pedido inexistente e dados inconsistentes → status e reprocessamento controlado.</p></div>
+    <div class="card"><h3>Continuidade</h3><p>Falha no legado não compromete os registros operacionais já armazenados no banco próprio.</p></div>
+  </div>
+  <span class="numero">16</span>
+</section>
+
+<!-- 17 — 5. MODELAGEM DE DADOS -->
+<section class="slide conteudo">
+  <h2 class="titulo">5. Modelagem de Dados</h2>
+  <p class="sub">Banco relacional MySQL próprio, gerenciado pelo Prisma ORM</p>
+  <div class="grid2">
+    <div class="card"><h3>Produto</h3><p>Materiais comercializados (tipo e descrição).</p></div>
+    <div class="card"><h3>ItemPedido</h3><p>Produtos do pedido, referência de origem e quantidade solicitada.</p></div>
+    <div class="card"><h3>Operador</h3><p>Profissionais responsáveis pelas atividades.</p></div>
+    <div class="card"><h3>Setor</h3><p>Corte e Dobra, Telhas e Revenda.</p></div>
+    <div class="card"><h3>Produção</h3><p>Execução das atividades por item e operador.</p></div>
+    <div class="card"><h3>Status</h3><p>Situação das atividades ao longo do fluxo.</p></div>
+  </div>
+  <p class="sub" style="margin-top:20px">Estruturas adicionais: autenticação, pedidos, ocorrências, entregas, prazos e auditoria.</p>
+  <span class="numero">17</span>
+</section>
+
+<!-- 18 — 5. REGRAS DE NEGÓCIO -->
+<section class="slide conteudo">
+  <h2 class="titulo">5. Regras de Negócio</h2>
+  <table class="compacta">
+    <thead><tr><th style="width:12%">ID</th><th>Regra</th></tr></thead>
+    <tbody>
+      <tr><td>RN01</td><td>O item deve estar associado a um setor antes de ir para execução.</td></tr>
+      <tr><td>RN02</td><td>Item sem classificação permanece pendente até ser associado por usuário autorizado.</td></tr>
+      <tr><td>RN03</td><td>O registro de execução é exclusivo de usuários com permissão.</td></tr>
+      <tr><td>RN04</td><td>Quantidades respeitam a unidade e a particularidade de cada setor.</td></tr>
+      <tr><td>RN05</td><td>Perdas e refugos são registrados à parte e <b>não contam como produção válida</b>.</td></tr>
+      <tr><td>RN06</td><td>Acompanhamento da situação das atividades pelos seus estados.</td></tr>
+      <tr><td>RN07</td><td>Entregas totais ou parciais, atualizando entregue e saldo.</td></tr>
+      <tr><td>RN08</td><td>Entrega acima do disponível exige gerente + justificativa + auditoria.</td></tr>
+      <tr><td>RN09</td><td>Atualizar dados comerciais preserva os registros operacionais.</td></tr>
+    </tbody>
+  </table>
+  <span class="numero">18</span>
+</section>
+
+<!-- 19 — 5. CONTROLE DE QUANTIDADES -->
+<section class="slide conteudo">
+  <h2 class="titulo">5. Controle de Produção e Entregas</h2>
+  <div class="formula"><b>Pendente de execução</b> = quantidade solicitada − quantidade executada</div>
+  <div class="formula"><b>Disponível para entrega</b> = quantidade executada − quantidade entregue</div>
+  <ul class="lista">
+    <li>Perdas e refugos são registrados separadamente e <b>não entram</b> na produção válida.</li>
+    <li>São permitidas <b>entregas totais ou parciais</b>, desde que não excedam o saldo disponível.</li>
+    <li>Exceções dependem de <b>autorização gerencial</b>, justificativa e registro de auditoria.</li>
+    <li>Prazos por item/setor são opcionais; sem prazo, a atividade <b>não é classificada como atrasada</b>.</li>
+  </ul>
+  <span class="numero">19</span>
+</section>
+
+<!-- 20 — 6. PERFIS -->
+<section class="slide conteudo">
+  <h2 class="titulo">6. Funcionalidades e Perfis de Usuário</h2>
+  <table class="compacta">
+    <thead><tr><th style="width:30%">Perfil</th><th>Principais funcionalidades</th></tr></thead>
+    <tbody>
+      <tr><td>Operador de Produção</td><td>Consultar atividades, registrar execução, perdas, pausas e conclusão.</td></tr>
+      <tr><td>Gerente de Produção</td><td>Acompanhar pedidos e setores, prioridades e prazos, indicadores e exceções.</td></tr>
+      <tr><td>Vendedor</td><td>Consultar pedidos, classificar itens por setor e gerenciar prazos.</td></tr>
+      <tr><td>Expedição</td><td>Consultar itens disponíveis e registrar entregas totais ou parciais.</td></tr>
+      <tr><td>Administrador</td><td>Gerenciar usuários, setores, perfis e permissões.</td></tr>
+      <tr><td>Responsável Técnico</td><td>Monitorar integrações, registros técnicos e diagnosticar falhas.</td></tr>
+    </tbody>
+  </table>
+  <span class="numero">20</span>
+</section>
+
+<!-- 21 — 6. INTERFACES -->
+<section class="slide conteudo">
+  <h2 class="titulo">6. Interfaces e Usabilidade</h2>
+  <ul class="lista">
+    <li>Interfaces <b>específicas por perfil</b>, compartilhando a mesma aplicação web.</li>
+    <li>Navegação simples, <b>consistência visual</b>, clareza e <b>prevenção de erros</b>.</li>
+    <li><b>Feedback</b> das ações: mensagens de sucesso, pendências e falhas.</li>
+    <li>Responsivas para <b>computador e dispositivos móveis</b> (uso no chão de fábrica).</li>
+    <li>Vocabulário do negócio (pedidos, produção, separação, expedição) e alvo <b>WCAG 2.1 AA</b>.</li>
+    <li>Fundamentação <b>semiótica</b>: cores sempre acompanhadas de texto.</li>
+  </ul>
+  <span class="numero">21</span>
+</section>
+
+<!-- 22 — 7. APIs -->
+<section class="slide conteudo">
+  <h2 class="titulo">7. APIs e Comunicação REST</h2>
+  <table class="compacta">
+    <thead><tr><th style="width:16%">Método</th><th style="width:46%">Rota</th><th>Finalidade</th></tr></thead>
+    <tbody>
+      <tr><td>POST</td><td>/api/auth/login</td><td>Autenticar usuários.</td></tr>
+      <tr><td>GET</td><td>/api/pedidos · /api/pedidos/[orderId]</td><td>Consultar pedidos e um pedido específico.</td></tr>
+      <tr><td>POST</td><td>/api/integracao/pedidos</td><td>Solicitar a importação de um pedido.</td></tr>
+      <tr><td>POST</td><td>/api/integracao/callback</td><td>Receber os dados do conector local.</td></tr>
+      <tr><td>POST</td><td>/api/producao/atividades/[id]/execucoes</td><td>Registrar a execução de uma atividade.</td></tr>
+      <tr><td>POST</td><td>/api/producao/atividades/[id]/ocorrencias</td><td>Registrar ocorrências da produção.</td></tr>
+      <tr><td>POST</td><td>/api/pedidos/itens/[itemId]/entregas</td><td>Registrar entregas de itens.</td></tr>
+      <tr><td>GET</td><td>/api/indicadores</td><td>Consultar indicadores operacionais.</td></tr>
+    </tbody>
+  </table>
+  <p class="sub" style="margin-top:16px">Respostas: 200 (sucesso) · 202 (aceito) · 400 · 401 · 403 · 404</p>
+  <span class="numero">22</span>
+</section>
+
+<!-- 23 — 7. QUALIDADE -->
+<section class="slide conteudo">
+  <h2 class="titulo">7. Qualidade, Testes e DevOps</h2>
+  <div class="grid2">
+    <div class="card"><h3>Verificação</h3><p>Análise estática (ESLint) e de tipos (TypeScript), revisão de código e conferência de regras.</p></div>
+    <div class="card"><h3>Validação</h3><p>As funcionalidades atendem operadores, gestores, vendedores, expedição e administradores.</p></div>
+    <div class="card"><h3>Testes</h3><p>Unitários (Vitest) e de ponta a ponta (Playwright), cobrindo saldos, permissões, prazos e entregas.</p></div>
+    <div class="card"><h3>CI/CD</h3><p>GitHub Actions executa lint, tipos, testes e build a cada alteração.</p></div>
+  </div>
+  <span class="numero">23</span>
+</section>
+
+<!-- 24 — 7. RISCOS -->
+<section class="slide conteudo">
+  <h2 class="titulo">7. Riscos e Limitações</h2>
+  <ul class="lista">
+    <li><b>Integração com o legado:</b> exige validação dos dados e tratamento de falhas do conector.</li>
+    <li><b>Qualidade do dado:</b> depende do uso correto pelos funcionários.</li>
+    <li><b>Escopo restrito</b> a Corte e Dobra, Telhas e Revenda; não substitui o Top Gerente.</li>
+    <li><b>Conectividade:</b> requer internet para a integração com a nuvem.</li>
+    <li>A efetividade depende da <b>conclusão do desenvolvimento</b>, dos testes de integração e da validação em ambiente real.</li>
+  </ul>
+  <span class="numero">24</span>
+</section>
+
+<!-- 25 — 8. PRÓXIMOS PASSOS -->
+<section class="slide conteudo">
+  <h2 class="titulo">8. Próximos Passos</h2>
+  <ul class="lista">
+    <li><b>Concluir o MVP</b> e ampliar a cobertura de testes das regras críticas.</li>
+    <li><b>Testes de integração</b> com o banco real do Top Gerente (estrutura, identificadores e categorias).</li>
+    <li><b>Implantar o conector local</b> na empresa + Cloudflare Tunnel/Access e validar em produção.</li>
+    <li><b>Treinamento e adaptação</b> das rotinas dos usuários por perfil.</li>
+    <li>Evoluções futuras: novos setores e <b>modo offline</b> (fora do escopo do MVP).</li>
+  </ul>
+  <span class="numero">25</span>
+</section>
+
+<!-- 26 — 8. CONCLUSÃO -->
+<section class="slide conteudo">
+  <h2 class="titulo">8. Conclusão</h2>
+  <ul class="lista">
+    <li>O <b>3E Operações</b> complementa o Top Gerente, trazendo controle e rastreabilidade ao fluxo operacional.</li>
+    <li>Integra <b>pedidos, produção, separação e expedição</b>, apoiando o Planejamento e Controle da Produção.</li>
+    <li>Aplica práticas de Engenharia de Software: requisitos, arquitetura modular, testes e integração segura.</li>
+    <li>Base sólida para melhorar a comunicação entre setores e a confiabilidade das informações.</li>
+  </ul>
+  <p class="destaque" style="margin-top:34px;text-align:center;color:var(--azul);font-weight:600">Obrigado!</p>
+  <span class="numero">26</span>
+</section>
+
+</body>
+</html>

@@ -11,6 +11,7 @@
 - `referencial-artigos-doi.md`: fundamentação acadêmica do que e de como foi feito, com artigos que possuem DOI e normas/governamentais.
 - `deploy.md`: publicação no Railway/Vercel.
 - `pacote-portatil.md`: geração e uso do pacote portátil Windows (executável).
+- `apresentacao-marco-solucao.pdf`: slides do Marco Solução (fonte em `apresentacao/`).
 - `subagentes.md`: delegação no OpenCode.
 - `tech-leads-club.md`: skills externas adotadas.
 - `fontes/`: conversões Markdown dos documentos originais.
