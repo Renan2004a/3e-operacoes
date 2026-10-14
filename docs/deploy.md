@@ -45,6 +45,28 @@ DATABASE_URL="<url-da-nuvem>" npx prisma migrate deploy
 DATABASE_URL="<url-da-nuvem>" npm run prisma:seed
 ```
 
+## Deploy via CLI (alternativa quando o auto-deploy do GitHub falha)
+
+Se a conexão do Railway com o GitHub oscilar, dá para enviar o código **direto**
+pela CLI (ignora o GitHub):
+
+```bash
+npm i -g @railway/cli
+railway up -p <PROJECT_ID> -s <SERVICE> -e <ENVIRONMENT_ID> -c   # -c transmite só os logs de build
+```
+
+- Variáveis: `railway variables -s <SERVICE> -p <PROJECT_ID> -e <ENVIRONMENT_ID> --set "CHAVE=valor" --skip-deploys`
+- Domínio: `railway domain -s <SERVICE> --project <PROJECT_ID> -e <ENVIRONMENT_ID> --port <PORTA>`
+- Logs: `railway logs -s <SERVICE> -p <PROJECT_ID> -e <ENVIRONMENT_ID> --lines 60`
+
+> **Porta:** no Railway o app escuta na porta da variável `PORT` (ex.: `8080`). O
+> **domínio** deve apontar para **essa mesma porta**.
+
+### Deploy de exemplo (feito)
+
+- URL: `https://3e-operacoes-production.up.railway.app`
+- Banco: MySQL `3e_operacoes` (RDS AWS já migrado/populado) via `DATABASE_URL`.
+
 ## Checklist pós-deploy
 
 - [ ] Abrir `/login` e entrar com um usuário do seed.
