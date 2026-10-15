@@ -8,6 +8,7 @@ legendas que ficam visíveis por tempo proporcional ao texto.
 | `demo-3e.mp4` | ~1min27 | navegação | Versão curta. |
 | `demo-3e-completo.mp4` | ~4min35 | navegação | Todas as telas, com cartões de seção e legendas lentas. |
 | `demo-3e-execucao.mp4` | ~5min37 | **execução real** | Importa o pedido e **registra execução, ocorrência e entrega** (grava no banco do app). |
+| `demo-fluxo.mp4` | ~5min | **fluxo completo (real)** | Por perfil: vendedor **puxa do Top Gerente e desmembra**, operador executa/ocorrência, gerente, expedição entrega, admin e técnico. |
 
 Os modos "navegação" não alteram dados: navegam e exibem as telas (em um ponto
 preenchem um campo apenas para mostrar o formulário). O modo "execução real"
