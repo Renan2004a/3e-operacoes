@@ -185,12 +185,20 @@ export function PedidoDetalhe({
   }
 
   function marcarClassificado(itemId: string) {
+    const setor = setores.find((s) => s.id === (escolhas[itemId] ?? ''))
     setPedido((atual) =>
       atual
         ? {
             ...atual,
             itens: atual.itens.map((item) =>
-              item.itemId === itemId ? { ...item, classificationStatus: 'CLASSIFIED' } : item,
+              item.itemId === itemId
+                ? {
+                    ...item,
+                    classificationStatus: 'CLASSIFIED',
+                    sectorCode: setor?.code ?? item.sectorCode ?? null,
+                    sectorName: setor?.name ?? item.sectorName ?? null,
+                  }
+                : item,
             ),
           }
         : atual,

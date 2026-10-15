@@ -215,8 +215,8 @@ try {
     },
   )
   await passo(page, '04-vendedor-importado', 'Importação concluída: o pedido entra na lista automaticamente.', async () => {
-    await page.getByText('Importação concluída').first().waitFor({ timeout: 45000 }).catch(() => {})
-    await pausa(page, 1200)
+    await page.getByText('Importação concluída').first().waitFor({ timeout: 90000 }).catch(() => {})
+    await pausa(page, 1500)
   })
 
   await passo(page, '05-vendedor-abrir', 'Abrir o pedido importado para desmembrar os itens.', async () => {
@@ -237,12 +237,12 @@ try {
     async () => {
       const setores = ['Corte e Dobra', 'Telhas', 'Revenda']
       for (let i = 1; i <= 3; i++) {
-        const select = page.getByLabel(`Setor do item ${i}`)
+        const select = page.getByLabel(`Setor do item ${i}`, { exact: true })
         if (!(await select.count())) break
         await select.scrollIntoViewIfNeeded().catch(() => {})
         await select.selectOption({ label: setores[(i - 1) % setores.length] })
         await pausa(page, 400)
-        await page.getByRole('button', { name: `Classificar item ${i}` }).click()
+        await page.getByRole('button', { name: `Classificar item ${i}`, exact: true }).click()
         await pausa(page, 1400)
       }
     },
@@ -253,12 +253,12 @@ try {
   })
 
   await passo(page, '09-vendedor-prazo', 'Vendedor define o prazo de entrega do item (opcional).', async () => {
-    const campo = page.getByLabel('Prazo do item 1')
+    const campo = page.getByLabel('Prazo do item 1', { exact: true })
     if (await campo.count()) {
       await campo.scrollIntoViewIfNeeded().catch(() => {})
       await campo.fill('2026-11-30')
       await pausa(page, 500)
-      await page.getByRole('button', { name: 'Salvar prazo do item 1' }).click()
+      await page.getByRole('button', { name: 'Salvar prazo do item 1', exact: true }).click()
       await pausa(page, 1200)
     }
   })
@@ -348,12 +348,14 @@ try {
   })
   await passo(page, '19-expedicao-entrega', 'Entrega registrada — o disponível é atualizado.', async () => {
     if (!itemEntrega) return
-    const campo = page.getByLabel(`Quantidade do item ${itemEntrega}`)
+    const campo = page.getByLabel(`Quantidade do item ${itemEntrega}`, { exact: true })
     await campo.waitFor({ timeout: 30000 })
     await campo.click()
     await campo.pressSequentially('1', { delay: 200 })
     await pausa(page, 600)
-    await page.getByRole('button', { name: `Registrar entrega do item ${itemEntrega}` }).click()
+    await page
+      .getByRole('button', { name: `Registrar entrega do item ${itemEntrega}`, exact: true })
+      .click()
     await page.getByText('Entrega registrada').first().waitFor({ timeout: 30000 }).catch(() => {})
   })
 
