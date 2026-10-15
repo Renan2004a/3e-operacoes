@@ -77,6 +77,7 @@ export async function processarCallback(
       })
     }
   } catch (error) {
+    console.error('[integracao] falha ao processar callback:', error)
     await deps.integracao.updateStatus({
       jobId: job.id,
       status: 'FAILED',

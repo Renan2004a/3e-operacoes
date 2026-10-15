@@ -30,9 +30,22 @@ const state = vi.hoisted(() => {
   }
 
   const prisma = {
-    $transaction: async (fn: (client: typeof tx) => Promise<unknown>) => {
+    order: {
+      upsert: async (args: unknown) => {
+        calls.orderUpsert.push(args)
+        return { id: 'order_1' }
+      },
+    },
+    orderItem: {
+      upsert: async (args: unknown) => {
+        calls.itemUpsert.push(args)
+        return {}
+      },
+    },
+    $transaction: async (arg: unknown) => {
       calls.transactions += 1
-      return fn(tx)
+      if (typeof arg === 'function') return (arg as (client: typeof tx) => Promise<unknown>)(tx)
+      return Promise.all(arg as Promise<unknown>[])
     },
     auditLog: {
       create: async (args: unknown) => {
@@ -77,7 +90,7 @@ const input = {
 describe('prismaPedidosRepository', () => {
   beforeEach(() => state.reset())
 
-  it('faz o upsert de pedido e itens em uma única transação', async () => {
+  it('faz o upsert do pedido e dos itens (itens em transação)', async () => {
     const result = await prismaPedidosRepository.upsertOrder(input)
 
     expect(result).toEqual({ orderId: 'order_1' })

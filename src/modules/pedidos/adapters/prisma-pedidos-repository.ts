@@ -36,28 +36,31 @@ export const prismaPedidosRepository: PedidosRepository = {
   async upsertOrder(input) {
     const now = new Date()
 
-    return prisma.$transaction(async (tx) => {
-      const order = await tx.order.upsert({
-        where: { legacyOrderKey: input.legacyOrderKey },
-        create: {
-          legacyOrderKey: input.legacyOrderKey,
-          legacyNumber: input.legacyNumber,
-          customerName: input.customerName,
-          sellerLegacyCode: input.sellerLegacyCode,
-          sourceUpdatedAt: input.sourceUpdatedAt,
-          lastSyncedAt: now,
-        },
-        update: {
-          legacyNumber: input.legacyNumber,
-          customerName: input.customerName,
-          sellerLegacyCode: input.sellerLegacyCode,
-          sourceUpdatedAt: input.sourceUpdatedAt,
-          lastSyncedAt: now,
-        },
-      })
+    // O pedido é gravado primeiro (fora da transação) para satisfazer a chave
+    // estrangeira dos itens; em seguida os itens são gravados em uma transação
+    // em lote. Evita o timeout da transação interativa em bancos com latência.
+    const order = await prisma.order.upsert({
+      where: { legacyOrderKey: input.legacyOrderKey },
+      create: {
+        legacyOrderKey: input.legacyOrderKey,
+        legacyNumber: input.legacyNumber,
+        customerName: input.customerName,
+        sellerLegacyCode: input.sellerLegacyCode,
+        sourceUpdatedAt: input.sourceUpdatedAt,
+        lastSyncedAt: now,
+      },
+      update: {
+        legacyNumber: input.legacyNumber,
+        customerName: input.customerName,
+        sellerLegacyCode: input.sellerLegacyCode,
+        sourceUpdatedAt: input.sourceUpdatedAt,
+        lastSyncedAt: now,
+      },
+    })
 
-      for (const item of input.items) {
-        await tx.orderItem.upsert({
+    await prisma.$transaction(
+      input.items.map((item) =>
+        prisma.orderItem.upsert({
           where: {
             orderId_legacyItemKey: { orderId: order.id, legacyItemKey: item.legacyItemKey },
           },
@@ -78,11 +81,12 @@ export const prismaPedidosRepository: PedidosRepository = {
             requestedQuantity: item.requestedQuantity,
             legacyCategory: item.legacyCategory,
           },
-        })
-      }
+        }),
+      ),
+      { timeout: 30000, maxWait: 10000 },
+    )
 
-      return { orderId: order.id }
-    })
+    return { orderId: order.id }
   },
 
   async registrarDivergencia({ legacyOrderKey, divergencia }) {

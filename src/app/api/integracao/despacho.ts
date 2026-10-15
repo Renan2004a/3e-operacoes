@@ -80,8 +80,10 @@ export async function despacharComRetry(
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
-      await conector.despachar({ jobId, orderNumber })
+      // RUNNING é marcado ANTES do despacho: o conector só responde após o
+      // callback, que marca SUCCEEDED; marcar depois sobrescreveria o sucesso.
       await repo.updateStatus({ jobId, status: 'RUNNING', now: now() })
+      await conector.despachar({ jobId, orderNumber })
       return
     } catch (error) {
       const code = error instanceof ConectorLegadoError ? error.code : 'DISPATCH_FAILED'
