@@ -8,7 +8,7 @@ legendas que ficam visíveis por tempo proporcional ao texto.
 | `demo-3e.mp4` | ~1min27 | navegação | Versão curta. |
 | `demo-3e-completo.mp4` | ~4min35 | navegação | Todas as telas, com cartões de seção e legendas lentas. |
 | `demo-3e-execucao.mp4` | ~5min37 | **execução real** | Importa o pedido e **registra execução, ocorrência e entrega** (grava no banco do app). |
-| `demo-fluxo.mp4` | ~5min | **fluxo completo (real)** | Por perfil: vendedor **puxa do Top Gerente e desmembra**, operador executa/ocorrência, gerente, expedição entrega, admin e técnico. |
+| `demo-fluxo.mp4` | ~5min | **fluxo completo (real)** | Por perfil: vendedor **puxa do Top Gerente**, vê o **setor sugerido pelo produto**, desmembra e **programa/confirma a remessa**; operador executa/ocorrência; gerente com **alertas operacionais**; expedição entrega; admin e técnico. |
 
 Os modos "navegação" não alteram dados: navegam e exibem as telas (em um ponto
 preenchem um campo apenas para mostrar o formulário). O modo "execução real"
@@ -17,10 +17,11 @@ preenchem um campo apenas para mostrar o formulário). O modo "execução real"
 ## Roteiro (versão completa / execução)
 
 1. Abertura e login por perfil.
-2. **Vendedor**: lista, pedido `70435`, cinco valores, desmembramento por setor,
-   prazo e classificação.
-3. **Gerente de Produção**: painel, pedidos, detalhe, fila e **importação**
-   (na versão de execução, a importação é disparada e confirmada).
+2. **Vendedor**: lista, pedido `70435`, cinco valores, **setor sugerido pelo produto**,
+   desmembramento por setor, **remessa programada e confirmada** e prazo.
+3. **Gerente de Produção**: painel com **alertas operacionais** (atrasados, parados e
+   não encaminhados), pedidos, detalhe, fila e **importação** (na versão de execução,
+   a importação é disparada e confirmada).
 4. **Operador**: fila, **execução** (registra 5 un.), **ocorrência** (perda com
    motivo) e ordem de produção.
 5. **Expedição**: entregas — na versão de execução, **registra a entrega**; na

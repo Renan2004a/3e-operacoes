@@ -12,7 +12,7 @@
 | --- | --- | --- |
 | Lint | `npm run lint` | 0 erros (5 avisos pré-existentes) |
 | Typecheck | `npm run typecheck` | OK |
-| Testes | `npm test` | **694 passam**, 96 arquivos, 0 falhas |
+| Testes | `npm test` | **697 passam**, 96 arquivos, 0 falhas |
 | Build | `npm run build` | OK (rotas novas listadas) |
 | Migration | `prisma migrate dev` | `20261015193341_alertas_remessas_regras` aplicada |
 | Seed | `npm run prisma:seed` | 14 regras produto→setor gravadas |
@@ -60,6 +60,7 @@ detalhe status: 200
 | IND-11 | `alertas.ts` + card no painel + `alertas.test.ts` + `page.test.tsx` |
 | IND-12 | `route.ts` + `route.test.ts` |
 | ENT-01/02/03 | `remessas.ts` + `prisma-remessa-repository.ts` + rotas + testes |
+| ENT-01 (data) | `interpretarDataPrevista`: data somente-dia ancorada ao meio-dia de SP (15/12 → 15/12, não 14/12) |
 | ENT-04 | `pedido-detalhe.tsx` (seção de remessa) + `detalhe` com `remessas` |
 | ENT-05 | `programar_remessa` em `permissoes.ts` + testes 403 |
 | LAC-14 | `sugerir-setor.ts` + seed + `suggestedSectorId` no detalhe |

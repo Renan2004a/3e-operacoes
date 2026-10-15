@@ -44,6 +44,7 @@ Migration: `prisma/migrations/20261015193341_alertas_remessas_regras`.
 ### Remessas (`src/modules/expedicao/remessas.ts`)
 
 - `programarRemessa`: valida número inteiro positivo e data; rejeita duplicidade (`RemessaDuplicadaError`).
+- `interpretarDataPrevista`: ancora datas "somente dia" (`YYYY-MM-DD`) ao meio-dia de São Paulo, evitando que a data "volte um dia" ao exibir em `America/Sao_Paulo`.
 - `confirmarRemessa`: marca `confirmedAt`; erro se não existir.
 - `removerRemessa`: remove; erro se não existir.
 

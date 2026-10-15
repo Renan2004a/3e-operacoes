@@ -193,7 +193,7 @@ try {
     await cartao(
       page,
       '3E Operações',
-      'Fluxo completo: o vendedor puxa o pedido do Top Gerente e desmembra por setor; a produção executa; a expedição entrega.',
+      'Fluxo completo: o vendedor puxa o pedido do Top Gerente, vê o setor sugerido, desmembra e programa a remessa; a produção executa; a expedição entrega; o gerente acompanha os alertas.',
     )
   })
 
@@ -232,6 +232,18 @@ try {
 
   await passo(
     page,
+    '06b-vendedor-sugestao',
+    'Sugestão de setor: cada item pendente já vem com o setor sugerido pelas regras do produto — a decisão final continua com o vendedor.',
+    async () => {
+      const dica = page.getByText('Sugerido pelo produto').first()
+      await dica.waitFor({ timeout: 15000 }).catch(() => {})
+      await dica.scrollIntoViewIfNeeded().catch(() => {})
+      await pausa(page, 1600)
+    },
+  )
+
+  await passo(
+    page,
     '07-vendedor-desmembrar',
     'Desmembramento: associar cada item ao setor responsável (Corte e Dobra, Telhas, Revenda).',
     async () => {
@@ -252,6 +264,50 @@ try {
     await pausa(page, 1200)
   })
 
+  await passo(
+    page,
+    '08b-vendedor-remessa',
+    'Entrega escalonada (remessa): programar a 1ª remessa do item com a data prevista.',
+    async () => {
+      const confirmar = page.getByRole('button', {
+        name: 'Confirmar 1ª remessa do item 1',
+        exact: true,
+      })
+      if (await confirmar.count()) {
+        // Já havia remessa programada: apenas exibe.
+        await confirmar.scrollIntoViewIfNeeded().catch(() => {})
+        return
+      }
+      const numero = page.getByLabel('Remessa (item 1)', { exact: true })
+      await numero.waitFor({ timeout: 30000 }).catch(() => {})
+      if (await numero.count()) {
+        await numero.scrollIntoViewIfNeeded().catch(() => {})
+        await numero.fill('1')
+        await page.getByLabel('Data prevista (item 1)', { exact: true }).fill('2026-12-15')
+        await pausa(page, 700)
+        await page.getByRole('button', { name: 'Programar remessa do item 1', exact: true }).click()
+        // Espera o botão de confirmar surgir (evita casar com a própria legenda).
+        await confirmar.waitFor({ timeout: 45000 }).catch(() => {})
+      }
+    },
+  )
+  await passo(
+    page,
+    '08c-vendedor-remessa-ok',
+    'A remessa fica vinculada ao item; confirmar registra a entrega prevista.',
+    async () => {
+      const confirmar = page.getByRole('button', {
+        name: 'Confirmar 1ª remessa do item 1',
+        exact: true,
+      })
+      if (await confirmar.count()) {
+        await confirmar.click()
+        await page.getByText('Confirmada em').first().waitFor({ timeout: 45000 }).catch(() => {})
+      }
+      await pausa(page, 1200)
+    },
+  )
+
   await passo(page, '09-vendedor-prazo', 'Vendedor define o prazo de entrega do item (opcional).', async () => {
     const campo = page.getByLabel('Prazo do item 1', { exact: true })
     if (await campo.count()) {
@@ -268,8 +324,20 @@ try {
   await passo(page, '10-gerente-painel', 'Gerente — painel com produção e atividades por setor.', async () => {
     await irPara(page, '/gerente/painel')
     await page.getByText('Produção por setor').first().waitFor({ timeout: 30000 })
-    await cartao(page, 'Gerente de Produção', 'Painel, pedidos e acompanhamento da produção.')
+    await cartao(page, 'Gerente de Produção', 'Painel, alertas, pedidos e acompanhamento da produção.')
   })
+  await passo(
+    page,
+    '10b-gerente-alertas',
+    'Alertas operacionais: itens ATRASADOS, PARADOS e NÃO ENCAMINHADOS, com link direto para o pedido.',
+    async () => {
+      const titulo = page.getByText('Alertas operacionais').first()
+      await titulo.waitFor({ timeout: 20000 }).catch(() => {})
+      await titulo.scrollIntoViewIfNeeded().catch(() => {})
+      await page.getByText('Atrasados').first().waitFor({ timeout: 20000 }).catch(() => {})
+      await pausa(page, 1800)
+    },
+  )
   await passo(page, '11-gerente-pedidos', 'Gerente — consulta e detalhe dos pedidos.', async () => {
     await irPara(page, '/gerente/pedidos')
     await page.getByText(`Pedido ${PEDIDO}`).first().waitFor({ timeout: 30000 })
