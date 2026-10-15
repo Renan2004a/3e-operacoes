@@ -66,6 +66,12 @@ holder.repo = {
   async buscarItensDoPedido() {
     return null
   },
+  async listarRegrasProdutoSetor() {
+    return []
+  },
+  async listarItensParaAlerta() {
+    return []
+  },
 }
 
 const ORIGINAL_SECRET = process.env.SESSION_SECRET

@@ -68,6 +68,9 @@ function createRepo(pedidos: PedidoSeed[]): ConsultaPedidosRepository {
       const encontrado = pedidos.find((p) => p.id === orderId)
       return encontrado?.especificacoes?.map((especificacao) => ({ ...especificacao })) ?? []
     },
+    async listarRegrasProdutoSetor() {
+      return []
+    },
   }
 }
 

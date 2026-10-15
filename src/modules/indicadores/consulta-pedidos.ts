@@ -1,4 +1,5 @@
 import type { ActivityStatus } from '../producao/tipos'
+import { sugerirSetor, type RegraProdutoSetor } from '../setores/sugerir-setor'
 import {
   PedidoNaoEncontradoError,
   saldoPedido,
@@ -58,6 +59,14 @@ export interface CabecalhoPedido {
   sellerLegacyCode: string | null
 }
 
+/** Remessa programada do item, exibida no detalhe (entrega escalonada). */
+export interface RemessaProgramada {
+  id: string
+  remessa: number
+  scheduledAt: Date
+  confirmedAt: Date | null
+}
+
 /** Especificações de exibição do item, além do saldo (IND-04). */
 export interface EspecificacaoItem {
   itemId: string
@@ -70,6 +79,8 @@ export interface EspecificacaoItem {
   sectorCode?: string | null
   sectorName?: string | null
   activityStatus?: ActivityStatus | null
+  /** Entregas programadas (remessas) do item. */
+  remessas?: RemessaProgramada[]
 }
 
 /** Item do detalhe: saldo consolidado + descrição, código e unidade (IND-04). */
@@ -81,6 +92,10 @@ export interface ItemDetalhado extends ItemSaldo {
   sectorCode?: string | null
   sectorName?: string | null
   activityStatus?: ActivityStatus | null
+  /** Setor sugerido pelas regras produto→setor, para pré-seleção (LAC-04). */
+  suggestedSectorId?: string | null
+  /** Entregas programadas (remessas) do item. */
+  remessas?: RemessaProgramada[]
 }
 
 export interface PedidoDetalhado extends CabecalhoPedido {
@@ -98,6 +113,8 @@ export interface ConsultaPedidosRepository extends SaldoPedidoRepository {
   buscarCabecalhoPedido(orderId: string): Promise<CabecalhoPedido | null>
   /** Descrição, código e unidade de cada item, para exibição no detalhe (IND-04). */
   buscarEspecificacoesDosItens(orderId: string): Promise<EspecificacaoItem[]>
+  /** Regras produto→setor para sugerir o setor de cada item (LAC-04). */
+  listarRegrasProdutoSetor(): Promise<RegraProdutoSetor[]>
 }
 
 /** Limite padrão quando o filtro não informa um valor (QF-07). */
@@ -191,11 +208,16 @@ export async function detalharPedido(
 
   const especificacoes = await repo.buscarEspecificacoesDosItens(orderId)
   const porItem = new Map(especificacoes.map((especificacao) => [especificacao.itemId, especificacao]))
+  const regras = await repo.listarRegrasProdutoSetor()
 
   return {
     ...cabecalho,
     itens: itens.map((item) => {
       const especificacao = porItem.get(item.itemId)
+      const suggestionavel = {
+        productCode: especificacao?.productCode ?? null,
+        description: especificacao?.description ?? null,
+      }
       return {
         ...item,
         description: especificacao?.description ?? null,
@@ -205,6 +227,11 @@ export async function detalharPedido(
         sectorCode: especificacao?.sectorCode ?? null,
         sectorName: especificacao?.sectorName ?? null,
         activityStatus: especificacao?.activityStatus ?? null,
+        suggestedSectorId:
+          especificacao?.classificationStatus === 'CLASSIFIED'
+            ? null
+            : sugerirSetor(suggestionavel, regras),
+        remessas: especificacao?.remessas ?? [],
       }
     }),
   }

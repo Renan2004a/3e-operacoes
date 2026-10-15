@@ -30,6 +30,7 @@ vi.mock('../../../../modules/indicadores/adapters/prisma-indicadores-repository'
     buscarEspecificacoesDosItens: (orderId: string) =>
       holder.repo.buscarEspecificacoesDosItens(orderId),
     buscarItensDoPedido: (orderId: string) => holder.repo.buscarItensDoPedido(orderId),
+    listarRegrasProdutoSetor: () => holder.repo.listarRegrasProdutoSetor(),
   },
 }))
 
@@ -77,6 +78,9 @@ holder.repo = {
       executado: new Prisma.Decimal(item.executado),
       entregue: new Prisma.Decimal(item.entregue),
     }))
+  },
+  async listarRegrasProdutoSetor() {
+    return []
   },
 }
 
@@ -143,6 +147,8 @@ describe('GET /api/pedidos/[orderId]', () => {
       sectorCode: null,
       sectorName: null,
       activityStatus: null,
+      suggestedSectorId: null,
+      remessas: [],
     })
   })
 

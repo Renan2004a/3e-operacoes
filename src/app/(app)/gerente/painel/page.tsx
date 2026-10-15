@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import Link from 'next/link'
 import type { ActivityStatus } from '@/modules/producao/tipos'
 import { apiGet } from '@/shared/http/api-client'
 import { Alert } from '@/shared/ui/alert'
@@ -50,6 +51,66 @@ interface Indicadores {
   pcp: Pcp
 }
 
+interface Alerta {
+  tipo: 'ATRASADO' | 'PARADO' | 'NAO_ENCAMINHADO'
+  orderId: string
+  orderNumber: string
+  itemId: string
+  itemDescription: string | null
+  sectorName: string | null
+  detail: string
+}
+
+interface Alertas {
+  atrasados: Alerta[]
+  parados: Alerta[]
+  naoEncaminhados: Alerta[]
+}
+
+type TomAlerta = 'danger' | 'warning' | 'info'
+
+function GrupoAlertas({
+  titulo,
+  tom,
+  itens,
+}: {
+  titulo: string
+  tom: TomAlerta
+  itens: Alerta[]
+}) {
+  return (
+    <div className="grid gap-2">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-semibold text-ink">{titulo}</span>
+        <Badge variant={tom}>{itens.length}</Badge>
+      </div>
+      {itens.length === 0 ? (
+        <p className="text-sm text-muted">Nada por aqui.</p>
+      ) : (
+        <ul className="grid gap-2">
+          {itens.slice(0, 6).map((alerta) => (
+            <li
+              key={`${alerta.tipo}-${alerta.itemId}`}
+              className="rounded-lg border border-line p-2 text-sm"
+            >
+              <Link href={`/gerente/pedidos/${alerta.orderId}`} className="font-medium text-accent">
+                Pedido {alerta.orderNumber}
+              </Link>
+              <p className="text-ink">
+                {alerta.itemDescription ?? 'Item'} · {alerta.sectorName ?? 'Sem setor'}
+              </p>
+              <p className="text-xs text-muted">{alerta.detail}</p>
+            </li>
+          ))}
+          {itens.length > 6 ? (
+            <li className="text-xs text-muted">+{itens.length - 6} outros…</li>
+          ) : null}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 const ROTULO_STATUS: Record<ActivityStatus, string> = {
   PENDING: 'Pendente',
   IN_PROGRESS: 'Em andamento',
@@ -70,14 +131,19 @@ const VARIANTE_STATUS: Record<ActivityStatus, 'neutral' | 'info' | 'warning' | '
 /** Painel do gerente: contagens por setor/status, pendências e indicadores de PCP (FEP-01, FEP-02). */
 export default function PainelPage() {
   const [dados, setDados] = useState<Indicadores | null>(null)
+  const [alertas, setAlertas] = useState<Alertas | null>(null)
   const [erro, setErro] = useState(false)
   const [carregando, setCarregando] = useState(true)
 
   const buscar = useCallback(
     () =>
-      apiGet<Indicadores>('/api/indicadores')
-        .then((resposta) => {
+      Promise.all([
+        apiGet<Indicadores>('/api/indicadores'),
+        apiGet<{ alertas: Alertas }>('/api/indicadores/alertas'),
+      ])
+        .then(([resposta, respostaAlertas]) => {
           setDados(resposta)
+          setAlertas(respostaAlertas.alertas)
           setErro(false)
         })
         .catch(() => setErro(true))
@@ -155,6 +221,21 @@ export default function PainelPage() {
           helper={`${cumprimentoPrazo.concluidasNoPrazo} de ${cumprimentoPrazo.concluidasComPrazo} no prazo.`}
         />
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Alertas operacionais</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 lg:grid-cols-3">
+          <GrupoAlertas titulo="Atrasados" tom="danger" itens={alertas?.atrasados ?? []} />
+          <GrupoAlertas titulo="Parados" tom="warning" itens={alertas?.parados ?? []} />
+          <GrupoAlertas
+            titulo="Não encaminhados"
+            tom="info"
+            itens={alertas?.naoEncaminhados ?? []}
+          />
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>

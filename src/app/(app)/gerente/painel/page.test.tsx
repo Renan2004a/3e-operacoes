@@ -17,6 +17,12 @@ vi.mock('next/navigation', () => ({
   useParams: () => ({}),
 }))
 
+vi.mock('next/link', () => ({
+  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
+    <a href={href}>{children}</a>
+  ),
+}))
+
 import PainelPage from './page'
 
 function indicadores() {
@@ -39,6 +45,22 @@ function indicadores() {
   }
 }
 
+const ALERTAS_VAZIO = {
+  alertas: { atrasados: [], parados: [], naoEncaminhados: [] },
+}
+
+/** Responde por rota, já que o painel busca indicadores e alertas em paralelo. */
+function mockRespostas(
+  indicadoresPayload: unknown = indicadores(),
+  alertasPayload: unknown = ALERTAS_VAZIO,
+) {
+  mocks.apiGet.mockImplementation((path: string) =>
+    path === '/api/indicadores'
+      ? Promise.resolve(indicadoresPayload)
+      : Promise.resolve(alertasPayload),
+  )
+}
+
 beforeEach(() => {
   mocks.apiGet.mockReset()
 })
@@ -54,7 +76,7 @@ describe('PainelPage', () => {
   })
 
   it('mostra a contagem por setor, por status e as pendências (FEP-01)', async () => {
-    mocks.apiGet.mockResolvedValue(indicadores())
+    mockRespostas()
     render(<PainelPage />)
 
     expect(await screen.findByText('setor-corte: 3')).toBeInTheDocument()
@@ -66,7 +88,7 @@ describe('PainelPage', () => {
   })
 
   it('mostra a produção por setor e o cumprimento de prazo (FEP-02)', async () => {
-    mocks.apiGet.mockResolvedValue(indicadores())
+    mockRespostas()
     render(<PainelPage />)
 
     expect(await screen.findByText('setor-corte: 12.5')).toBeInTheDocument()
@@ -74,8 +96,35 @@ describe('PainelPage', () => {
     expect(screen.getByText('3 de 4 no prazo.')).toBeInTheDocument()
   })
 
+  it('mostra os alertas operacionais com atrasados, parados e não encaminhados (IND-11)', async () => {
+    mockRespostas(indicadores(), {
+      alertas: {
+        atrasados: [
+          {
+            tipo: 'ATRASADO',
+            orderId: 'o1',
+            orderNumber: '1001',
+            itemId: 'i1',
+            itemDescription: 'Telha',
+            sectorName: 'Telhas',
+            detail: 'Prazo vencido em 05/01/2026',
+          },
+        ],
+        parados: [],
+        naoEncaminhados: [],
+      },
+    })
+    render(<PainelPage />)
+
+    expect(await screen.findByText('Alertas operacionais')).toBeInTheDocument()
+    expect(screen.getByText('Atrasados')).toBeInTheDocument()
+    expect(screen.getByText('Parados')).toBeInTheDocument()
+    expect(screen.getByText('Não encaminhados')).toBeInTheDocument()
+    expect(screen.getByText('Pedido 1001')).toBeInTheDocument()
+  })
+
   it('rotula o status com texto, sem depender apenas de cor (FEP-01)', async () => {
-    mocks.apiGet.mockResolvedValue(indicadores())
+    mockRespostas()
     render(<PainelPage />)
 
     expect(await screen.findByText('Pendente')).toBeInTheDocument()
@@ -92,24 +141,32 @@ describe('PainelPage', () => {
   })
 
   it('ao tentar de novo refaz a busca e mostra os indicadores (FEP-13)', async () => {
-    mocks.apiGet.mockRejectedValueOnce(new Error('falha')).mockResolvedValueOnce(indicadores())
+    let falhar = true
+    mocks.apiGet.mockImplementation((path: string) => {
+      if (falhar) return Promise.reject(new Error('falha'))
+      return path === '/api/indicadores'
+        ? Promise.resolve(indicadores())
+        : Promise.resolve(ALERTAS_VAZIO)
+    })
     render(<PainelPage />)
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Tentar de novo' }))
+    const botao = await screen.findByRole('button', { name: 'Tentar de novo' })
+    falhar = false
+    fireEvent.click(botao)
 
     expect(await screen.findByText('setor-corte: 3')).toBeInTheDocument()
-    expect(mocks.apiGet).toHaveBeenCalledTimes(2)
+    expect(mocks.apiGet).toHaveBeenCalledWith('/api/indicadores/alertas')
   })
 
   it('usa o cabeçalho de página com o título do painel (VIS-09)', async () => {
-    mocks.apiGet.mockResolvedValue(indicadores())
+    mockRespostas()
     render(<PainelPage />)
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Painel' })).toBeInTheDocument()
   })
 
   it('mostra métricas de produção e o progresso por setor (PROT-05)', async () => {
-    mocks.apiGet.mockResolvedValue(indicadores())
+    mockRespostas()
     render(<PainelPage />)
 
     expect(await screen.findByText('Concluídas')).toBeInTheDocument()

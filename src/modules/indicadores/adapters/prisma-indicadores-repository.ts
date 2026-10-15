@@ -9,12 +9,14 @@ import type {
 } from '../consulta-pedidos'
 import type { AtividadeIndicador, PainelRepository } from '../painel'
 import type { AtividadeComPrazo, ExecucaoIndicador, PcpRepository } from '../pcp'
+import type { AlertasRepository, ItemParaAlerta } from '../alertas'
 
 /** Porta única de indicadores, composta pelas portas de cada caso de uso. */
 export interface IndicadoresRepository
   extends ConsultaPedidosRepository,
     PainelRepository,
-    PcpRepository {}
+    PcpRepository,
+    AlertasRepository {}
 
 /** Implementação Prisma da porta `IndicadoresRepository` (somente o banco do app). */
 export const prismaIndicadoresRepository: IndicadoresRepository = {
@@ -73,6 +75,10 @@ export const prismaIndicadoresRepository: IndicadoresRepository = {
           select: { status: true, sector: { select: { code: true, name: true } } },
           take: 1,
         },
+        scheduledDeliveries: {
+          select: { id: true, remessa: true, scheduledAt: true, confirmedAt: true },
+          orderBy: { remessa: 'asc' },
+        },
       },
       orderBy: { createdAt: 'asc' },
     })
@@ -85,11 +91,62 @@ export const prismaIndicadoresRepository: IndicadoresRepository = {
       sectorCode: row.activities[0]?.sector.code ?? null,
       sectorName: row.activities[0]?.sector.name ?? null,
       activityStatus: row.activities[0]?.status ?? null,
+      remessas: row.scheduledDeliveries,
     }))
   },
 
   async buscarItensDoPedido(orderId): Promise<ItemDoPedido[] | null> {
     return prismaExpedicaoRepository.buscarItensDoPedido(orderId)
+  },
+
+  async listarRegrasProdutoSetor() {
+    return prisma.productSectorRule.findMany({
+      where: { active: true },
+      select: { matchType: true, matchValue: true, sectorId: true, priority: true },
+      orderBy: { priority: 'desc' },
+    })
+  },
+
+  async listarItensParaAlerta(): Promise<ItemParaAlerta[]> {
+    const rows = await prisma.orderItem.findMany({
+      select: {
+        id: true,
+        description: true,
+        classificationStatus: true,
+        order: { select: { id: true, legacyNumber: true } },
+        activities: {
+          select: {
+            id: true,
+            status: true,
+            deadlineAt: true,
+            createdAt: true,
+            sector: { select: { name: true } },
+            executions: {
+              select: { occurredAt: true },
+              orderBy: { occurredAt: 'desc' },
+              take: 1,
+            },
+          },
+          take: 1,
+        },
+      },
+    })
+    return rows.map((row) => {
+      const atividade = row.activities[0]
+      return {
+        itemId: row.id,
+        orderId: row.order.id,
+        orderNumber: row.order.legacyNumber,
+        itemDescription: row.description,
+        classificationStatus: row.classificationStatus,
+        activityId: atividade?.id ?? null,
+        activityStatus: atividade?.status ?? null,
+        sectorName: atividade?.sector.name ?? null,
+        activityCreatedAt: atividade?.createdAt ?? null,
+        deadlineAt: atividade?.deadlineAt ?? null,
+        lastExecutionAt: atividade?.executions[0]?.occurredAt ?? null,
+      }
+    })
   },
 
   async listarAtividades(): Promise<AtividadeIndicador[]> {

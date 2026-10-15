@@ -76,8 +76,7 @@ const USUARIOS_DEMO = [
   },
 ]
 
-const MOTIVOS = [
-  { tipo: 'PERDA', codigo: 'DEFEITO_CORTE', descricao: 'Defeito de corte' },
+const MOTIVOS = [  { tipo: 'PERDA', codigo: 'DEFEITO_CORTE', descricao: 'Defeito de corte' },
   { tipo: 'PERDA', codigo: 'MATERIAL_PROBLEMA', descricao: 'Material com problema' },
   { tipo: 'PERDA', codigo: 'ERRO_DOBRA', descricao: 'Erro de dobra / medida incorreta' },
   { tipo: 'REFUGO', codigo: 'CORTE_ERRADO', descricao: 'Corte errado' },
@@ -90,6 +89,24 @@ const MOTIVOS = [
     codigo: 'SALDO_INSUFICIENTE',
     descricao: 'Saldo insuficiente para a quantidade solicitada',
   },
+]
+
+/** Regras iniciais de sugestão produto→setor (podem ser ajustadas depois). */
+const REGRAS_PRODUTO_SETOR = [
+  { matchType: 'CONTAINS', matchValue: 'telha', sector: 'TELHAS' as const, priority: 20 },
+  { matchType: 'CONTAINS', matchValue: 'perfil', sector: 'CORTE_DOBRA' as const, priority: 20 },
+  { matchType: 'CONTAINS', matchValue: 'chapa', sector: 'CORTE_DOBRA' as const, priority: 15 },
+  { matchType: 'CONTAINS', matchValue: 'dobra', sector: 'CORTE_DOBRA' as const, priority: 15 },
+  { matchType: 'CONTAINS', matchValue: 'metalom', sector: 'REVENDA' as const, priority: 10 },
+  { matchType: 'CONTAINS', matchValue: 'parafuso', sector: 'REVENDA' as const, priority: 10 },
+  { matchType: 'CONTAINS', matchValue: 'fechadura', sector: 'REVENDA' as const, priority: 10 },
+  { matchType: 'CONTAINS', matchValue: 'disco', sector: 'REVENDA' as const, priority: 10 },
+  { matchType: 'CONTAINS', matchValue: 'solvente', sector: 'REVENDA' as const, priority: 10 },
+  { matchType: 'CONTAINS', matchValue: 'thinner', sector: 'REVENDA' as const, priority: 10 },
+  { matchType: 'CONTAINS', matchValue: 'batente', sector: 'REVENDA' as const, priority: 10 },
+  { matchType: 'CONTAINS', matchValue: 'painel', sector: 'REVENDA' as const, priority: 10 },
+  { matchType: 'CONTAINS', matchValue: 'mascara', sector: 'REVENDA' as const, priority: 10 },
+  { matchType: 'CONTAINS', matchValue: 'tinta', sector: 'REVENDA' as const, priority: 10 },
 ]
 
 async function main() {
@@ -109,6 +126,29 @@ async function main() {
       update: { descricao: motivo.descricao, ativo: true },
       create: { ...motivo, ativo: true },
     })
+  }
+
+  for (const regra of REGRAS_PRODUTO_SETOR) {
+    const setor = await prisma.sector.findUnique({ where: { code: regra.sector } })
+    if (!setor) continue
+    const existente = await prisma.productSectorRule.findFirst({
+      where: { matchType: regra.matchType, matchValue: regra.matchValue },
+    })
+    if (existente) {
+      await prisma.productSectorRule.update({
+        where: { id: existente.id },
+        data: { sectorId: setor.id, priority: regra.priority, active: true },
+      })
+    } else {
+      await prisma.productSectorRule.create({
+        data: {
+          matchType: regra.matchType,
+          matchValue: regra.matchValue,
+          sectorId: setor.id,
+          priority: regra.priority,
+        },
+      })
+    }
   }
 
   const email = process.env.SEED_ADMIN_EMAIL ?? 'admin@3e.local'

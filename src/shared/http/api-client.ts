@@ -87,3 +87,7 @@ export function apiPost<T>(path: string, body: unknown, options: ApiClientOption
 export function apiPatch<T>(path: string, body: unknown, options: ApiClientOptions = {}): Promise<T> {
   return requisitar<T>('PATCH', path, body, options)
 }
+
+export function apiDelete<T = void>(path: string, options: ApiClientOptions = {}): Promise<T> {
+  return requisitar<T>('DELETE', path, undefined, options)
+}

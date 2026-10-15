@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ApiError, apiGet, apiPatch, apiPost } from '@/shared/http/api-client'
+import { ApiError, apiDelete, apiGet, apiPatch, apiPost } from '@/shared/http/api-client'
 import { Alert } from './alert'
 import { Badge } from './badge'
 import { Button } from './button'
@@ -28,6 +28,22 @@ interface ItemSaldo {
   sectorCode?: string | null
   sectorName?: string | null
   activityStatus?: string | null
+  suggestedSectorId?: string | null
+  remessas?: Remessa[]
+}
+
+/** Remessa (entrega programada) de um item. */
+interface Remessa {
+  id: string
+  remessa: number
+  scheduledAt: string
+  confirmedAt: string | null
+}
+
+function formatarDataRemessa(valor: string): string {
+  const data = new Date(valor)
+  if (Number.isNaN(data.getTime())) return valor
+  return new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo' }).format(data)
 }
 
 interface Setor {
@@ -103,6 +119,11 @@ export function PedidoDetalhe({
   const [escolhas, setEscolhas] = useState<Record<string, string>>({})
   const [classificando, setClassificando] = useState<string | null>(null)
   const [erroClassificacao, setErroClassificacao] = useState<string | null>(null)
+
+  const [remessaNumero, setRemessaNumero] = useState<Record<string, string>>({})
+  const [remessaData, setRemessaData] = useState<Record<string, string>>({})
+  const [remessaSalvando, setRemessaSalvando] = useState<string | null>(null)
+  const [erroRemessa, setErroRemessa] = useState<string | null>(null)
 
   const buscar = useCallback(
     () =>
@@ -205,6 +226,81 @@ export function PedidoDetalhe({
     )
   }
 
+  function atualizarRemessas(itemId: string, transformar: (remessas: Remessa[]) => Remessa[]) {
+    setPedido((atual) =>
+      atual
+        ? {
+            ...atual,
+            itens: atual.itens.map((item) =>
+              item.itemId === itemId
+                ? { ...item, remessas: transformar(item.remessas ?? []) }
+                : item,
+            ),
+          }
+        : atual,
+    )
+  }
+
+  async function programarRemessa(itemId: string) {
+    const numero = Number(remessaNumero[itemId] ?? '')
+    const data = remessaData[itemId] ?? ''
+    setErroRemessa(null)
+
+    if (!Number.isInteger(numero) || numero <= 0) {
+      setErroRemessa('Informe o número da remessa (1, 2, 3…).')
+      return
+    }
+    if (data.trim() === '') {
+      setErroRemessa('Informe a data prevista da remessa.')
+      return
+    }
+
+    setRemessaSalvando(itemId)
+    try {
+      const resposta = await apiPost<{ remessa: Remessa }>(
+        `/api/pedidos/itens/${itemId}/remessas`,
+        { remessa: numero, scheduledAt: data },
+      )
+      atualizarRemessas(itemId, (remessas) =>
+        [...remessas, resposta.remessa].sort((a, b) => a.remessa - b.remessa),
+      )
+      setRemessaNumero((atual) => ({ ...atual, [itemId]: '' }))
+      setRemessaData((atual) => ({ ...atual, [itemId]: '' }))
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 409) {
+        setErroRemessa('Essa remessa já está programada para o item.')
+      } else if (error instanceof ApiError && error.status === 400) {
+        setErroRemessa('Número ou data da remessa inválidos.')
+      } else {
+        setErroRemessa('Não foi possível programar a remessa. Tente novamente.')
+      }
+    } finally {
+      setRemessaSalvando(null)
+    }
+  }
+
+  async function confirmarRemessa(id: string, itemId: string) {
+    setErroRemessa(null)
+    try {
+      const resposta = await apiPatch<{ remessa: Remessa }>(`/api/pedidos/remessas/${id}`, {})
+      atualizarRemessas(itemId, (remessas) =>
+        remessas.map((remessa) => (remessa.id === id ? resposta.remessa : remessa)),
+      )
+    } catch {
+      setErroRemessa('Não foi possível confirmar a remessa. Tente novamente.')
+    }
+  }
+
+  async function removerRemessa(id: string, itemId: string) {
+    setErroRemessa(null)
+    try {
+      await apiDelete(`/api/pedidos/remessas/${id}`)
+      atualizarRemessas(itemId, (remessas) => remessas.filter((remessa) => remessa.id !== id))
+    } catch {
+      setErroRemessa('Não foi possível remover a remessa. Tente novamente.')
+    }
+  }
+
   if (carregando) {
     return (
       <div className="p-2">
@@ -282,6 +378,12 @@ export function PedidoDetalhe({
       {erroClassificacao ? (
         <Alert variant="error" title="Não foi possível classificar">
           {erroClassificacao}
+        </Alert>
+      ) : null}
+
+      {erroRemessa ? (
+        <Alert variant="error" title="Não foi possível atualizar a remessa">
+          {erroRemessa}
         </Alert>
       ) : null}
 
@@ -380,6 +482,12 @@ export function PedidoDetalhe({
               {permitirClassificacao ? (
                 <div className="grid gap-3 border-t border-line pt-4">
                   <p className="text-sm font-semibold text-ink">Desmembramento</p>
+                  {item.suggestedSectorId ? (
+                    <p className="text-xs text-muted">
+                      Sugerido pelo produto:{' '}
+                      {setores.find((s) => s.id === item.suggestedSectorId)?.name ?? '—'}
+                    </p>
+                  ) : null}
                   {item.classificationStatus === 'CLASSIFIED' ? (
                     <Badge variant="success">Item classificado</Badge>
                   ) : (
@@ -397,7 +505,7 @@ export function PedidoDetalhe({
                             id={props.id}
                             aria-describedby={props['aria-describedby']}
                             className={CLASSE_SELECT}
-                            value={escolhas[item.itemId] ?? ''}
+                            value={escolhas[item.itemId] ?? item.suggestedSectorId ?? ''}
                             onChange={(evento) =>
                               setEscolhas((atual) => ({
                                 ...atual,
@@ -423,6 +531,104 @@ export function PedidoDetalhe({
                       </Button>
                     </form>
                   )}
+                </div>
+              ) : null}
+
+              {permitirClassificacao ? (
+                <div className="grid gap-3 border-t border-line pt-4">
+                  <p className="text-sm font-semibold text-ink">Entrega programada (remessa)</p>
+                  {item.remessas && item.remessas.length > 0 ? (
+                    <ul className="grid gap-2 text-sm text-ink">
+                      {item.remessas.map((remessa) => (
+                        <li
+                          key={remessa.id}
+                          className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line p-2"
+                        >
+                          <span>
+                            {remessa.remessa}ª remessa · prevista para{' '}
+                            {formatarDataRemessa(remessa.scheduledAt)}
+                          </span>
+                          <span className="flex flex-wrap items-center gap-2">
+                            {remessa.confirmedAt ? (
+                              <Badge variant="success">
+                                Confirmada em {formatarDataRemessa(remessa.confirmedAt)}
+                              </Badge>
+                            ) : (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => void confirmarRemessa(remessa.id, item.itemId)}
+                                aria-label={`Confirmar ${remessa.remessa}ª remessa do item ${indice + 1}`}
+                              >
+                                Confirmar
+                              </Button>
+                            )}
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => void removerRemessa(remessa.id, item.itemId)}
+                              aria-label={`Remover ${remessa.remessa}ª remessa do item ${indice + 1}`}
+                            >
+                              Remover
+                            </Button>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted">Sem remessa programada.</p>
+                  )}
+
+                  <form
+                    className="grid gap-3 sm:grid-cols-[8rem_1fr_auto] sm:items-end"
+                    onSubmit={(evento) => {
+                      evento.preventDefault()
+                      void programarRemessa(item.itemId)
+                    }}
+                    noValidate
+                  >
+                    <Field label={`Remessa (item ${indice + 1})`}>
+                      {(props) => (
+                        <Input
+                          {...props}
+                          type="number"
+                          min={1}
+                          inputMode="numeric"
+                          value={remessaNumero[item.itemId] ?? ''}
+                          onChange={(evento) =>
+                            setRemessaNumero((atual) => ({
+                              ...atual,
+                              [item.itemId]: evento.target.value,
+                            }))
+                          }
+                        />
+                      )}
+                    </Field>
+                    <Field label={`Data prevista (item ${indice + 1})`}>
+                      {(props) => (
+                        <Input
+                          {...props}
+                          type="date"
+                          value={remessaData[item.itemId] ?? ''}
+                          onChange={(evento) =>
+                            setRemessaData((atual) => ({
+                              ...atual,
+                              [item.itemId]: evento.target.value,
+                            }))
+                          }
+                        />
+                      )}
+                    </Field>
+                    <Button
+                      type="submit"
+                      disabled={remessaSalvando === item.itemId}
+                      aria-label={`Programar remessa do item ${indice + 1}`}
+                    >
+                      Programar remessa
+                    </Button>
+                  </form>
                 </div>
               ) : null}
             </CardContent>
