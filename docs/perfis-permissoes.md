@@ -3,8 +3,8 @@
 | Perfil | Consulta | Alterações principais |
 |---|---|---|
 | Operador | Atividades dos setores aos quais pertence | execução, status permitido, ocorrências |
-| Gerente de Produção | Todos os pedidos e setores | status, prioridade, prazo, exceções e entregas |
-| Vendedor | Todos os pedidos | prazo de entrega e desmembramento (classificação por setor); demais ações de produção permanecem leitura |
+| Gerente de Produção | Todos os pedidos e setores | status, prioridade, prazo, exceções, entregas e remessas programadas |
+| Vendedor | Todos os pedidos | prazo de entrega, desmembramento (classificação por setor) e remessas programadas; demais ações de produção permanecem leitura |
 | Expedição | Itens disponíveis e histórico | entregas totais/parciais |
 | Responsável pelo Sistema | cadastros administrativos | usuários, setores, perfis e permissões |
 | Responsável Técnico | integração, jobs e logs | ações técnicas autorizadas |

@@ -65,13 +65,22 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Date**: 2026-10-08
 - **Status**: active
 
+### AD-004
+
+- **Decision**: Fechar as lacunas A/B/C do cliente com: (A) alertas operacionais de **atrasados**, **parados** (sem execução há `ALERTA_PARADO_DIAS`, padrão 5) e **não encaminhados**, com endpoint `GET /api/indicadores/alertas` e card no painel; (B) **remessas** (entrega programada) por item — número + data prevista + confirmação — via `ScheduledDelivery`, com permissão `programar_remessa` (gerente/vendedor); (C) **sugestão de setor** por produto via `ProductSectorRule` (regras semeadas), pré-selecionada no desmembramento sem impedir a troca.
+- **Reason**: Requisitos explícitos do cliente (RF012, RF010, RF002) apontados como parciais na análise de conformidade.
+- **Trade-off**: "Parado" e a forma da remessa foram decididos por default do agente (limiar configurável e número+data); a edição das regras em runtime e o vínculo remessa↔entrega ficam no backlog.
+- **Scope**: indicadores (alertas), expedição (remessas), setores (sugestão), frontend (painel/detalhe).
+- **Date**: 2026-10-15
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: desmembramento-do-vendedor (ajuste de permissão + UI)
-- **Phase / Task**: concluído; próximo: confirmar separação de Revenda, E2E com banco, deploy
-- **Completed**: vendedor classifica itens; detalhe sem CUID; desmembramento por setor; docs de deploy
+- **Feature**: alertas-remessas-e-sugestao (A/B/C do cliente)
+- **Phase / Task**: concluído; próximo: redeploy e vídeo
+- **Completed**: alertas (atrasados/parados/não encaminhados) no painel + endpoint; remessas (programar/confirmar/remover) por item; sugestão produto→setor no desmembramento; 694 testes verdes; validado no banco AWS
 - **In-progress** (file:line): nenhum
-- **Next step**: confirmar se o vendedor também registra a separação (execução de Revenda); deploy Railway/Vercel
+- **Next step**: redeploy no Railway; atualizar vídeo/análise de conformidade
 - **Blockers**: nenhum para desenvolvimento
 - **Uncommitted files**: (atualizado no commit)
 - **Branch**: main

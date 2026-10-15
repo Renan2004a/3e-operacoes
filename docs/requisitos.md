@@ -30,11 +30,11 @@ HU01 a HU06 permanecem como base: Operador, Gerente de Produção, Vendedor, Exp
 ## Ajustes de interpretação aprovados
 
 - RF001: integração é sob demanda e assíncrona, iniciada pelo número do pedido; não usar polling contínuo.
-- RF002: somente três setores operacionais nesta etapa. A categoria vem do Top Gerente; o app mantém mapeamento categoria → setor configurável.
+- RF002: somente três setores operacionais nesta etapa. A categoria vem do Top Gerente; o app mantém mapeamento categoria → setor configurável. A classificação é manual, com **sugestão** de setor a partir do produto (`ProductSectorRule`, regras semeadas e ajustáveis).
 - RF003/RF004: operador pode pertencer a mais de um setor; gerente também pode alterar status.
 - RF008: vendedor pode consultar **todos** os pedidos. É somente leitura para produção, com a exceção aprovada de cadastrar/alterar prazo de entrega.
-- RF010: Expedição e Gerente registram entregas. Exceção acima do disponível exige autorização gerencial, motivo e auditoria.
-- RF012: prazo é opcional e pode existir por item/setor. Sem prazo, nunca classificar como atrasado.
+- RF010: Expedição e Gerente registram entregas. Exceção acima do disponível exige autorização gerencial, motivo e auditoria. A entrega pode ser **programada por remessa** (número + data prevista + confirmação) por item; Gerente e Vendedor programam.
+- RF012: prazo é opcional e pode existir por item/setor. Sem prazo, nunca classificar como atrasado. Alertas cobrem também itens **parados** (sem execução há mais de `ALERTA_PARADO_DIAS`, padrão 5) e **não encaminhados** (pendentes de desmembramento).
 - RF013/RF014: associação usuário ↔ setor é muitos-para-muitos.
 
 ## Requisitos não funcionais
