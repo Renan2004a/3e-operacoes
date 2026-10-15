@@ -46,6 +46,19 @@ export class RemessaInvalidaError extends Error {
 }
 
 /**
+ * Interpreta a data prevista vinda do formulário. Datas "somente dia"
+ * (`YYYY-MM-DD`) são ancoradas ao meio-dia de São Paulo, para não "voltar um
+ * dia" ao exibir em `America/Sao_Paulo`. Demais formatos usam `new Date`.
+ */
+export function interpretarDataPrevista(valor: string): Date {
+  const limpo = valor.trim()
+  if (/^\d{4}-\d{2}-\d{2}$/.test(limpo)) {
+    return new Date(`${limpo}T12:00:00-03:00`)
+  }
+  return new Date(valor)
+}
+
+/**
  * Programa uma remessa (entrega prevista) de um item: número da remessa (1ª, 2ª…)
  * e data. Rejeita número repetido para o mesmo item.
  */

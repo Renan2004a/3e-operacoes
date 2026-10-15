@@ -4,6 +4,7 @@ import {
   RemessaInvalidaError,
   RemessaNaoEncontradaError,
   confirmarRemessa,
+  interpretarDataPrevista,
   programarRemessa,
   removerRemessa,
   type Remessa,
@@ -124,5 +125,20 @@ describe('removerRemessa', () => {
     await expect(removerRemessa({ id: 'inexistente' }, repo)).rejects.toBeInstanceOf(
       RemessaNaoEncontradaError,
     )
+  })
+})
+
+describe('interpretarDataPrevista', () => {
+  it('ancora data somente-dia ao meio-dia de São Paulo (não volta um dia)', () => {
+    const data = interpretarDataPrevista('2026-12-15')
+    expect(data.toISOString()).toBe('2026-12-15T15:00:00.000Z')
+    expect(
+      new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo' }).format(data),
+    ).toBe('15/12/2026')
+  })
+
+  it('mantém datas com hora completas', () => {
+    const data = interpretarDataPrevista('2026-12-15T00:00:00.000Z')
+    expect(data.toISOString()).toBe('2026-12-15T00:00:00.000Z')
   })
 })

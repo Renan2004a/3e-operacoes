@@ -1,6 +1,7 @@
 import {
   RemessaDuplicadaError,
   RemessaInvalidaError,
+  interpretarDataPrevista,
   programarRemessa,
 } from '../../../../../../modules/expedicao/remessas'
 import { prismaRemessaRepository } from '../../../../../../modules/expedicao/adapters/prisma-remessa-repository'
@@ -31,7 +32,7 @@ export async function POST(request: Request, context: { params: Promise<{ itemId
       {
         orderItemId: itemId,
         remessa,
-        scheduledAt: new Date(dados.scheduledAt),
+        scheduledAt: interpretarDataPrevista(dados.scheduledAt),
         note: typeof dados.note === 'string' ? dados.note : null,
       },
       prismaRemessaRepository,

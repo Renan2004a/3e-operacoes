@@ -81,6 +81,16 @@ describe('POST /api/pedidos/itens/[itemId]/remessas', () => {
     expect(mocks.remessas).toHaveLength(1)
   })
 
+  it('ancora data somente-dia ao meio-dia de São Paulo', async () => {
+    const response = await POST(
+      request({ remessa: 2, scheduledAt: '2026-12-15' }),
+      context('item_1'),
+    )
+
+    expect(response.status).toBe(201)
+    expect(mocks.remessas[0].scheduledAt.toISOString()).toBe('2026-12-15T15:00:00.000Z')
+  })
+
   it('responde 409 para remessa repetida no mesmo item', async () => {
     mocks.remessas.push({
       id: 'r1',
