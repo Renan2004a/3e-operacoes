@@ -12,6 +12,7 @@ describe('pode', () => {
     expect(pode(['SELLER'], 'consultar_pedidos')).toBe(true)
     expect(pode(['SELLER'], 'definir_prazo')).toBe(true)
     expect(pode(['SELLER'], 'classificar_item')).toBe(true)
+    expect(pode(['SELLER'], 'solicitar_importacao')).toBe(true)
     expect(pode(['SELLER'], 'registrar_execucao')).toBe(false)
     expect(pode(['SELLER'], 'registrar_entrega')).toBe(false)
   })

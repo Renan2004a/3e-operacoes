@@ -3,10 +3,33 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import {
+  Building2,
+  LayoutDashboard,
+  ListChecks,
+  Plug,
+  ShoppingCart,
+  Truck,
+  Upload,
+  Users,
+  type LucideIcon,
+} from 'lucide-react'
 import type { RoleCode } from '@/generated/prisma/client'
 import { cn, FOCO_VISIVEL } from './utils'
 import { Button } from './button'
 import { NAV_POR_PERFIL } from './navegacao-perfil'
+
+const ICONE_POR_HREF: Record<string, LucideIcon> = {
+  '/gerente/painel': LayoutDashboard,
+  '/gerente/pedidos': ShoppingCart,
+  '/vendedor/pedidos': ShoppingCart,
+  '/integracao': Upload,
+  '/operador/fila': ListChecks,
+  '/expedicao/entregas': Truck,
+  '/admin/usuarios': Users,
+  '/admin/setores': Building2,
+  '/tecnico/integracao': Plug,
+}
 
 const ROTULO_PERFIL: Record<RoleCode, string> = {
   OPERATOR: 'Operador',
@@ -114,18 +137,20 @@ export function AppShell({ perfil, usuarioNome, onLogout, children }: AppShellPr
             ) : (
               itens.map((item) => {
                 const ativo = caminho === item.href
+                const Icone = ICONE_POR_HREF[item.href]
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
                     aria-current={ativo ? 'page' : undefined}
                     className={cn(
-                      'inline-flex min-h-11 items-center rounded-lg px-3 font-medium',
+                      'inline-flex min-h-11 items-center gap-2 rounded-lg px-3 font-medium',
                       ativo ? 'bg-brand-700 text-white' : 'text-white hover:bg-brand-700',
                       FOCO_VISIVEL,
                     )}
                     onClick={() => setMenuAberto(false)}
                   >
+                    {Icone ? <Icone aria-hidden="true" className="h-5 w-5 shrink-0" /> : null}
                     {item.label}
                   </Link>
                 )

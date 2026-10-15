@@ -82,6 +82,15 @@ describe('VendedorPedidosPage', () => {
     expect(mocks.apiGet).toHaveBeenCalledWith('/api/pedidos')
   })
 
+  it('permite puxar o pedido do Top Gerente (vendedor importa)', async () => {
+    configurarApi()
+    render(<VendedorPedidosPage />)
+
+    expect(await screen.findByText('Puxar pedido do Top Gerente')).toBeInTheDocument()
+    expect(screen.getByLabelText('Número do pedido')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Importar pedido' })).toBeInTheDocument()
+  })
+
   it('ao selecionar um pedido mostra o detalhe com os cinco valores (FEP-04)', async () => {
     configurarApi()
     render(<VendedorPedidosPage />)
@@ -142,7 +151,7 @@ describe('VendedorPedidosPage', () => {
     configurarApi()
     render(<VendedorPedidosPage />)
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Pedidos' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Vendas' })).toBeInTheDocument()
   })
 
   it('mostra a tabela com os filtros da consulta (PROT-06)', async () => {

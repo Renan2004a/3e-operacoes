@@ -201,7 +201,7 @@ describe('POST /api/integracao/pedidos/[jobId]/reprocessar', () => {
 
   it('responde 403 quando o perfil não é autorizado', async () => {
     mocks.jobs.push(makeJob('job_failed', 'FAILED'))
-    mocks.perfis.user_vendedor = ['SELLER']
+    mocks.perfis.user_vendedor = ['OPERATOR']
 
     const response = await POST(request({ usuarioId: 'user_vendedor' }), context('job_failed'))
 

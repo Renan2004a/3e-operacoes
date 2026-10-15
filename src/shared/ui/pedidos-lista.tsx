@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { apiGet } from '@/shared/http/api-client'
 import { Alert } from './alert'
 import { Badge } from './badge'
@@ -23,6 +23,8 @@ export interface PedidoListado {
 export interface PedidosListaProps {
   /** Aciona o detalhe do pedido escolhido (rota no gerente, painel no vendedor). */
   onSelecionar: (pedido: PedidoListado) => void
+  /** Alterar este valor força recarregar a lista (ex.: após importar um pedido). */
+  recarregarToken?: number
 }
 
 interface Filtros {
@@ -70,11 +72,12 @@ function montarUrl(filtros: Filtros): string {
  * de carregando, vazio e erro (FEP-03, FEP-13). Compartilhada entre gerente e
  * vendedor; a seleção é delegada ao chamador.
  */
-export function PedidosLista({ onSelecionar }: PedidosListaProps) {
+export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProps) {
   const [filtros, setFiltros] = useState<Filtros>(FILTROS_VAZIOS)
   const [pedidos, setPedidos] = useState<PedidoListado[] | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState(false)
+  const primeiraCarga = useRef(true)
 
   const buscar = useCallback(
     (aplicados: Filtros) =>
@@ -91,6 +94,17 @@ export function PedidosLista({ onSelecionar }: PedidosListaProps) {
   useEffect(() => {
     void buscar(FILTROS_VAZIOS)
   }, [buscar])
+
+  // Recarrega quando o token muda (ex.: após importar um pedido).
+  useEffect(() => {
+    if (primeiraCarga.current) {
+      primeiraCarga.current = false
+      return
+    }
+    setCarregando(true)
+    void buscar(filtros)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recarregarToken])
 
   function aoFiltrar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault()

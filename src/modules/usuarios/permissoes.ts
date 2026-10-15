@@ -32,7 +32,7 @@ const MATRIZ: Record<Acao, readonly RoleCode[]> = {
   registrar_entrega: ['SHIPPING', 'PRODUCTION_MANAGER'],
   autorizar_excecao: ['PRODUCTION_MANAGER'],
   classificar_item: ['PRODUCTION_MANAGER', 'SYSTEM_RESPONSIBLE', 'SELLER'],
-  solicitar_importacao: ['PRODUCTION_MANAGER', 'TECHNICAL_RESPONSIBLE', 'SYSTEM_RESPONSIBLE'],
+  solicitar_importacao: ['PRODUCTION_MANAGER', 'TECHNICAL_RESPONSIBLE', 'SYSTEM_RESPONSIBLE', 'SELLER'],
   gerenciar_usuarios: ['SYSTEM_RESPONSIBLE'],
   gerenciar_setores: ['SYSTEM_RESPONSIBLE'],
   monitorar_integracao: ['TECHNICAL_RESPONSIBLE', 'SYSTEM_RESPONSIBLE'],

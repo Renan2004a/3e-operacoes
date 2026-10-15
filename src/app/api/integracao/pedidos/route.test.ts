@@ -201,7 +201,7 @@ describe('POST /api/integracao/pedidos', () => {
   })
 
   it('responde 403 e não cria job quando o perfil não é autorizado', async () => {
-    mocks.perfis.user_vendedor = ['SELLER']
+    mocks.perfis.user_vendedor = ['OPERATOR']
 
     const response = await POST(
       request({ orderNumber: '70435' }, { usuarioId: 'user_vendedor' }),

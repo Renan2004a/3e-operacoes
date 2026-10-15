@@ -1,3 +1,4 @@
+import { Inbox } from 'lucide-react'
 import { cn } from './utils'
 
 export interface EmptyStateProps {
@@ -17,6 +18,7 @@ export function EmptyState({ title, description, action, className }: EmptyState
         className,
       )}
     >
+      <Inbox aria-hidden="true" className="h-8 w-8 text-muted" />
       <p className="text-base font-semibold text-ink">{title}</p>
       {description ? <p className="text-sm text-muted">{description}</p> : null}
       {action ? <div className="mt-2">{action}</div> : null}

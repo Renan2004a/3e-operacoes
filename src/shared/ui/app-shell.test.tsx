@@ -46,7 +46,7 @@ const PERFIS: Array<{ perfil: RoleCode; itens: Array<{ nome: string; href: strin
       { nome: 'Fila', href: '/operador/fila' },
     ],
   },
-  { perfil: 'SELLER', itens: [{ nome: 'Pedidos', href: '/vendedor/pedidos' }] },
+  { perfil: 'SELLER', itens: [{ nome: 'Vendas', href: '/vendedor/pedidos' }] },
   { perfil: 'SHIPPING', itens: [{ nome: 'Entregas', href: '/expedicao/entregas' }] },
   {
     perfil: 'SYSTEM_RESPONSIBLE',

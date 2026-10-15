@@ -9,6 +9,7 @@ import { Button } from './button'
 import { Card, CardContent, CardHeader, CardTitle } from './card'
 import { Field } from './field'
 import { Input } from './input'
+import { Metric } from './metric'
 import { PageHead } from './page-head'
 import { Spinner } from './spinner'
 import { cn, FOCO_VISIVEL } from './utils'
@@ -224,6 +225,14 @@ export function PedidoDetalhe({
     )
   }
 
+  const pendentesDesmembramento = pedido.itens.filter(
+    (item) => item.classificationStatus !== 'CLASSIFIED',
+  ).length
+  const pendentesProducao = pedido.itens.reduce(
+    (total, item) => total + (Number(item.pendente) || 0),
+    0,
+  )
+
   return (
     <section className="grid gap-4">
       <div className="grid gap-2">
@@ -238,6 +247,21 @@ export function PedidoDetalhe({
               <Badge variant="info">Vendedor {pedido.sellerLegacyCode}</Badge>
             ) : null
           }
+        />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Metric label="Itens" value={pedido.itens.length} helper="No pedido." />
+        <Metric
+          label="Pendentes de desmembramento"
+          value={pendentesDesmembramento}
+          tone={pendentesDesmembramento > 0 ? 'warning' : 'success'}
+          helper="Itens sem setor definido."
+        />
+        <Metric
+          label="Pendentes de produção"
+          value={pendentesProducao}
+          helper="A produzir ou separar."
         />
       </div>
 
@@ -288,7 +312,12 @@ export function PedidoDetalhe({
                   Item {indice + 1} · Código {item.productCode ?? '—'} · {item.unit}
                 </p>
               </div>
-              {item.unit ? <Badge variant="neutral">{item.unit}</Badge> : null}
+              <div className="flex flex-wrap items-center gap-2">
+                {item.unit ? <Badge variant="neutral">{item.unit}</Badge> : null}
+                {item.classificationStatus !== 'CLASSIFIED' ? (
+                  <Badge variant="warning">Pendente de desmembramento</Badge>
+                ) : null}
+              </div>
             </CardHeader>
             <CardContent className="grid gap-4">
               <ul aria-label={`Valores do item ${indice + 1}`} className="grid gap-1 text-sm text-ink">
@@ -342,7 +371,7 @@ export function PedidoDetalhe({
 
               {permitirClassificacao ? (
                 <div className="grid gap-3 border-t border-line pt-4">
-                  <p className="text-sm font-semibold text-ink">Classificação</p>
+                  <p className="text-sm font-semibold text-ink">Desmembramento</p>
                   {item.classificationStatus === 'CLASSIFIED' ? (
                     <Badge variant="success">Item classificado</Badge>
                   ) : (
@@ -382,7 +411,7 @@ export function PedidoDetalhe({
                         disabled={classificando === item.itemId}
                         aria-label={`Classificar item ${indice + 1}`}
                       >
-                        Classificar
+                        Desmembrar
                       </Button>
                     </form>
                   )}

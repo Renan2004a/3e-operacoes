@@ -21,7 +21,7 @@ export const NAV_POR_PERFIL: Record<RoleCode, readonly ItemNav[]> = {
     // preservar o painel como tela inicial (FEP-11).
     { href: '/operador/fila', label: 'Fila' },
   ],
-  SELLER: [{ href: '/vendedor/pedidos', label: 'Pedidos' }],
+  SELLER: [{ href: '/vendedor/pedidos', label: 'Vendas' }],
   SHIPPING: [{ href: '/expedicao/entregas', label: 'Entregas' }],
   SYSTEM_RESPONSIBLE: [
     { href: '/admin/usuarios', label: 'Usuários' },
