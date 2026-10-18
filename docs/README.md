@@ -1,5 +1,6 @@
 # Documentação
 
+- `panorama-do-projeto.md`: visão geral — o que é, metodologia, funcionalidades, estado e como seguir.
 - `decisoes.md`: decisões atuais que substituem hipóteses históricas.
 - `requisitos.md`: interpretação efetiva dos requisitos.
 - `regras-negocio.md`: regras efetivas.

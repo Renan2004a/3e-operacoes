@@ -510,3 +510,35 @@ O vendedor registra o desmembramento (classificação dos itens por setor) de ca
 ### Riscos abertos
 - Confirmar se o vendedor também registra a **separação** (execução de Revenda) — hoje só o desmembramento.
 - Deploy real depende de conta Railway/Vercel do cliente.
+
+---
+
+## Feature 16 — Alertas, remessas e sugestão de setor
+
+**Data**: 2026-10-15
+**Requisitos**: RF012 (alertas), RF010 (entregas escalonadas), RF002 (identificação por setor)
+**Artefatos**: `.specs/features/alertas-remessas-e-sugestao/{spec,design,tasks,validation}.md`; `AD-004` em `.specs/STATE.md`
+
+### Objetivo
+Fechar as três lacunas apontadas na análise de conformidade: **alertas** de atrasados/parados/não encaminhados, **remessas** (entrega programada por item) e **sugestão** de setor pelo produto.
+
+### Como foi feito
+- **Specify**: 9 requisitos (`IND-11/12`, `ENT-01..05`, `LAC-14/15`) com critérios EARS.
+- **Design**: `ScheduledDelivery` e `ProductSectorRule` no schema; domínio puro + adapters; rotas finas.
+- **Tasks**: 8 tarefas (T1–T8).
+- **Execute**: implementação com testes por camada (domínio, rota, página).
+- **Verify**: validação com evidência + execução contra o banco AWS e em produção.
+
+### Resultado
+- **697 testes unitários** passando; lint/typecheck/build OK.
+- Migration `20261015193341_alertas_remessas_regras` aplicada; 14 regras produto→setor semeadas.
+- Deploy em produção validado (alertas, remessa programar/confirmar/remover, sugestão).
+
+### Decisões e desvios
+- "Parado" = sem execução há `ALERTA_PARADO_DIAS` (padrão 5), configurável.
+- Remessa = número sequencial por item + data prevista + confirmação.
+- Correção de fuso: data "somente dia" ancorada ao meio-dia de SP (`interpretarDataPrevista`).
+
+### Riscos abertos
+- Tela de administração das regras produto→setor; vínculo automático remessa↔entrega.
+- E2E autenticado com banco real.
