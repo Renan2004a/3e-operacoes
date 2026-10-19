@@ -119,7 +119,11 @@ export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProp
 
   return (
     <section className="grid gap-4">
-      <form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5" onSubmit={aoFiltrar} noValidate>
+      <form
+        className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-5"
+        onSubmit={aoFiltrar}
+        noValidate
+      >
         <Field label="Cliente" hint="Trecho do nome do cliente; não diferencia maiúsculas.">
           {(props) => (
             <Input
