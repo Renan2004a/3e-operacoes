@@ -289,11 +289,20 @@ try {
         await adicionar.click()
         await pausa(page, 500)
       }
+      // Usa o próximo número livre para não colidir com remessas já existentes.
+      const textos = await page
+        .locator('text=/\\d+ª remessa/')
+        .allInnerTexts()
+        .catch(() => [])
+      const numeros = textos
+        .map((texto) => Number((texto.match(/(\d+)ª remessa/) ?? [])[1]))
+        .filter((n) => Number.isFinite(n))
+      const proximo = (numeros.length ? Math.max(...numeros) : 0) + 1
       const numero = page.getByLabel('Remessa (item 1)', { exact: true })
       await numero.waitFor({ timeout: 30000 }).catch(() => {})
       if (await numero.count()) {
         await numero.scrollIntoViewIfNeeded().catch(() => {})
-        await numero.fill('1')
+        await numero.fill(String(proximo))
         await page.getByLabel('Data prevista (item 1)', { exact: true }).fill('2026-12-15')
         await pausa(page, 700)
         await page.getByRole('button', { name: 'Programar remessa do item 1', exact: true }).click()
