@@ -1,6 +1,12 @@
 # Documentação
 
 - `panorama-do-projeto.md`: visão geral — o que é, metodologia, funcionalidades, estado e como seguir.
+- `diagnostico-docentes.md`: problemas relatados, causas, correções e plano de execução.
+- `banco-de-dados.md`: bancos local/hospedado, tabelas, relacionamentos, nomenclatura e DBeaver.
+- `mockups/`: mockups editáveis das telas propostas (HTML/CSS) e instruções.
+- `avaliacao-heuristicas.md`: avaliação das 10 heurísticas de Nielsen antes/depois.
+- `testes-locais.md`: gates, Playwright, testes manuais e verificação no banco.
+- `validacao-hospedada.md`: checklist e resultados do ambiente hospedado.
 - `decisoes.md`: decisões atuais que substituem hipóteses históricas.
 - `requisitos.md`: interpretação efetiva dos requisitos.
 - `regras-negocio.md`: regras efetivas.

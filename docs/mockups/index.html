@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mockups editáveis — 3E Operações</title>
+    <style>
+      :root {
+        --brand-900: #102a33;
+        --brand-700: #205261;
+        --accent: #0f7b8a;
+        --bg: #f4f7f9;
+        --surface: #fff;
+        --surface-2: #f8fafb;
+        --ink: #17212b;
+        --muted: #4b5b66;
+        --line: #dce4e8;
+        --success: #147a50;
+        --success-bg: #e9f7f0;
+        --warning: #7a4e00;
+        --warning-bg: #fff5dd;
+        --danger: #b42318;
+        --danger-bg: #fdeceb;
+        --info: #245da8;
+        --info-bg: #eaf1fb;
+        --radius: 12px;
+        font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        color-scheme: light;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--ink); line-height: 1.5; }
+      a { color: var(--accent); }
+      .wrap { max-width: 1180px; margin: 0 auto; padding: 24px; }
+      header.mk { display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline; justify-content: space-between; }
+      header.mk h1 { font-size: 1.4rem; margin: 0; }
+      header.mk p { margin: 0; color: var(--muted); }
+      .aviso { border: 1px solid var(--line); background: var(--info-bg); color: var(--info); border-radius: var(--radius); padding: 12px 16px; margin: 20px 0; font-size: .9rem; }
+      nav.mk { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 28px; }
+      nav.mk a { text-decoration: none; border: 1px solid var(--line); background: var(--surface); padding: 8px 12px; border-radius: 999px; font-size: .85rem; }
+      nav.mk a:hover { background: var(--surface-2); }
+      h2.secao { font-size: 1.1rem; margin: 36px 0 6px; }
+      p.nota { color: var(--muted); font-size: .88rem; margin: 0 0 16px; }
+      .grid2 { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); align-items: start; }
+      .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+      .card h3 { margin: 0 0 4px; font-size: 1rem; }
+      .muted { color: var(--muted); }
+      .small { font-size: .82rem; }
+      .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+      .badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 2px 10px; font-size: .78rem; font-weight: 600; border: 1px solid transparent; }
+      .badge.neutral { background: var(--surface-2); color: var(--muted); border-color: var(--line); }
+      .badge.info { background: var(--info-bg); color: var(--info); border-color: #c9daf3; }
+      .badge.success { background: var(--success-bg); color: var(--success); border-color: #bfe6d3; }
+      .badge.warning { background: var(--warning-bg); color: var(--warning); border-color: #f1dca7; }
+      .badge.danger { background: var(--danger-bg); color: var(--danger); border-color: #f3c3bf; }
+      .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: .88rem; cursor: pointer; }
+      .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+      .btn.sm { min-height: 34px; padding: 0 10px; font-size: .82rem; }
+      .metric { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 14px; }
+      .metric .rotulo { font-size: .8rem; color: var(--muted); }
+      .metric .valor { font-size: 1.7rem; font-weight: 800; }
+      .metric .ajuda { font-size: .78rem; color: var(--muted); }
+      .metric.warning .valor { color: var(--warning); }
+      .metric.success .valor { color: var(--success); }
+      .progresso { display: grid; gap: 4px; }
+      .progresso .linha { display: flex; justify-content: space-between; font-size: .82rem; font-weight: 600; }
+      .barra { height: 10px; border-radius: 999px; background: var(--line); overflow: hidden; }
+      .barra > span { display: block; height: 100%; border-radius: 999px; background: var(--accent); }
+      .barra.success > span { background: var(--success); }
+      .barra.warning > span { background: var(--warning); }
+      table.mk { width: 100%; border-collapse: collapse; font-size: .86rem; }
+      table.mk th { text-align: left; font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); padding: 10px 12px; border-bottom: 1px solid var(--line); }
+      table.mk td { padding: 10px 12px; border-bottom: 1px solid var(--line); }
+      table.mk tr:last-child td { border-bottom: 0; }
+      .filtros { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+      .campo { display: grid; gap: 4px; font-size: .82rem; }
+      .campo input, .campo select { min-height: 40px; border: 1px solid var(--line); border-radius: 10px; padding: 0 10px; font: inherit; background: var(--surface); }
+      .alerta { border-radius: 10px; border: 1px solid; padding: 10px 12px; font-size: .85rem; }
+      .alerta.success { background: var(--success-bg); border-color: #bfe6d3; color: var(--success); }
+      .alerta.error { background: var(--danger-bg); border-color: #f3c3bf; color: var(--danger); }
+      .alerta.info { background: var(--info-bg); border-color: #c9daf3; color: var(--info); }
+      .telefone { width: 390px; max-width: 100%; border: 10px solid #0b1a20; border-radius: 28px; background: var(--bg); padding: 12px; }
+      .telefone .topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+      .telefone .topo strong { font-size: .9rem; }
+      .cartao-lista { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 10px 12px; display: grid; gap: 6px; margin-bottom: 8px; }
+      .cartao-lista .linha { display: flex; justify-content: space-between; gap: 10px; font-size: .85rem; }
+      .cartao-lista .linha .rotulo { color: var(--muted); font-weight: 600; }
+      .fluxo { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: .82rem; color: var(--muted); }
+      .fluxo span { border: 1px dashed var(--line); border-radius: 999px; padding: 4px 10px; background: var(--surface); }
+      .folha { background: #fff; border: 1px solid var(--line); padding: 28px; max-width: 720px; }
+      .folha h3 { margin: 0 0 2px; }
+      .folha dl { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; margin: 18px 0 0; font-size: .9rem; }
+      .folha dt { color: var(--muted); }
+      .folha dd { margin: 0; font-weight: 700; }
+      @media (max-width: 640px) {
+        .wrap { padding: 16px; }
+        table.mk thead { display: none; }
+        table.mk, table.mk tbody, table.mk tr, table.mk td { display: block; width: 100%; }
+        table.mk tr { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 10px; margin-bottom: 8px; }
+        table.mk td { display: flex; justify-content: space-between; gap: 12px; border: 0; padding: 3px 0; }
+        table.mk td::before { content: attr(data-label); font-weight: 600; color: var(--muted); }
+        .folha { padding: 18px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="mk">
+        <h1>Mockups editáveis — 3E Operações</h1>
+        <p class="small">Artefato de avaliação. Não é a aplicação. Edite este HTML/CSS livremente.</p>
+      </header>
+
+      <div class="aviso">
+        <strong>Como usar:</strong> abra este arquivo no navegador (duplo clique) e edite o HTML/CSS.
+        Cada seção representa uma tela/estado proposto. Os termos e status são os reais do sistema.
+      </div>
+
+      <nav class="mk">
+        <a href="#lista">Lista de pedidos</a>
+        <a href="#detalhe">Detalhe / desmembramento / remessas</a>
+        <a href="#usuarios">Usuários</a>
+        <a href="#impressao">Impressão</a>
+        <a href="#estados">Estados</a>
+        <a href="#fluxo">Fluxo de navegação</a>
+      </nav>
+
+      <!-- ---------------------------------------------------------------- -->
+      <h2 class="secao" id="lista">1. Lista de pedidos</h2>
+      <p class="nota">Filtros por cliente, setor, status e período. No desktop, tabela; no celular, cartões (sem rolagem horizontal).</p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Desktop (≥ 768 px)</h3>
+          <div class="filtros" style="margin:12px 0">
+            <label class="campo">Cliente<input value="MARCELO" /></label>
+            <label class="campo">Setor<input value="Telhas" /></label>
+            <label class="campo">Status<select><option>Em andamento</option></select></label>
+            <label class="campo">De<input type="date" value="2026-10-01" /></label>
+            <label class="campo">Até<input type="date" value="2026-10-31" /></label>
+          </div>
+          <div class="row" style="margin-bottom:8px">
+            <div class="row" style="gap:8px"><button class="btn primary">Filtrar</button><button class="btn">Limpar filtros</button></div>
+            <span class="small muted">3 pedido(s) encontrado(s).</span>
+          </div>
+          <table class="mk">
+            <thead><tr><th>Pedido</th><th>Cliente</th><th>Status</th><th style="text-align:right">Ações</th></tr></thead>
+            <tbody>
+              <tr><td data-label="Pedido">Pedido 82269</td><td data-label="Cliente">MARCELO JOSE DA COSTA</td><td data-label="Status"><span class="badge info">Em andamento</span></td><td data-label="Ações" style="text-align:right"><button class="btn primary sm">Abrir</button></td></tr>
+              <tr><td data-label="Pedido">Pedido 82268</td><td data-label="Cliente">MARCELO JOSE DA COSTA</td><td data-label="Status"><span class="badge neutral">Pendente</span></td><td data-label="Ações" style="text-align:right"><button class="btn primary sm">Abrir</button></td></tr>
+              <tr><td data-label="Pedido">Pedido 70435</td><td data-label="Cliente">MARCO ANTONIO DE OLIVEIRA</td><td data-label="Status"><span class="badge success">Concluído</span></td><td data-label="Ações" style="text-align:right"><button class="btn primary sm">Abrir</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div>
+          <h3 style="margin:0 0 8px">Celular (390 px) — cartões</h3>
+          <div class="telefone">
+            <div class="topo"><strong>Vendas</strong><span class="badge neutral">Vendedor</span></div>
+            <div class="alerta info small" style="margin-bottom:8px">3 pedido(s) encontrado(s).</div>
+            <div class="cartao-lista">
+              <div class="linha"><span class="rotulo">Pedido</span><strong>82269</strong></div>
+              <div class="linha"><span class="rotulo">Cliente</span><span>MARCELO JOSE DA COSTA</span></div>
+              <div class="linha"><span class="rotulo">Status</span><span class="badge info">Em andamento</span></div>
+              <div class="linha"><button class="btn primary sm">Abrir pedido</button></div>
+            </div>
+            <div class="cartao-lista">
+              <div class="linha"><span class="rotulo">Pedido</span><strong>82268</strong></div>
+              <div class="linha"><span class="rotulo">Cliente</span><span>MARCELO JOSE DA COSTA</span></div>
+              <div class="linha"><span class="rotulo">Status</span><span class="badge neutral">Pendente</span></div>
+              <div class="linha"><button class="btn primary sm">Abrir pedido</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---------------------------------------------------------------- -->
+      <h2 class="secao" id="detalhe">2. Detalhe do pedido — desmembramento e remessas</h2>
+      <p class="nota">Ordem: identificação → progresso → quantidades → prazo → desmembramento → remessas → ações. O botão “+ Adicionar remessa” abre o formulário.</p>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="row" style="align-items:flex-start">
+            <div>
+              <h3>Pedido 82269</h3>
+              <p class="small muted" style="margin:0">MARCELO JOSE DA COSTA · Vendedor V1</p>
+            </div>
+            <a href="#lista">← Voltar para os pedidos</a>
+          </div>
+
+          <div style="display:grid;gap:10px;grid-template-columns:repeat(3,1fr);margin:14px 0">
+            <div class="metric"><div class="rotulo">Itens</div><div class="valor">9</div><div class="ajuda">No pedido.</div></div>
+            <div class="metric warning"><div class="rotulo">Pendentes de desmembramento</div><div class="valor">0</div><div class="ajuda">Itens sem setor.</div></div>
+            <div class="metric"><div class="rotulo">Pendentes de produção</div><div class="valor">42</div><div class="ajuda">A produzir/separar.</div></div>
+          </div>
+
+          <div class="card" style="box-shadow:none">
+            <h3>Resumo do pedido</h3>
+            <div class="progresso" style="margin:10px 0 12px">
+              <div class="linha"><span>Execução do pedido</span><span>38%</span></div>
+              <div class="barra"><span style="width:38%"></span></div>
+              <span class="small muted">12 de 32 unidades executadas.</span>
+            </div>
+            <div class="row small"><strong>Telhas</strong><span class="muted">4 item(ns) · solicitado 20 · pendente 12</span></div>
+            <div class="row small"><strong>Corte e Dobra</strong><span class="muted">3 item(ns) · solicitado 8 · pendente 6</span></div>
+            <div class="row small"><strong>Revenda</strong><span class="muted">2 item(ns) · solicitado 4 · pendente 4</span></div>
+          </div>
+
+          <div class="card" style="box-shadow:none;margin-top:12px">
+            <div class="row"><h3>Telha termoacústica EPS 30</h3><span class="badge success">Desmembrado</span></div>
+            <p class="small muted" style="margin:2px 0 12px">Item 1 · Código 470 · m</p>
+
+            <div class="progresso" style="margin-bottom:12px">
+              <div class="linha"><span>Execução do item 1</span><span>80%</span></div>
+              <div class="barra success"><span style="width:80%"></span></div>
+              <span class="small muted">8 de 10 m executadas.</span>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:.85rem">
+              <div><div class="muted small">Solicitado</div><strong>10</strong></div>
+              <div><div class="muted small">Executado</div><strong>8</strong></div>
+              <div><div class="muted small">Disponível</div><strong>5</strong></div>
+              <div><div class="muted small">Entregue</div><strong>3</strong></div>
+              <div><div class="muted small">Pendente</div><strong>2</strong></div>
+              <div><div class="muted small">Unidade</div><strong>m</strong></div>
+            </div>
+
+            <div class="alerta success" style="margin:12px 0">Item desmembrado. Setor definido: Telhas. Você pode continuar com as remessas abaixo.</div>
+
+            <div class="row" style="margin-bottom:8px"><strong>Entregas programadas (remessas)</strong><button class="btn sm">+ Adicionar remessa</button></div>
+            <div class="cartao-lista" style="margin-bottom:10px">
+              <div class="linha"><span>1ª remessa · prevista para 15/12/2026</span><span class="badge success">Confirmada em 15/12/2026</span></div>
+              <div class="linha"><span class="muted small">Entrega prevista — não altera o saldo.</span><button class="btn sm">Remover</button></div>
+            </div>
+
+            <div style="border:1px dashed var(--line);border-radius:10px;padding:10px;display:grid;gap:8px;grid-template-columns:90px 1fr auto;align-items:end">
+              <label class="campo">Remessa<input type="number" value="2" /></label>
+              <label class="campo">Data prevista<input type="date" value="2026-12-20" /></label>
+              <button class="btn primary">Programar remessa</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Decisões de interface</h3>
+          <ul class="small" style="margin:8px 0 0;padding-left:18px;color:var(--muted)">
+            <li>Prazo e quantidades vêm antes das ações de desmembrar/remessar.</li>
+            <li>O botão “+” reduz a poluição visual e mantém o formulário acessível.</li>
+            <li>Cada ação bem-sucedida exibe confirmação textual (não só cor).</li>
+            <li>A remessa é claramente “previsão”; a entrega realizada é outro registro.</li>
+            <li>Progresso com percentual textual e cor por estado real.</li>
+          </ul>
+          <div class="alerta error" style="margin-top:12px">Não foi possível desmembrar o item: escolha um setor antes de confirmar.</div>
+          <div class="alerta success" style="margin-top:8px">Remessa criada com sucesso.</div>
+        </div>
+      </div>
+
+      <!-- ---------------------------------------------------------------- -->
+      <h2 class="secao" id="usuarios">3. Usuários (administrador)</h2>
+      <p class="nota">No celular, a tabela vira cartões. A inativação exige confirmação inline e informa o resultado.</p>
+
+      <div class="grid2">
+        <div>
+          <h3 style="margin:0 0 8px">Celular (390 px)</h3>
+          <div class="telefone">
+            <div class="topo"><strong>Usuários</strong><span class="badge neutral">Sistema</span></div>
+            <div class="alerta success small" style="margin-bottom:8px">Usuário inativado com sucesso.</div>
+            <div class="cartao-lista">
+              <div class="linha"><span class="rotulo">Usuário</span><strong>Ana Souza</strong></div>
+              <div class="linha"><span class="rotulo">E-mail</span><span>ana@3e.local</span></div>
+              <div class="linha"><span class="rotulo">Perfil</span><span class="badge info">Vendedor</span></div>
+              <div class="linha"><span class="rotulo">Setor</span><span>Telhas</span></div>
+              <div class="linha"><span class="rotulo">Status</span><span class="badge neutral">Inativo</span></div>
+              <div class="linha"><button class="btn sm">Ativar</button></div>
+            </div>
+            <div class="cartao-lista">
+              <div class="linha"><span class="rotulo">Usuário</span><strong>Beto Lima</strong></div>
+              <div class="linha"><span class="rotulo">Perfil</span><span class="badge info">Operador</span></div>
+              <div class="linha"><span class="rotulo">Status</span><span class="badge success">Ativo</span></div>
+              <div class="linha"><span>Confirmar inativação?</span><span><button class="btn primary sm">Confirmar</button> <button class="btn sm">Cancelar</button></span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Desktop — tabela com ação</h3>
+          <table class="mk" style="margin-top:10px">
+            <thead><tr><th>Usuário</th><th>Perfil</th><th>Setor</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td data-label="Usuário"><strong>Ana Souza</strong><div class="small muted">ana@3e.local</div></td><td data-label="Perfil"><span class="badge info">Vendedor</span></td><td data-label="Setor">Telhas</td><td data-label="Status"><span class="badge success">Ativo</span> <button class="btn sm">Inativar</button></td></tr>
+              <tr><td data-label="Usuário"><strong>Beto Lima</strong><div class="small muted">beto@3e.local</div></td><td data-label="Perfil"><span class="badge info">Operador</span></td><td data-label="Setor">Corte e Dobra</td><td data-label="Status"><span class="badge neutral">Inativo</span> <button class="btn sm">Ativar</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ---------------------------------------------------------------- -->
+      <h2 class="secao" id="impressao">4. Impressão da ordem de produção</h2>
+      <p class="nota">Sem menu, sem página em branco. O PDF gerado na validação tem exatamente 1 página A4.</p>
+
+      <div class="folha">
+        <p class="small muted" style="margin:0 0 10px">3E Operações — Ordem de produção</p>
+        <h3>Telha termoacústica EPS 30</h3>
+        <p class="small muted" style="margin:0">Pedido 82269 · Setor Telhas</p>
+        <dl>
+          <div><dt>Pedido</dt><dd>82269</dd></div>
+          <div><dt>Item</dt><dd>Telha termoacústica EPS 30</dd></div>
+          <div><dt>Setor</dt><dd>Telhas</dd></div>
+          <div><dt>Unidade</dt><dd>m</dd></div>
+          <div><dt>Solicitado</dt><dd>10 m</dd></div>
+          <div><dt>Executado</dt><dd>8 m</dd></div>
+          <div><dt>Pendente</dt><dd>2 m</dd></div>
+        </dl>
+      </div>
+
+      <!-- ---------------------------------------------------------------- -->
+      <h2 class="secao" id="estados">5. Estados de interface</h2>
+      <p class="nota">Toda tela deve cobrir carregando, vazio, sucesso e erro de forma acessível.</p>
+      <div class="grid2">
+        <div class="card"><h3>Carregando</h3><div class="row" style="margin-top:10px"><span class="badge info">Carregando…</span><span class="small muted">Anunciado por role="status".</span></div></div>
+        <div class="card"><h3>Vazio</h3><div class="alerta info" style="margin-top:10px">Sem pedidos. Nenhum pedido encontrado com os filtros atuais.</div></div>
+        <div class="card"><h3>Sucesso</h3><div class="alerta success" style="margin-top:10px">Pedido atualizado com sucesso.</div></div>
+        <div class="card"><h3>Erro</h3><div class="alerta error" style="margin-top:10px">Não foi possível atualizar o pedido. Verifique sua conexão e tente novamente. <button class="btn sm" style="margin-left:8px">Tentar de novo</button></div></div>
+      </div>
+
+      <!-- ---------------------------------------------------------------- -->
+      <h2 class="secao" id="fluxo">6. Fluxo de navegação</h2>
+      <p class="nota">Abertura e retorno com contexto preservado (filtros na URL).</p>
+      <div class="fluxo">
+        <span>Login</span> → <span>Vendas / Pedidos</span> → <span>Detalhe do pedido</span> → <span>Desmembrar</span> → <span>+ Remessa</span> → <span>Confirmar remessa</span> → <span>← Voltar para os pedidos (filtros mantidos)</span>
+      </div>
+      <div class="fluxo" style="margin-top:10px">
+        <span>Operador: fila</span> → <span>Executar atividade</span> → <span>Registrar execução/ocorrência</span> → <span>Ordem de produção</span> → <span>Imprimir</span>
+      </div>
+      <div class="fluxo" style="margin-top:10px">
+        <span>Gerente: painel/alertas</span> → <span>Pedidos</span> → <span>Detalhe</span> → <span>Exceção de entrega (quando aplicável)</span>
+      </div>
+
+      <p class="small muted" style="margin-top:36px">Fim do artefato de mockups. A implementação funcional está em <code>src/app</code>.</p>
+    </div>
+  </body>
+</html>

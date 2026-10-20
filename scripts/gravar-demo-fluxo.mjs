@@ -222,7 +222,8 @@ try {
   await passo(page, '05-vendedor-abrir', 'Abrir o pedido importado para desmembrar os itens.', async () => {
     await page.getByRole('button', { name: `Abrir pedido ${PEDIDO}` }).first().waitFor({ timeout: 30000 })
     await page.getByRole('button', { name: `Abrir pedido ${PEDIDO}` }).first().click()
-    await page.getByText('Desmembramento por setor').first().waitFor({ timeout: 30000 })
+    await page.waitForURL(/\/vendedor\/pedidos\/.+/, { timeout: 30000 }).catch(() => {})
+    await page.getByText('Resumo do pedido').first().waitFor({ timeout: 30000 })
   })
 
   await passo(page, '06-vendedor-detalhe', 'Visão do pedido: métricas, itens e o resumo do desmembramento por setor.', async () => {
@@ -260,7 +261,7 @@ try {
     },
   )
   await passo(page, '08-vendedor-desmembrado', 'Itens desmembrados: o resumo por setor e as pendências se atualizam.', async () => {
-    await page.getByText('Desmembramento por setor').first().scrollIntoViewIfNeeded().catch(() => {})
+    await page.getByText('Resumo do pedido').first().scrollIntoViewIfNeeded().catch(() => {})
     await pausa(page, 1200)
   })
 
@@ -277,6 +278,16 @@ try {
         // Já havia remessa programada: apenas exibe.
         await confirmar.scrollIntoViewIfNeeded().catch(() => {})
         return
+      }
+      // O formulário de remessa agora fica atrás do botão "+ Adicionar remessa".
+      const adicionar = page.getByRole('button', {
+        name: 'Adicionar remessa do item 1',
+        exact: true,
+      })
+      if (await adicionar.count()) {
+        await adicionar.scrollIntoViewIfNeeded().catch(() => {})
+        await adicionar.click()
+        await pausa(page, 500)
       }
       const numero = page.getByLabel('Remessa (item 1)', { exact: true })
       await numero.waitFor({ timeout: 30000 }).catch(() => {})
@@ -318,6 +329,18 @@ try {
       await pausa(page, 1200)
     }
   })
+
+  await passo(
+    page,
+    '09b-vendedor-voltar',
+    'O botão "Voltar para os pedidos" retorna à lista e preserva o contexto da consulta.',
+    async () => {
+      const voltar = page.getByRole('link', { name: /voltar para os pedidos/i }).first()
+      await voltar.scrollIntoViewIfNeeded().catch(() => {})
+      await voltar.click()
+      await page.waitForURL(/\/vendedor\/pedidos$/, { timeout: 30000 }).catch(() => {})
+    },
+  )
 
   // ---- GERENTE --------------------------------------------------------------
   await login(context, page, 'gerente')

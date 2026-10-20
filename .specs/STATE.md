@@ -76,11 +76,11 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 
 ## Handoff
 
-- **Feature**: alertas-remessas-e-sugestao (A/B/C do cliente)
-- **Phase / Task**: concluído e **deployado**
-- **Completed**: alertas (atrasados/parados/não encaminhados) no painel + endpoint; remessas (programar/confirmar/remover) por item; sugestão produto→setor no desmembramento; 694 testes verdes; validado no banco AWS e em produção (`https://3e-operacoes-production.up.railway.app`)
+- **Feature**: revisão e correções do feedback dos docentes
+- **Phase / Task**: concluído; próximo: gravar vídeo e validar no ambiente hospedado
+- **Completed**: navegação do vendedor em rota própria; tabelas responsivas (cartões no celular); feedback de ações; ordem do detalhe + “+ remessa”; progresso acessível; impressão com 1 página; docs de banco, mockups, heurísticas e testes locais
 - **In-progress** (file:line): nenhum
-- **Next step**: atualizar vídeo e análise de conformidade com as lacunas A/B/C fechadas
-- **Blockers**: nenhum para desenvolvimento
-- **Uncommitted files**: nenhum
+- **Next step**: gravar o vídeo completo por perfil e publicar no Railway com smoke test
+- **Blockers**: nenhum para desenvolvimento; integração real depende do conector na rede da 3E
+- **Uncommitted files**: (atualizado no commit)
 - **Branch**: main
