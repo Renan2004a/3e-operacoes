@@ -16,7 +16,7 @@
   </head>
   <body>
     <h1>DER — 3E Operações (banco próprio do app)</h1>
-    <p>Rascunho. Fonte: <code>docs/modelo-dados/mer.md</code> · Top Gerente é externo (somente leitura).</p>
+    <p>Fonte: <code>prisma/schema.prisma</code> e <code>docs/modelo-dados/mer.md</code> · Top Gerente é externo (somente leitura). Linha tracejada = referência lógica sem FK.</p>
     <div class="wrap">
       <pre class="mermaid">
 erDiagram
@@ -48,6 +48,14 @@ erDiagram
         string categoriaLegado UK
         string setorId FK
         string situacao
+    }
+    REGRA_PRODUTO_SETOR {
+        string id PK
+        string tipoCorrespondencia
+        string valorCorrespondencia
+        string setorId FK
+        int prioridade
+        boolean ativo
     }
     PEDIDO {
         string id PK
@@ -114,6 +122,14 @@ erDiagram
         string motivoExcecao
         datetime ocorridoEm
     }
+    REMESSA_PROGRAMADA {
+        string id PK
+        string itemPedidoId FK
+        int numeroRemessa UK
+        datetime dataPrevista
+        datetime confirmadaEm
+        string observacao
+    }
     JOB_INTEGRACAO {
         string id PK
         string pedidoId FK
@@ -134,7 +150,7 @@ erDiagram
     }
     LOG_AUDITORIA {
         string id PK
-        string usuarioId FK
+        string usuarioId
         string acao
         string entidadeTipo
         string entidadeId
@@ -147,6 +163,7 @@ erDiagram
     USUARIO ||--o{ USUARIO_SETOR : atua
     SETOR ||--o{ USUARIO_SETOR : agrupa
     SETOR ||--o{ MAPEAMENTO_CATEGORIA_SETOR : direciona
+    SETOR ||--o{ REGRA_PRODUTO_SETOR : sugere
     PEDIDO ||--|{ ITEM_PEDIDO : contem
     ITEM_PEDIDO ||--o{ ATIVIDADE : origina
     SETOR ||--o{ ATIVIDADE : executa
@@ -155,11 +172,12 @@ erDiagram
     USUARIO ||--o{ EXECUCAO : realiza
     USUARIO ||--o{ OCORRENCIA : reporta
     ITEM_PEDIDO ||--o{ ENTREGA : entrega
+    ITEM_PEDIDO ||--o{ REMESSA_PROGRAMADA : programa
     USUARIO ||--o{ ENTREGA : registra_ou_autoriza
     MOTIVO_OCORRENCIA ||--o{ OCORRENCIA : justifica
     PEDIDO ||--o{ JOB_INTEGRACAO : sincroniza
     JOB_INTEGRACAO ||--|{ EVENTO_JOB_INTEGRACAO : registra
-    USUARIO ||--o{ LOG_AUDITORIA : audita
+    USUARIO ||..o{ LOG_AUDITORIA : audita
       </pre>
     </div>
     <script>
