@@ -271,7 +271,7 @@ try {
     'Entrega escalonada (remessa): programar a 1ª remessa do item com a data prevista.',
     async () => {
       const confirmar = page.getByRole('button', {
-        name: 'Confirmar 1ª remessa do item 1',
+        name: /^Confirmar \d+ª remessa do item 1$/,
         exact: true,
       })
       if (await confirmar.count()) {
@@ -317,7 +317,7 @@ try {
     'A remessa fica vinculada ao item; confirmar registra a entrega prevista.',
     async () => {
       const confirmar = page.getByRole('button', {
-        name: 'Confirmar 1ª remessa do item 1',
+        name: /^Confirmar \d+ª remessa do item 1$/,
         exact: true,
       })
       if (await confirmar.count()) {

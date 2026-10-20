@@ -100,6 +100,8 @@ Enums: `UserStatus`, `RoleCode`, `SectorCode`, `MappingStatus`, `ItemClassificat
 
 Modelos: `User`, `UserRole`, `Sector`, `UserSector`, `CategorySectorMapping`, `ProductSectorRule`, `Order`, `OrderItem`, `Activity`, `Execution`, `Occurrence`, `MotivoOcorrencia`, `Delivery`, `ScheduledDelivery`, `IntegrationJob`, `IntegrationJobEvent`, `AuditLog`.
 
+No MySQL, as **tabelas físicas** usam português (`usuarios`, `pedidos`, `pedidos_itens`, `atividades`, `execucoes`, `ocorrencias`, `entregas`, `remessas_programadas`, `setores`, `regras_produto_setor`, `mapeamentos_categoria_setor`, `jobs_integracao`, `eventos_job_integracao`, `logs_auditoria`, `usuarios_perfis`, `usuarios_setores`, `motivos_ocorrencia`), via `@@map`. Detalhes em `docs/banco-de-dados.md`.
+
 Separação de conceitos:
 
 - **Order/OrderItem** = dados comerciais importados (snapshot do legado).

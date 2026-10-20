@@ -1,6 +1,6 @@
 # Banco de dados do 3E Operações
 
-Documento para inspeção e manutenção do banco: **qual banco é qual**, **tabelas**, **relacionamentos**, **nomenclatura**, **migrations/seed** e **como abrir no DBeaver**. Nenhuma credencial aparece aqui.
+Documento para inspeção e manutenção do banco: **qual banco é qual**, **como o fluxo funciona**, **por que cada tabela existe**, **relacionamentos**, **nomenclatura**, **migrations/seed** e **como abrir no DBeaver**. Nenhuma credencial aparece aqui.
 
 ---
 
@@ -9,9 +9,9 @@ Documento para inspeção e manutenção do banco: **qual banco é qual**, **tab
 | Banco | Onde | Dono | Escrita | Conteúdo |
 | --- | --- | --- | --- | --- |
 | **`topgerente`** | MySQL do Top Gerente (RDS AWS em dev; servidor da 3E em produção) | ERP legado | **Nenhuma** (somente `SELECT`) | Pedidos comerciais (`orcamento`, `orcamento_itens`), clientes, vendedores, catálogo |
-| **`3e_operacoes`** | MySQL do app (RDS AWS em dev/homologação; Railway em produção) | 3E Operações | **Somente o app** | Snapshot dos pedidos + toda a operação (atividades, execuções, ocorrências, entregas, remessas, usuários, auditoria) |
+| **`3e_operacoes`** | MySQL do app (RDS AWS em dev; Railway em produção) | 3E Operações | **Somente o app** | Snapshot dos pedidos + toda a operação (atividades, execuções, ocorrências, entregas, remessas, usuários, auditoria) |
 
-- O **Top Gerente é fonte oficial do comercial** e **nunca** é alterado pelo app.
+- O **Top Gerente é a fonte oficial do comercial** e **nunca** é alterado pelo app.
 - A leitura do legado é feita pelo **conector local** (`connector-local/`), com SQL parametrizado e usuário `SELECT`, atrás de Cloudflare Tunnel/Access.
 - O app **não** acessa o MySQL do legado diretamente; recebe os dados por callback autenticado.
 
@@ -43,14 +43,14 @@ npm run prisma:seed    # setores, motivos, usuários e regras produto→setor
 npm run dev            # app em http://localhost:3000
 ```
 
-> O projeto **não depende do Docker** para rodar: qualquer MySQL 8 com a `DATABASE_URL` correta funciona. O Docker é apenas o caminho mais simples no Windows.
+> O projeto **não depende do Docker**: qualquer MySQL 8 com a `DATABASE_URL` correta funciona. O Docker é só o caminho mais simples no Windows.
 
 ---
 
 ## 3. Banco do ambiente hospedado
 
-- **Aplicação**: Railway (serviço `3e-operacoes`), variável `DATABASE_URL` apontando para o MySQL do app.
-- **Banco do app**: schema **`3e_operacoes`** (na AWS RDS durante o desenvolvimento; no Railway/MySQL em produção).
+- **Aplicação**: Railway (serviço `3e-operacoes`), `DATABASE_URL` no MySQL do app.
+- **Banco do app**: schema **`3e_operacoes`** (AWS RDS em dev; Railway/MySQL em produção).
 - **Legado**: schema **`topgerente`** (AWS em dev; Top Gerente real em produção), somente leitura.
 - **Credenciais**: apenas em variáveis de ambiente/cofre. Nunca no Git.
 
@@ -60,78 +60,166 @@ Variáveis do conector (sem valores): `TOPGERENTE_HOST`, `TOPGERENTE_PORT`, `TOP
 
 ---
 
-## 4. Tabelas (schema `3e_operacoes`)
+## 4. Como o banco funciona (fluxo)
 
-Fonte da verdade: `prisma/schema.prisma`. Modelo conceitual: `docs/modelo-dados/mer.md`; DER: `docs/modelo-dados/der.html` / `der.mmd`.
+O banco do app é um **registro operacional** construído em camadas. O fluxo real é:
 
-### 4.1 Acesso e organização
+### 4.1 Importação (comercial → app)
 
-| Tabela | Para que serve | Relacionamentos |
-| --- | --- | --- |
-| `User` | Usuários do app (login, status) | 1:N `UserRole`, 1:N `UserSector`, 1:N `Execution`, `Occurrence`, `Delivery` |
-| `UserRole` | Perfis do usuário (N:N lógico) | PK (`userId`, `role`) |
-| `Sector` | Setores: Corte e Dobra, Telhas, Revenda | 1:N `UserSector`, `CategorySectorMapping`, `ProductSectorRule`, `Activity` |
-| `UserSector` | Usuário ↔ setor (N:N) | PK (`userId`, `sectorId`) |
-| `CategorySectorMapping` | De/para categoria do legado → setor | N:1 `Sector`; UK `legacyCategory` |
-| `ProductSectorRule` | **Sugestão** de setor por produto (código/descrição) | N:1 `Sector`; índice (`matchType`, `matchValue`) |
+1. O usuário informa o número do pedido.
+2. O app cria um **job** em `jobs_integracao` (idempotente) e chama o conector.
+3. O conector lê `topgerente.orcamento` + `orcamento_itens` (somente leitura) e devolve o payload.
+4. O app grava (upsert) **`pedidos`** e **`pedidos_itens`**; cada transição vira um **`eventos_job_integracao`**.
+5. Se a nova quantidade solicitada conflitar com o que já foi executado/entregue, registra **`logs_auditoria`** (divergência) — nunca apaga histórico.
 
-### 4.2 Comercial (snapshot do legado)
+### 4.2 Desmembramento (item → setor)
 
-| Tabela | Para que serve | Relacionamentos |
-| --- | --- | --- |
-| `Order` | Pedido importado | 1:N `OrderItem`, 1:N `IntegrationJob`; UK `legacyOrderKey` |
-| `OrderItem` | Item do pedido (código, descrição, unidade, quantidade solicitada, classificação, prazo) | N:1 `Order`; 1:N `Activity`, `Delivery`, `ScheduledDelivery`; UK (`orderId`, `legacyItemKey`) |
+6. O vendedor/gerente escolhe o setor de cada item. Nasce uma **`atividades`** (item × setor) e o item fica `CLASSIFIED`.
+7. A sugestão de setor usa **`regras_produto_setor`** (heurística) e o de/para **`mapeamentos_categoria_setor`**. A decisão final é humana.
+8. O item também pode receber **prazo** (`deadlineAt`) e **remessas programadas** (`remessas_programadas`).
 
-### 4.3 Operação
+### 4.3 Produção e ocorrências
 
-| Tabela | Para que serve | Relacionamentos |
-| --- | --- | --- |
-| `Activity` | **Unidade operacional** (item × setor), base da fila | N:1 `OrderItem`, `Sector`; 1:N `Execution`, `Occurrence`; UK (`orderItemId`, `sectorId`) |
-| `Execution` | Produção (Corte/Telhas) ou separação (Revenda) | N:1 `Activity`, `User` |
-| `Occurrence` | Perda, refugo, indisponibilidade, pausa, parada, defeito | N:1 `Activity`, `User`, `MotivoOcorrencia` (opcional) |
-| `MotivoOcorrencia` | Lista fechada de motivos por tipo | 1:N `Occurrence`; UK (`tipo`, `codigo`) |
-| `Delivery` | Entrega **realizada** (total/parcial) e exceção gerencial | N:1 `OrderItem`, `User` (registrou/autorizou) |
-| `ScheduledDelivery` | **Remessa** (entrega prevista): número, data, confirmação | N:1 `OrderItem`; UK (`orderItemId`, `remessa`) |
+9. O operador vê a fila pelas **`atividades`** dos seus setores.
+10. Cada produção/separação vira uma **`execucoes`** (quantidade, usuário, data).
+11. Perda/refugo/indisponibilidade/pausa/parada viram **`ocorrencias`**, com **`motivos_ocorrencia`** quando exigido.
+12. Perda/refugo **não** reduzem o saldo pendente; o item continua devendo quantidade conforme.
 
-### 4.4 Integração e auditoria
+### 4.4 Entrega
 
-| Tabela | Para que serve | Relacionamentos |
-| --- | --- | --- |
-| `IntegrationJob` | Job on-demand de importação/atualização | N:1 `Order` (opcional); UK `idempotencyKey`; 1:N `IntegrationJobEvent` |
-| `IntegrationJobEvent` | Trilha do job (despacho, retorno, erro) | N:1 `IntegrationJob` |
-| `AuditLog` | Auditoria de ações sensíveis (exceções, mapeamento, prazos) | **Referência lógica** (`userId`, `entityId` sem FK) |
+13. A **remessa** (`remessas_programadas`) é a **previsão** de entrega (número + data + confirmação). Não altera saldo.
+14. A **`entregas`** é a entrega **realizada** (quantidade, disponível antes, exceção gerencial). É ela que reduz o disponível.
+15. Entrega acima do disponível fica bloqueada; o gerente pode autorizar com motivo, e isso vai para **`logs_auditoria`**.
 
-> **`ScheduledDelivery` ≠ `Delivery`**: a remessa é previsão e **não** altera o saldo; a baixa ocorre na entrega realizada. A soma das remessas não é usada para calcular disponível.
+### 4.5 Leitura gerencial e acesso
+
+16. Indicadores e alertas são **consultas** sobre `atividades`, `execucoes`, `entregas` e prazos (sem tabela de “dashboard”).
+17. **`usuarios`**, **`usuarios_perfis`** e **`usuarios_setores`** controlam quem entra e em quais setores atua.
+18. **`logs_auditoria`** registra ações sensíveis (exceções, mapeamentos, prazos, divergências).
 
 ---
 
-## 5. Nomenclatura adotada
+## 5. Por que cada entidade existe
 
-- **Schema/Prisma/MySQL**: **inglês** (`User`, `Order`, `OrderItem`, `Activity`…), padrão do ecossistema Prisma e já usado em todas as migrations e no código.
-- **Interface, documentos e MER**: **português** (Pedido, Item, Atividade, Remessa…), para alinhar ao vocabulário do cliente.
-- O MER faz o de/para (`USUARIO` ↔ `User`), então as duas visões convivem sem renomear tabelas.
-- **Não foi feita renomeação estrutural**: renomear tabelas exigiria migration destrutiva e quebraria consultas, Prisma e o ambiente hospedado. A padronização escolhida é a **documentação bilíngue** com identificadores técnicos consistentes em inglês.
+| Tabela física | Modelo Prisma | Por que existe |
+| --- | --- | --- |
+| `usuarios` | `User` | Autenticação, status e vínculo com execuções/entregas |
+| `usuarios_perfis` | `UserRole` | Um usuário pode ter mais de um perfil (N:N com `RoleCode`) |
+| `setores` | `Sector` | Os três setores operacionais e a fila de trabalho |
+| `usuarios_setores` | `UserSector` | Operador pode atuar em vários setores (N:N) |
+| `mapeamentos_categoria_setor` | `CategorySectorMapping` | De/para categoria do legado → setor (configurável e auditável) |
+| `regras_produto_setor` | `ProductSectorRule` | Sugestão de setor pelo produto (heurística, não decide sozinha) |
+| `pedidos` | `Order` | Snapshot do cabeçalho comercial importado do Top Gerente |
+| `pedidos_itens` | `OrderItem` | Snapshot de cada linha comercial (produto, unidade, quantidade, prazo, classificação) |
+| `atividades` | `Activity` | **Unidade operacional** (item × setor); é o que vai para a fila |
+| `execucoes` | `Execution` | Produção (Corte/Telhas) ou separação (Revenda) |
+| `ocorrencias` | `Occurrence` | Perda, refugo, indisponibilidade, pausa, parada, defeito |
+| `motivos_ocorrencia` | `MotivoOcorrencia` | Lista fechada de motivos por tipo |
+| `entregas` | `Delivery` | Entrega **realizada** (total/parcial) e exceção gerencial |
+| `remessas_programadas` | `ScheduledDelivery` | Entrega **prevista** (remessa) com data e confirmação |
+| `jobs_integracao` | `IntegrationJob` | Controle do job on-demand (idempotência, retry, erro) |
+| `eventos_job_integracao` | `IntegrationJobEvent` | Trilha do job (despacho, retorno, falha) |
+| `logs_auditoria` | `AuditLog` | Auditoria de ações sensíveis (referências lógicas, sem FK) |
+
+> **`remessas_programadas` ≠ `entregas`**: a primeira é previsão; a segunda é a baixa real. A soma das remessas não calcula o disponível.
 
 ---
 
-## 6. Migrations e seed
+## 6. Relacionamentos (nomes físicos)
+
+```mermaid
+erDiagram
+    usuarios ||--|{ usuarios_perfis : possui
+    usuarios ||--o{ usuarios_setores : atua
+    setores ||--o{ usuarios_setores : agrupa
+    setores ||--o{ mapeamentos_categoria_setor : direciona
+    setores ||--o{ regras_produto_setor : sugere
+    pedidos ||--|{ pedidos_itens : contem
+    pedidos_itens ||--o{ atividades : origina
+    setores ||--o{ atividades : executa
+    atividades ||--o{ execucoes : registra
+    atividades ||--o{ ocorrencias : sofre
+    motivos_ocorrencia ||--o{ ocorrencias : justifica
+    pedidos_itens ||--o{ entregas : entrega
+    pedidos_itens ||--o{ remessas_programadas : programa
+    usuarios ||--o{ execucoes : realiza
+    usuarios ||--o{ ocorrencias : reporta
+    usuarios ||--o{ entregas : registra_ou_autoriza
+    pedidos ||--o{ jobs_integracao : sincroniza
+    jobs_integracao ||--|{ eventos_job_integracao : registra
+```
+
+Chaves de negócio (unicidade):
+
+- `pedidos.legacyOrderKey`
+- `pedidos_itens (orderId, legacyItemKey)`
+- `atividades (orderItemId, sectorId)`
+- `remessas_programadas (orderItemId, remessa)`
+- `mapeamentos_categoria_setor.legacyCategory`
+- `motivos_ocorrencia (tipo, codigo)`
+- `jobs_integracao.idempotencyKey`
+
+---
+
+## 7. Nomenclatura adotada (padronizada em português)
+
+| Camada | Padrão | Exemplo |
+| --- | --- | --- |
+| **Tabelas físicas (MySQL)** | português, `snake_case`, plural | `pedidos`, `pedidos_itens`, `remessas_programadas` |
+| **Constraints/índices** | derivados do nome físico | `pedidos_itens_orderId_fkey` |
+| **Modelos Prisma (código)** | inglês (mantidos) | `model Order` |
+| **Mapeamento** | `@@map("pedidos")` | o código continua `prisma.order.findMany()` |
+| **Colunas** | inglês (identificadores técnicos) | `legacyOrderKey`, `scheduledAt` |
+| **UI, MER e documentos** | português | “Pedido”, “Remessa”, “Atividade” |
+
+**Por que os modelos e colunas continuam em inglês?** Para não quebrar todo o código de domínio, testes, APIs e o client Prisma. A padronização exigida foi aplicada no **nome das tabelas** (o que aparece no DBeaver), com `@@map`; o de/para está na tabela abaixo. Uma tradução das colunas seria uma segunda fase, com `@map` em cada campo e migration de `RENAME COLUMN` — não foi feita para evitar risco desnecessário.
+
+### De/para (antes → depois)
+
+| Antes | Depois |
+| --- | --- |
+| `User` | `usuarios` |
+| `UserRole` | `usuarios_perfis` |
+| `Sector` | `setores` |
+| `UserSector` | `usuarios_setores` |
+| `CategorySectorMapping` | `mapeamentos_categoria_setor` |
+| `ProductSectorRule` | `regras_produto_setor` |
+| `Order` | `pedidos` |
+| `OrderItem` | `pedidos_itens` |
+| `Activity` | `atividades` |
+| `Execution` | `execucoes` |
+| `Occurrence` | `ocorrencias` |
+| `MotivoOcorrencia` | `motivos_ocorrencia` |
+| `Delivery` | `entregas` |
+| `ScheduledDelivery` | `remessas_programadas` |
+| `IntegrationJob` | `jobs_integracao` |
+| `IntegrationJobEvent` | `eventos_job_integracao` |
+| `AuditLog` | `logs_auditoria` |
+
+A migration `20261020213000_padroniza_tabelas_portugues` usa **`RENAME TABLE`** (preserva dados, índices e FKs) e a `20261020213500_padroniza_constraints_portugues` normaliza os nomes de FKs/índices. Nenhum dado foi recriado ou apagado.
+
+---
+
+## 8. Migrations e seed
 
 | Migration | Conteúdo |
 | --- | --- |
-| `20261007000000_init` | Schema inicial (usuários, setores, pedidos, atividades, execuções, ocorrências, entregas, jobs, auditoria) |
+| `20261007000000_init` | Schema inicial |
 | `20261015193341_alertas_remessas_regras` | `ProductSectorRule` e `ScheduledDelivery` |
+| `20261020213000_padroniza_tabelas_portugues` | `RENAME TABLE` para os nomes em português |
+| `20261020213500_padroniza_constraints_portugues` | Normaliza nomes de FKs e índices |
 
 ```powershell
 npm run prisma:migrate   # desenvolvimento (cria/aplica)
 npm run prisma:deploy    # ambientes existentes (aplica sem recriar)
-npm run prisma:seed      # idempotente: setores, motivos, usuários demo e 14 regras produto→setor
+npm run prisma:seed      # idempotente: setores, motivos, usuários demo e 14 regras
 ```
 
-O seed cria os setores, 9 motivos sugeridos, usuários de demonstração e as regras de sugestão. É seguro rodar mais de uma vez (upsert).
+O seed cria setores, 9 motivos sugeridos, usuários de demonstração e as regras de sugestão. É seguro rodar mais de uma vez (upsert).
 
 ---
 
-## 7. Como inspecionar no DBeaver (banco local)
+## 9. Como inspecionar no DBeaver (banco local)
 
 1. Suba o banco: `npm run db:up`.
 2. No DBeaver: **Nova conexão → MySQL**.
@@ -141,52 +229,61 @@ O seed cria os setores, 9 motivos sugeridos, usuários de demonstração e as re
    - **Database**: `3e_operacoes`
    - **Username**: `app`
    - **Password**: `app`
-4. Em **Driver properties**, se necessário, `allowPublicKeyRetrieval=true` e `useSSL=false` (MySQL 8 local).
+4. Em **Driver properties**, se necessário, `allowPublicKeyRetrieval=true` e `useSSL=false`.
 5. **Test Connection** → **Finish**.
-6. Verifique as tabelas em `3e_operacoes` → `Tables`. Exemplos de consulta:
+6. Em `3e_operacoes` → `Tables`, você verá as tabelas em português: `usuarios`, `pedidos`, `pedidos_itens`, `atividades`, `execucoes`, `ocorrencias`, `entregas`, `remessas_programadas`, etc.
+
+Consultas úteis:
 
 ```sql
--- Pedidos importados e itens
-SELECT o.legacyNumber, o.customerName, COUNT(i.id) AS itens
-FROM `Order` o LEFT JOIN OrderItem i ON i.orderId = o.id
-GROUP BY o.id ORDER BY o.legacyNumber;
+-- Pedidos importados e quantidade de itens
+SELECT p.legacyNumber, p.customerName, COUNT(i.id) AS itens
+FROM pedidos p LEFT JOIN pedidos_itens i ON i.orderId = p.id
+GROUP BY p.id ORDER BY p.legacyNumber;
 
 -- Saldo por item (pendente = solicitado - executado)
-SELECT o.legacyNumber, i.description, i.requestedQuantity,
+SELECT p.legacyNumber, i.description, i.requestedQuantity,
        COALESCE(SUM(e.quantity), 0) AS executado,
        i.requestedQuantity - COALESCE(SUM(e.quantity), 0) AS pendente
-FROM OrderItem i
-JOIN `Order` o ON o.id = i.orderId
-LEFT JOIN Activity a ON a.orderItemId = i.id
-LEFT JOIN Execution e ON e.activityId = a.id
-GROUP BY i.id ORDER BY o.legacyNumber;
+FROM pedidos_itens i
+JOIN pedidos p ON p.id = i.orderId
+LEFT JOIN atividades a ON a.orderItemId = i.id
+LEFT JOIN execucoes e ON e.activityId = a.id
+GROUP BY i.id ORDER BY p.legacyNumber;
 
 -- Remessas programadas
-SELECT o.legacyNumber, sd.remessa, sd.scheduledAt, sd.confirmedAt
-FROM ScheduledDelivery sd
-JOIN OrderItem i ON i.id = sd.orderItemId
-JOIN `Order` o ON o.id = i.orderId
-ORDER BY o.legacyNumber, sd.remessa;
+SELECT p.legacyNumber, r.remessa, r.scheduledAt, r.confirmedAt
+FROM remessas_programadas r
+JOIN pedidos_itens i ON i.id = r.orderItemId
+JOIN pedidos p ON p.id = i.orderId
+ORDER BY p.legacyNumber, r.remessa;
+
+-- Entregas realizadas
+SELECT p.legacyNumber, i.description, d.quantity, d.occurredAt
+FROM entregas d
+JOIN pedidos_itens i ON i.id = d.orderItemId
+JOIN pedidos p ON p.id = i.orderId
+ORDER BY d.occurredAt DESC;
 ```
 
-> Para inspecionar o **banco hospedado**, use a `DATABASE_URL` do ambiente (nunca no Git) e trate como **produção**: apenas leitura, sem `UPDATE`/`DELETE` manuais.
+> Para o **banco hospedado**, use a `DATABASE_URL` do ambiente (nunca no Git) e trate como **produção**: apenas leitura, sem `UPDATE`/`DELETE` manuais.
 
 ---
 
-## 8. O que vem do Top Gerente × o que é operacional
+## 10. O que vem do Top Gerente × o que é operacional
 
 | Origem | Dados |
 | --- | --- |
 | **Top Gerente (importado)** | Número do pedido, cliente, vendedor, código/descrição do produto, unidade e quantidade solicitada |
 | **3E Operações (operacional)** | Classificação por setor, prazos, execuções, ocorrências, entregas, remessas, usuários/perfis, auditoria e jobs |
 
-A ressincronização atualiza apenas o **comercial** e **nunca apaga** execução, ocorrência, entrega ou remessa. Se a nova quantidade solicitada ficar abaixo do executado/entregue, o app registra **divergência** em `AuditLog`/evento do job.
+A ressincronização atualiza apenas o **comercial** e **nunca apaga** execução, ocorrência, entrega ou remessa. Se a nova quantidade solicitada ficar abaixo do executado/entregue, o app registra **divergência** em `logs_auditoria`/evento do job.
 
 ---
 
-## 9. Segurança e cuidados
+## 11. Segurança e cuidados
 
-- Nunca apague/recrie o banco para "padronizar": use migrations.
+- Nunca apague/recrie o banco para “padronizar”: use migrations.
 - Nunca rode `prisma migrate reset` contra o banco hospedado.
 - O usuário do legado deve ser **somente `SELECT`**, restrito às tabelas mapeadas.
 - Não logar senha, token, CPF completo ou payload comercial desnecessário.
@@ -194,25 +291,30 @@ A ressincronização atualiza apenas o **comercial** e **nunca apaga** execuçã
 
 ---
 
-## 10. Estado observado no ambiente de desenvolvimento (2026-10-20)
+## 12. Estado observado no ambiente de desenvolvimento (2026-10-20)
 
 Contagem de registros (ambiente AWS de desenvolvimento, sem dados pessoais):
 
 | Tabela | Registros |
 | --- | --- |
-| `User` | 7 |
-| `Sector` | 3 |
-| `ProductSectorRule` | 14 |
-| `Order` | 7 |
-| `OrderItem` | 60 |
-| `Activity` | 12 |
-| `Execution` | 10 |
-| `Occurrence` | 9 |
-| `MotivoOcorrencia` | 9 |
-| `Delivery` | 6 |
-| `ScheduledDelivery` | 1 |
-| `IntegrationJob` | 7 |
-| `IntegrationJobEvent` | 52 |
-| `AuditLog` | 1 |
+| `usuarios` | 7 |
+| `usuarios_perfis` | 7 |
+| `setores` | 3 |
+| `usuarios_setores` | 6 |
+| `mapeamentos_categoria_setor` | 1 |
+| `regras_produto_setor` | 14 |
+| `pedidos` | 7 |
+| `pedidos_itens` | 60 |
+| `atividades` | 12 |
+| `execucoes` | 12 |
+| `ocorrencias` | 11 |
+| `motivos_ocorrencia` | 9 |
+| `entregas` | 6 |
+| `remessas_programadas` | 1 |
+| `jobs_integracao` | 7 |
+| `eventos_job_integracao` | 58 |
+| `logs_auditoria` | 1 |
 
 Pedidos reais usados na validação: `70435`, `82249`, `82250`, `82261`, `82262`, `82268`, `82269`.
+
+> O schema Prisma é a fonte da verdade: `prisma/schema.prisma`. O DER conceitual está em `docs/modelo-dados/der.html` e `der.mmd`.

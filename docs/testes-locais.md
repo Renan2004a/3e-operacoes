@@ -83,23 +83,23 @@ Consultas executadas no schema do app (`3e_operacoes`) após os testes:
 
 | Tabela | Registros |
 | --- | --- |
-| `User` | 7 |
-| `UserRole` | 7 |
-| `Sector` | 3 |
-| `UserSector` | 6 |
-| `CategorySectorMapping` | 1 |
-| `ProductSectorRule` | 14 |
-| `Order` | 7 |
-| `OrderItem` | 60 |
-| `Activity` | 12 |
-| `Execution` | 10 |
-| `Occurrence` | 9 |
-| `MotivoOcorrencia` | 9 |
-| `Delivery` | 6 |
-| `ScheduledDelivery` | 1 |
-| `IntegrationJob` | 7 |
-| `IntegrationJobEvent` | 52 |
-| `AuditLog` | 1 |
+| `usuarios` | 7 |
+| `usuarios_perfis` | 7 |
+| `setores` | 3 |
+| `usuarios_setores` | 6 |
+| `mapeamentos_categoria_setor` | 1 |
+| `regras_produto_setor` | 14 |
+| `pedidos` | 7 |
+| `pedidos_itens` | 60 |
+| `atividades` | 12 |
+| `execucoes` | 12 |
+| `ocorrencias` | 11 |
+| `motivos_ocorrencia` | 9 |
+| `entregas` | 6 |
+| `remessas_programadas` | 1 |
+| `jobs_integracao` | 7 |
+| `eventos_job_integracao` | 58 |
+| `logs_auditoria` | 1 |
 
 - Pedidos reais: `70435`, `82249`, `82250`, `82261`, `82262`, `82268`, `82269`.
 - As operações feitas na interface (desmembrar, remessa, prazo, inativação) correspondem a registros persistidos no banco correto (`3e_operacoes`), não no legado.

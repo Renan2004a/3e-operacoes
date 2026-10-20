@@ -134,25 +134,27 @@
 
 ## 9. Mapeamento para o schema Prisma atual
 
-| MER (conceitual) | Prisma |
-|---|---|
-| USUARIO | `User` |
-| USUARIO_PERFIL | `UserRole` (enum `RoleCode`) |
-| SETOR | `Sector` (enum `SectorCode`) |
-| USUARIO_SETOR | `UserSector` |
-| MAPEAMENTO_CATEGORIA_SETOR | `CategorySectorMapping` |
-| REGRA_PRODUTO_SETOR | `ProductSectorRule` |
-| PEDIDO | `Order` |
-| ITEM_PEDIDO | `OrderItem` |
-| ATIVIDADE | `Activity` (enum `ActivityStatus`) |
-| EXECUCAO | `Execution` |
-| OCORRENCIA | `Occurrence` |
-| MOTIVO_OCORRENCIA | `MotivoOcorrencia` |
-| ENTREGA | `Delivery` |
-| REMESSA_PROGRAMADA | `ScheduledDelivery` |
-| JOB_INTEGRACAO | `IntegrationJob` |
-| EVENTO_JOB_INTEGRACAO | `IntegrationJobEvent` |
-| LOG_AUDITORIA | `AuditLog` (referências lógicas, sem FK) |
+| MER (conceitual) | Prisma (código) | Tabela física (MySQL) |
+|---|---|---|
+| USUARIO | `User` | `usuarios` |
+| USUARIO_PERFIL | `UserRole` (enum `RoleCode`) | `usuarios_perfis` |
+| SETOR | `Sector` (enum `SectorCode`) | `setores` |
+| USUARIO_SETOR | `UserSector` | `usuarios_setores` |
+| MAPEAMENTO_CATEGORIA_SETOR | `CategorySectorMapping` | `mapeamentos_categoria_setor` |
+| REGRA_PRODUTO_SETOR | `ProductSectorRule` | `regras_produto_setor` |
+| PEDIDO | `Order` | `pedidos` |
+| ITEM_PEDIDO | `OrderItem` | `pedidos_itens` |
+| ATIVIDADE | `Activity` (enum `ActivityStatus`) | `atividades` |
+| EXECUCAO | `Execution` | `execucoes` |
+| OCORRENCIA | `Occurrence` | `ocorrencias` |
+| MOTIVO_OCORRENCIA | `MotivoOcorrencia` | `motivos_ocorrencia` |
+| ENTREGA | `Delivery` | `entregas` |
+| REMESSA_PROGRAMADA | `ScheduledDelivery` | `remessas_programadas` |
+| JOB_INTEGRACAO | `IntegrationJob` | `jobs_integracao` |
+| EVENTO_JOB_INTEGRACAO | `IntegrationJobEvent` | `eventos_job_integracao` |
+| LOG_AUDITORIA | `AuditLog` (referências lógicas, sem FK) | `logs_auditoria` |
+
+As **tabelas físicas** estão em português (`snake_case`, plural), via `@@map` no Prisma. Os modelos do código continuam em inglês para não quebrar domínio, APIs e testes. O fluxo e o porquê de cada entidade estão em `docs/banco-de-dados.md`.
 
 O DER está em `docs/modelo-dados/der.mmd` (Mermaid) e `der.html`
 (visualizador). O modelo lógico executável é `prisma/schema.prisma`.

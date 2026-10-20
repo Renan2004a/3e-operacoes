@@ -68,6 +68,8 @@ model User {
   occurrences        Occurrence[]
   deliveriesRecorded Delivery[] @relation("DeliveryRecordedBy")
   deliveriesApproved Delivery[] @relation("DeliveryAuthorizedBy")
+
+  @@map("usuarios")
 }
 
 model UserRole {
@@ -75,6 +77,8 @@ model UserRole {
   role   RoleCode
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@id([userId, role])
+
+  @@map("usuarios_perfis")
 }
 
 model Sector {
@@ -88,6 +92,8 @@ model Sector {
   categoryMappings CategorySectorMapping[]
   productRules ProductSectorRule[]
   activities Activity[]
+
+  @@map("setores")
 }
 
 model UserSector {
@@ -96,6 +102,8 @@ model UserSector {
   user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   sector   Sector @relation(fields: [sectorId], references: [id], onDelete: Cascade)
   @@id([userId, sectorId])
+
+  @@map("usuarios_setores")
 }
 
 model CategorySectorMapping {
@@ -107,6 +115,8 @@ model CategorySectorMapping {
   updatedAt      DateTime      @updatedAt
   sector         Sector        @relation(fields: [sectorId], references: [id])
   @@unique([legacyCategory])
+
+  @@map("mapeamentos_categoria_setor")
 }
 
 /// Regra de sugestão de setor a partir do produto (código/descrição) do legado.
@@ -121,6 +131,8 @@ model ProductSectorRule {
   updatedAt  DateTime @updatedAt
   sector     Sector   @relation(fields: [sectorId], references: [id])
   @@index([matchType, matchValue])
+
+  @@map("regras_produto_setor")
 }
 
 model Order {
@@ -137,6 +149,8 @@ model Order {
   items          OrderItem[]
   integrationJobs IntegrationJob[]
   @@index([legacyNumber])
+
+  @@map("pedidos")
 }
 
 model OrderItem {
@@ -157,6 +171,8 @@ model OrderItem {
   deliveries           Delivery[]
   scheduledDeliveries  ScheduledDelivery[]
   @@unique([orderId, legacyItemKey])
+
+  @@map("pedidos_itens")
 }
 
 model Activity {
@@ -173,6 +189,8 @@ model Activity {
   executions  Execution[]
   occurrences Occurrence[]
   @@unique([orderItemId, sectorId])
+
+  @@map("atividades")
 }
 
 model Execution {
@@ -184,6 +202,8 @@ model Execution {
   activity    Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
   user        User     @relation(fields: [userId], references: [id])
   @@index([activityId, occurredAt])
+
+  @@map("execucoes")
 }
 
 model Occurrence {
@@ -201,6 +221,8 @@ model Occurrence {
   motivo      MotivoOcorrencia? @relation(fields: [motivoId], references: [id])
   @@index([activityId, occurredAt])
   @@index([motivoId])
+
+  @@map("ocorrencias")
 }
 
 model MotivoOcorrencia {
@@ -213,6 +235,8 @@ model MotivoOcorrencia {
   updatedAt   DateTime @updatedAt
   occurrences Occurrence[]
   @@unique([tipo, codigo])
+
+  @@map("motivos_ocorrencia")
 }
 
 model Delivery {
@@ -230,6 +254,8 @@ model Delivery {
   authorizedBy          User?     @relation("DeliveryAuthorizedBy", fields: [authorizedByUserId], references: [id])
   @@index([orderItemId, occurredAt])
   @@index([authorizedByUserId])
+
+  @@map("entregas")
 }
 
 /// Entrega programada (remessa) de um item: data prevista e confirmação.
@@ -245,6 +271,8 @@ model ScheduledDelivery {
   orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
   @@unique([orderItemId, remessa])
   @@index([orderItemId, scheduledAt])
+
+  @@map("remessas_programadas")
 }
 
 model IntegrationJob {
@@ -261,6 +289,8 @@ model IntegrationJob {
   completedAt     DateTime?
   order           Order?               @relation(fields: [orderId], references: [id])
   events          IntegrationJobEvent[]
+
+  @@map("jobs_integracao")
 }
 
 model IntegrationJobEvent {
@@ -271,6 +301,8 @@ model IntegrationJobEvent {
   createdAt DateTime @default(now())
   job       IntegrationJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
   @@index([jobId, createdAt])
+
+  @@map("eventos_job_integracao")
 }
 
 model AuditLog {
@@ -285,4 +317,6 @@ model AuditLog {
   correlationId String?
   createdAt   DateTime @default(now())
   @@index([entityType, entityId, createdAt])
+
+  @@map("logs_auditoria")
 }

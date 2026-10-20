@@ -35,7 +35,7 @@
 | 2.4 | Indicação de conclusão do desmembramento | Só um badge discreto | `Alert` "Item desmembrado" + badge "Desmembrado" + mensagem "Item desmembrado com sucesso." | ✅ |
 | 2.5 | Barra de progresso com cores inconsistentes | `<progress>` nativo (cor do navegador) no painel e na execução; sem rótulo textual | Componente único `Progress` com `role="progressbar"`, percentual textual e cor por **estado real** (andamento/concluído/atenção/falha) | ✅ |
 | 2.6 | Impressão gera página extra em branco | `min-h-screen` do shell + `main` com padding na mídia de impressão | `@media print` zera `min-height`/padding do shell, remove borda/sombra e evita quebra no meio; PDF validado com **1 página** | ✅ |
-| 2.7 | Banco e nomenclatura | Não havia documento consolidado de banco local/hospedado nem instruções de DBeaver | `docs/banco-de-dados.md` + MER/DER atualizados; nomenclatura **inglês** no schema (Prisma/MySQL) e português na UI/docs, decisão registrada | ✅ |
+| 2.7 | Banco e nomenclatura | Não havia documento consolidado de banco local/hospedado nem instruções de DBeaver | `docs/banco-de-dados.md` + MER/DER atualizados; **tabelas físicas em português** (`@@map`), modelos Prisma em inglês (código) e UI/docs em português; migration `RENAME TABLE` sem perda de dados | ✅ |
 | 2.8 | Integração | Nenhuma falha funcional encontrada; fluxo idempotente e somente leitura | Revisado; sem alteração de contrato. Limitação: teste real depende do conector local | ✅ (ver limitações) |
 
 ---

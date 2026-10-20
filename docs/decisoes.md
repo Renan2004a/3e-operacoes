@@ -63,6 +63,13 @@ A decisão mais recente substitui a formulação anterior que descontava perda/r
 - Logs do Railway no início; observabilidade externa somente quando houver necessidade concreta.
 - Persistir timestamps em UTC; apresentar ao usuário em `America/Sao_Paulo`.
 
+## Nomenclatura do banco
+
+- As **tabelas físicas** do banco do app usam **português**, `snake_case` e plural: `usuarios`, `pedidos`, `pedidos_itens`, `atividades`, `execucoes`, `ocorrencias`, `entregas`, `remessas_programadas`, `setores`, `regras_produto_setor`, `mapeamentos_categoria_setor`, `jobs_integracao`, `eventos_job_integracao`, `logs_auditoria`, `usuarios_perfis`, `usuarios_setores`, `motivos_ocorrencia`.
+- Os **modelos do código (Prisma)** continuam em inglês (`User`, `Order`, `Activity`…), mapeados com `@@map`, para não quebrar domínio, APIs e testes.
+- As **colunas** continuam em inglês (identificadores técnicos). Traduzi-las exigiria `@map` em cada campo e uma migration de `RENAME COLUMN` (fase futura).
+- A renomeação usa `RENAME TABLE`, preservando dados, índices e FKs; os nomes de constraints/índices foram normalizados em migration separada.
+
 ## Integração sob demanda
 
 - Não existe polling contínuo no Top Gerente.

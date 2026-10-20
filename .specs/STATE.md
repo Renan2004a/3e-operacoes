@@ -74,13 +74,22 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Date**: 2026-10-15
 - **Status**: active
 
+### AD-005
+
+- **Decision**: As **tabelas físicas** do banco do app passam a usar **português** (`snake_case`, plural), aplicado por `@@map` no Prisma. Os modelos do código continuam em inglês para preservar domínio, APIs e testes. A renomeação usa `RENAME TABLE` + normalização de constraints, sem recriar tabelas nem perder dados.
+- **Reason**: Pedido explícito do cliente/docentes para padronizar a nomenclatura visível no banco (DBeaver) em português, alinhando ao vocabulário do MER e da interface.
+- **Trade-off**: Tabelas em português e colunas/modelos em inglês; a tradução de colunas exigiria `@map` em cada campo e uma nova migration (fase futura). O ambiente hospedado precisa ser implantado junto com a migration.
+- **Scope**: banco, Prisma, migrations, documentação de banco e DER.
+- **Date**: 2026-10-20
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: revisão e correções do feedback dos docentes
-- **Phase / Task**: concluído; próximo: gravar vídeo e validar no ambiente hospedado
-- **Completed**: navegação do vendedor em rota própria; tabelas responsivas (cartões no celular); feedback de ações; ordem do detalhe + “+ remessa”; progresso acessível; impressão com 1 página; docs de banco, mockups, heurísticas e testes locais
+- **Feature**: revisão e correções do feedback dos docentes + padronização do banco em português
+- **Phase / Task**: concluído; próximo: vídeo final e validação hospedada
+- **Completed**: navegação do vendedor em rota própria; tabelas responsivas; feedback; ordem do detalhe + “+ remessa”; progresso acessível; impressão com 1 página; tabelas do banco renomeadas para português (17 tabelas, dados preservados); docs de banco, mockups, heurísticas e testes locais
 - **In-progress** (file:line): nenhum
-- **Next step**: gravar o vídeo completo por perfil e publicar no Railway com smoke test
+- **Next step**: gravar o vídeo final por perfil e publicar no Railway com smoke test
 - **Blockers**: nenhum para desenvolvimento; integração real depende do conector na rede da 3E
 - **Uncommitted files**: (atualizado no commit)
 - **Branch**: main
