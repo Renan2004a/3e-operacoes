@@ -1,5 +1,5 @@
 %% Diagrama de classes restrito às entidades do MER
-%% Fonte: docs/modelo-dados/mer.md
+%% Fonte: docs/modelo-dados/mer.md e prisma/schema.prisma
 classDiagram
     direction LR
 
@@ -37,6 +37,17 @@ classDiagram
         +String categoriaLegado
         +UUID setorId
         +SituacaoMapeamento situacao
+        +DateTime criadoEm
+        +DateTime atualizadoEm
+    }
+
+    class RegraProdutoSetor {
+        +UUID id
+        +TipoCorrespondencia tipoCorrespondencia
+        +String valorCorrespondencia
+        +UUID setorId
+        +int prioridade
+        +bool ativo
         +DateTime criadoEm
         +DateTime atualizadoEm
     }
@@ -119,6 +130,17 @@ classDiagram
         +DateTime ocorridoEm
     }
 
+    class RemessaProgramada {
+        +UUID id
+        +UUID itemPedidoId
+        +int numeroRemessa
+        +DateTime dataPrevista
+        +DateTime confirmadaEm
+        +String observacao
+        +DateTime criadoEm
+        +DateTime atualizadoEm
+    }
+
     class JobIntegracao {
         +UUID id
         +UUID pedidoId
@@ -154,10 +176,17 @@ classDiagram
         +DateTime criadoEm
     }
 
+    class TipoCorrespondencia {
+        <<enumeration>>
+        CONTAINS
+        PREFIX
+    }
+
     Usuario "1" -- "1..*" UsuarioPerfil : possui
     Usuario "1" -- "0..*" UsuarioSetor : atua
     Setor "1" -- "0..*" UsuarioSetor : agrupa
     Setor "1" -- "0..*" MapeamentoCategoriaSetor : direciona
+    Setor "1" -- "0..*" RegraProdutoSetor : sugere
 
     Pedido "1" *-- "1..*" ItemPedido : contem
     Pedido "1" o-- "0..*" JobIntegracao : sincroniza
@@ -172,6 +201,7 @@ classDiagram
     Usuario "1" -- "0..*" Ocorrencia : reporta
 
     ItemPedido "1" *-- "0..*" Entrega : entrega
+    ItemPedido "1" *-- "0..*" RemessaProgramada : programa
     Usuario "1" -- "0..*" Entrega : registra
     Usuario "0..1" -- "0..*" Entrega : autorizaExcecao
 

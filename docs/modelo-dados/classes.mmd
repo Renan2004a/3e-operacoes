@@ -34,6 +34,15 @@ classDiagram
         +inativar() void
     }
 
+    class RegraProdutoSetor {
+        +UUID id
+        +TipoCorrespondencia tipoCorrespondencia
+        +String valorCorrespondencia
+        +int prioridade
+        +bool ativo
+        +corresponde(produto) bool
+    }
+
     class Produto {
         <<readOnly>>
         +UUID id
@@ -97,7 +106,6 @@ classDiagram
         +UUID id
         +Decimal quantidade
         +DateTime ocorridoEm
-        +modalidade() ModalidadeExecucao
     }
 
     class Ocorrencia {
@@ -125,6 +133,17 @@ classDiagram
         +String motivoExcecao
         +DateTime ocorridoEm
         +exigeAutorizacao() bool
+    }
+
+    class RemessaProgramada {
+        +UUID id
+        +int numeroRemessa
+        +DateTime dataPrevista
+        +DateTime confirmadaEm
+        +String observacao
+        +programar() void
+        +confirmar() void
+        +estaConfirmada() bool
     }
 
     class JobIntegracao {
@@ -195,6 +214,11 @@ classDiagram
         ATIVO
         INATIVO
     }
+    class TipoCorrespondencia {
+        <<enumeration>>
+        CONTAINS
+        PREFIX
+    }
     class SituacaoClassificacao {
         <<enumeration>>
         CLASSIFICADO
@@ -208,18 +232,13 @@ classDiagram
         CONCLUIDA
         DIVERGENTE
     }
-    class ModalidadeExecucao {
-        <<enumeration>>
-        PRODUCAO
-        SEPARACAO
-    }
     class TipoOcorrencia {
         <<enumeration>>
         PERDA
         REFUGO
         INDISPONIBILIDADE
+        PAUSA
         PARADA
-        INTERRUPCAO
         DEFEITO
     }
     class SituacaoJob {
@@ -239,6 +258,7 @@ classDiagram
     Usuario "1" -- "0..*" Setor : atua
 
     Setor "1" -- "0..*" MapeamentoCategoriaSetor : define
+    Setor "1" -- "0..*" RegraProdutoSetor : sugere
     Setor "1" o-- "0..*" Atividade : executa
 
     Produto "1" -- "0..*" ItemPedido : refere
@@ -249,6 +269,7 @@ classDiagram
 
     ItemPedido "1" *-- "0..*" Atividade : origina
     ItemPedido "1" *-- "0..*" Entrega : possui
+    ItemPedido "1" *-- "0..*" RemessaProgramada : programa
 
     Atividade "1" *-- "0..*" Execucao : registra
     Atividade "1" *-- "0..*" Ocorrencia : sofre
@@ -258,4 +279,6 @@ classDiagram
 
     note for Produto "Espelho somente-leitura do Top Gerente; o banco do app guarda snapshot em ItemPedido."
     note for Atividade "Unidade operacional: item x setor. Fila de trabalho do setor."
-    note for Execucao "Corte/Telhas = PRODUCAO; Revenda = SEPARACAO."
+    note for Execucao "Corte/Telhas = produção; Revenda = separação (derivado do setor)."
+    note for RemessaProgramada "Previsão de entrega; NÃO altera o saldo. A baixa ocorre em Entrega."
+    note for RegraProdutoSetor "Heurística de sugestão; a classificação final é manual."
