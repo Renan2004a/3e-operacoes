@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { RoleCode } from '@/generated/prisma/client'
 import { TODOS_PERFIS } from '@/modules/usuarios/permissoes'
-import { ApiError, apiGet, apiPost } from '@/shared/http/api-client'
+import { ApiError, apiGet, apiPatch, apiPost } from '@/shared/http/api-client'
 import { Alert } from '@/shared/ui/alert'
 import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
@@ -38,7 +38,11 @@ const ROTULO_PERFIL: Record<RoleCode, string> = {
   TECHNICAL_RESPONSIBLE: 'Responsável Técnico',
 }
 
-/** Administração de usuários: cria com perfis e setores e trata 409/403 (FEP-08). */
+/**
+ * Administração de usuários: cria com perfis e setores, e ativa/inativa com
+ * confirmação (FEP-08). A inativação impede o login (AUTH-12) e é irreversível
+ * apenas no sentido de exigir uma nova ação de ativação.
+ */
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
   const [setores, setSetores] = useState<Setor[]>([])
@@ -53,6 +57,9 @@ export default function UsuariosPage() {
   const [erroForm, setErroForm] = useState<string | null>(null)
   const [sucesso, setSucesso] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
+
+  const [confirmacao, setConfirmacao] = useState<{ usuario: Usuario; ativar: boolean } | null>(null)
+  const [alterandoStatus, setAlterandoStatus] = useState<string | null>(null)
 
   const carregar = useCallback(
     () =>
@@ -95,7 +102,7 @@ export default function UsuariosPage() {
     setEnviando(true)
     try {
       await apiPost('/api/usuarios', { name: nome, email, senha, roles, sectorIds })
-      setSucesso('Usuário criado.')
+      setSucesso('Usuário criado com sucesso.')
       setNome('')
       setEmail('')
       setSenha('')
@@ -108,10 +115,34 @@ export default function UsuariosPage() {
       } else if (error instanceof ApiError && error.status === 403) {
         setErroForm('Sem permissão para gerenciar usuários.')
       } else {
-        setErroForm('Não foi possível criar o usuário. Tente novamente.')
+        setErroForm('Não foi possível criar o usuário. Verifique sua conexão e tente novamente.')
       }
     } finally {
       setEnviando(false)
+    }
+  }
+
+  async function confirmarStatus() {
+    if (!confirmacao) return
+    const { usuario, ativar } = confirmacao
+    const novoStatus = ativar ? 'ACTIVE' : 'INACTIVE'
+
+    setErroForm(null)
+    setSucesso(null)
+    setAlterandoStatus(usuario.id)
+    try {
+      await apiPatch(`/api/usuarios/${usuario.id}`, { status: novoStatus })
+      setSucesso(ativar ? 'Usuário ativado com sucesso.' : 'Usuário inativado com sucesso.')
+      setConfirmacao(null)
+      await carregar()
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 403) {
+        setErroForm('Sem permissão para alterar o status deste usuário.')
+      } else {
+        setErroForm('Não foi possível atualizar o usuário. Tente novamente.')
+      }
+    } finally {
+      setAlterandoStatus(null)
     }
   }
 
@@ -146,7 +177,20 @@ export default function UsuariosPage() {
 
   return (
     <section className="grid gap-4">
-      <PageHead title="Usuários" description="Cadastre usuários e associe perfis e setores." />
+      <PageHead title="Usuários" description="Cadastre usuários, associe perfis e setores e controle o acesso." />
+
+      <div aria-live="polite" className="grid gap-2">
+        {sucesso ? (
+          <Alert variant="success" title="Tudo certo">
+            {sucesso}
+          </Alert>
+        ) : null}
+        {erroForm ? (
+          <Alert variant="error" title="Não foi possível concluir">
+            {erroForm}
+          </Alert>
+        ) : null}
+      </div>
 
       <Card>
         <CardHeader>
@@ -154,18 +198,6 @@ export default function UsuariosPage() {
         </CardHeader>
         <CardContent>
           <form className="grid gap-4" onSubmit={aoEnviar} noValidate>
-            {sucesso ? (
-              <Alert variant="success" title={sucesso}>
-                O usuário foi cadastrado.
-              </Alert>
-            ) : null}
-
-            {erroForm ? (
-              <Alert variant="error" title="Não foi possível criar o usuário">
-                {erroForm}
-              </Alert>
-            ) : null}
-
             <div className="grid gap-4 sm:grid-cols-3">
               <Field label="Nome" required>
                 {(props) => (
@@ -256,7 +288,10 @@ export default function UsuariosPage() {
             <p className="text-sm text-muted">Nenhum usuário cadastrado.</p>
           ) : (
             <div className="overflow-x-auto">
-              <table aria-label="Usuários" className="w-full border-collapse text-left text-sm">
+              <table
+                aria-label="Usuários"
+                className="tabela-responsiva w-full border-collapse text-left text-sm"
+              >
                 <thead>
                   <tr className="border-b border-line text-xs uppercase tracking-wide text-muted">
                     <th scope="col" className="px-3 py-3 font-semibold">
@@ -274,34 +309,71 @@ export default function UsuariosPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {usuarios.map((usuario) => (
-                    <tr
-                      key={usuario.id}
-                      className="border-b border-line last:border-b-0 hover:bg-surface-2"
-                    >
-                      <td className="px-3 py-3">
-                        <p className="font-semibold text-ink">{usuario.name}</p>
-                        <p className="text-muted">{usuario.email}</p>
-                      </td>
-                      <td className="px-3 py-3">
-                        <div className="flex flex-wrap gap-1">
-                          {usuario.roles.map((perfil) => (
-                            <Badge key={perfil} variant="info">
-                              {ROTULO_PERFIL[perfil]}
+                  {usuarios.map((usuario) => {
+                    const ativo = usuario.status === 'ACTIVE'
+                    const emConfirmacao = confirmacao?.usuario.id === usuario.id
+                    return (
+                      <tr
+                        key={usuario.id}
+                        className="border-b border-line last:border-b-0 hover:bg-surface-2"
+                      >
+                        <td data-label="Usuário" className="px-3 py-3">
+                          <p className="font-semibold text-ink">{usuario.name}</p>
+                          <p className="text-muted">{usuario.email}</p>
+                        </td>
+                        <td data-label="Perfil" className="px-3 py-3">
+                          <div className="flex flex-wrap gap-1">
+                            {usuario.roles.map((perfil) => (
+                              <Badge key={perfil} variant="info">
+                                {ROTULO_PERFIL[perfil]}
+                              </Badge>
+                            ))}
+                          </div>
+                        </td>
+                        <td data-label="Setor" className="px-3 py-3 text-muted">
+                          Setores: {usuario.sectorIds.map(nomeDoSetor).join(', ')}
+                        </td>
+                        <td data-label="Status" className="px-3 py-3">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge variant={ativo ? 'success' : 'neutral'}>
+                              {ativo ? 'Ativo' : 'Inativo'}
                             </Badge>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-3 text-muted">
-                        Setores: {usuario.sectorIds.map(nomeDoSetor).join(', ')}
-                      </td>
-                      <td className="px-3 py-3">
-                        <Badge variant={usuario.status === 'ACTIVE' ? 'success' : 'neutral'}>
-                          {usuario.status === 'ACTIVE' ? 'Ativo' : usuario.status}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
+                            {emConfirmacao ? (
+                              <>
+                                <span className="text-sm text-ink">
+                                  Confirmar {confirmacao?.ativar ? 'ativação' : 'inativação'}?
+                                </span>
+                                <Button
+                                  size="sm"
+                                  onClick={() => void confirmarStatus()}
+                                  disabled={alterandoStatus === usuario.id}
+                                  aria-label={`Confirmar ${confirmacao?.ativar ? 'ativação' : 'inativação'} de ${usuario.name}`}
+                                >
+                                  {alterandoStatus === usuario.id ? 'Atualizando…' : 'Confirmar'}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setConfirmacao(null)}
+                                >
+                                  Cancelar
+                                </Button>
+                              </>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setConfirmacao({ usuario, ativar: !ativo })}
+                                aria-label={`${ativo ? 'Inativar' : 'Ativar'} usuário ${usuario.name}`}
+                              >
+                                {ativo ? 'Inativar' : 'Ativar'}
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>

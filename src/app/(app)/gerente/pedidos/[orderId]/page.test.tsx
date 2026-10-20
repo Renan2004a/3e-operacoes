@@ -2,7 +2,7 @@
 import '@testing-library/jest-dom/vitest'
 import type { AnchorHTMLAttributes, ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
 const mocks = vi.hoisted(() => ({
   apiGet: vi.fn(),
@@ -101,11 +101,17 @@ describe('PedidoGerentePage', () => {
     configurarApi()
     render(<PedidoGerentePage />)
 
-    expect(await screen.findByText('Solicitado: 10')).toBeInTheDocument()
-    expect(screen.getByText('Executado: 8')).toBeInTheDocument()
-    expect(screen.getByText('Disponível: 5')).toBeInTheDocument()
-    expect(screen.getByText('Entregue: 3')).toBeInTheDocument()
-    expect(screen.getByText('Pendente: 2')).toBeInTheDocument()
+    const valores = await screen.findByLabelText('Valores do item 1')
+    expect(within(valores).getByText('Solicitado')).toBeInTheDocument()
+    expect(within(valores).getByText('10')).toBeInTheDocument()
+    expect(within(valores).getByText('Executado')).toBeInTheDocument()
+    expect(within(valores).getByText('8')).toBeInTheDocument()
+    expect(within(valores).getByText('Disponível')).toBeInTheDocument()
+    expect(within(valores).getByText('5')).toBeInTheDocument()
+    expect(within(valores).getByText('Entregue')).toBeInTheDocument()
+    expect(within(valores).getByText('3')).toBeInTheDocument()
+    expect(within(valores).getByText('Pendente')).toBeInTheDocument()
+    expect(within(valores).getByText('2')).toBeInTheDocument()
     expect(mocks.apiGet).toHaveBeenCalledWith('/api/pedidos/p1')
   })
 
@@ -117,7 +123,7 @@ describe('PedidoGerentePage', () => {
     configurarApi(comSetor)
     render(<PedidoGerentePage />)
 
-    expect(await screen.findByText('Desmembramento por setor')).toBeInTheDocument()
+    expect(await screen.findByText('Resumo do pedido')).toBeInTheDocument()
     expect(screen.getAllByText('Telhas').length).toBeGreaterThan(0)
     expect(screen.getByText(/1 item\(ns\).*solicitado 10.*pendente 2/)).toBeInTheDocument()
   })
@@ -182,7 +188,8 @@ describe('PedidoGerentePage', () => {
 
     expect(await screen.findByText('Chapa dobrada')).toBeInTheDocument()
     expect(screen.getByText(/PRD-77/)).toBeInTheDocument()
-    expect(screen.getByText('Unidade: peca')).toBeInTheDocument()
+    expect(screen.getByText('Unidade')).toBeInTheDocument()
+    expect(screen.getAllByText('peca').length).toBeGreaterThan(0)
     expect(screen.getByText(/V-77/)).toBeInTheDocument()
   })
 
@@ -230,14 +237,14 @@ describe('PedidoGerentePage', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: 'Classificar item 1' }))
 
-    expect(await screen.findByText('Item classificado')).toBeInTheDocument()
+    expect(await screen.findByText('Item desmembrado')).toBeInTheDocument()
   })
 
   it('indica o item já classificado e não oferece classificar de novo (LAC-05)', async () => {
     configurarApi(pedido('CLASSIFIED'))
     render(<PedidoGerentePage />)
 
-    expect(await screen.findByText('Item classificado')).toBeInTheDocument()
+    expect(await screen.findByText('Item desmembrado')).toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: 'Classificar item 1' }),
     ).not.toBeInTheDocument()
@@ -253,6 +260,6 @@ describe('PedidoGerentePage', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: 'Classificar item 1' }))
 
-    expect(await screen.findByText('Item classificado')).toBeInTheDocument()
+    expect(await screen.findByText('Item desmembrado')).toBeInTheDocument()
   })
 })

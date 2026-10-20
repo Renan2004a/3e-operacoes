@@ -21,7 +21,7 @@ export interface PedidoListado {
 }
 
 export interface PedidosListaProps {
-  /** Aciona o detalhe do pedido escolhido (rota no gerente, painel no vendedor). */
+  /** Aciona o detalhe do pedido escolhido (rota no gerente e no vendedor). */
   onSelecionar: (pedido: PedidoListado) => void
   /** Alterar este valor força recarregar a lista (ex.: após importar um pedido). */
   recarregarToken?: number
@@ -51,33 +51,55 @@ const VARIANTE_STATUS: Record<StatusPedido, 'neutral' | 'info' | 'success'> = {
 
 const CLASSE_SELECT = `min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base text-ink ${FOCO_VISIVEL}`
 
-/**
- * Monta a URL da consulta. O cliente é enviado como trecho (substring) e sem
- * transformar maiúsculas: a comparação sem diferenciar maiúsculas acontece no
- * servidor (QF-09).
- */
-function montarUrl(filtros: Filtros): string {
+/** Monta os parâmetros da consulta (cliente como trecho, sem diferenciar maiúsculas). */
+function parametros(filtros: Filtros): URLSearchParams {
   const params = new URLSearchParams()
   if (filtros.cliente.trim()) params.set('cliente', filtros.cliente.trim())
   if (filtros.setor.trim()) params.set('setor', filtros.setor.trim())
   if (filtros.status) params.set('status', filtros.status)
   if (filtros.de) params.set('de', filtros.de)
   if (filtros.ate) params.set('ate', filtros.ate)
-  const query = params.toString()
+  return params
+}
+
+function montarUrl(filtros: Filtros): string {
+  const query = parametros(filtros).toString()
   return `/api/pedidos${query ? `?${query}` : ''}`
+}
+
+/** Recupera os filtros da URL, preservando o contexto ao voltar do detalhe. */
+function lerFiltrosDaUrl(): Filtros {
+  if (typeof window === 'undefined') return FILTROS_VAZIOS
+  const params = new URLSearchParams(window.location.search)
+  return {
+    cliente: params.get('cliente') ?? '',
+    setor: params.get('setor') ?? '',
+    status: params.get('status') ?? '',
+    de: params.get('de') ?? '',
+    ate: params.get('ate') ?? '',
+  }
+}
+
+/** Mantém a URL sincronizada com os filtros aplicados (sem recarregar a página). */
+function sincronizarUrl(filtros: Filtros): void {
+  if (typeof window === 'undefined') return
+  const query = parametros(filtros).toString()
+  const url = `${window.location.pathname}${query ? `?${query}` : ''}`
+  window.history.replaceState({}, '', url)
 }
 
 /**
  * Lista de pedidos com filtros de cliente, setor, status e período e os estados
- * de carregando, vazio e erro (FEP-03, FEP-13). Compartilhada entre gerente e
- * vendedor; a seleção é delegada ao chamador.
+ * de carregando, vazio e erro (FEP-03, FEP-13). No celular, a tabela vira
+ * cartões (sem rolagem horizontal da página) por CSS (`.tabela-responsiva`).
  */
 export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProps) {
-  const [filtros, setFiltros] = useState<Filtros>(FILTROS_VAZIOS)
+  const [filtros, setFiltros] = useState<Filtros>(() => lerFiltrosDaUrl())
   const [pedidos, setPedidos] = useState<PedidoListado[] | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState(false)
   const primeiraCarga = useRef(true)
+  const filtrosIniciais = useRef(filtros)
 
   const buscar = useCallback(
     (aplicados: Filtros) =>
@@ -92,7 +114,7 @@ export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProp
   )
 
   useEffect(() => {
-    void buscar(FILTROS_VAZIOS)
+    void buscar(filtrosIniciais.current)
   }, [buscar])
 
   // Recarrega quando o token muda (ex.: após importar um pedido).
@@ -108,14 +130,24 @@ export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProp
 
   function aoFiltrar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault()
+    sincronizarUrl(filtros)
     setCarregando(true)
     void buscar(filtros)
+  }
+
+  function limparFiltros() {
+    setFiltros(FILTROS_VAZIOS)
+    sincronizarUrl(FILTROS_VAZIOS)
+    setCarregando(true)
+    void buscar(FILTROS_VAZIOS)
   }
 
   function tentarDeNovo() {
     setCarregando(true)
     void buscar(filtros)
   }
+
+  const temFiltro = Object.values(filtros).some((valor) => valor.trim() !== '')
 
   return (
     <section className="grid gap-4">
@@ -152,7 +184,6 @@ export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProp
               id={props.id}
               name="status"
               aria-describedby={props['aria-describedby']}
-              aria-invalid={props.invalid || undefined}
               className={CLASSE_SELECT}
               value={filtros.status}
               onChange={(evento) => setFiltros((atual) => ({ ...atual, status: evento.target.value }))}
@@ -189,8 +220,13 @@ export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProp
           )}
         </Field>
 
-        <div className="sm:col-span-2 lg:col-span-5">
+        <div className="flex flex-wrap gap-2 sm:col-span-2 lg:col-span-5">
           <Button type="submit">Filtrar</Button>
+          {temFiltro ? (
+            <Button type="button" variant="outline" onClick={limparFiltros}>
+              Limpar filtros
+            </Button>
+          ) : null}
         </div>
       </form>
 
@@ -207,55 +243,66 @@ export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProp
       ) : !pedidos || pedidos.length === 0 ? (
         <EmptyState title="Sem pedidos" description="Nenhum pedido encontrado com os filtros atuais." />
       ) : (
-        <div className="overflow-x-auto rounded-card border border-line bg-surface">
-          <table aria-label="Pedidos" className="w-full border-collapse text-left text-sm">
-            <thead>
-              <tr className="border-b border-line text-xs uppercase tracking-wide text-muted">
-                <th scope="col" className="px-4 py-3 font-semibold">
-                  Pedido
-                </th>
-                <th scope="col" className="px-4 py-3 font-semibold">
-                  Cliente
-                </th>
-                <th scope="col" className="px-4 py-3 font-semibold">
-                  Status
-                </th>
-                <th scope="col" className="px-4 py-3 text-right font-semibold">
-                  Ações
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {pedidos.map((pedido) => (
-                <tr
-                  key={pedido.id}
-                  className="border-b border-line last:border-b-0 hover:bg-surface-2"
-                >
-                  <td className="whitespace-nowrap px-4 py-3 font-semibold text-ink">
-                    Pedido {pedido.numero}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-muted">
-                    {pedido.cliente ?? 'Sem cliente'}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3">
-                    <Badge variant={VARIANTE_STATUS[pedido.status]}>
-                      {ROTULO_STATUS[pedido.status]}
-                    </Badge>
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-right">
-                    <Button
-                      size="sm"
-                      onClick={() => onSelecionar(pedido)}
-                      aria-label={`Abrir pedido ${pedido.numero}`}
-                    >
-                      Abrir
-                    </Button>
-                  </td>
+        <>
+          <p className="text-sm text-muted" role="status">
+            {pedidos.length} pedido(s) encontrado(s).
+          </p>
+          <div className="overflow-x-auto rounded-card border border-line bg-surface">
+            <table
+              aria-label="Pedidos"
+              className="tabela-responsiva w-full border-collapse text-left text-sm"
+            >
+              <thead>
+                <tr className="border-b border-line text-xs uppercase tracking-wide text-muted">
+                  <th scope="col" className="px-4 py-3 font-semibold">
+                    Pedido
+                  </th>
+                  <th scope="col" className="px-4 py-3 font-semibold">
+                    Cliente
+                  </th>
+                  <th scope="col" className="px-4 py-3 font-semibold">
+                    Status
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-right font-semibold">
+                    Ações
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {pedidos.map((pedido) => (
+                  <tr
+                    key={pedido.id}
+                    className="border-b border-line last:border-b-0 hover:bg-surface-2"
+                  >
+                    <td
+                      data-label="Pedido"
+                      className="whitespace-nowrap px-4 py-3 font-semibold text-ink"
+                    >
+                      Pedido {pedido.numero}
+                    </td>
+                    <td data-label="Cliente" className="px-4 py-3 text-muted">
+                      {pedido.cliente ?? 'Sem cliente'}
+                    </td>
+                    <td data-label="Status" className="px-4 py-3">
+                      <Badge variant={VARIANTE_STATUS[pedido.status]}>
+                        {ROTULO_STATUS[pedido.status]}
+                      </Badge>
+                    </td>
+                    <td data-label="Ações" className="px-4 py-3 md:text-right">
+                      <Button
+                        size="sm"
+                        onClick={() => onSelecionar(pedido)}
+                        aria-label={`Abrir pedido ${pedido.numero}`}
+                      >
+                        Abrir
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </section>
   )

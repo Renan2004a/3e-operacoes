@@ -59,3 +59,90 @@
     outline-offset: 2px;
   }
 }
+
+/*
+ * Tabelas responsivas: em telas pequenas viram cartões (cada célula mostra o
+ * rótulo via `data-label`), eliminando a rolagem horizontal da página inteira.
+ * A semântica de tabela é preservada para leitores de tela.
+ */
+@media (max-width: 767px) {
+  .tabela-responsiva,
+  .tabela-responsiva tbody,
+  .tabela-responsiva tr,
+  .tabela-responsiva td {
+    display: block;
+    width: 100%;
+  }
+
+  .tabela-responsiva thead {
+    display: none;
+  }
+
+  .tabela-responsiva tr {
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    padding: 0.75rem;
+  }
+
+  .tabela-responsiva tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .tabela-responsiva td {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.25rem 0;
+    border: 0;
+    white-space: normal;
+  }
+
+  .tabela-responsiva td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--color-muted);
+  }
+
+  .tabela-responsiva td[data-label='Ações'] {
+    padding-top: 0.5rem;
+  }
+}
+
+/*
+ * Impressão: somente o conteúdo útil. O `min-h-screen` do shell gera uma
+ * segunda página em branco no Chromium; aqui ele é neutralizado. A ordem de
+ * produção usa `.folha-impressao` para não quebrar no meio.
+ */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 14mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  .app-shell {
+    display: block !important;
+    min-height: 0 !important;
+    background: #fff !important;
+  }
+
+  .app-shell main {
+    padding: 0 !important;
+  }
+
+  .folha-impressao {
+    border: 0 !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+
+  .folha-impressao + .folha-impressao {
+    break-before: page;
+  }
+}

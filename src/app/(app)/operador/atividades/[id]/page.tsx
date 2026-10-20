@@ -11,6 +11,7 @@ import { Field } from '@/shared/ui/field'
 import { Input } from '@/shared/ui/input'
 import { OcorrenciaForm } from '@/shared/ui/ocorrencia-form'
 import { PageHead } from '@/shared/ui/page-head'
+import { Progress } from '@/shared/ui/progress'
 import { Spinner } from '@/shared/ui/spinner'
 import { cn, FOCO_VISIVEL } from '@/shared/ui/utils'
 
@@ -153,17 +154,11 @@ export default function ExecutarAtividadePage() {
         </CardHeader>
         <CardContent className="grid gap-3">
           <div className="grid gap-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted">Executado</span>
-              <span className="font-semibold text-ink">
-                {ordem.executado} de {ordem.solicitado} {ordem.unidade}
-              </span>
-            </div>
-            <progress
-              className="h-3 w-full"
-              aria-label="Progresso da atividade"
+            <Progress
+              label="Progresso da atividade"
               value={percentualExecutado(ordem)}
-              max={100}
+              tone={percentualExecutado(ordem) >= 100 ? 'success' : 'accent'}
+              helper={`${ordem.executado} de ${ordem.solicitado} ${ordem.unidade} executadas.`}
             />
           </div>
           <ul aria-label="Valores da atividade" className="grid gap-1 text-sm text-muted">

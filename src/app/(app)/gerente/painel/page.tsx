@@ -10,6 +10,7 @@ import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import { Metric } from '@/shared/ui/metric'
 import { PageHead } from '@/shared/ui/page-head'
+import { Progress } from '@/shared/ui/progress'
 import { Spinner } from '@/shared/ui/spinner'
 
 interface ContagemPorSetor {
@@ -253,11 +254,11 @@ export default function PainelPage() {
                       <span className="text-ink">{producao.sectorName ?? producao.sectorId}</span>
                       <span className="font-semibold text-ink">{producao.quantidade}</span>
                     </div>
-                    <progress
-                      className="h-3 w-full"
-                      aria-label={`Produção do setor ${producao.sectorName ?? producao.sectorId}`}
+                    <Progress
+                      label={`Produção do setor ${producao.sectorName ?? producao.sectorId}`}
                       value={percentualProducao(producao.quantidade)}
-                      max={100}
+                      tone={percentualProducao(producao.quantidade) >= 100 ? 'success' : 'accent'}
+                      helper={`${producao.quantidade} produzidas no período.`}
                     />
                     <span className="text-xs text-muted">
                       {producao.sectorName ?? producao.sectorId}: {producao.quantidade}

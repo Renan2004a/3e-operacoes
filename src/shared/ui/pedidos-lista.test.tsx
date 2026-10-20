@@ -23,6 +23,8 @@ const PEDIDO = { id: 'p1', numero: '100', cliente: 'Ana', status: 'PENDING' as c
 
 beforeEach(() => {
   mocks.apiGet.mockReset()
+  // Isola os testes: o componente lê os filtros da URL (preservação de contexto).
+  window.history.replaceState({}, '', '/')
 })
 
 afterEach(cleanup)

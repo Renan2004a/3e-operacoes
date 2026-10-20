@@ -175,6 +175,6 @@ describe('ExecutarAtividadePage', () => {
     render(<ExecutarAtividadePage />)
 
     const progresso = await screen.findByRole('progressbar', { name: 'Progresso da atividade' })
-    expect(progresso).toHaveAttribute('value', '20')
+    expect(progresso).toHaveAttribute('aria-valuenow', '20')
   })
 })

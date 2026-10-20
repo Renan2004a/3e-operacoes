@@ -87,7 +87,7 @@ export default function OrdemProducaoPage() {
   }
 
   return (
-    <section className="grid gap-4">
+    <section className="grid gap-4 print:gap-0">
       <div className="grid gap-2 print:hidden">
         <Link
           href="/operador/fila"
@@ -106,7 +106,10 @@ export default function OrdemProducaoPage() {
         />
       </div>
 
-      <Card>
+      <Card className="folha-impressao">
+        <CardContent className="hidden pt-6 print:block">
+          <p className="text-sm font-semibold">3E Operações — Ordem de produção</p>
+        </CardContent>
         <CardHeader>
           <div>
             <CardTitle>{ordem.item}</CardTitle>

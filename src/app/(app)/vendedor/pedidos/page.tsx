@@ -1,19 +1,20 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import { ImportarPedido } from '@/shared/ui/importar-pedido'
 import { PageHead } from '@/shared/ui/page-head'
-import { PedidoDetalhe } from '@/shared/ui/pedido-detalhe'
-import { PedidosLista, type PedidoListado } from '@/shared/ui/pedidos-lista'
+import { PedidosLista } from '@/shared/ui/pedidos-lista'
 
 /**
  * Área de Vendas (FEP-03, FEP-04, FEP-05). O vendedor puxa o pedido do Top
- * Gerente pelo número, desmembra os itens por setor, define prazos e acompanha o
- * saldo. A produção permanece somente leitura.
+ * Gerente pelo número, desmembra os itens por setor, define prazos e programa
+ * remessas. A produção permanece somente leitura. A abertura do pedido navega
+ * para a rota de detalhe (e o "Voltar" retorna para esta lista).
  */
 export default function VendedorPedidosPage() {
-  const [selecionado, setSelecionado] = useState<PedidoListado | null>(null)
+  const router = useRouter()
   const [recarregarToken, setRecarregarToken] = useState(0)
 
   return (
@@ -54,8 +55,9 @@ export default function VendedorPedidosPage() {
                   3
                 </span>
                 <span>
-                  Defina o <strong>prazo de entrega</strong> do item quando necessário e acompanhe
-                  o saldo (solicitado, executado, disponível, entregue e pendente).
+                  Defina o <strong>prazo de entrega</strong> e programe as{' '}
+                  <strong>remessas</strong>; acompanhe o saldo (solicitado, executado, disponível,
+                  entregue e pendente).
                 </span>
               </li>
             </ol>
@@ -65,16 +67,11 @@ export default function VendedorPedidosPage() {
 
       <div>
         <h2 className="mb-3 text-lg font-semibold text-ink">Pedidos</h2>
-        <PedidosLista recarregarToken={recarregarToken} onSelecionar={setSelecionado} />
-      </div>
-
-      {selecionado ? (
-        <PedidoDetalhe
-          orderId={selecionado.id}
-          basePath="/vendedor/pedidos"
-          permitirClassificacao
+        <PedidosLista
+          recarregarToken={recarregarToken}
+          onSelecionar={(pedido) => router.push(`/vendedor/pedidos/${pedido.id}`)}
         />
-      ) : null}
+      </div>
     </section>
   )
 }

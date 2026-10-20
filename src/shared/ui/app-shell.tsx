@@ -79,7 +79,7 @@ export function AppShell({ perfil, usuarioNome, onLogout, children }: AppShellPr
   }
 
   return (
-    <div className="flex min-h-screen flex-col overflow-x-hidden bg-bg">
+    <div className="app-shell flex min-h-screen flex-col overflow-x-hidden bg-bg print:min-h-0 print:bg-white">
       <header className="sticky top-0 z-20 flex min-h-[68px] items-center justify-between gap-3 border-b border-line bg-surface px-4 sm:px-6 print:hidden">
         <div className="flex items-center gap-3">
           <span
@@ -159,7 +159,7 @@ export function AppShell({ perfil, usuarioNome, onLogout, children }: AppShellPr
           </div>
         </nav>
 
-        <main className="min-w-0 flex-1 p-4 sm:p-6">{children}</main>
+        <main className="min-w-0 flex-1 p-4 sm:p-6 print:p-0">{children}</main>
       </div>
     </div>
   )

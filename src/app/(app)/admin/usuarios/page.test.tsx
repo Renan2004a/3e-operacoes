@@ -6,6 +6,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 const mocks = vi.hoisted(() => ({
   apiGet: vi.fn(),
   apiPost: vi.fn(),
+  apiPatch: vi.fn(),
   ApiError: class ApiError extends Error {
     status: number
     code: string
@@ -20,7 +21,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/shared/http/api-client', () => ({
   apiGet: mocks.apiGet,
   apiPost: mocks.apiPost,
-  apiPatch: vi.fn(),
+  apiPatch: mocks.apiPatch,
   ApiError: mocks.ApiError,
 }))
 
@@ -58,6 +59,7 @@ function preencherFormulario() {
 beforeEach(() => {
   mocks.apiGet.mockReset()
   mocks.apiPost.mockReset()
+  mocks.apiPatch.mockReset()
 })
 
 afterEach(cleanup)
@@ -160,5 +162,21 @@ describe('UsuariosPage', () => {
     render(<UsuariosPage />)
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Usuários' })).toBeInTheDocument()
+  })
+
+  it('inativa um usuário somente após confirmação e informa o resultado (FEP-08)', async () => {
+    configurarApi([USUARIO])
+    mocks.apiPatch.mockResolvedValue({ usuario: { ...USUARIO, status: 'INACTIVE' } })
+    render(<UsuariosPage />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Inativar usuário Ana' }))
+    expect(screen.getByText('Confirmar inativação?')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar inativação de Ana' }))
+
+    await waitFor(() =>
+      expect(mocks.apiPatch).toHaveBeenCalledWith('/api/usuarios/u1', { status: 'INACTIVE' }),
+    )
+    expect(await screen.findByText('Usuário inativado com sucesso.')).toBeInTheDocument()
   })
 })
