@@ -15,7 +15,8 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const BASE = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000'
-const DIR = join(process.cwd(), 'docs', 'video', 'validacao')
+const PRODUCAO = !BASE.includes('localhost') && !BASE.includes('127.0.0.1')
+const DIR = join(process.cwd(), 'docs', 'video', PRODUCAO ? 'validacao-prod' : 'validacao')
 mkdirSync(DIR, { recursive: true })
 
 const CRED = {
