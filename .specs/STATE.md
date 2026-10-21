@@ -83,6 +83,15 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Date**: 2026-10-20
 - **Status**: active
 
+### AD-006
+
+- **Decision**: O vendedor pode **corrigir o setor** de um item já desmembrado, desde que o item não tenha execução, ocorrência, entrega nem atividade iniciada (status diferente de `PENDING`). Gerente e responsável pelo sistema fazem correções **com motivo obrigatório**. Toda troca grava auditoria (`SECTOR_CORRECTION`) com setor anterior, setor novo, usuário e motivo. Quando há registro operacional, a API responde 409 (`operational_records`). Remessas programadas não bloqueiam a correção.
+- **Reason**: Desmembramento errado hoje é definitivo na tela; o vendedor conhece o pedido e precisa corrigir sem depender de outro perfil, sem deixar registros de produção órfãos no setor antigo.
+- **Trade-off**: A checagem de bloqueio é feita no servidor com `updateMany` condicional, sem tela de correção nesta etapa. A exigência de motivo para gerente/sistema é decisão de default do agente, a confirmar com o cliente.
+- **Scope**: setores (classificação), permissões, pedidos (vendedor/gerente), auditoria.
+- **Date**: 2026-10-21
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: revisão e correções do feedback dos docentes + padronização do banco em português
