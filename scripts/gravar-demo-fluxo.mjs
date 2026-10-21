@@ -268,7 +268,7 @@ try {
   await passo(
     page,
     '08b-vendedor-remessa',
-    'Entrega escalonada (remessa): programar a 1ª remessa do item com a data prevista.',
+    'Entrega escalonada (remessa): programar uma nova remessa do item com a data prevista.',
     async () => {
       const confirmar = page.getByRole('button', {
         name: /^Confirmar \d+ª remessa do item 1$/,

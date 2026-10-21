@@ -2,7 +2,7 @@
 
 **Data**: 2026-10-20
 **URL**: https://3e-operacoes-production.up.railway.app
-**Commit implantado**: `8861b96` (código) — o commit do vídeo é posterior e não altera o app.
+**Commit implantado**: `6e21336` (código + schema com tabelas em português) — o commit do vídeo é posterior e não altera o app.
 **Método**: deploy por CLI (`railway up`) e o **mesmo script Playwright** usado no ambiente local.
 
 > A validação hospedada só foi executada **depois** de todos os gates locais passarem (700 testes, build e 9/9 verificações locais). Nenhuma migration destrutiva ou teste que alterasse dados reais foi executado.
@@ -30,6 +30,7 @@
 | “Voltar para os pedidos” no vendedor | **OK** (`href=/vendedor/pedidos`) |
 | Impressão: shell sem `min-height` | **OK** (`0px`) |
 | Impressão: PDF da ordem | **1 página** |
+| Tabelas físicas em português (`usuarios`, `pedidos`, …) | **17/17** (migration aplicada; sem drift) |
 | Resumo | **9/9 verificações OK** |
 
 Evidências: `docs/video/validacao-prod/` (PNGs e `ordem-producao.pdf`).
@@ -42,6 +43,7 @@ Evidências: `docs/video/validacao-prod/` (PNGs e `ordem-producao.pdf`).
 | Responsividade 390 px | 5/5 | 5/5 |
 | Tabela em cartões | OK | OK |
 | Impressão em 1 página | OK | OK |
+| Tabelas em português | OK | OK |
 | Testes automatizados | 700 verdes | mesmos artefatos do commit |
 
 Não houve diferença de comportamento observada entre local e hospedado.
