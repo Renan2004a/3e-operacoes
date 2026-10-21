@@ -1,4 +1,5 @@
 import type { ActivityStatus } from '../producao/tipos'
+import { motivoBloqueioCorrecao, type RegistrosDaAtividade } from '../setores/corrigir-setor'
 import { sugerirSetor, type RegraProdutoSetor } from '../setores/sugerir-setor'
 import {
   PedidoNaoEncontradoError,
@@ -76,9 +77,12 @@ export interface EspecificacaoItem {
   /** Situação de classificação do item, base da classificação manual (LAC-04). */
   classificationStatus: StatusClassificacaoItem
   /** Setor da atividade do item, para o desmembramento. */
+  sectorId?: string | null
   sectorCode?: string | null
   sectorName?: string | null
   activityStatus?: ActivityStatus | null
+  /** Registros da atividade que podem impedir a correção de setor (AD-007). */
+  registrosAtividade?: RegistrosDaAtividade | null
   /** Entregas programadas (remessas) do item. */
   remessas?: RemessaProgramada[]
 }
@@ -89,11 +93,17 @@ export interface ItemDetalhado extends ItemSaldo {
   productCode: string | null
   unit: string
   classificationStatus: StatusClassificacaoItem
+  sectorId?: string | null
   sectorCode?: string | null
   sectorName?: string | null
   activityStatus?: ActivityStatus | null
   /** Setor sugerido pelas regras produto→setor, para pré-seleção (LAC-04). */
   suggestedSectorId?: string | null
+  /**
+   * Motivo que impede a correção de setor do item, ou null quando ela é permitida.
+   * Só existe para itens desmembrados (AD-007).
+   */
+  bloqueioCorrecaoSetor?: string | null
   /** Entregas programadas (remessas) do item. */
   remessas?: RemessaProgramada[]
 }
@@ -224,6 +234,7 @@ export async function detalharPedido(
         productCode: especificacao?.productCode ?? null,
         unit: especificacao?.unit ?? '',
         classificationStatus: especificacao?.classificationStatus ?? 'PENDING_CLASSIFICATION',
+        sectorId: especificacao?.sectorId ?? null,
         sectorCode: especificacao?.sectorCode ?? null,
         sectorName: especificacao?.sectorName ?? null,
         activityStatus: especificacao?.activityStatus ?? null,
@@ -231,6 +242,10 @@ export async function detalharPedido(
           especificacao?.classificationStatus === 'CLASSIFIED'
             ? null
             : sugerirSetor(suggestionavel, regras),
+        bloqueioCorrecaoSetor:
+          especificacao?.classificationStatus === 'CLASSIFIED'
+            ? motivoBloqueioCorrecao(especificacao.registrosAtividade ?? null)
+            : null,
         remessas: especificacao?.remessas ?? [],
       }
     }),

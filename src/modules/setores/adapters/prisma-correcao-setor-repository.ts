@@ -32,6 +32,7 @@ export const prismaCorrecaoSetorRepository: CorrecaoSetorRepository = {
     const row = await prisma.activity.findFirst({
       where: { orderItemId: itemId },
       include: {
+        sector: { select: { code: true, name: true } },
         _count: { select: { executions: true, occurrences: true } },
         orderItem: { select: { _count: { select: { deliveries: true } } } },
       },
@@ -41,6 +42,8 @@ export const prismaCorrecaoSetorRepository: CorrecaoSetorRepository = {
       id: row.id,
       itemId: row.orderItemId,
       sectorId: row.sectorId,
+      sectorCode: row.sector.code,
+      sectorName: row.sector.name,
       status: row.status,
       execucoes: row._count.executions,
       ocorrencias: row._count.occurrences,
@@ -54,13 +57,13 @@ export const prismaCorrecaoSetorRepository: CorrecaoSetorRepository = {
         where: {
           id: input.atividadeId,
           orderItemId: input.itemId,
-          sectorId: input.setorAnteriorId,
+          sectorId: input.setorAnterior.id,
           status: 'PENDING',
           executions: { none: {} },
           occurrences: { none: {} },
           orderItem: { deliveries: { none: {} } },
         },
-        data: { sectorId: input.sectorId },
+        data: { sectorId: input.setorNovo.id },
       })
       if (count === 0) return false
 
@@ -70,8 +73,18 @@ export const prismaCorrecaoSetorRepository: CorrecaoSetorRepository = {
           action: 'SECTOR_CORRECTION',
           entityType: 'OrderItem',
           entityId: input.itemId,
-          beforeJson: { sectorId: input.setorAnteriorId },
-          afterJson: { sectorId: input.sectorId },
+          beforeJson: {
+            activityId: input.atividadeId,
+            sectorId: input.setorAnterior.id,
+            sectorCode: input.setorAnterior.code,
+            sectorName: input.setorAnterior.name,
+          },
+          afterJson: {
+            activityId: input.atividadeId,
+            sectorId: input.setorNovo.id,
+            sectorCode: input.setorNovo.code,
+            sectorName: input.setorNovo.name,
+          },
           reason: input.motivo,
         },
       })

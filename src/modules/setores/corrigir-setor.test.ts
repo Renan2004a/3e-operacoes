@@ -4,9 +4,11 @@ import { ItemNaoEncontradoError, SetorInvalidoError } from './classificar-item'
 import type { Sector } from './gerenciar-setores'
 import {
   ItemNaoClassificadoError,
+  MotivoExcedeLimiteError,
   MotivoObrigatorioError,
   RegistrosOperacionaisError,
   corrigirSetorItem,
+  motivoBloqueioCorrecao,
   type AtividadeDoItem,
   type CorrecaoSetorRepository,
 } from './corrigir-setor'
@@ -29,6 +31,8 @@ function atividade(overrides: Partial<AtividadeDoItem> = {}): AtividadeDoItem {
     id: 'act_1',
     itemId: 'item_1',
     sectorId: 'setor_corte',
+    sectorCode: 'CORTE',
+    sectorName: 'Corte e Dobra',
     status: 'PENDING',
     execucoes: 0,
     ocorrencias: 0,
@@ -38,9 +42,11 @@ function atividade(overrides: Partial<AtividadeDoItem> = {}): AtividadeDoItem {
 }
 
 interface Auditoria {
+  atividadeId: string
+  itemId: string
   userId: string
-  setorAnteriorId: string
-  sectorId: string
+  setorAnterior: { id: string; code: string; name: string }
+  setorNovo: { id: string; code: string; name: string }
   motivo: string | null
 }
 
@@ -82,11 +88,13 @@ function createRepo(
     },
     async trocarSetorDaAtividade(input) {
       if (seed.trocaFalha || !estado.atividade) return false
-      estado.atividade.sectorId = input.sectorId
+      estado.atividade.sectorId = input.setorNovo.id
       estado.auditorias.push({
+        atividadeId: input.atividadeId,
+        itemId: input.itemId,
         userId: input.userId,
-        setorAnteriorId: input.setorAnteriorId,
-        sectorId: input.sectorId,
+        setorAnterior: { ...input.setorAnterior },
+        setorNovo: { ...input.setorNovo },
         motivo: input.motivo,
       })
       return true
@@ -120,12 +128,118 @@ describe('corrigirSetorItem', () => {
     expect(estado.atividade?.sectorId).toBe('setor_telhas')
     expect(estado.auditorias).toEqual([
       {
+        atividadeId: 'act_1',
+        itemId: 'item_1',
         userId: 'user_vendedor',
-        setorAnteriorId: 'setor_corte',
-        sectorId: 'setor_telhas',
+        setorAnterior: { id: 'setor_corte', code: 'CORTE', name: 'Corte e Dobra' },
+        setorNovo: { id: 'setor_telhas', code: 'TELHAS', name: 'Telhas' },
         motivo: null,
       },
     ])
+  })
+
+  it('preserva as auditorias anteriores ao corrigir o setor de novo', async () => {
+    const { repo, estado } = createRepo()
+
+    await corrigirSetorItem(
+      {
+        itemId: 'item_1',
+        sectorId: 'setor_telhas',
+        exigeMotivo: false,
+        motivo: null,
+        userId: 'user_vendedor',
+      },
+      repo,
+    )
+    await corrigirSetorItem(
+      {
+        itemId: 'item_1',
+        sectorId: 'setor_corte',
+        exigeMotivo: true,
+        motivo: 'Voltou ao setor original',
+        userId: 'user_gerente',
+      },
+      repo,
+    )
+
+    expect(estado.auditorias).toHaveLength(2)
+    expect(estado.auditorias[0]).toMatchObject({ userId: 'user_vendedor' })
+    expect(estado.auditorias[1]).toMatchObject({
+      userId: 'user_gerente',
+      setorAnterior: { id: 'setor_telhas' },
+      setorNovo: { id: 'setor_corte' },
+    })
+  })
+
+  it('aceita motivo com exatamente 500 caracteres Unicode, mesmo com emoji', async () => {
+    const { repo, estado } = createRepo()
+    const motivo = `${'a'.repeat(499)}😀`
+
+    await corrigirSetorItem(
+      {
+        itemId: 'item_1',
+        sectorId: 'setor_telhas',
+        exigeMotivo: true,
+        motivo,
+        userId: 'user_gerente',
+      },
+      repo,
+    )
+
+    expect(estado.auditorias[0].motivo).toBe(motivo)
+  })
+
+  it('rejeita motivo com mais de 500 caracteres Unicode sem gravar nada', async () => {
+    const { repo, estado } = createRepo()
+
+    await expect(
+      corrigirSetorItem(
+        {
+          itemId: 'item_1',
+          sectorId: 'setor_telhas',
+          exigeMotivo: true,
+          motivo: 'a'.repeat(501),
+          userId: 'user_gerente',
+        },
+        repo,
+      ),
+    ).rejects.toBeInstanceOf(MotivoExcedeLimiteError)
+    expect(estado.atividade?.sectorId).toBe('setor_corte')
+    expect(estado.auditorias).toHaveLength(0)
+  })
+
+  it('rejeita limite excedido também para o vendedor que informar motivo', async () => {
+    const { repo } = createRepo()
+
+    await expect(
+      corrigirSetorItem(
+        {
+          itemId: 'item_1',
+          sectorId: 'setor_telhas',
+          exigeMotivo: false,
+          motivo: 'b'.repeat(501),
+          userId: 'user_vendedor',
+        },
+        repo,
+      ),
+    ).rejects.toBeInstanceOf(MotivoExcedeLimiteError)
+  })
+
+  it('grava o motivo sem espaços nas bordas', async () => {
+    const { repo, estado } = createRepo()
+
+    await corrigirSetorItem(
+      {
+        itemId: 'item_1',
+        sectorId: 'setor_telhas',
+        exigeMotivo: true,
+        motivo: '  Cadastro errado  ',
+        userId: 'user_gerente',
+      },
+      repo,
+    )
+
+    expect(estado.auditorias[0].motivo).toBe('Cadastro errado')
   })
 
   it('exige motivo para gerente e responsável pelo sistema e registra o motivo na auditoria', async () => {
@@ -334,5 +448,52 @@ describe('corrigirSetorItem', () => {
 
     expect(resultado).toMatchObject({ sectorId: 'setor_corte', alterado: false })
     expect(estado.auditorias).toHaveLength(0)
+  })
+
+  it('informa ao usuário o motivo do bloqueio pelo registro operacional', async () => {
+    const { repo } = createRepo({ atividade: atividade({ execucoes: 1 }) })
+
+    const erro = await corrigirSetorItem(
+      {
+        itemId: 'item_1',
+        sectorId: 'setor_telhas',
+        exigeMotivo: false,
+        motivo: null,
+        userId: 'user_vendedor',
+      },
+      repo,
+    ).catch((e: unknown) => e)
+
+    expect(erro).toBeInstanceOf(RegistrosOperacionaisError)
+    expect((erro as RegistrosOperacionaisError).motivoBloqueio).toBe(
+      'O item já possui execução registrada.',
+    )
+  })
+})
+
+describe('motivoBloqueioCorrecao', () => {
+  const base = { status: 'PENDING' as const, execucoes: 0, ocorrencias: 0, entregas: 0 }
+
+  it('permite a correção quando não há registros operacionais', () => {
+    expect(motivoBloqueioCorrecao(base)).toBeNull()
+  })
+
+  it('bloqueia por entrega, execução, ocorrência ou atividade iniciada', () => {
+    expect(motivoBloqueioCorrecao({ ...base, entregas: 1 })).toBe(
+      'O item já possui entrega registrada.',
+    )
+    expect(motivoBloqueioCorrecao({ ...base, execucoes: 1 })).toBe(
+      'O item já possui execução registrada.',
+    )
+    expect(motivoBloqueioCorrecao({ ...base, ocorrencias: 1 })).toBe(
+      'O item já possui ocorrência registrada.',
+    )
+    expect(motivoBloqueioCorrecao({ ...base, status: 'PAUSED' })).toBe(
+      'A produção deste item já foi iniciada.',
+    )
+  })
+
+  it('bloqueia quando o item não tem atividade', () => {
+    expect(motivoBloqueioCorrecao(null)).toBe('O item ainda não possui atividade de produção.')
   })
 })

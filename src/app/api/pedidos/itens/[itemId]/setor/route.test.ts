@@ -23,6 +23,8 @@ const mocks = vi.hoisted(() => {
     id: string
     itemId: string
     sectorId: string
+    sectorCode: string
+    sectorName: string
     status: string
     execucoes: number
     ocorrencias: number
@@ -45,15 +47,20 @@ const mocks = vi.hoisted(() => {
     },
     trocarSetorDaAtividade: async (input: {
       atividadeId: string
-      setorAnteriorId: string
-      sectorId: string
+      setorNovo: { id: string; code: string; name: string }
+      setorAnterior: { id: string; code: string; name: string }
       userId: string
       motivo: string | null
     }) => {
       const found = atividades.find((atividade) => atividade.id === input.atividadeId)
       if (!found) return false
-      found.sectorId = input.sectorId
-      auditorias.push({ ...input })
+      found.sectorId = input.setorNovo.id
+      auditorias.push({
+        userId: input.userId,
+        setorAnterior: input.setorAnterior,
+        setorNovo: input.setorNovo,
+        motivo: input.motivo,
+      })
       return true
     },
   }
@@ -116,6 +123,8 @@ function seedAtividade(
     id: 'act_1',
     itemId: 'item_1',
     sectorId: 'setor_corte',
+    sectorCode: 'CORTE',
+    sectorName: 'Corte e Dobra',
     status: overrides.status ?? 'PENDING',
     execucoes: overrides.execucoes ?? 0,
     ocorrencias: overrides.ocorrencias ?? 0,
@@ -237,18 +246,72 @@ describe('PATCH /api/pedidos/itens/[itemId]/setor', () => {
     const response = await PATCH(request('item_1', { sectorId: 'setor_telhas' }), context('item_1'))
 
     expect(response.status).toBe(409)
-    expect((await response.json()).error).toBe('operational_records')
+    const corpo = await response.json()
+    expect(corpo.error).toBe('operational_records')
+    expect(corpo.message).toBe('O item já possui execução registrada.')
     expect(mocks.atividades[0].sectorId).toBe('setor_corte')
   })
 
-  it('responde 409 quando o item ainda não foi desmembrado', async () => {
+  it('responde 422 quando o item ainda não foi desmembrado', async () => {
     seedItem({ classificationStatus: 'PENDING_CLASSIFICATION' })
     seedSector()
 
     const response = await PATCH(request('item_1', { sectorId: 'setor_telhas' }), context('item_1'))
 
-    expect(response.status).toBe(409)
+    expect(response.status).toBe(422)
     expect((await response.json()).error).toBe('item_not_classified')
+  })
+
+  it('responde 400 quando o motivo passa de 500 caracteres Unicode', async () => {
+    seedItem()
+    seedSector()
+    seedAtividade()
+
+    const response = await PATCH(
+      request(
+        'item_1',
+        { sectorId: 'setor_telhas', motivo: 'a'.repeat(501) },
+        { usuarioId: 'user_gerente' },
+      ),
+      context('item_1'),
+    )
+
+    expect(response.status).toBe(400)
+    expect((await response.json()).error).toBe('reason_too_long')
+    expect(mocks.atividades[0].sectorId).toBe('setor_corte')
+    expect(mocks.auditorias).toHaveLength(0)
+  })
+
+  it('aceita motivo de 500 caracteres quando a correção é válida', async () => {
+    seedItem()
+    seedSector()
+    seedAtividade()
+
+    const response = await PATCH(
+      request(
+        'item_1',
+        { sectorId: 'setor_telhas', motivo: `${'a'.repeat(499)}😀` },
+        { usuarioId: 'user_gerente' },
+      ),
+      context('item_1'),
+    )
+
+    expect(response.status).toBe(200)
+  })
+
+  it('registra setores anterior e novo, código e nome na auditoria', async () => {
+    seedItem()
+    seedSector()
+    seedAtividade()
+
+    await PATCH(request('item_1', { sectorId: 'setor_telhas' }), context('item_1'))
+
+    expect(mocks.auditorias[0]).toMatchObject({
+      userId: 'user_vendedor',
+      setorAnterior: { id: 'setor_corte', code: 'CORTE', name: 'Corte e Dobra' },
+      setorNovo: { id: 'setor_telhas', code: 'TELHAS', name: 'Telhas' },
+      motivo: null,
+    })
   })
 
   it('responde 400 quando o setor está inativo ou não existe', async () => {
