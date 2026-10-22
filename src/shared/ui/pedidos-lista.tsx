@@ -29,6 +29,7 @@ export interface PedidosListaProps {
 }
 
 interface Filtros {
+  numero: string
   cliente: string
   setor: string
   status: string
@@ -36,7 +37,7 @@ interface Filtros {
   ate: string
 }
 
-const FILTROS_VAZIOS: Filtros = { cliente: '', setor: '', status: '', de: '', ate: '' }
+const FILTROS_VAZIOS: Filtros = { numero: '', cliente: '', setor: '', status: '', de: '', ate: '' }
 
 const ROTULO_STATUS: Record<StatusPedido, string> = {
   PENDING: 'Pendente',
@@ -58,9 +59,13 @@ const ROTULO_SETOR: Record<CodigoSetor, string> = {
 
 const CLASSE_SELECT = `min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base text-ink ${FOCO_VISIVEL}`
 
-/** Monta os parâmetros da consulta (cliente como trecho, sem diferenciar maiúsculas). */
+/**
+ * Monta os parâmetros da consulta (número como trecho do número comercial e
+ * cliente como trecho do nome, sem diferenciar maiúsculas).
+ */
 function parametros(filtros: Filtros): URLSearchParams {
   const params = new URLSearchParams()
+  if (filtros.numero.trim()) params.set('numero', filtros.numero.trim())
   if (filtros.cliente.trim()) params.set('cliente', filtros.cliente.trim())
   if (filtros.setor.trim()) params.set('setor', filtros.setor.trim())
   if (filtros.status) params.set('status', filtros.status)
@@ -79,6 +84,7 @@ function lerFiltrosDaUrl(): Filtros {
   if (typeof window === 'undefined') return FILTROS_VAZIOS
   const params = new URLSearchParams(window.location.search)
   return {
+    numero: params.get('numero') ?? '',
     cliente: params.get('cliente') ?? '',
     setor: ehCodigoSetor(params.get('setor') ?? '') ? (params.get('setor') as CodigoSetor) : '',
     status: params.get('status') ?? '',
@@ -96,9 +102,10 @@ function sincronizarUrl(filtros: Filtros): void {
 }
 
 /**
- * Lista de pedidos com filtros de cliente, setor, status e período e os estados
- * de carregando, vazio e erro (FEP-03, FEP-13). No celular, a tabela vira
- * cartões (sem rolagem horizontal da página) por CSS (`.tabela-responsiva`).
+ * Lista de pedidos com filtros de número comercial, cliente, setor, status e
+ * período e os estados de carregando, vazio e erro (FEP-03, FEP-13). No
+ * celular, a tabela vira cartões (sem rolagem horizontal da página) por CSS
+ * (`.tabela-responsiva`).
  */
 export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProps) {
   const [filtros, setFiltros] = useState<Filtros>(() => lerFiltrosDaUrl())
@@ -159,10 +166,24 @@ export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProp
   return (
     <section className="grid gap-4">
       <form
-        className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-5"
+        className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-3"
         onSubmit={aoFiltrar}
         noValidate
       >
+        <Field label="Pesquisar por número" hint="Trecho do número comercial do pedido.">
+          {(props) => (
+            <Input
+              {...props}
+              name="numero"
+              inputMode="numeric"
+              value={filtros.numero}
+              onChange={(evento) =>
+                setFiltros((atual) => ({ ...atual, numero: evento.target.value }))
+              }
+            />
+          )}
+        </Field>
+
         <Field label="Cliente" hint="Trecho do nome do cliente; não diferencia maiúsculas.">
           {(props) => (
             <Input
@@ -236,7 +257,7 @@ export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProp
           )}
         </Field>
 
-        <div className="flex flex-wrap gap-2 sm:col-span-2 lg:col-span-5">
+        <div className="flex flex-wrap gap-2 sm:col-span-2 lg:col-span-3">
           <Button type="submit">Filtrar</Button>
           {temFiltro ? (
             <Button type="button" variant="outline" onClick={limparFiltros}>

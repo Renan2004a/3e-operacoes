@@ -215,7 +215,33 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Date**: 2026-10-22
 - **Status**: active (correção aprovada provisoriamente com 815 testes automatizados). Pendentes: validação no navegador e teste de integração com MySQL da consulta real.
 
+### AD-019
+
+- **Decision**: A pesquisa por número do pedido usa o **número comercial** `Order.legacyNumber` (origem `orcamento.Orc` no Top Gerente), nunca o id interno `Order.id`. O parâmetro da API é `numero`; a comparação é **parcial (contém)**, sem diferenciar maiúsculas e com espaços nas bordas removidos. Campo vazio ou só com espaços não restringe a consulta. A pesquisa é aplicada no servidor sobre todos os pedidos acessíveis, antes do limite padrão de 20, e combina com cliente, setor, status e período.
+- **Reason**: RF008 permite ao Vendedor pesquisar por número do pedido, mas a lista só oferecia cliente, setor, status e período. O número comercial é o identificador usado na importação e não coincide com o id interno.
+- **Trade-off**: Por ser parcial, um trecho curto pode retornar números semelhantes (ex.: `100` retorna `100`, `1000` e `2100`). O filtro continua em memória no servidor, após carregar todos os pedidos, como os demais filtros; não há paginação nova. O índice existente em `legacyNumber` não é usado pela busca parcial.
+- **Scope**: consulta de pedidos (vendedor e gerente), lista de pedidos, API `GET /api/pedidos`, documentação. Permissões, status, saldos e conclusão preservados.
+- **Date**: 2026-10-22
+- **Status**: active (aprovada provisoriamente em 2026-10-22). Decisões confirmadas: pesquisa parcial por `legacyNumber`, combinação com os demais filtros, permissões existentes preservadas e `Order.id` inalterado. Pendentes: validação no navegador, teste de integração com MySQL e otimização das consultas para não carregar todos os pedidos em memória na etapa **A1 — Paginação**. Sem alteração de banco, migração ou deploy.
+
 ## Handoff
+
+- **Feature**: pesquisa por número do pedido (AD-019, correção A6 do perfil Vendedor)
+- **Phase / Task**: implementação concluída e aprovada provisoriamente; decisões confirmadas em 2026-10-22; aguardando registro do commit pelo responsável e autorização para a próxima correção
+- **Completed**:
+  - Problema: a lista de pedidos permitia filtrar por cliente, setor, status e período, mas não pelo número comercial, apesar de RF008 prever pesquisa por número.
+  - Causa: `GET /api/pedidos` e `PedidosLista` não tinham o parâmetro/campo `numero`; o domínio também não filtrava por `PedidoConsultado.numero` (`Order.legacyNumber`).
+  - Correção: filtro parcial (contém) em `legacyNumber`, com `trim`; campo "Pesquisar por número" na lista; restauração pela URL; combinação com os demais filtros; filtro aplicado no servidor antes do limite de 20.
+  - Sem alteração de banco, migração, status, saldos, conclusão, permissões ou paginação.
+  - Testes: 839 testes automatizados aprovados (suíte completa), `tsc` sem erros e lint sem erros nos arquivos alterados.
+  - Decisões confirmadas: manter a pesquisa parcial; preservar a combinação com os demais filtros; manter as permissões existentes; não alterar `Order.id`.
+- **In-progress**: nenhum
+- **Next step**: aguardar o registro do commit pelo responsável. Após autorização, tratar a **A1 — Paginação**, incluindo a otimização das consultas para evitar carregar todos os pedidos em memória quando houver alternativa viável.
+- **Blockers**: validação no navegador dos filtros pendente; teste de integração com MySQL da consulta de pedidos não existe; otimização das consultas pendente na A1; aprovação do contrato do conector e de eventual campo em `OrderItem` (AD-010); T00.4 (AD-012); decisões D6 (AD-016) e D7 (AD-017); validação da data original do pedido no ambiente de integração
+- **Uncommitted files**: `src/modules/indicadores/consulta-pedidos.ts`, `src/modules/indicadores/consulta-pedidos.test.ts`, `src/app/api/pedidos/route.ts`, `src/app/api/pedidos/route.test.ts`, `src/shared/ui/pedidos-lista.tsx`, `src/shared/ui/pedidos-lista.test.tsx`, `docs/requisitos.md`, `.specs/features/indicadores-e-consulta/spec.md` e `.specs/STATE.md`. Nenhum commit foi feito pelo agente.
+- **Branch**: fix/fluxos-vendedor1-preparação-decisões-negócio
+
+## Handoff anterior (AD-018, filtro por setor)
 
 - **Feature**: filtro por setor de pedidos (AD-018, correção A2 do perfil Vendedor)
 - **Phase / Task**: implementação concluída e aprovada provisoriamente; documentação atualizada; aguardando autorização para a próxima correção

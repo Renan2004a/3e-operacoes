@@ -33,8 +33,9 @@ function lerInteiro(valor: string | null): number | null | undefined {
 }
 
 /**
- * GET /api/pedidos — lista os pedidos com filtros de cliente, setor, status e
- * período (RF008, IND-01..03). Somente leitura e restrita à sessão (IND-11).
+ * GET /api/pedidos — lista os pedidos com filtros de número comercial, cliente,
+ * setor, status e período (RF008, IND-01..03). Somente leitura e restrita à
+ * sessão (IND-11). O filtro vazio não restringe a consulta.
  */
 export async function GET(request: Request) {
   const auth = await autorizar(request, 'consultar_pedidos')
@@ -60,6 +61,7 @@ export async function GET(request: Request) {
   }
 
   const filtros: FiltrosPedido = {
+    numero: params.get('numero') ?? undefined,
     cliente: params.get('cliente') ?? undefined,
     setor,
     status: status ? (status as StatusPedido) : undefined,

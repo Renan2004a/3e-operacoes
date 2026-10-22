@@ -6,7 +6,7 @@ O vendedor não tem uma visão dos pedidos e o gerente não tem um painel consol
 
 ## Goals
 
-- [ ] Consultar pedidos com filtros (cliente, setor, status, período).
+- [ ] Consultar pedidos com filtros (número do pedido, cliente, setor, status, período).
 - [ ] Vendedor consulta todos os pedidos, somente leitura.
 - [ ] Painel consolidado por setor e status, com pendências.
 - [ ] Indicadores de produção por setor e cumprimento de prazo.
@@ -47,11 +47,13 @@ O vendedor não tem uma visão dos pedidos e o gerente não tem um painel consol
 **Acceptance Criteria**:
 
 1. WHEN um usuário consulta a lista de pedidos THEN o sistema SHALL retornar pedidos com número, cliente e status.
-2. WHEN filtros são informados THEN o sistema SHALL filtrar por cliente, setor, status e período.
-3. WHEN o vendedor consulta THEN o sistema SHALL permitir ver todos os pedidos, somente leitura.
-4. WHEN um pedido é consultado THEN o sistema SHALL retornar os itens com solicitado, executado, disponível, entregue e pendente.
+2. WHEN filtros são informados THEN o sistema SHALL filtrar por número do pedido, cliente, setor, status e período.
+3. WHEN o número do pedido é informado THEN o sistema SHALL pesquisar o número comercial (`legacyNumber`) como trecho, no servidor, sem usar o id interno; campo vazio não restringe a consulta.
+4. WHEN o número é combinado com outros filtros THEN o sistema SHALL aplicar todos os critérios em conjunto.
+5. WHEN o vendedor consulta THEN o sistema SHALL permitir ver todos os pedidos, somente leitura.
+6. WHEN um pedido é consultado THEN o sistema SHALL retornar os itens com solicitado, executado, disponível, entregue e pendente.
 
-**Independent Test**: Filtrar por cliente e ver só os pedidos dele; abrir um pedido e ver os cinco valores por item.
+**Independent Test**: Filtrar por número e por cliente e ver só os pedidos correspondentes; abrir um pedido e ver os cinco valores por item.
 
 ---
 

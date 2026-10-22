@@ -131,6 +131,149 @@ describe('listarPedidos', () => {
     expect(lista.map((linha) => linha.id)).toEqual(['ped_1'])
   })
 
+  it('pesquisa pelo número comercial do pedido como trecho (IND-02)', async () => {
+    const repo = createRepo([
+      pedido({ id: 'ped_1', numero: '70435' }),
+      pedido({ id: 'ped_2', numero: '70436' }),
+    ])
+
+    const lista = await listarPedidos({ numero: '0435' }, repo)
+
+    expect(lista.map((linha) => [linha.numero, linha.id])).toEqual([['70435', 'ped_1']])
+  })
+
+  it('não retorna pedidos quando o número pesquisado não existe (IND-02)', async () => {
+    const repo = createRepo([
+      pedido({ id: 'ped_1', numero: '70435' }),
+      pedido({ id: 'ped_2', numero: '70436' }),
+    ])
+
+    expect(await listarPedidos({ numero: '99999' }, repo)).toEqual([])
+  })
+
+  it('com o número vazio ou só com espaços, não restringe a consulta (IND-02)', async () => {
+    const repo = createRepo([
+      pedido({ id: 'ped_1', numero: '70435' }),
+      pedido({ id: 'ped_2', numero: '70436' }),
+    ])
+
+    expect((await listarPedidos({ numero: '' }, repo)).map((linha) => linha.id).sort()).toEqual([
+      'ped_1',
+      'ped_2',
+    ])
+    expect((await listarPedidos({ numero: '   ' }, repo)).map((linha) => linha.id).sort()).toEqual([
+      'ped_1',
+      'ped_2',
+    ])
+  })
+
+  it('não confunde o número comercial com o id interno do pedido (IND-02)', async () => {
+    const repo = createRepo([pedido({ id: 'ped_1', numero: '70435' })])
+
+    expect(await listarPedidos({ numero: 'ped_1' }, repo)).toEqual([])
+  })
+
+  it('combina a pesquisa de número com o filtro de setor (IND-02)', async () => {
+    const repo = createRepo([
+      pedido({
+        id: 'ped_1',
+        numero: '70435',
+        atividades: [{ sectorCode: 'TELHAS', status: 'PENDING' }],
+      }),
+      pedido({
+        id: 'ped_2',
+        numero: '70436',
+        atividades: [{ sectorCode: 'TELHAS', status: 'PENDING' }],
+      }),
+      pedido({
+        id: 'ped_3',
+        numero: '70437',
+        atividades: [{ sectorCode: 'REVENDA', status: 'PENDING' }],
+      }),
+    ])
+
+    const lista = await listarPedidos({ numero: '7043', setor: 'TELHAS' }, repo)
+
+    expect(lista.map((linha) => linha.id).sort()).toEqual(['ped_1', 'ped_2'])
+  })
+
+  it('combina a pesquisa de número com o filtro de período (IND-02, AD-014)', async () => {
+    const repo = createRepo([
+      pedido({
+        id: 'ped_1',
+        numero: '70435',
+        criadoEm: new Date('2026-10-22T12:00:00.000-03:00'),
+      }),
+      pedido({
+        id: 'ped_2',
+        numero: '704350',
+        criadoEm: new Date('2026-10-23T12:00:00.000-03:00'),
+      }),
+    ])
+
+    const lista = await listarPedidos(
+      {
+        numero: '70435',
+        de: new Date('2026-10-22T03:00:00.000Z'),
+        ate: new Date('2026-10-23T03:00:00.000Z'),
+      },
+      repo,
+    )
+
+    expect(lista.map((linha) => linha.id)).toEqual(['ped_1'])
+  })
+
+  it('combina a pesquisa de número com o filtro de status (IND-02)', async () => {
+    const repo = createRepo([
+      pedido({
+        id: 'ped_1',
+        numero: '70435',
+        atividades: [{ sectorCode: 'TELHAS', status: 'COMPLETED' }],
+      }),
+      pedido({
+        id: 'ped_2',
+        numero: '70436',
+        atividades: [{ sectorCode: 'TELHAS', status: 'PENDING' }],
+      }),
+    ])
+
+    const lista = await listarPedidos({ numero: '7043', status: 'COMPLETED' }, repo)
+
+    expect(lista.map((linha) => linha.id)).toEqual(['ped_1'])
+  })
+
+  it('preserva números semelhantes que contêm o trecho pesquisado, sem incluir os demais (IND-02)', async () => {
+    const repo = createRepo([
+      pedido({ id: 'ped_1', numero: '100' }),
+      pedido({ id: 'ped_2', numero: '1000' }),
+      pedido({ id: 'ped_3', numero: '2100' }),
+      pedido({ id: 'ped_4', numero: '2001' }),
+    ])
+
+    const lista = await listarPedidos({ numero: '100' }, repo)
+
+    expect(lista.map((linha) => linha.numero).sort()).toEqual(['100', '1000', '2100'])
+  })
+
+  it('encontra pedido fora dos 20 primeiros da ordenação padrão (IND-02, QF-07)', async () => {
+    const repo = createRepo(
+      Array.from({ length: 25 }, (_, indice) =>
+        pedido({
+          id: `ped_${String(indice).padStart(2, '0')}`,
+          numero: String(70000 + indice),
+          criadoEm: new Date(2026, 0, 1, 0, indice),
+        }),
+      ),
+    )
+
+    // O pedido mais antigo fica fora dos 20 primeiros na ordem padrão.
+    expect((await listarPedidos({}, repo)).map((linha) => linha.id)).not.toContain('ped_00')
+
+    const lista = await listarPedidos({ numero: '70000' }, repo)
+
+    expect(lista.map((linha) => linha.id)).toEqual(['ped_00'])
+  })
+
   it('filtra por setor das atividades (IND-02)', async () => {
     const repo = createRepo([
       pedido({
@@ -152,7 +295,11 @@ describe('listarPedidos', () => {
 
   it('filtra pedido com itens de um único setor pelo código do setor (IND-02)', async () => {
     const repo = createRepo([
-      pedido({ id: 'ped_1', numero: '1001', atividades: [{ sectorCode: 'TELHAS', status: 'PENDING' }] }),
+      pedido({
+        id: 'ped_1',
+        numero: '1001',
+        atividades: [{ sectorCode: 'TELHAS', status: 'PENDING' }],
+      }),
     ])
 
     expect((await listarPedidos({ setor: 'TELHAS' }, repo)).map((l) => l.id)).toEqual(['ped_1'])
@@ -172,14 +319,20 @@ describe('listarPedidos', () => {
     ])
 
     expect((await listarPedidos({ setor: 'TELHAS' }, repo)).map((l) => l.id)).toEqual(['ped_1'])
-    expect((await listarPedidos({ setor: 'CORTE_DOBRA' }, repo)).map((l) => l.id)).toEqual(['ped_1'])
+    expect((await listarPedidos({ setor: 'CORTE_DOBRA' }, repo)).map((l) => l.id)).toEqual([
+      'ped_1',
+    ])
     expect(await listarPedidos({ setor: 'REVENDA' }, repo)).toEqual([])
   })
 
   it('não inclui pedido sem itens classificados em filtro de setor, mas o mantém sem filtro (LAC-04)', async () => {
     const repo = createRepo([
       pedido({ id: 'ped_1', numero: '1001', atividades: [] }),
-      pedido({ id: 'ped_2', numero: '1002', atividades: [{ sectorCode: 'TELHAS', status: 'PENDING' }] }),
+      pedido({
+        id: 'ped_2',
+        numero: '1002',
+        atividades: [{ sectorCode: 'TELHAS', status: 'PENDING' }],
+      }),
     ])
 
     expect((await listarPedidos({ setor: 'TELHAS' }, repo)).map((l) => l.id)).toEqual(['ped_2'])
@@ -188,8 +341,16 @@ describe('listarPedidos', () => {
 
   it('sem setor selecionado, não filtra por setor (IND-02)', async () => {
     const repo = createRepo([
-      pedido({ id: 'ped_1', numero: '1001', atividades: [{ sectorCode: 'REVENDA', status: 'PENDING' }] }),
-      pedido({ id: 'ped_2', numero: '1002', atividades: [{ sectorCode: 'TELHAS', status: 'PENDING' }] }),
+      pedido({
+        id: 'ped_1',
+        numero: '1001',
+        atividades: [{ sectorCode: 'REVENDA', status: 'PENDING' }],
+      }),
+      pedido({
+        id: 'ped_2',
+        numero: '1002',
+        atividades: [{ sectorCode: 'TELHAS', status: 'PENDING' }],
+      }),
     ])
 
     expect((await listarPedidos({ setor: undefined }, repo)).map((l) => l.id).sort()).toEqual([
@@ -201,9 +362,24 @@ describe('listarPedidos', () => {
   it('combina setor com status e período de criação (IND-02, AD-014)', async () => {
     const dentro = new Date('2026-10-22T12:00:00.000-03:00')
     const repo = createRepo([
-      pedido({ id: 'ped_1', numero: '1001', criadoEm: dentro, atividades: [{ sectorCode: 'TELHAS', status: 'PENDING' }] }),
-      pedido({ id: 'ped_2', numero: '1002', criadoEm: dentro, atividades: [{ sectorCode: 'TELHAS', status: 'COMPLETED' }] }),
-      pedido({ id: 'ped_3', numero: '1003', criadoEm: dentro, atividades: [{ sectorCode: 'CORTE_DOBRA', status: 'PENDING' }] }),
+      pedido({
+        id: 'ped_1',
+        numero: '1001',
+        criadoEm: dentro,
+        atividades: [{ sectorCode: 'TELHAS', status: 'PENDING' }],
+      }),
+      pedido({
+        id: 'ped_2',
+        numero: '1002',
+        criadoEm: dentro,
+        atividades: [{ sectorCode: 'TELHAS', status: 'COMPLETED' }],
+      }),
+      pedido({
+        id: 'ped_3',
+        numero: '1003',
+        criadoEm: dentro,
+        atividades: [{ sectorCode: 'CORTE_DOBRA', status: 'PENDING' }],
+      }),
       pedido({
         id: 'ped_4',
         numero: '1004',
@@ -566,7 +742,11 @@ describe('detalharPedido — totais por unidade de medida (RN01–RN05)', () => 
     const detalhe = await detalharPedido('ped_1', repo)
 
     expect(
-      detalhe.totaisPorUnidade.map((total) => [total.unidade, total.itens, total.solicitado.toString()]),
+      detalhe.totaisPorUnidade.map((total) => [
+        total.unidade,
+        total.itens,
+        total.solicitado.toString(),
+      ]),
     ).toEqual([
       ['metro', 1, '15'],
       ['peca', 2, '30'],
@@ -729,7 +909,11 @@ describe('detalharPedido — totais por unidade de medida (RN01–RN05)', () => 
     const detalhe = await detalharPedido('ped_1', repo)
 
     expect(
-      detalhe.totaisPorUnidade.map((total) => [total.unidade, total.itens, total.solicitado.toString()]),
+      detalhe.totaisPorUnidade.map((total) => [
+        total.unidade,
+        total.itens,
+        total.solicitado.toString(),
+      ]),
     ).toEqual([
       ['UN', 1, '4'],
       [null, 2, '12'],

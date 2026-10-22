@@ -148,7 +148,11 @@ describe('GET /api/pedidos', () => {
       atividades: PedidoConsultado['atividades'],
       criadoEm = '2026-10-22T12:00:00.000-03:00',
     ): PedidoConsultado {
-      return { ...pedido(id, numero, 'Cliente', 'PENDING'), atividades, criadoEm: new Date(criadoEm) }
+      return {
+        ...pedido(id, numero, 'Cliente', 'PENDING'),
+        atividades,
+        criadoEm: new Date(criadoEm),
+      }
     }
 
     async function numerosDoFiltro(query: string, userId = 'user_vendedor') {
@@ -165,7 +169,9 @@ describe('GET /api/pedidos', () => {
       const resposta = await numerosDoFiltro('setor=TELHAS')
 
       expect(resposta.status).toBe(200)
-      expect(resposta.body.pedidos.map((linha: { numero: string }) => linha.numero)).toEqual(['1001'])
+      expect(resposta.body.pedidos.map((linha: { numero: string }) => linha.numero)).toEqual([
+        '1001',
+      ])
     })
 
     it('retorna pedido com itens de vários setores em cada um dos setores (IND-02)', async () => {
@@ -236,11 +242,18 @@ describe('GET /api/pedidos', () => {
       mocks.pedidos.push(
         pedidoComAtividades('ped_1', '1001', [{ sectorCode: 'TELHAS', status: 'PENDING' }]),
         pedidoComAtividades('ped_2', '1002', [{ sectorCode: 'TELHAS', status: 'COMPLETED' }]),
-        pedidoComAtividades('ped_3', '1003', [{ sectorCode: 'TELHAS', status: 'PENDING' }], '2026-10-23T12:00:00.000-03:00'),
+        pedidoComAtividades(
+          'ped_3',
+          '1003',
+          [{ sectorCode: 'TELHAS', status: 'PENDING' }],
+          '2026-10-23T12:00:00.000-03:00',
+        ),
         pedidoComAtividades('ped_4', '1004', [{ sectorCode: 'REVENDA', status: 'PENDING' }]),
       )
 
-      const resposta = await numerosDoFiltro('setor=TELHAS&status=PENDING&de=2026-10-22&ate=2026-10-22')
+      const resposta = await numerosDoFiltro(
+        'setor=TELHAS&status=PENDING&de=2026-10-22&ate=2026-10-22',
+      )
 
       expect(resposta.status).toBe(200)
       expect(resposta.body.pedidos.map((l: { numero: string }) => l.numero)).toEqual(['1001'])
@@ -313,6 +326,142 @@ describe('GET /api/pedidos', () => {
 
       expect(response.status).toBe(400)
       expect((await response.json()).error).toBe('invalid_filters')
+    })
+  })
+
+  describe('pesquisa pelo número comercial do pedido', () => {
+    function pedidoComNumero(
+      id: string,
+      numero: string,
+      atividades: PedidoConsultado['atividades'] = [{ sectorCode: 'TELHAS', status: 'PENDING' }],
+      criadoEm = '2026-10-22T12:00:00.000-03:00',
+    ): PedidoConsultado {
+      return {
+        ...pedido(id, numero, 'Cliente', 'PENDING'),
+        atividades,
+        criadoEm: new Date(criadoEm),
+      }
+    }
+
+    async function consultar(query: string, userId = 'user_vendedor') {
+      const response = await GET(request({ userId, query: `?${query}` }))
+      return { status: response.status, body: await response.json() }
+    }
+
+    it('retorna o pedido cujo número contém o trecho pesquisado (IND-02)', async () => {
+      mocks.pedidos.push(
+        pedidoComNumero('ped_1', '70435'),
+        pedidoComNumero('ped_2', '70436'),
+        pedidoComNumero('ped_3', '90001'),
+      )
+
+      const resposta = await consultar('numero=0435')
+
+      expect(resposta.status).toBe(200)
+      expect(resposta.body.pedidos.map((l: { numero: string }) => l.numero)).toEqual(['70435'])
+    })
+
+    it('retorna lista vazia quando o número pesquisado não existe (IND-02)', async () => {
+      mocks.pedidos.push(pedidoComNumero('ped_1', '70435'))
+
+      const resposta = await consultar('numero=99999')
+
+      expect(resposta.status).toBe(200)
+      expect(resposta.body.pedidos).toEqual([])
+    })
+
+    it('com o campo vazio, mantém a consulta de todos os pedidos (IND-02)', async () => {
+      mocks.pedidos.push(pedidoComNumero('ped_1', '70435'), pedidoComNumero('ped_2', '70436'))
+
+      expect((await consultar('numero=')).body.pedidos).toHaveLength(2)
+      expect((await consultar('numero=%20%20')).body.pedidos).toHaveLength(2)
+      expect((await consultar('')).body.pedidos).toHaveLength(2)
+    })
+
+    it('não usa o id interno do pedido como número comercial (IND-02)', async () => {
+      mocks.pedidos.push(pedidoComNumero('ped_1', '70435'))
+
+      expect((await consultar('numero=ped_1')).body.pedidos).toEqual([])
+    })
+
+    it('combina a pesquisa com o filtro de setor (IND-02)', async () => {
+      mocks.pedidos.push(
+        pedidoComNumero('ped_1', '70435', [{ sectorCode: 'TELHAS', status: 'PENDING' }]),
+        pedidoComNumero('ped_2', '70436', [{ sectorCode: 'TELHAS', status: 'PENDING' }]),
+        pedidoComNumero('ped_3', '70437', [{ sectorCode: 'REVENDA', status: 'PENDING' }]),
+      )
+
+      const resposta = await consultar('numero=7043&setor=TELHAS')
+
+      expect(resposta.status).toBe(200)
+      expect(resposta.body.pedidos.map((l: { numero: string }) => l.numero).sort()).toEqual([
+        '70435',
+        '70436',
+      ])
+    })
+
+    it('combina a pesquisa com o filtro de período (IND-02, AD-014)', async () => {
+      mocks.pedidos.push(
+        pedidoComNumero('ped_1', '70435', undefined, '2026-10-22T12:00:00.000-03:00'),
+        pedidoComNumero('ped_2', '704350', undefined, '2026-10-23T12:00:00.000-03:00'),
+      )
+
+      const resposta = await consultar('numero=70435&de=2026-10-22&ate=2026-10-22')
+
+      expect(resposta.status).toBe(200)
+      expect(resposta.body.pedidos.map((l: { numero: string }) => l.numero)).toEqual(['70435'])
+    })
+
+    it('combina a pesquisa com o filtro de status (IND-02)', async () => {
+      mocks.pedidos.push(
+        pedidoComNumero('ped_1', '70435', [{ sectorCode: 'TELHAS', status: 'COMPLETED' }]),
+        pedidoComNumero('ped_2', '70436', [{ sectorCode: 'TELHAS', status: 'PENDING' }]),
+      )
+
+      const resposta = await consultar('numero=7043&status=COMPLETED')
+
+      expect(resposta.status).toBe(200)
+      expect(resposta.body.pedidos.map((l: { numero: string }) => l.numero)).toEqual(['70435'])
+    })
+
+    it('encontra pedido fora dos 20 primeiros da ordenação padrão (IND-02, QF-07)', async () => {
+      mocks.pedidos.push(
+        ...Array.from({ length: 25 }, (_, indice) =>
+          pedidoComNumero(
+            `ped_${String(indice).padStart(2, '0')}`,
+            String(70000 + indice),
+            undefined,
+            new Date(2026, 0, 1, 0, indice).toISOString(),
+          ),
+        ),
+      )
+
+      expect((await consultar('')).body.pedidos.map((l: { id: string }) => l.id)).not.toContain(
+        'ped_00',
+      )
+
+      const resposta = await consultar('numero=70000')
+
+      expect(resposta.body.pedidos.map((l: { id: string }) => l.id)).toEqual(['ped_00'])
+    })
+
+    it('aplica a pesquisa para o Vendedor e para o Gerente (IND-11)', async () => {
+      mocks.perfis.user_gerente = ['PRODUCTION_MANAGER']
+      mocks.pedidos.push(pedidoComNumero('ped_1', '70435'), pedidoComNumero('ped_2', '70436'))
+
+      const vendedor = await consultar('numero=70435', 'user_vendedor')
+      const gerente = await consultar('numero=70435', 'user_gerente')
+
+      expect(vendedor.body.pedidos.map((l: { numero: string }) => l.numero)).toEqual(['70435'])
+      expect(gerente.body.pedidos.map((l: { numero: string }) => l.numero)).toEqual(['70435'])
+    })
+
+    it('mantém a recusa de acesso sem perfil quando há pesquisa de número (IND-11)', async () => {
+      mocks.pedidos.push(pedidoComNumero('ped_1', '70435'))
+
+      const resposta = await consultar('numero=70435', 'user_sem_perfil')
+
+      expect(resposta.status).toBe(403)
     })
   })
 })

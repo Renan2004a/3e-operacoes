@@ -35,6 +35,8 @@ export interface PedidoConsultado {
 }
 
 export interface FiltrosPedido {
+  /** Trecho do número comercial do pedido (legacyNumber), sem espaços nas bordas. */
+  numero?: string
   /** Trecho do nome do cliente, sem diferenciar maiúsculas. */
   cliente?: string
   /** Código do setor; mantém pedidos com alguma atividade nesse setor. */
@@ -189,6 +191,11 @@ function clienteContem(cliente: string | null, filtro: string): boolean {
   return cliente !== null && cliente.toLowerCase().includes(filtro.trim().toLowerCase())
 }
 
+/** Pesquisa parcial no número comercial do pedido (não no id interno). */
+function numeroContem(numero: string, filtro: string): boolean {
+  return numero.toLowerCase().includes(filtro.trim().toLowerCase())
+}
+
 function dentroDoPeriodo(pedido: PedidoConsultado, de?: Date, ate?: Date): boolean {
   if (de && pedido.criadoEm.getTime() < de.getTime()) return false
   if (ate && pedido.criadoEm.getTime() >= ate.getTime()) return false
@@ -196,9 +203,9 @@ function dentroDoPeriodo(pedido: PedidoConsultado, de?: Date, ate?: Date): boole
 }
 
 /**
- * Lista os pedidos aplicando os filtros de cliente, setor, status e período,
- * ordena por criação decrescente (id como desempate) e pagina por
- * limite/offset (IND-01, IND-02, IND-03, QF-07).
+ * Lista os pedidos aplicando os filtros de número comercial, cliente, setor,
+ * status e período, ordena por criação decrescente (id como desempate) e
+ * pagina por limite/offset (IND-01, IND-02, IND-03, QF-07).
  */
 export async function listarPedidos(
   filtros: FiltrosPedido,
@@ -208,6 +215,7 @@ export async function listarPedidos(
   const { limite, offset } = normalizarPaginacao(filtros)
 
   return pedidos
+    .filter((pedido) => !filtros.numero?.trim() || numeroContem(pedido.numero, filtros.numero))
     .filter((pedido) => !filtros.cliente?.trim() || clienteContem(pedido.cliente, filtros.cliente))
     .filter((pedido) => !filtros.setor || pedido.atividades.some((a) => a.sectorCode === filtros.setor))
     .filter((pedido) => !filtros.status || statusDoPedido(pedido.atividades) === filtros.status)

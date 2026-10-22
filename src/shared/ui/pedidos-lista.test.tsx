@@ -56,7 +56,9 @@ describe('PedidosLista', () => {
   })
 
   it('mostra erro acessível e tentar de novo recarrega (FEP-13)', async () => {
-    mocks.apiGet.mockRejectedValueOnce(new Error('falha')).mockResolvedValueOnce({ pedidos: [PEDIDO] })
+    mocks.apiGet
+      .mockRejectedValueOnce(new Error('falha'))
+      .mockResolvedValueOnce({ pedidos: [PEDIDO] })
     render(<PedidosLista onSelecionar={vi.fn()} />)
 
     const alert = await screen.findByRole('alert')
@@ -94,7 +96,9 @@ describe('PedidosLista', () => {
     const setor = screen.getByLabelText('Setor')
     expect(setor.tagName).toBe('SELECT')
     expect(setor).toHaveValue('')
-    const opcoes = within(setor).getAllByRole('option').map((opcao) => [opcao.textContent, opcao.getAttribute('value')])
+    const opcoes = within(setor)
+      .getAllByRole('option')
+      .map((opcao) => [opcao.textContent, opcao.getAttribute('value')])
     expect(opcoes).toEqual([
       ['Todos', ''],
       ['Corte e Dobra', 'CORTE_DOBRA'],
@@ -180,6 +184,67 @@ describe('PedidosLista', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Filtrar' }))
 
     await waitFor(() => expect(mocks.apiGet).toHaveBeenLastCalledWith('/api/pedidos'))
+  })
+
+  it('oferece o campo de número do pedido com orientação de trecho (FEP-03)', async () => {
+    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+
+    expect(screen.getByLabelText('Pesquisar por número')).toBeInTheDocument()
+    expect(screen.getByText(/trecho do número comercial/i)).toBeInTheDocument()
+  })
+
+  it('envia o número do pedido sem os espaços em volta (FEP-03)', async () => {
+    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+    await screen.findByText('Sem pedidos')
+
+    fireEvent.change(screen.getByLabelText('Pesquisar por número'), {
+      target: { value: '  70435  ' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Filtrar' }))
+
+    await waitFor(() => expect(mocks.apiGet).toHaveBeenLastCalledWith('/api/pedidos?numero=70435'))
+  })
+
+  it('combina a pesquisa por número com os demais filtros (FEP-03)', async () => {
+    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+    await screen.findByText('Sem pedidos')
+
+    fireEvent.change(screen.getByLabelText('Pesquisar por número'), { target: { value: '7043' } })
+    fireEvent.change(screen.getByLabelText('Setor'), { target: { value: 'TELHAS' } })
+    fireEvent.change(screen.getByLabelText('Status'), { target: { value: 'PENDING' } })
+    fireEvent.change(screen.getByLabelText('De'), { target: { value: '2026-10-01' } })
+    fireEvent.change(screen.getByLabelText('Até'), { target: { value: '2026-10-31' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Filtrar' }))
+
+    await waitFor(() =>
+      expect(mocks.apiGet).toHaveBeenLastCalledWith(
+        '/api/pedidos?numero=7043&setor=TELHAS&status=PENDING&de=2026-10-01&ate=2026-10-31',
+      ),
+    )
+  })
+
+  it('omite o número quando o campo está vazio (FEP-03)', async () => {
+    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+    await screen.findByText('Sem pedidos')
+
+    fireEvent.change(screen.getByLabelText('Pesquisar por número'), { target: { value: '   ' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Filtrar' }))
+
+    await waitFor(() => expect(mocks.apiGet).toHaveBeenLastCalledWith('/api/pedidos'))
+  })
+
+  it('restaura o número da URL ao voltar do detalhe (FEP-03)', async () => {
+    window.history.replaceState({}, '', '/?numero=70435&setor=TELHAS')
+    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+
+    await screen.findByText('Sem pedidos')
+    expect(screen.getByLabelText('Pesquisar por número')).toHaveValue('70435')
+    expect(mocks.apiGet).toHaveBeenCalledWith('/api/pedidos?numero=70435&setor=TELHAS')
   })
 
   it('selecionar um pedido aciona o chamador com o pedido (FEP-03)', async () => {
