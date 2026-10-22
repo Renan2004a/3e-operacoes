@@ -8,8 +8,8 @@ import {
   type PcpRepository,
 } from './pcp'
 
-function execucao(sectorId: string, quantidade: number): ExecucaoIndicador {
-  return { sectorId, quantidade: new Prisma.Decimal(quantidade) }
+function execucao(sectorId: string, quantidade: number, unidade = 'UN'): ExecucaoIndicador {
+  return { sectorId, unidade, quantidade: new Prisma.Decimal(quantidade) }
 }
 
 function atividade(
@@ -67,6 +67,50 @@ describe('montarPcp', () => {
         ['setor_telhas', '5'],
       ],
     )
+  })
+
+  it('não soma no mesmo setor execuções de unidades diferentes (RN01, RN02)', async () => {
+    const repo = createRepo({
+      execucoes: [
+        execucao('setor_corte', 20, 'UN'),
+        execucao('setor_corte', 15.5, 'M'),
+        execucao('setor_corte', 10, 'UN'),
+      ],
+    })
+
+    const pcp = await montarPcp(repo)
+
+    expect(
+      pcp.producaoPorSetor.map((linha) => [linha.sectorId, linha.unidade, linha.quantidade.toString()]),
+    ).toEqual([
+      ['setor_corte', 'M', '15.5'],
+      ['setor_corte', 'UN', '30'],
+    ])
+  })
+
+  it('mantém a produção sem unidade informada em grupo próprio (RN05)', async () => {
+    const repo = createRepo({
+      execucoes: [execucao('setor_corte', 2, ''), execucao('setor_corte', 3, 'un')],
+    })
+
+    const pcp = await montarPcp(repo)
+
+    expect(
+      pcp.producaoPorSetor.map((linha) => [linha.unidade, linha.quantidade.toString()]),
+    ).toEqual([
+      ['un', '3'],
+      [null, '2'],
+    ])
+  })
+
+  it('preserva a precisão decimal da produção em metros (RN04)', async () => {
+    const repo = createRepo({
+      execucoes: [execucao('setor_telhas', 0.1, 'M'), execucao('setor_telhas', 0.2, 'M')],
+    })
+
+    const pcp = await montarPcp(repo)
+
+    expect(pcp.producaoPorSetor[0].quantidade.toString()).toBe('0.3')
   })
 
   it('calcula o cumprimento de prazo das concluídas com prazo (IND-08)', async () => {

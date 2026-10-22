@@ -13,6 +13,11 @@ import { Metric } from './metric'
 import { PageHead } from './page-head'
 import { Progress, type ProgressTone } from './progress'
 import { Spinner } from './spinner'
+import {
+  rotuloDaUnidade,
+  valorPorUnidade,
+  type TotalUnidadeView,
+} from './totais-unidade'
 import { cn, FOCO_VISIVEL } from './utils'
 
 interface ItemSaldo {
@@ -65,28 +70,36 @@ const ROTULO_SITUACAO: Record<string, string> = {
   DIVERGENT: 'Divergente',
 }
 
-/** Agrupa os itens por setor para o desmembramento operacional. */
+/**
+ * Agrupa os itens por setor e unidade para o desmembramento operacional.
+ * Unidades diferentes ficam em linhas separadas (RN01, RN02).
+ */
 function agruparPorSetor(itens: ItemSaldo[]) {
-  const mapa = new Map<string, { itens: number; solicitado: number; pendente: number }>()
+  const mapa = new Map<
+    string,
+    { setor: string; unidade: string | null; itens: number; solicitado: number; pendente: number }
+  >()
   for (const item of itens) {
-    const chave = item.sectorName ?? 'Não classificado'
-    const atual = mapa.get(chave) ?? { itens: 0, solicitado: 0, pendente: 0 }
+    const setor = item.sectorName ?? 'Não classificado'
+    const unidade = item.unit.trim() === '' ? null : item.unit.trim()
+    const chave = `${setor}\u0000${unidade?.toUpperCase() ?? ''}`
+    const atual = mapa.get(chave) ?? { setor, unidade, itens: 0, solicitado: 0, pendente: 0 }
     atual.itens += 1
     atual.solicitado += Number(item.solicitado) || 0
     atual.pendente += Number(item.pendente) || 0
     mapa.set(chave, atual)
   }
-  return Array.from(mapa.entries()).map(([setor, dados]) => ({ setor, ...dados }))
+  return Array.from(mapa.values())
 }
 
 function numero(valor: string | number): number {
   return Number(String(valor).replace(',', '.'))
 }
 
-/** Percentual executado do item, limitado a 100. */
-function percentualExecutado(item: ItemSaldo): number {
-  const solicitado = numero(item.solicitado)
-  const executado = numero(item.executado)
+/** Percentual executado de um item ou de um grupo da mesma unidade, limitado a 100. */
+function percentualExecutado(valores: Pick<ItemSaldo, 'solicitado' | 'executado'>): number {
+  const solicitado = numero(valores.solicitado)
+  const executado = numero(valores.executado)
   if (!Number.isFinite(solicitado) || solicitado <= 0) return 0
   return Math.min(100, Math.max(0, Math.round((executado / solicitado) * 100)))
 }
@@ -106,6 +119,7 @@ interface PedidoDetalhado {
   customerName: string | null
   sellerLegacyCode: string | null
   itens: ItemSaldo[]
+  totaisPorUnidade: TotalUnidadeView[]
 }
 
 export interface PedidoDetalheProps {
@@ -367,21 +381,6 @@ export function PedidoDetalhe({
   const pendentesDesmembramento = pedido.itens.filter(
     (item) => item.classificationStatus !== 'CLASSIFIED' && !classificados[item.itemId],
   ).length
-  const pendentesProducao = pedido.itens.reduce(
-    (total, item) => total + (Number(item.pendente) || 0),
-    0,
-  )
-  const totalSolicitado = pedido.itens.reduce(
-    (total, item) => total + (Number(item.solicitado) || 0),
-    0,
-  )
-  const totalExecutado = pedido.itens.reduce(
-    (total, item) => total + (Number(item.executado) || 0),
-    0,
-  )
-  const progressoPedido =
-    totalSolicitado > 0 ? Math.min(100, Math.round((totalExecutado / totalSolicitado) * 100)) : 0
-
   return (
     <section className="grid gap-4">
       <div className="grid gap-2">
@@ -409,8 +408,8 @@ export function PedidoDetalhe({
         />
         <Metric
           label="Pendentes de produção"
-          value={pendentesProducao}
-          helper="A produzir ou separar."
+          value={valorPorUnidade(pedido.totaisPorUnidade, 'pendente')}
+          helper="A produzir ou separar, por unidade."
         />
       </div>
 
@@ -419,18 +418,34 @@ export function PedidoDetalhe({
           <CardTitle className="text-base">Resumo do pedido</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <Progress
-            label="Execução do pedido"
-            value={progressoPedido}
-            tone={progressoPedido >= 100 ? 'success' : 'accent'}
-            helper={`${totalExecutado} de ${totalSolicitado} unidades executadas.`}
-          />
+          {pedido.totaisPorUnidade.length === 0 ? (
+            <p className="text-sm text-muted">Sem itens para medir a execução.</p>
+          ) : (
+            pedido.totaisPorUnidade.map((total) => {
+              const percentual = percentualExecutado(total)
+              const unidade = rotuloDaUnidade(total.unidade)
+              return (
+                <Progress
+                  key={total.unidade ?? 'sem-unidade'}
+                  label={`Execução do pedido (${unidade})`}
+                  value={percentual}
+                  tone={percentual >= 100 ? 'success' : 'accent'}
+                  helper={`${total.executado} de ${total.solicitado} ${unidade} executadas.`}
+                />
+              )
+            })
+          )}
           <ul className="grid gap-2 text-sm text-ink">
             {agruparPorSetor(pedido.itens).map((grupo) => (
-              <li key={grupo.setor} className="flex flex-wrap items-center justify-between gap-2">
+              <li
+                key={`${grupo.setor}-${grupo.unidade ?? ''}`}
+                className="flex flex-wrap items-center justify-between gap-2"
+              >
                 <span className="font-medium">{grupo.setor}</span>
                 <span className="text-muted">
-                  {grupo.itens} item(ns) · solicitado {grupo.solicitado} · pendente {grupo.pendente}
+                  {grupo.itens} item(ns) · solicitado {grupo.solicitado}{' '}
+                  {rotuloDaUnidade(grupo.unidade)} · pendente {grupo.pendente}{' '}
+                  {rotuloDaUnidade(grupo.unidade)}
                 </span>
               </li>
             ))}

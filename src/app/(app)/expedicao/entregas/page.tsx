@@ -11,6 +11,7 @@ import { Input } from '@/shared/ui/input'
 import { Metric } from '@/shared/ui/metric'
 import { PageHead } from '@/shared/ui/page-head'
 import { Spinner } from '@/shared/ui/spinner'
+import { valorPorUnidade, type TotalUnidadeView } from '@/shared/ui/totais-unidade'
 
 interface ItemSaldo {
   itemId: string
@@ -26,6 +27,7 @@ interface PedidoDetalhado {
   numero: string
   cliente: string | null
   itens: ItemSaldo[]
+  totaisPorUnidade: TotalUnidadeView[]
 }
 
 interface PedidoListado {
@@ -39,11 +41,6 @@ const CLASSE_SELECT =
 
 function numero(valor: string | number): number {
   return Number(String(valor).replace(',', '.'))
-}
-
-/** Soma um campo numérico dos itens, para o resumo do pedido (PROT-05). */
-function somar(itens: ItemSaldo[], campo: 'disponivel' | 'pendente'): number {
-  return itens.reduce((total, item) => total + numero(item[campo]), 0)
 }
 
 interface EntregaFormProps {
@@ -291,14 +288,14 @@ export default function EntregasPage() {
             <Metric label="Itens" value={pedido.itens.length} helper="No pedido." />
             <Metric
               label="Disponíveis"
-              value={somar(pedido.itens, 'disponivel')}
+              value={valorPorUnidade(pedido.totaisPorUnidade, 'disponivel')}
               tone="success"
-              helper="Para entrega."
+              helper="Para entrega, por unidade."
             />
             <Metric
               label="Pendentes"
-              value={somar(pedido.itens, 'pendente')}
-              helper="A produzir."
+              value={valorPorUnidade(pedido.totaisPorUnidade, 'pendente')}
+              helper="A produzir, por unidade."
             />
           </div>
 

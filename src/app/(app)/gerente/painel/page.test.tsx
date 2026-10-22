@@ -39,7 +39,7 @@ function indicadores() {
       pendencias: 2,
     },
     pcp: {
-      producaoPorSetor: [{ sectorId: 'setor-corte', quantidade: '12.5' }],
+      producaoPorSetor: [{ sectorId: 'setor-corte', unidade: 'M', quantidade: '12.5' }],
       cumprimentoPrazo: { concluidasComPrazo: 4, concluidasNoPrazo: 3, percentual: 75 },
     },
   }
@@ -91,9 +91,27 @@ describe('PainelPage', () => {
     mockRespostas()
     render(<PainelPage />)
 
-    expect(await screen.findByText('setor-corte: 12.5')).toBeInTheDocument()
+    expect(await screen.findByText('setor-corte: 12.5 M')).toBeInTheDocument()
     expect(screen.getByText('75%')).toBeInTheDocument()
     expect(screen.getByText('3 de 4 no prazo.')).toBeInTheDocument()
+  })
+
+  it('mostra a produção de unidades diferentes do mesmo setor em linhas separadas (RN01, RN02)', async () => {
+    mockRespostas({
+      ...indicadores(),
+      pcp: {
+        producaoPorSetor: [
+          { sectorId: 'setor-corte', unidade: 'UN', quantidade: '30' },
+          { sectorId: 'setor-corte', unidade: 'M', quantidade: '15' },
+        ],
+        cumprimentoPrazo: { concluidasComPrazo: 0, concluidasNoPrazo: 0, percentual: 0 },
+      },
+    })
+    render(<PainelPage />)
+
+    expect(await screen.findByText('setor-corte: 30 UN')).toBeInTheDocument()
+    expect(screen.getByText('setor-corte: 15 M')).toBeInTheDocument()
+    expect(screen.queryByText(/45/)).not.toBeInTheDocument()
   })
 
   it('mostra os alertas operacionais com atrasados, parados e não encaminhados (IND-11)', async () => {

@@ -12,6 +12,7 @@ import { Metric } from '@/shared/ui/metric'
 import { PageHead } from '@/shared/ui/page-head'
 import { Progress } from '@/shared/ui/progress'
 import { Spinner } from '@/shared/ui/spinner'
+import { rotuloDaUnidade } from '@/shared/ui/totais-unidade'
 
 interface ContagemPorSetor {
   sectorId: string
@@ -32,6 +33,7 @@ interface Painel {
 
 interface ProducaoPorSetor {
   sectorId: string
+  unidade: string | null
   quantidade: string | number
   sectorName?: string | null
 }
@@ -186,9 +188,18 @@ export default function PainelPage() {
 
   const totalPorStatus = (status: ActivityStatus) =>
     painel.porStatus.find((contagem) => contagem.status === status)?.total ?? 0
-  const maxProducao = Math.max(...pcp.producaoPorSetor.map((linha) => Number(linha.quantidade)), 0)
-  const percentualProducao = (quantidade: string | number) =>
-    maxProducao > 0 ? Math.min(100, Math.round((Number(quantidade) / maxProducao) * 100)) : 0
+  /** Maior produção entre as linhas da mesma unidade: só se compara o que tem a mesma medida (RN01). */
+  const maxProducaoDaUnidade = (unidade: string | null) =>
+    Math.max(
+      ...pcp.producaoPorSetor
+        .filter((linha) => linha.unidade === unidade)
+        .map((linha) => Number(linha.quantidade)),
+      0,
+    )
+  const percentualProducao = (linha: ProducaoPorSetor) => {
+    const maximo = maxProducaoDaUnidade(linha.unidade)
+    return maximo > 0 ? Math.min(100, Math.round((Number(linha.quantidade) / maximo) * 100)) : 0
+  }
 
   return (
     <section className="grid gap-4">
@@ -248,23 +259,28 @@ export default function PainelPage() {
               <p className="text-sm text-muted">Sem produção registrada.</p>
             ) : (
               <ul aria-label="Produção por setor" className="grid gap-3">
-                {pcp.producaoPorSetor.map((producao) => (
-                  <li key={producao.sectorId} className="grid gap-1">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-ink">{producao.sectorName ?? producao.sectorId}</span>
-                      <span className="font-semibold text-ink">{producao.quantidade}</span>
-                    </div>
-                    <Progress
-                      label={`Produção do setor ${producao.sectorName ?? producao.sectorId}`}
-                      value={percentualProducao(producao.quantidade)}
-                      tone={percentualProducao(producao.quantidade) >= 100 ? 'success' : 'accent'}
-                      helper={`${producao.quantidade} produzidas no período.`}
-                    />
-                    <span className="text-xs text-muted">
-                      {producao.sectorName ?? producao.sectorId}: {producao.quantidade}
-                    </span>
-                  </li>
-                ))}
+                {pcp.producaoPorSetor.map((producao) => {
+                  const nome = producao.sectorName ?? producao.sectorId
+                  const quantidade = `${producao.quantidade} ${rotuloDaUnidade(producao.unidade)}`
+                  const percentual = percentualProducao(producao)
+                  return (
+                    <li key={`${producao.sectorId}-${producao.unidade ?? ''}`} className="grid gap-1">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-ink">{nome}</span>
+                        <span className="font-semibold text-ink">{quantidade}</span>
+                      </div>
+                      <Progress
+                        label={`Produção do setor ${nome}`}
+                        value={percentual}
+                        tone={percentual >= 100 ? 'success' : 'accent'}
+                        helper={`${quantidade} produzidas no período.`}
+                      />
+                      <span className="text-xs text-muted">
+                        {nome}: {quantidade}
+                      </span>
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </CardContent>
