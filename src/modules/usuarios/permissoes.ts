@@ -23,6 +23,8 @@ export type Acao =
   | 'monitorar_integracao'
   | 'definir_prazo'
   | 'programar_remessa'
+  | 'corrigir_setor'
+  | 'corrigir_setor_justificado'
 
 /** Matriz ação × perfis permitidos (design.md). Fonte única da autorização no servidor. */
 const MATRIZ: Record<Acao, readonly RoleCode[]> = {
@@ -39,6 +41,8 @@ const MATRIZ: Record<Acao, readonly RoleCode[]> = {
   monitorar_integracao: ['TECHNICAL_RESPONSIBLE', 'SYSTEM_RESPONSIBLE'],
   definir_prazo: ['PRODUCTION_MANAGER', 'SELLER'],
   programar_remessa: ['PRODUCTION_MANAGER', 'SELLER'],
+  corrigir_setor: ['PRODUCTION_MANAGER', 'SYSTEM_RESPONSIBLE', 'SELLER'],
+  corrigir_setor_justificado: ['PRODUCTION_MANAGER', 'SYSTEM_RESPONSIBLE'],
 }
 
 /**

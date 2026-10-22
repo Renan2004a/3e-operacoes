@@ -72,27 +72,45 @@ export const prismaIndicadoresRepository: IndicadoresRepository = {
         unit: true,
         classificationStatus: true,
         activities: {
-          select: { status: true, sector: { select: { code: true, name: true } } },
+          select: {
+            sectorId: true,
+            status: true,
+            sector: { select: { code: true, name: true } },
+            _count: { select: { executions: true, occurrences: true } },
+          },
           take: 1,
         },
         scheduledDeliveries: {
           select: { id: true, remessa: true, scheduledAt: true, confirmedAt: true },
           orderBy: { remessa: 'asc' },
         },
+        _count: { select: { deliveries: true } },
       },
       orderBy: { createdAt: 'asc' },
     })
-    return rows.map((row) => ({
-      itemId: row.id,
-      description: row.description,
-      productCode: row.productCode,
-      unit: row.unit,
-      classificationStatus: row.classificationStatus,
-      sectorCode: row.activities[0]?.sector.code ?? null,
-      sectorName: row.activities[0]?.sector.name ?? null,
-      activityStatus: row.activities[0]?.status ?? null,
-      remessas: row.scheduledDeliveries,
-    }))
+    return rows.map((row) => {
+      const atividade = row.activities[0]
+      return {
+        itemId: row.id,
+        description: row.description,
+        productCode: row.productCode,
+        unit: row.unit,
+        classificationStatus: row.classificationStatus,
+        sectorId: atividade?.sectorId ?? null,
+        sectorCode: atividade?.sector.code ?? null,
+        sectorName: atividade?.sector.name ?? null,
+        activityStatus: atividade?.status ?? null,
+        registrosAtividade: atividade
+          ? {
+              status: atividade.status,
+              execucoes: atividade._count.executions,
+              ocorrencias: atividade._count.occurrences,
+              entregas: row._count.deliveries,
+            }
+          : null,
+        remessas: row.scheduledDeliveries,
+      }
+    })
   },
 
   async buscarItensDoPedido(orderId): Promise<ItemDoPedido[] | null> {
