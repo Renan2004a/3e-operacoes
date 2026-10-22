@@ -144,10 +144,12 @@ describe('GET /api/pedidos/[orderId]', () => {
       productCode: null,
       unit: 'un',
       classificationStatus: 'PENDING_CLASSIFICATION',
+      sectorId: null,
       sectorCode: null,
       sectorName: null,
       activityStatus: null,
       suggestedSectorId: null,
+      bloqueioCorrecaoSetor: null,
       remessas: [],
     })
   })

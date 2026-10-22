@@ -85,6 +85,31 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 
 ### AD-006
 
+- **Decision**: O vendedor pode **corrigir o setor** de um item já desmembrado, desde que o item não tenha execução, ocorrência, entrega nem atividade iniciada (status diferente de `PENDING`). Gerente e responsável pelo sistema fazem correções **com motivo obrigatório**. Toda troca grava auditoria (`SECTOR_CORRECTION`) com setor anterior, setor novo, usuário e motivo. Quando há registro operacional, a API responde 409 (`operational_records`). Remessas programadas não bloqueiam a correção.
+- **Reason**: Desmembramento errado hoje é definitivo na tela; o vendedor conhece o pedido e precisa corrigir sem depender de outro perfil, sem deixar registros de produção órfãos no setor antigo.
+- **Trade-off**: A checagem de bloqueio é feita no servidor com `updateMany` condicional, sem tela de correção nesta etapa. A exigência de motivo para gerente/sistema é decisão de default do agente, a confirmar com o cliente.
+- **Scope**: setores (classificação), permissões, pedidos (vendedor/gerente), auditoria.
+- **Date**: 2026-10-21
+- **Status**: revisado pelo AD-007 (regras de bloqueio, permissão e registros mantidas; o trade-off "sem tela de correção nesta etapa" foi superado)
+
+### AD-007
+
+- **Decision**: Complementa e revisa o AD-006 na correção de setor de item já desmembrado:
+  - Vendedor corrige sem justificativa, desde que tenha a permissão `corrigir_setor` e não existam registros operacionais conflitantes.
+  - Gerente (`PRODUCTION_MANAGER`) e Responsável pelo Sistema (`SYSTEM_RESPONSIBLE`) precisam informar justificativa obrigatória, que não pode ser vazia nem conter só espaços.
+  - A justificativa tem limite de 500 caracteres Unicode, contados por pontos de código (um emoji simples vale 1). A mesma regra vale no frontend e no backend, por `src/modules/setores/motivo-correcao.ts`.
+  - Registros operacionais conflitantes são execução, ocorrência, entrega ou atividade com status diferente de `PENDING`. Remessas programadas não bloqueiam.
+  - O servidor responde `409` (`operational_records`, com mensagem) quando há conflito real, `403` sem permissão, `400` para justificativa ausente (`reason_required`) ou acima do limite (`reason_too_long`), e `422` (`item_not_classified`) para item ainda não desmembrado, que continua no fluxo de classificação inicial.
+  - A interface informa antecipadamente o bloqueio: a ação aparece desabilitada, com o motivo. Ela não aparece para perfis sem permissão. A validação da interface não substitui a do servidor.
+  - Toda correção autorizada grava auditoria `SECTOR_CORRECTION` com usuário, data e horário, item (entidade), setor anterior e novo (id, código e nome), `activityId` e justificativa quando houver. Registros anteriores são preservados.
+- **Reason**: Confirmação do cliente sobre a exigência de justificativa para gerente e responsável pelo sistema, que no AD-006 era default do agente. Também a necessidade de a interface mostrar o bloqueio antes da tentativa.
+- **Trade-off**: A checagem de bloqueio é repetida na interface a partir do detalhe do pedido, e o servidor continua sendo a fonte de verdade. O código e o nome do setor vão no JSON da auditoria, então renomear um setor não altera o histórico. Nenhuma tabela nova foi criada.
+- **Scope**: setores (correção de setor), pedidos (detalhe com bloqueio), auditoria. A matriz de permissões não mudou.
+- **Date**: 2026-10-21
+- **Status**: active
+
+### AD-008
+
 - **Decision**: Totais e somas de quantidades são agrupados pela **unidade de medida** do item. Não existe total geral entre unidades diferentes (RN01, RN02). O agrupamento compara a unidade sem espaços nas bordas e sem diferenciar maiúsculas; **não há conversão nem equivalência** entre códigos (ex.: `M`, `MT` e `M2` são unidades distintas). Item sem unidade informada forma grupo próprio, rotulado “sem unidade informada”, e nunca é somado com unidade válida (RN05); não se inventa unidade padrão. O cálculo fica no servidor (`totalizarPorUnidade` em `consulta-pedidos`, `montarPcpDe` em `pcp`, helper `agruparPorUnidade` em `producao/totais-por-unidade`); a interface apenas apresenta os valores.
 - **Reason**: RN01–RN05 do ajuste “Correção dos totais dos pedidos”. Antes, o detalhe do pedido, a entrega e a produção por setor somavam peças com metros.
 - **Trade-off**: Pedido com mais de uma unidade mostra vários totais em vez de um número único. Mudança de contrato aditiva: `GET /api/pedidos/[orderId]` ganha `totaisPorUnidade`; `GET /api/indicadores` passa a devolver uma entrada de `producaoPorSetor` por setor **e** unidade, com o campo `unidade`. Equivalência de códigos legados (M/MT, UN/PC) fica em aberto para o negócio.

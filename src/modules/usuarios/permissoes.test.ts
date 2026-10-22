@@ -17,6 +17,20 @@ describe('pode', () => {
     expect(pode(['SELLER'], 'registrar_entrega')).toBe(false)
   })
 
+  it('corrige setor sem justificativa: vendedor, gerente e responsável pelo sistema', () => {
+    expect(pode(['SELLER'], 'corrigir_setor')).toBe(true)
+    expect(pode(['PRODUCTION_MANAGER'], 'corrigir_setor')).toBe(true)
+    expect(pode(['SYSTEM_RESPONSIBLE'], 'corrigir_setor')).toBe(true)
+    expect(pode(['OPERATOR'], 'corrigir_setor')).toBe(false)
+    expect(pode(['SHIPPING'], 'corrigir_setor')).toBe(false)
+  })
+
+  it('corrige setor com justificativa obrigatória: só gerente e responsável pelo sistema', () => {
+    expect(pode(['PRODUCTION_MANAGER'], 'corrigir_setor_justificado')).toBe(true)
+    expect(pode(['SYSTEM_RESPONSIBLE'], 'corrigir_setor_justificado')).toBe(true)
+    expect(pode(['SELLER'], 'corrigir_setor_justificado')).toBe(false)
+  })
+
   it('Operador registra execução e ocorrência, mas não define prioridade', () => {
     expect(pode(['OPERATOR'], 'registrar_execucao')).toBe(true)
     expect(pode(['OPERATOR'], 'registrar_ocorrencia')).toBe(true)

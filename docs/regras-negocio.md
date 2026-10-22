@@ -17,6 +17,7 @@ Item operacional: **solicitado → executado conforme o setor → disponível �
 - Toda quantidade respeita a unidade do item; não misturar unidades.
 - Entrega parcial não conclui o item enquanto houver quantidade válida ainda não entregue.
 - Entrega acima do disponível é bloqueada; gerente pode autorizar exceção com motivo obrigatório e auditoria.
+- Correção de setor de item já desmembrado: permitida ao vendedor, ao gerente e ao responsável pelo sistema somente enquanto o item não tiver execução, ocorrência, entrega ou atividade iniciada. Gerente e responsável pelo sistema informam motivo obrigatório. Toda correção é auditada; com registro operacional, a correção é recusada (conflito).
 - Perdas, refugos e indisponibilidades exigem motivo quando informados; a lista fechada real ainda deve ser levantada.
 
 ## Corte e Dobra

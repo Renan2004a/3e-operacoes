@@ -17,7 +17,13 @@ vi.mock('@/shared/http/api-client', () => ({
   apiPatch: mocks.apiPatch,
   apiDelete: mocks.apiDelete,
   ApiError: class ApiError extends Error {
-    status = 0
+    status: number
+    code: string
+    constructor(status = 0, code = '', message?: string) {
+      super(message)
+      this.status = status
+      this.code = code
+    }
   },
 }))
 
@@ -163,5 +169,158 @@ describe('PedidoVendedorPage', () => {
 
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent(/não foi possível carregar o pedido/i)
+  })
+})
+
+function detalheDesmembrado(bloqueioCorrecaoSetor: string | null = null) {
+  return {
+    ...detalhe(),
+    itens: [
+      {
+        ...detalhe().itens[0],
+        classificationStatus: 'CLASSIFIED',
+        sectorId: 'setor_corte',
+        sectorCode: 'CORTE_DOBRA',
+        sectorName: 'Corte e Dobra',
+        activityStatus: 'PENDING',
+        suggestedSectorId: null,
+        bloqueioCorrecaoSetor,
+      },
+    ],
+  }
+}
+
+function configurarCorrecao({
+  perfis,
+  bloqueio = null,
+}: {
+  perfis: string[]
+  bloqueio?: string | null
+}) {
+  mocks.apiGet.mockImplementation((url: string) => {
+    if (url === '/api/pedidos/p1') {
+      return Promise.resolve({ pedido: detalheDesmembrado(bloqueio) })
+    }
+    if (url === '/api/setores') return Promise.resolve({ sectors: SETORES })
+    if (url === '/api/auth/sessao') {
+      return Promise.resolve({ usuario: { id: 'user_1', expiraEm: null, roles: perfis } })
+    }
+    return Promise.reject(new Error(`url inesperada: ${url}`))
+  })
+}
+
+describe('correção de setor do item desmembrado', () => {
+  it('permite ao vendedor corrigir o setor sem informar justificativa', async () => {
+    configurarCorrecao({ perfis: ['SELLER'] })
+    mocks.apiPatch.mockResolvedValue({})
+    render(<PedidoVendedorPage />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Corrigir setor do item 1' }))
+    expect(screen.queryByLabelText(/Motivo da correção/)).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Novo setor do item 1'), {
+      target: { value: 'setor_telhas' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar correção de setor do item 1' }))
+
+    await waitFor(() =>
+      expect(mocks.apiPatch).toHaveBeenCalledWith('/api/pedidos/itens/item_1/setor', {
+        sectorId: 'setor_telhas',
+        motivo: null,
+      }),
+    )
+    expect(await screen.findByText('Setor corrigido com sucesso.')).toBeInTheDocument()
+    expect(screen.getByText(/Setor: Telhas/)).toBeInTheDocument()
+  })
+
+  it('mostra a ação desabilitada com o motivo quando há registro operacional', async () => {
+    configurarCorrecao({
+      perfis: ['SELLER'],
+      bloqueio: 'O item já possui execução registrada.',
+    })
+    render(<PedidoVendedorPage />)
+
+    expect(await screen.findByText('Correção bloqueada')).toBeInTheDocument()
+    expect(screen.getByText(/O item já possui execução registrada\./)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Corrigir setor do item 1' })).toBeDisabled()
+  })
+
+  it('não oferece a correção para perfil sem permissão', async () => {
+    configurarCorrecao({ perfis: ['OPERATOR'] })
+    render(<PedidoVendedorPage />)
+
+    expect(await screen.findByText('Setor: Corte e Dobra', { exact: false })).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Corrigir setor do item 1' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('exige motivo do gerente antes de enviar a correção', async () => {
+    configurarCorrecao({ perfis: ['PRODUCTION_MANAGER'] })
+    render(<PedidoVendedorPage />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Corrigir setor do item 1' }))
+    fireEvent.change(screen.getByLabelText('Novo setor do item 1'), {
+      target: { value: 'setor_telhas' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar correção de setor do item 1' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Informe o motivo da correção.')
+    expect(mocks.apiPatch).not.toHaveBeenCalled()
+  })
+
+  it('bloqueia motivo com mais de 500 caracteres Unicode antes de enviar', async () => {
+    configurarCorrecao({ perfis: ['SYSTEM_RESPONSIBLE'] })
+    render(<PedidoVendedorPage />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Corrigir setor do item 1' }))
+    fireEvent.change(screen.getByLabelText('Novo setor do item 1'), {
+      target: { value: 'setor_telhas' },
+    })
+    fireEvent.change(screen.getByLabelText(/Motivo da correção/), {
+      target: { value: 'a'.repeat(501) },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar correção de setor do item 1' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('no máximo 500 caracteres')
+    expect(mocks.apiPatch).not.toHaveBeenCalled()
+  })
+
+  it('envia o motivo validado para o gerente e aceita 500 caracteres com emoji', async () => {
+    configurarCorrecao({ perfis: ['PRODUCTION_MANAGER'] })
+    mocks.apiPatch.mockResolvedValue({})
+    render(<PedidoVendedorPage />)
+
+    const motivo = `${'a'.repeat(499)}😀`
+    fireEvent.click(await screen.findByRole('button', { name: 'Corrigir setor do item 1' }))
+    fireEvent.change(screen.getByLabelText('Novo setor do item 1'), {
+      target: { value: 'setor_telhas' },
+    })
+    fireEvent.change(screen.getByLabelText(/Motivo da correção/), { target: { value: motivo } })
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar correção de setor do item 1' }))
+
+    await waitFor(() =>
+      expect(mocks.apiPatch).toHaveBeenCalledWith('/api/pedidos/itens/item_1/setor', {
+        sectorId: 'setor_telhas',
+        motivo,
+      }),
+    )
+  })
+
+  it('mostra a mensagem clara quando o servidor responde conflito 409', async () => {
+    configurarCorrecao({ perfis: ['SELLER'] })
+    const { ApiError } = await import('@/shared/http/api-client')
+    mocks.apiPatch.mockRejectedValue(new ApiError(409, 'operational_records'))
+    render(<PedidoVendedorPage />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Corrigir setor do item 1' }))
+    fireEvent.change(screen.getByLabelText('Novo setor do item 1'), {
+      target: { value: 'setor_telhas' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar correção de setor do item 1' }))
+
+    expect(
+      await screen.findByText('O item já possui registros operacionais e não pode mudar de setor.'),
+    ).toBeInTheDocument()
   })
 })

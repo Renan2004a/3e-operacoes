@@ -2,6 +2,15 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
+import type { RoleCode } from '@/generated/prisma/client'
+import {
+  contarCaracteresMotivo,
+  LIMITE_MOTIVO_CORRECAO,
+  normalizarMotivoCorrecao,
+  validarMotivoCorrecao,
+  type ErroMotivoCorrecao,
+} from '@/modules/setores/motivo-correcao'
+import { pode } from '@/modules/usuarios/permissoes'
 import { ApiError, apiDelete, apiGet, apiPatch, apiPost } from '@/shared/http/api-client'
 import { Alert } from './alert'
 import { Badge } from './badge'
@@ -31,10 +40,12 @@ interface ItemSaldo {
   productCode: string | null
   unit: string
   classificationStatus: 'CLASSIFIED' | 'PENDING_CLASSIFICATION'
+  sectorId?: string | null
   sectorCode?: string | null
   sectorName?: string | null
   activityStatus?: string | null
   suggestedSectorId?: string | null
+  bloqueioCorrecaoSetor?: string | null
   remessas?: Remessa[]
 }
 
@@ -61,6 +72,33 @@ interface Setor {
 
 const CLASSE_SELECT =
   'min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base text-ink'
+
+const MENSAGEM_MOTIVO_CORRECAO: Record<ErroMotivoCorrecao, string> = {
+  reason_required: 'Informe o motivo da correção.',
+  reason_too_long: `O motivo deve ter no máximo ${LIMITE_MOTIVO_CORRECAO} caracteres.`,
+}
+
+/** Mensagem para a resposta de erro da correção de setor (AD-007). */
+function mensagemErroCorrecao(codigo: string): string {
+  switch (codigo) {
+    case 'operational_records':
+      return 'O item já possui registros operacionais e não pode mudar de setor.'
+    case 'item_not_classified':
+      return 'O item ainda não foi desmembrado. Use o desmembramento inicial.'
+    case 'reason_required':
+      return MENSAGEM_MOTIVO_CORRECAO.reason_required
+    case 'reason_too_long':
+      return MENSAGEM_MOTIVO_CORRECAO.reason_too_long
+    case 'invalid_sector':
+      return 'Setor inválido ou inativo. Escolha outro setor e tente novamente.'
+    case 'forbidden':
+      return 'Seu perfil não pode corrigir o setor deste item.'
+    case 'item_not_found':
+      return 'Item não encontrado. Atualize a página e tente novamente.'
+    default:
+      return 'Não foi possível corrigir o setor. Tente novamente.'
+  }
+}
 
 const ROTULO_SITUACAO: Record<string, string> = {
   PENDING: 'Pendente',
@@ -158,6 +196,13 @@ export function PedidoDetalhe({
   const [remessaData, setRemessaData] = useState<Record<string, string>>({})
   const [remessaSalvando, setRemessaSalvando] = useState<string | null>(null)
 
+  const [perfis, setPerfis] = useState<RoleCode[]>([])
+  const [correcaoAberta, setCorrecaoAberta] = useState<Record<string, boolean>>({})
+  const [correcaoSetor, setCorrecaoSetor] = useState<Record<string, string>>({})
+  const [correcaoMotivo, setCorrecaoMotivo] = useState<Record<string, string>>({})
+  const [correcaoErro, setCorrecaoErro] = useState<Record<string, string>>({})
+  const [corrigindo, setCorrigindo] = useState<string | null>(null)
+
   const [sucesso, setSucesso] = useState<string | null>(null)
   const [erroAcao, setErroAcao] = useState<string | null>(null)
 
@@ -179,6 +224,22 @@ export function PedidoDetalhe({
   useEffect(() => {
     void buscar()
   }, [buscar])
+
+  useEffect(() => {
+    let ativo = true
+    async function carregarPerfis() {
+      try {
+        const dados = await apiGet<{ usuario: { roles: RoleCode[] } }>('/api/auth/sessao')
+        if (ativo) setPerfis(dados.usuario.roles)
+      } catch {
+        if (ativo) setPerfis([])
+      }
+    }
+    void carregarPerfis()
+    return () => {
+      ativo = false
+    }
+  }, [])
 
   function tentarDeNovo() {
     setCarregando(true)
@@ -261,6 +322,7 @@ export function PedidoDetalhe({
                 ? {
                     ...item,
                     classificationStatus: 'CLASSIFIED',
+                    sectorId: setor?.id ?? item.sectorId ?? null,
                     sectorCode: setor?.code ?? item.sectorCode ?? null,
                     sectorName: setor?.name ?? item.sectorName ?? null,
                   }
@@ -350,6 +412,70 @@ export function PedidoDetalhe({
     }
   }
 
+  function marcarSetor(itemId: string, sectorId: string) {
+    const setor = setores.find((s) => s.id === sectorId)
+    setPedido((atual) =>
+      atual
+        ? {
+            ...atual,
+            itens: atual.itens.map((item) =>
+              item.itemId === itemId
+                ? {
+                    ...item,
+                    sectorId,
+                    sectorCode: setor?.code ?? item.sectorCode ?? null,
+                    sectorName: setor?.name ?? item.sectorName ?? null,
+                  }
+                : item,
+            ),
+          }
+        : atual,
+    )
+  }
+
+  async function corrigirSetor(item: ItemSaldo) {
+    const { itemId } = item
+    const sectorId = correcaoSetor[itemId] ?? ''
+    const motivoDigitado = correcaoMotivo[itemId] ?? ''
+    limparFeedback()
+    setCorrecaoErro((atual) => ({ ...atual, [itemId]: '' }))
+
+    if (sectorId === '') {
+      setCorrecaoErro((atual) => ({ ...atual, [itemId]: 'Escolha o novo setor do item.' }))
+      return
+    }
+    if (sectorId === item.sectorId) {
+      setCorrecaoErro((atual) => ({
+        ...atual,
+        [itemId]: 'Escolha um setor diferente do setor atual.',
+      }))
+      return
+    }
+    const erroMotivo = validarMotivoCorrecao(motivoDigitado, exigeJustificativaCorrecao)
+    if (erroMotivo) {
+      setCorrecaoErro((atual) => ({ ...atual, [itemId]: MENSAGEM_MOTIVO_CORRECAO[erroMotivo] }))
+      return
+    }
+
+    setCorrigindo(itemId)
+    try {
+      await apiPatch(`/api/pedidos/itens/${itemId}/setor`, {
+        sectorId,
+        motivo: exigeJustificativaCorrecao ? normalizarMotivoCorrecao(motivoDigitado) : null,
+      })
+      marcarSetor(itemId, sectorId)
+      setCorrecaoAberta((atual) => ({ ...atual, [itemId]: false }))
+      setCorrecaoMotivo((atual) => ({ ...atual, [itemId]: '' }))
+      setSucesso('Setor corrigido com sucesso.')
+    } catch (error) {
+      const codigo = error instanceof ApiError ? error.code : ''
+      if (codigo === 'operational_records' || codigo === 'item_not_classified') void buscar()
+      setErroAcao(mensagemErroCorrecao(codigo))
+    } finally {
+      setCorrigindo(null)
+    }
+  }
+
   if (carregando) {
     return (
       <div className="p-2">
@@ -381,6 +507,8 @@ export function PedidoDetalhe({
   const pendentesDesmembramento = pedido.itens.filter(
     (item) => item.classificationStatus !== 'CLASSIFIED' && !classificados[item.itemId],
   ).length
+  const podeCorrigirSetor = pode(perfis, 'corrigir_setor')
+  const exigeJustificativaCorrecao = pode(perfis, 'corrigir_setor_justificado')
   return (
     <section className="grid gap-4">
       <div className="grid gap-2">
@@ -630,6 +758,111 @@ export function PedidoDetalhe({
                         </Button>
                       </form>
                     )}
+                  </div>
+                ) : null}
+
+                {permitirClassificacao && desmembrado && podeCorrigirSetor ? (
+                  <div className="grid gap-3 border-t border-line pt-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-ink">Correção de setor</p>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        aria-label={`Corrigir setor do ${labelItem}`}
+                        aria-expanded={correcaoAberta[item.itemId] === true}
+                        disabled={Boolean(item.bloqueioCorrecaoSetor)}
+                        onClick={() => {
+                          limparFeedback()
+                          setCorrecaoAberta((atual) => ({
+                            ...atual,
+                            [item.itemId]: !atual[item.itemId],
+                          }))
+                        }}
+                      >
+                        {correcaoAberta[item.itemId] ? '− Fechar' : 'Corrigir setor'}
+                      </Button>
+                    </div>
+
+                    {item.bloqueioCorrecaoSetor ? (
+                      <Alert variant="warning" title="Correção bloqueada">
+                        {item.bloqueioCorrecaoSetor} O setor deste item não pode ser alterado.
+                      </Alert>
+                    ) : null}
+
+                    {!item.bloqueioCorrecaoSetor && correcaoAberta[item.itemId] ? (
+                      <form
+                        className="grid gap-3 rounded-lg border border-line bg-surface-2 p-3"
+                        onSubmit={(evento) => {
+                          evento.preventDefault()
+                          void corrigirSetor(item)
+                        }}
+                        noValidate
+                      >
+                        <Field label={`Novo setor do ${labelItem}`}>
+                          {(props) => (
+                            <select
+                              id={props.id}
+                              aria-describedby={props['aria-describedby']}
+                              className={CLASSE_SELECT}
+                              value={correcaoSetor[item.itemId] ?? item.sectorId ?? ''}
+                              onChange={(evento) =>
+                                setCorrecaoSetor((atual) => ({
+                                  ...atual,
+                                  [item.itemId]: evento.target.value,
+                                }))
+                              }
+                            >
+                              <option value="">Selecione…</option>
+                              {setores.map((setor) => (
+                                <option key={setor.id} value={setor.id}>
+                                  {setor.name}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        </Field>
+
+                        {exigeJustificativaCorrecao ? (
+                          <Field
+                            label={`Motivo da correção (${labelItem})`}
+                            required
+                            hint={`${contarCaracteresMotivo((correcaoMotivo[item.itemId] ?? '').trim())} de ${LIMITE_MOTIVO_CORRECAO} caracteres.`}
+                          >
+                            {(props) => (
+                              <textarea
+                                id={props.id}
+                                aria-describedby={props['aria-describedby']}
+                                aria-invalid={props.invalid || undefined}
+                                rows={3}
+                                className={cn(CLASSE_SELECT, 'min-h-24 py-2')}
+                                value={correcaoMotivo[item.itemId] ?? ''}
+                                onChange={(evento) =>
+                                  setCorrecaoMotivo((atual) => ({
+                                    ...atual,
+                                    [item.itemId]: evento.target.value,
+                                  }))
+                                }
+                              />
+                            )}
+                          </Field>
+                        ) : null}
+
+                        {correcaoErro[item.itemId] ? (
+                          <p role="alert" className="text-sm font-medium text-danger">
+                            {correcaoErro[item.itemId]}
+                          </p>
+                        ) : null}
+
+                        <Button
+                          type="submit"
+                          disabled={corrigindo === item.itemId}
+                          aria-label={`Confirmar correção de setor do ${labelItem}`}
+                        >
+                          {corrigindo === item.itemId ? 'Corrigindo…' : 'Confirmar correção'}
+                        </Button>
+                      </form>
+                    ) : null}
                   </div>
                 ) : null}
 

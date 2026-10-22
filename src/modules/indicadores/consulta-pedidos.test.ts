@@ -359,6 +359,63 @@ describe('detalharPedido', () => {
     expect(detalhe.itens[0].unit).toBe('')
   })
 
+  it('informa o bloqueio da correção de setor quando há registro operacional (AD-007)', async () => {
+    const repo = createRepo([
+      pedido({
+        id: 'ped_1',
+        numero: '1001',
+        cliente: 'Construtora X',
+        itens: [item({ id: 'item_1' }), item({ id: 'item_2' }), item({ id: 'item_3' })],
+        especificacoes: [
+          {
+            itemId: 'item_1',
+            description: 'Chapa',
+            productCode: 'PRD-1',
+            unit: 'peca',
+            classificationStatus: 'CLASSIFIED',
+            sectorId: 'setor_corte',
+            sectorCode: 'CORTE',
+            sectorName: 'Corte e Dobra',
+            activityStatus: 'IN_PROGRESS',
+            registrosAtividade: {
+              status: 'IN_PROGRESS',
+              execucoes: 1,
+              ocorrencias: 0,
+              entregas: 0,
+            },
+          },
+          {
+            itemId: 'item_2',
+            description: 'Telha',
+            productCode: 'PRD-2',
+            unit: 'peca',
+            classificationStatus: 'CLASSIFIED',
+            sectorId: 'setor_telhas',
+            sectorCode: 'TELHAS',
+            sectorName: 'Telhas',
+            activityStatus: 'PENDING',
+            registrosAtividade: { status: 'PENDING', execucoes: 0, ocorrencias: 0, entregas: 0 },
+          },
+          {
+            itemId: 'item_3',
+            description: 'Peça',
+            productCode: 'PRD-3',
+            unit: 'peca',
+            classificationStatus: 'PENDING_CLASSIFICATION',
+          },
+        ],
+      }),
+    ])
+
+    const detalhe = await detalharPedido('ped_1', repo)
+
+    expect(detalhe.itens[0].bloqueioCorrecaoSetor).toBe('O item já possui execução registrada.')
+    expect(detalhe.itens[0].sectorId).toBe('setor_corte')
+    expect(detalhe.itens[1].bloqueioCorrecaoSetor).toBeNull()
+    expect(detalhe.itens[1].sectorId).toBe('setor_telhas')
+    expect(detalhe.itens[2].bloqueioCorrecaoSetor).toBeNull()
+  })
+
   it('rejeita pedido inexistente (IND-10)', async () => {
     const repo = createRepo([])
 
