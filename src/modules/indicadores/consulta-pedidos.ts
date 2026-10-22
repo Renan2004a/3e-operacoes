@@ -1,6 +1,7 @@
 import type { ActivityStatus } from '../producao/tipos'
 import { agruparPorUnidade, somarQuantidades } from '../producao/totais-por-unidade'
 import type { Quantidade } from '../producao/unidades'
+import type { CodigoSetor } from '../setores/codigos-setor'
 import { motivoBloqueioCorrecao, type RegistrosDaAtividade } from '../setores/corrigir-setor'
 import { sugerirSetor, type RegraProdutoSetor } from '../setores/sugerir-setor'
 import {
@@ -20,7 +21,7 @@ export type StatusPedido = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED'
 export type StatusClassificacaoItem = 'CLASSIFIED' | 'PENDING_CLASSIFICATION'
 
 export interface AtividadeDoPedido {
-  sectorId: string
+  sectorCode: CodigoSetor
   status: ActivityStatus
 }
 
@@ -36,8 +37,8 @@ export interface PedidoConsultado {
 export interface FiltrosPedido {
   /** Trecho do nome do cliente, sem diferenciar maiúsculas. */
   cliente?: string
-  /** Id do setor; mantém pedidos com alguma atividade nesse setor. */
-  setor?: string
+  /** Código do setor; mantém pedidos com alguma atividade nesse setor. */
+  setor?: CodigoSetor
   status?: StatusPedido
   /** Início do período, inclusive, sobre a data de criação do pedido. */
   de?: Date
@@ -208,7 +209,7 @@ export async function listarPedidos(
 
   return pedidos
     .filter((pedido) => !filtros.cliente?.trim() || clienteContem(pedido.cliente, filtros.cliente))
-    .filter((pedido) => !filtros.setor || pedido.atividades.some((a) => a.sectorId === filtros.setor))
+    .filter((pedido) => !filtros.setor || pedido.atividades.some((a) => a.sectorCode === filtros.setor))
     .filter((pedido) => !filtros.status || statusDoPedido(pedido.atividades) === filtros.status)
     .filter((pedido) => dentroDoPeriodo(pedido, filtros.de, filtros.ate))
     .sort(compararPorCriacao)

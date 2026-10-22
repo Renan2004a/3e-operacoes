@@ -73,7 +73,7 @@ describe('PedidosLista', () => {
 
     await screen.findByText('Sem pedidos')
     fireEvent.change(screen.getByLabelText('Cliente'), { target: { value: 'Ana' } })
-    fireEvent.change(screen.getByLabelText('Setor'), { target: { value: 'setor-corte' } })
+    fireEvent.change(screen.getByLabelText('Setor'), { target: { value: 'CORTE_DOBRA' } })
     fireEvent.change(screen.getByLabelText('Status'), { target: { value: 'PENDING' } })
     fireEvent.change(screen.getByLabelText('De'), { target: { value: '2026-01-01' } })
     fireEvent.change(screen.getByLabelText('Até'), { target: { value: '2026-01-31' } })
@@ -81,9 +81,58 @@ describe('PedidosLista', () => {
 
     await waitFor(() =>
       expect(mocks.apiGet).toHaveBeenLastCalledWith(
-        '/api/pedidos?cliente=Ana&setor=setor-corte&status=PENDING&de=2026-01-01&ate=2026-01-31',
+        '/api/pedidos?cliente=Ana&setor=CORTE_DOBRA&status=PENDING&de=2026-01-01&ate=2026-01-31',
       ),
     )
+  })
+
+  it('oferece os setores por código como opções fixas, com "Todos" como padrão (LAC-04)', async () => {
+    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+    await screen.findByText('Sem pedidos')
+
+    const setor = screen.getByLabelText('Setor')
+    expect(setor.tagName).toBe('SELECT')
+    expect(setor).toHaveValue('')
+    const opcoes = within(setor).getAllByRole('option').map((opcao) => [opcao.textContent, opcao.getAttribute('value')])
+    expect(opcoes).toEqual([
+      ['Todos', ''],
+      ['Corte e Dobra', 'CORTE_DOBRA'],
+      ['Telhas', 'TELHAS'],
+      ['Revenda', 'REVENDA'],
+    ])
+  })
+
+  it('não envia o setor quando "Todos" está selecionado (LAC-04)', async () => {
+    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+    await screen.findByText('Sem pedidos')
+
+    fireEvent.change(screen.getByLabelText('Setor'), { target: { value: 'TELHAS' } })
+    fireEvent.change(screen.getByLabelText('Setor'), { target: { value: '' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Filtrar' }))
+
+    await waitFor(() => expect(mocks.apiGet).toHaveBeenLastCalledWith('/api/pedidos'))
+  })
+
+  it('restaura o setor da URL quando é um código válido (FEP-03)', async () => {
+    window.history.replaceState({}, '', '/?setor=TELHAS')
+    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+
+    await screen.findByText('Sem pedidos')
+    expect(screen.getByLabelText('Setor')).toHaveValue('TELHAS')
+    expect(mocks.apiGet).toHaveBeenCalledWith('/api/pedidos?setor=TELHAS')
+  })
+
+  it('ignora setor inválido da URL e não o envia à API (LAC-04)', async () => {
+    window.history.replaceState({}, '', '/?setor=Telhas')
+    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+
+    await screen.findByText('Sem pedidos')
+    expect(screen.getByLabelText('Setor')).toHaveValue('')
+    expect(mocks.apiGet).toHaveBeenCalledWith('/api/pedidos')
   })
 
   it('documenta o filtro de cliente como substring sem diferenciar maiúsculas (QF-09)', async () => {

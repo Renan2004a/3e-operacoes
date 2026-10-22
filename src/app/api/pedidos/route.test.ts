@@ -51,7 +51,7 @@ function pedido(
     numero,
     cliente,
     criadoEm: new Date('2026-10-07T12:00:00.000Z'),
-    atividades: [{ sectorId: 'setor_telhas', status }],
+    atividades: [{ sectorCode: 'TELHAS', status }],
   }
 }
 
@@ -139,6 +139,112 @@ describe('GET /api/pedidos', () => {
 
     expect(response.status).toBe(403)
     expect((await response.json()).error).toBe('forbidden')
+  })
+
+  describe('filtro de setor pelo código do setor', () => {
+    function pedidoComAtividades(
+      id: string,
+      numero: string,
+      atividades: PedidoConsultado['atividades'],
+      criadoEm = '2026-10-22T12:00:00.000-03:00',
+    ): PedidoConsultado {
+      return { ...pedido(id, numero, 'Cliente', 'PENDING'), atividades, criadoEm: new Date(criadoEm) }
+    }
+
+    async function numerosDoFiltro(query: string, userId = 'user_vendedor') {
+      const response = await GET(request({ userId, query: `?${query}` }))
+      return { status: response.status, body: await response.json() }
+    }
+
+    it('retorna pedido com itens de um único setor e exclui os demais (IND-02)', async () => {
+      mocks.pedidos.push(
+        pedidoComAtividades('ped_1', '1001', [{ sectorCode: 'TELHAS', status: 'PENDING' }]),
+        pedidoComAtividades('ped_2', '1002', [{ sectorCode: 'CORTE_DOBRA', status: 'PENDING' }]),
+      )
+
+      const resposta = await numerosDoFiltro('setor=TELHAS')
+
+      expect(resposta.status).toBe(200)
+      expect(resposta.body.pedidos.map((linha: { numero: string }) => linha.numero)).toEqual(['1001'])
+    })
+
+    it('retorna pedido com itens de vários setores em cada um dos setores (IND-02)', async () => {
+      mocks.pedidos.push(
+        pedidoComAtividades('ped_1', '1001', [
+          { sectorCode: 'TELHAS', status: 'PENDING' },
+          { sectorCode: 'CORTE_DOBRA', status: 'COMPLETED' },
+        ]),
+      )
+
+      expect((await numerosDoFiltro('setor=TELHAS')).body.pedidos).toHaveLength(1)
+      expect((await numerosDoFiltro('setor=CORTE_DOBRA')).body.pedidos).toHaveLength(1)
+      expect((await numerosDoFiltro('setor=REVENDA')).body.pedidos).toEqual([])
+    })
+
+    it('não retorna pedido sem itens classificados quando há filtro de setor (LAC-04)', async () => {
+      mocks.pedidos.push(pedidoComAtividades('ped_1', '1001', []))
+
+      expect((await numerosDoFiltro('setor=TELHAS')).body.pedidos).toEqual([])
+      expect((await numerosDoFiltro('')).body.pedidos).toHaveLength(1)
+    })
+
+    it('sem setor, não filtra por setor', async () => {
+      mocks.pedidos.push(
+        pedidoComAtividades('ped_1', '1001', [{ sectorCode: 'TELHAS', status: 'PENDING' }]),
+        pedidoComAtividades('ped_2', '1002', []),
+      )
+
+      const resposta = await numerosDoFiltro('')
+
+      expect(resposta.status).toBe(200)
+      expect(resposta.body.pedidos).toHaveLength(2)
+    })
+
+    it('aplica o filtro de setor para o Vendedor e para o Gerente (IND-11)', async () => {
+      mocks.perfis.user_gerente = ['PRODUCTION_MANAGER']
+      mocks.pedidos.push(
+        pedidoComAtividades('ped_1', '1001', [{ sectorCode: 'TELHAS', status: 'PENDING' }]),
+        pedidoComAtividades('ped_2', '1002', [{ sectorCode: 'REVENDA', status: 'PENDING' }]),
+      )
+
+      const vendedor = await numerosDoFiltro('setor=TELHAS', 'user_vendedor')
+      const gerente = await numerosDoFiltro('setor=TELHAS', 'user_gerente')
+
+      expect(vendedor.body.pedidos.map((l: { numero: string }) => l.numero)).toEqual(['1001'])
+      expect(gerente.body.pedidos.map((l: { numero: string }) => l.numero)).toEqual(['1001'])
+    })
+
+    it('mantém a recusa de acesso sem perfil quando há filtro de setor (IND-11)', async () => {
+      const response = await GET(request({ userId: 'user_sem_perfil', query: '?setor=TELHAS' }))
+
+      expect(response.status).toBe(403)
+    })
+
+    it('responde 400 para setor que não é um código válido e não consulta (LAC-04)', async () => {
+      mocks.pedidos.push(
+        pedidoComAtividades('ped_1', '1001', [{ sectorCode: 'TELHAS', status: 'PENDING' }]),
+      )
+
+      for (const valor of ['Telhas', 'telhas', 'setor_telhas', 'INEXISTENTE', 'Corte e Dobra']) {
+        const resposta = await numerosDoFiltro(`setor=${encodeURIComponent(valor)}`)
+        expect(resposta.status).toBe(400)
+        expect(resposta.body.error).toBe('invalid_filters')
+      }
+    })
+
+    it('combina setor com status e período (AD-014)', async () => {
+      mocks.pedidos.push(
+        pedidoComAtividades('ped_1', '1001', [{ sectorCode: 'TELHAS', status: 'PENDING' }]),
+        pedidoComAtividades('ped_2', '1002', [{ sectorCode: 'TELHAS', status: 'COMPLETED' }]),
+        pedidoComAtividades('ped_3', '1003', [{ sectorCode: 'TELHAS', status: 'PENDING' }], '2026-10-23T12:00:00.000-03:00'),
+        pedidoComAtividades('ped_4', '1004', [{ sectorCode: 'REVENDA', status: 'PENDING' }]),
+      )
+
+      const resposta = await numerosDoFiltro('setor=TELHAS&status=PENDING&de=2026-10-22&ate=2026-10-22')
+
+      expect(resposta.status).toBe(200)
+      expect(resposta.body.pedidos.map((l: { numero: string }) => l.numero)).toEqual(['1001'])
+    })
   })
 
   describe('filtro de período por dia em America/Sao_Paulo (AD-014)', () => {

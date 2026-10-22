@@ -28,7 +28,9 @@ export const prismaIndicadoresRepository: IndicadoresRepository = {
         customerName: true,
         createdAt: true,
         items: {
-          select: { activities: { select: { sectorId: true, status: true } } },
+          select: {
+            activities: { select: { status: true, sector: { select: { code: true } } } },
+          },
         },
       },
     })
@@ -40,7 +42,7 @@ export const prismaIndicadoresRepository: IndicadoresRepository = {
       criadoEm: row.createdAt,
       atividades: row.items.flatMap((item) =>
         item.activities.map((atividade) => ({
-          sectorId: atividade.sectorId,
+          sectorCode: atividade.sector.code,
           status: atividade.status,
         })),
       ),

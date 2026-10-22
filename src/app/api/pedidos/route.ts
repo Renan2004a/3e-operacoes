@@ -4,6 +4,7 @@ import {
   type FiltrosPedido,
   type StatusPedido,
 } from '../../../modules/indicadores/consulta-pedidos'
+import { ehCodigoSetor, type CodigoSetor } from '../../../modules/setores/codigos-setor'
 import { autorizar } from '../../../shared/http/autorizacao'
 import { inicioDoDiaNoFuso } from '../../../shared/time/dia-do-periodo'
 
@@ -16,6 +17,12 @@ const STATUS_VALIDOS: readonly StatusPedido[] = ['PENDING', 'IN_PROGRESS', 'COMP
 function lerDia(valor: string | null, diasAdicionais: 0 | 1): Date | null | undefined {
   if (valor === null || valor.trim() === '') return undefined
   return inicioDoDiaNoFuso(valor, diasAdicionais)
+}
+
+/** Código do setor: `undefined` quando ausente, `null` quando não é um código válido. */
+function lerSetor(valor: string | null): CodigoSetor | null | undefined {
+  if (valor === null || valor.trim() === '') return undefined
+  return ehCodigoSetor(valor) ? valor : null
 }
 
 /** Inteiro não negativo do parâmetro: `undefined` quando ausente, `null` quando inválido. */
@@ -35,6 +42,7 @@ export async function GET(request: Request) {
 
   const params = new URL(request.url).searchParams
   const status = params.get('status')
+  const setor = lerSetor(params.get('setor'))
   const de = lerDia(params.get('de'), 0)
   const ate = lerDia(params.get('ate'), 1)
   const limite = lerInteiro(params.get('limite'))
@@ -42,6 +50,7 @@ export async function GET(request: Request) {
 
   if (
     (status !== null && status !== '' && !STATUS_VALIDOS.includes(status as StatusPedido)) ||
+    setor === null ||
     de === null ||
     ate === null ||
     limite === null ||
@@ -52,7 +61,7 @@ export async function GET(request: Request) {
 
   const filtros: FiltrosPedido = {
     cliente: params.get('cliente') ?? undefined,
-    setor: params.get('setor') ?? undefined,
+    setor,
     status: status ? (status as StatusPedido) : undefined,
     de,
     ate,

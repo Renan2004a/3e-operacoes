@@ -206,7 +206,31 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Date**: 2026-10-22
 - **Status**: proposed (D7). Pending approval.
 
+### AD-018
+
+- **Decision**: O filtro por setor de `GET /api/pedidos` usa o **código do setor** (`CORTE_DOBRA`, `TELHAS`, `REVENDA`, enum `SectorCode`), e não o texto digitado nem o id interno (cuid). A interface oferece os setores como seleção fixa ("Todos" não envia o parâmetro). Código inexistente ou inválido responde `400 invalid_filters`. Pedido entra no filtro quando tem ao menos uma atividade no setor; pedido sem itens classificados não entra no filtro de setor, mas aparece sem filtro. O status do pedido continua calculado sobre **todos** os itens, independentemente do setor selecionado; as regras de status não foram alteradas.
+- **Reason**: O campo era texto livre e comparava com o id interno, então um nome como "Telhas" não retornava nada. O código é estável entre ambientes (o id muda entre bancos) e já é o enum do banco.
+- **Trade-off**: A API passa a rejeitar valores antes aceitos (mudança de contrato; único consumidor conhecido é a própria tela). Rótulos dos setores ficam fixos na interface; se o nome de um setor mudar no banco, o rótulo não acompanha. Nenhum campo ou tabela nova.
+- **Scope**: consulta de pedidos (vendedor e gerente), filtros da lista, status do pedido (somente preservado).
+- **Date**: 2026-10-22
+- **Status**: active (correção aprovada provisoriamente com 815 testes automatizados). Pendentes: validação no navegador e teste de integração com MySQL da consulta real.
+
 ## Handoff
+
+- **Feature**: filtro por setor de pedidos (AD-018, correção A2 do perfil Vendedor)
+- **Phase / Task**: implementação concluída e aprovada provisoriamente; documentação atualizada; aguardando autorização para a próxima correção
+- **Completed**:
+  - Problema: o filtro "Setor" era texto livre comparado ao id interno do setor; "Telhas" retornava lista vazia.
+  - Correção: filtro por código do setor (`SectorCode`), seleção fixa na interface, validação na API (`400 invalid_filters` para código inválido) e consulta comparando `sector.code`. Novo módulo `src/modules/setores/codigos-setor.ts`.
+  - Status do pedido preservado como global (todos os itens); regras de status inalteradas.
+  - Testes: 815 testes automatizados aprovados (suíte completa), `tsc` sem erros e lint sem erros nos arquivos alterados.
+- **In-progress**: nenhum
+- **Next step**: após autorização, próxima correção da Etapa 1: prazo na tela e alerta de atividade (AD-009). Antes de fechar a AD-014 e a AD-018, validar no navegador (Vendedor e Gerente) os filtros de data e de setor.
+- **Blockers**: validação no navegador dos filtros de data e de setor pendente; teste de integração com MySQL da consulta de pedidos não existe; aprovação do contrato do conector e de eventual campo em `OrderItem` (AD-010); T00.4 (AD-012); decisões D6 (AD-016) e D7 (AD-017); validação da data original do pedido no ambiente de integração
+- **Uncommitted files**: alterações da AD-014 e da AD-018 em código (`src/app/api/pedidos/route.ts`, `route.test.ts`, `src/modules/indicadores/consulta-pedidos.ts`, `consulta-pedidos.test.ts`, `src/modules/indicadores/adapters/prisma-indicadores-repository.ts`, `src/shared/ui/pedidos-lista.tsx`, `pedidos-lista.test.tsx`, `src/modules/setores/codigos-setor.ts`, `codigos-setor.test.ts`, `src/shared/time/dia-do-periodo.ts`, `dia-do-periodo.test.ts`) e a documentação `docs/requisitos.md` e `.specs/STATE.md`. Nenhum commit foi feito.
+- **Branch**: fix/fluxos-vendedor1-preparação-decisões-negócio
+
+## Handoff anterior (AD-014, filtro de data de pedidos)
 
 - **Feature**: filtro de data de pedidos (AD-014), primeira correção da Etapa 1
 - **Phase / Task**: implementação concluída e aprovada provisoriamente; aguardando autorização para a próxima correção

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { apiGet } from '@/shared/http/api-client'
+import { CODIGOS_SETOR, ehCodigoSetor, type CodigoSetor } from '@/modules/setores/codigos-setor'
 import { Alert } from './alert'
 import { Badge } from './badge'
 import { Button } from './button'
@@ -49,6 +50,12 @@ const VARIANTE_STATUS: Record<StatusPedido, 'neutral' | 'info' | 'success'> = {
   COMPLETED: 'success',
 }
 
+const ROTULO_SETOR: Record<CodigoSetor, string> = {
+  CORTE_DOBRA: 'Corte e Dobra',
+  TELHAS: 'Telhas',
+  REVENDA: 'Revenda',
+}
+
 const CLASSE_SELECT = `min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-base text-ink ${FOCO_VISIVEL}`
 
 /** Monta os parâmetros da consulta (cliente como trecho, sem diferenciar maiúsculas). */
@@ -73,7 +80,7 @@ function lerFiltrosDaUrl(): Filtros {
   const params = new URLSearchParams(window.location.search)
   return {
     cliente: params.get('cliente') ?? '',
-    setor: params.get('setor') ?? '',
+    setor: ehCodigoSetor(params.get('setor') ?? '') ? (params.get('setor') as CodigoSetor) : '',
     status: params.get('status') ?? '',
     de: params.get('de') ?? '',
     ate: params.get('ate') ?? '',
@@ -169,12 +176,21 @@ export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProp
 
         <Field label="Setor">
           {(props) => (
-            <Input
-              {...props}
+            <select
+              id={props.id}
               name="setor"
+              aria-describedby={props['aria-describedby']}
+              className={CLASSE_SELECT}
               value={filtros.setor}
               onChange={(evento) => setFiltros((atual) => ({ ...atual, setor: evento.target.value }))}
-            />
+            >
+              <option value="">Todos</option>
+              {CODIGOS_SETOR.map((codigo) => (
+                <option key={codigo} value={codigo}>
+                  {ROTULO_SETOR[codigo]}
+                </option>
+              ))}
+            </select>
           )}
         </Field>
 
