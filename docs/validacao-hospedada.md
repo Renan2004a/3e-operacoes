@@ -82,9 +82,9 @@ Os PRs do Marcelo foram revisados, mergeados e validados **localmente**:
 | Playwright (390 px, navegação, setor, totais, impressão) | **11/11** | — |
 | Impressão | 1 página | — |
 
-**Pendência:** o deploy não pôde ser executado nesta rodada porque o **token do Railway foi revogado/expirou** (`Unauthorized`) e o CLI não tem sessão ativa. O ambiente hospedado continua no commit anterior (`6e21336`) e permanece saudável (`/api/health` 200); as migrations dos PRs não adicionam tabelas, então não há risco de incompatibilidade no banco.
+**Pendência (atualizada em 2026-10-22):** com um token de projeto válido, o CLI autentica (consulta o serviço normalmente), mas o Railway responde **“Deploys have been paused temporarily”** ao tentar `railway up`/`redeploy`. Não é falha de código: o último deploy (`200dfb21`) está `SUCCESS` (20/10 20:51) e o app segue saudável (`/api/health` 200). É um bloqueio de conta/projeto (trial/uso ou pausa manual), que precisa ser resolvido no dashboard.
 
-**Para publicar as correções:** autenticar o CLI (`railway login`) ou fornecer um token de projeto válido e rodar `railway up -p <PROJECT_ID> -s 3e-operacoes -e <ENV_ID> -c`; em seguida rodar `PLAYWRIGHT_BASE_URL=https://3e-operacoes-production.up.railway.app node scripts/validar-responsivo-impressao.mjs`.
+**Para publicar as correções:** no dashboard do projeto `reliable-enchantment` → serviço `3e-operacoes`, verificar o aviso de trial/uso e **despausar os deploys** (ou adicionar forma de pagamento/upgrade). Depois rodar `railway up -p <PROJECT_ID> -s 3e-operacoes -e <ENV_ID> -c` e a validação com `PLAYWRIGHT_BASE_URL=https://3e-operacoes-production.up.railway.app node scripts/validar-responsivo-impressao.mjs`.
 
 ## 6. Próximos passos para go-live
 
