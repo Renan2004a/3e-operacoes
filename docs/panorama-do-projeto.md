@@ -156,6 +156,13 @@ Fluxo sob demanda:
 | 15 | Desmembramento do vendedor (AD-003) | Desmembramento por setor | — | Concluído |
 | 16 | Alertas, remessas e sugestão de setor | RF012, RF010, RF002 | 8 | PASS |
 
+**Correções pós-feedback (PRs do Marcelo, 2026-10-21/22):**
+
+| # | Correção | Decisão | Resultado |
+| --- | --- | --- | --- |
+| 17 | **Correção de setor** de item desmembrado (vendedor sem justificativa; gerente/sistema com motivo; bloqueio por registros operacionais; auditoria) | AD-006/AD-007 | PASS (PR #2) |
+| 18 | **Totais por unidade de medida** (nunca somar peças com metros; detalhe, entregas e produção por setor) | AD-008 | PASS (PR #3) |
+
 `.specs/features/` reúne 15 pastas com `spec/design/tasks/validation`. O diário (`docs/execucao.md`) registra 15 features (a #15 está em AD-003). Todos os `validation.md` estão em **PASS**.
 
 ### Destaques da #16 (mais recente)

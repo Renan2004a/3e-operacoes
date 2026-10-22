@@ -119,11 +119,11 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 
 ## Handoff
 
-- **Feature**: revisão e correções do feedback dos docentes + padronização do banco em português
-- **Phase / Task**: concluído; próximo: vídeo final e validação hospedada
-- **Completed**: navegação do vendedor em rota própria; tabelas responsivas; feedback; ordem do detalhe + “+ remessa”; progresso acessível; impressão com 1 página; tabelas do banco renomeadas para português (17 tabelas, dados preservados); docs de banco, mockups, heurísticas e testes locais
+- **Feature**: correção de setor (AD-006/AD-007) + totais por unidade (AD-008)
+- **Phase / Task**: concluído; próximo: deploy e validação hospedada das duas correções
+- **Completed**: PRs #2 e #3 do Marcelo revisados e mergeados; 785 testes, lint/typecheck/build OK; conflitos resolvidos (totais renumerado para AD-008)
 - **In-progress** (file:line): nenhum
-- **Next step**: gravar o vídeo final por perfil e publicar no Railway com smoke test
+- **Next step**: deploy no Railway e smoke test das telas afetadas (detalhe/painel/entregas)
 - **Blockers**: nenhum para desenvolvimento; integração real depende do conector na rede da 3E
 - **Uncommitted files**: (atualizado no commit)
 - **Branch**: main

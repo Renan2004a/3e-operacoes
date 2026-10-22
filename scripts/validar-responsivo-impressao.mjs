@@ -87,6 +87,16 @@ try {
       `/vendedor/pedidos/${primeiro.id}`,
       'text=Resumo do pedido',
     )
+    // Correção de setor (AD-007): a ação aparece para o vendedor em item desmembrado.
+    const corrigir = page.getByRole('button', { name: /Corrigir setor do item 1/ })
+    const qtdCorrigir = await corrigir.count()
+    registrar('setor: ação de correção disponível', qtdCorrigir > 0, `botões=${qtdCorrigir}`)
+
+    // Totais por unidade (AD-008): o resumo mostra uma execução por unidade.
+    const progressoUnidade = page.getByText(/Execução do pedido \(/)
+    const qtdProgresso = await progressoUnidade.count()
+    registrar('totais: progresso por unidade', qtdProgresso > 0, `labels=${qtdProgresso}`)
+
     // A listagem volta a funcionar: o link aponta para a lista e a rota existe.
     const voltar = page.getByRole('link', { name: /voltar para os pedidos/i })
     const href = await voltar.getAttribute('href')
