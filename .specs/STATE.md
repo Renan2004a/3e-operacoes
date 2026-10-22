@@ -224,7 +224,32 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Date**: 2026-10-22
 - **Status**: active (aprovada provisoriamente em 2026-10-22). Decisões confirmadas: pesquisa parcial por `legacyNumber`, combinação com os demais filtros, permissões existentes preservadas e `Order.id` inalterado. Pendentes: validação no navegador, teste de integração com MySQL e otimização das consultas para não carregar todos os pedidos em memória na etapa **A1 — Paginação**. Sem alteração de banco, migração ou deploy.
 
+### AD-020
+
+- **Decision**: A lista de pedidos passa a ser paginada **no servidor**, no MySQL via Prisma. `limite` (padrão 20, teto 100) e `offset` continuam sendo os parâmetros; a resposta acrescenta `paginacao` com `pagina`, `total` e `totalPaginas`. Filtros de número comercial (parcial), cliente, setor, status derivado e período, além da ordenação `createdAt desc, id asc`, são aplicados no banco antes de `skip`/`take`. Página e total são lidos na mesma transação (`findMany` + `count`). O status derivado é traduzido para relation filters (`every`/`some`/`NOT`) reproduzindo exatamente `statusDoPedido`, sem incorporar as regras pendentes da AD-013. `%` e `_` são escapados e tratados como literais. Página inexistente responde `200` com lista vazia e total correto. A interface navega entre páginas, mantém os filtros na URL e volta à primeira página ao alterar/limpar filtros ou após importar um pedido. Nenhuma alteração de banco, migração, índice ou workflow de CI nesta etapa.
+- **Reason**: O limite de 20 era aplicado em memória (`slice`) após carregar todos os pedidos, itens e atividades; Vendedor e Gerente não conseguiam chegar ao 21º pedido. Filtros e contagem no banco eliminam o carregamento integral e permitem navegação completa.
+- **Trade-off**: A tradução do status para SQL é um espelho de `statusDoPedido` e precisa ser mantida em sincronia se a AD-013 for alterada. Por usar offset, uma importação concorrente pode deslocar um item entre páginas; a ordenação determinística evita duplicados na mesma resposta e a interface volta à primeira página após importar. A collation `utf8mb4_unicode_ci` torna a busca também insensível a acentos (mudança documentada). A busca parcial com `%...%` não usa o índice de `legacyNumber`. Índice em `createdAt` não foi criado (D6); desempenho deve ser medido com `EXPLAIN` antes de propor migração.
+- **Scope**: consulta de pedidos (Vendedor e Gerente), API `GET /api/pedidos`, lista de pedidos, testes e documentação. Filtros AD-014/A2/A6, status global, permissões, saldos e conclusão preservados.
+- **Date**: 2026-10-22
+- **Status**: active (aprovada e implementada). Testes unitários, de rota, de componente e de integração com MySQL local aprovados; validação no navegador pendente. Sem commit, push ou deploy.
+
 ## Handoff
+
+- **Feature**: paginação e otimização da consulta de pedidos (AD-020, correção A1)
+- **Phase / Task**: implementação concluída e validada localmente; aguardando validação no navegador e autorização para a próxima correção
+- **Completed**:
+  - Problema: o limite padrão de 20 era aplicado com `slice` depois de carregar todos os pedidos, itens e atividades; a interface não enviava `limite`/`offset` e não havia navegação por páginas nem total real.
+  - Correção: filtros, ordenação e paginação no MySQL via Prisma; `paginacao` na resposta; `count` e página na mesma transação; status derivado traduzido para SQL preservando os critérios atuais; `%`/`_` literais; navegação Anterior/Próxima, página na URL, reset para a primeira página ao filtrar/limpar/importar.
+  - Preservados: AD-014 (datas em `America/Sao_Paulo`, fim exclusivo), AD-018 (setor por código, status global), AD-019 (pesquisa parcial por `legacyNumber`) e permissões de Vendedor/Gerente.
+  - Sem alteração de banco, migração, índice, CI ou regras de negócio.
+  - Testes: 832 testes unitários, de rota e de componente aprovados; 17 testes de integração com MySQL local aprovados separadamente; 1 arquivo de integração ignorado na suíte padrão (`npm test`), conforme D8. `tsc`, lint e build executados (ver validação).
+- **In-progress**: nenhum
+- **Next step**: executar o roteiro manual de `docs/testes-locais.md` §6 (Vendedor e Gerente): primeira página, navegação, retorno, última página, pesquisa por número, filtros combinados, preservação/reset de filtros, retorno do detalhe e total. Avaliar `EXPLAIN` com volume real; propor índice em `(createdAt, id)` somente se justificado e autorizado. Aguardar autorização antes de iniciar outra correção.
+- **Blockers**: validação no navegador pendente; índice/`EXPLAIN` não avaliado com volume real; Expedição continua limitada à primeira página (fora do escopo da A1); aprovação do contrato do conector e de eventual campo em `OrderItem` (AD-010); T00.4 (AD-012); decisões D6 (AD-016) e D7 (AD-017); validação da data original do pedido no ambiente de integração
+- **Uncommitted files**: `src/modules/indicadores/consulta-pedidos.ts`, `src/modules/indicadores/consulta-pedidos.test.ts`, `src/modules/indicadores/adapters/filtros-pedidos-prisma.ts`, `src/modules/indicadores/adapters/filtros-pedidos-prisma.test.ts`, `src/modules/indicadores/adapters/prisma-indicadores-repository.ts`, `src/modules/indicadores/adapters/consulta-pedidos.integration.test.ts`, `src/app/api/pedidos/route.ts`, `src/app/api/pedidos/route.test.ts`, `src/app/api/pedidos/[orderId]/route.test.ts`, `src/app/api/indicadores/route.test.ts`, `src/shared/ui/pedidos-lista.tsx`, `src/shared/ui/pedidos-lista.test.tsx`, `docs/requisitos.md`, `docs/testes-locais.md`, `docs/diagnostico-docentes.md`, `.specs/features/indicadores-e-consulta/spec.md`, `.specs/features/indicadores-e-consulta/design.md`, `.specs/features/indicadores-e-consulta/validation.md` e `.specs/STATE.md`. Nenhum commit foi feito pelo agente.
+- **Branch**: fix/fluxos-vendedor1-preparação-decisões-negócio
+
+## Handoff anterior (AD-019, pesquisa por número)
 
 - **Feature**: pesquisa por número do pedido (AD-019, correção A6 do perfil Vendedor)
 - **Phase / Task**: implementação concluída e aprovada provisoriamente; decisões confirmadas em 2026-10-22; aguardando registro do commit pelo responsável e autorização para a próxima correção

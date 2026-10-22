@@ -178,3 +178,55 @@ Spec.md already records all IND-01..IND-11 as `Done`. Recommended status after v
 **Issues found**: none blocking. Ranked precision/coverage gaps 1-7 above.
 
 **Next steps**: route Gaps 3 and 4 to a spec clarification + fix task; add the two missing assertions (Gaps 1-2) in a follow-up hardening task.
+
+---
+
+## A1 — Paginação e otimização (2026-10-22)
+
+**Verdict**: PASS local (validação no navegador pendente)
+
+Correção AD-020: filtros, ordenação e paginação no MySQL; total com os filtros; navegação na interface; sem alteração de banco, migração ou CI.
+
+| Critério | Evidência |
+| --- | --- |
+| Filtros antes da paginação | `src/modules/indicadores/adapters/filtros-pedidos-prisma.ts` + `consulta-pedidos.integration.test.ts` (combinação de número, cliente, setor, status e período) |
+| Pedidos com vários setores sem duplicar | `consulta-pedidos.integration.test.ts` — listagem e `total` iguais a 1 nos dois setores |
+| Status global preservado | `consulta-pedidos.integration.test.ts` — TELHAS `PENDING` + CORTE `COMPLETED` continua `IN_PROGRESS`; `PAUSED`/`DIVERGENT` em andamento |
+| Pesquisa parcial por `legacyNumber` | `consulta-pedidos.integration.test.ts` — `100` retorna `100`, `1000`, `2100` |
+| `%` e `_` literais | `filtros-pedidos-prisma.test.ts` + integração com `100%` e `100_` |
+| Sem acentos | integração: `joao` retorna `João` e `Joao` (D3) |
+| Primeira/intermediária/última/inexistente | `consulta-pedidos.test.ts` (metadados) + integração (25 pedidos, `offset` 0/10/20/100) + `pedidos-lista.test.tsx` |
+| Menos de 20, exatamente 20, mais de 20 | integração + unidade (`totalPaginas`) |
+| Datas iguais | integração: desempate por `id`, uma linha por página |
+| Permissões | `src/app/api/pedidos/route.test.ts` — Vendedor e Gerente 200; 401 sem sessão; 403 sem perfil |
+| Filtros na URL / reset na primeira página | `src/shared/ui/pedidos-lista.test.tsx` |
+| Total e página | resposta `{ pedidos, paginacao }` em `route.ts` e `consulta-pedidos.ts` |
+
+**Testes**: 832 unitários/rota/componente + 17 integração MySQL local aprovados.
+**Ignorados na suíte padrão**: 17 testes de integração (`describe.skipIf`), executados separadamente com `RUN_INTEGRATION_TESTS=1` (D8).
+**Gates**: `tsc` OK; ESLint 0 erros (4 avisos pré-existentes); build OK.
+**Pendência**: validação no navegador (Vendedor e Gerente) e medição de `EXPLAIN` com volume real. Nenhum índice criado (D6).
+
+### Preservação e substituição de testes (A1)
+
+| Arquivo | Antes | Depois | Situação |
+| --- | --- | --- | --- |
+| `consulta-pedidos.test.ts` | 41 testes (25 de lista + 16 de detalhe/totais) | 30 (14 de lista + 16 de detalhe/totais) | Os 16 de detalhe/totais foram preservados integralmente. Os 11 testes de filtro/ordenação/paginação em memória foram substituídos por cobertura equivalente: 12 testes do tradutor de filtros, 17 de integração MySQL e 14 testes de paginação no domínio. |
+| `pedidos/route.test.ts` | 30 testes | 13 testes | Os 17 testes que exerciam a filtragem sobre um repositório fake passaram a ser cobertos no MySQL real (integração) e no tradutor de filtros (unidade). A rota continua coberta em contrato, validação, conversão de datas, paginação, 401/403 e Vendedor/Gerente. |
+| `pedidos-lista.test.tsx` | 21 testes | 30 testes | Os 21 originais foram preservados; 9 foram acrescentados para paginação, URL, reset e página inexistente. |
+| `filtros-pedidos-prisma.test.ts` | — | 12 testes | Novo: tradução de cada filtro, status derivado e escape de `%`/`_`. |
+| `consulta-pedidos.integration.test.ts` | — | 17 testes | Novo: semântica real no MySQL (filtros, status, setores, datas, ordenação e páginas). |
+
+Nenhum teste de detalhe, totais por unidade, permissão ou erro foi removido. As substituições acima são as únicas e estão justificadas pela mudança de camada (filtro saiu do domínio em memória e passou para o banco).
+
+### Compatibilidade da API
+
+`GET /api/pedidos` mantém os parâmetros e o array `pedidos`; `paginacao` é um campo **aditivo**. Consumidores verificados:
+
+- `src/shared/ui/pedidos-lista.tsx` — atualizado para ler `paginacao`.
+- `src/app/(app)/expedicao/entregas/page.tsx` — lê apenas `dados.pedidos`; continua compatível.
+- Nenhum script, rota ou teste E2E consome o corpo integral ou depende da ausência de `paginacao`.
+
+### Limitação registrada — Expedição
+
+A tela `/expedicao/entregas` continua consumindo `GET /api/pedidos` sem paginação explícita e, portanto, vê somente os 20 pedidos mais recentes. Esse era o comportamento anterior à A1 e **não foi alterado** nesta correção, que tem escopo restrito a Vendedor e Gerente. A inclusão de navegação/paginação na Expedição fica registrada como pendência para correção própria.

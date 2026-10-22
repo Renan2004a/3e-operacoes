@@ -21,6 +21,29 @@ import { PedidosLista } from './pedidos-lista'
 
 const PEDIDO = { id: 'p1', numero: '100', cliente: 'Ana', status: 'PENDING' as const }
 
+function resposta(
+  pedidos = [PEDIDO],
+  paginacao: Partial<{
+    limite: number
+    offset: number
+    pagina: number
+    total: number
+    totalPaginas: number
+  }> = {},
+) {
+  return {
+    pedidos,
+    paginacao: {
+      limite: 20,
+      offset: 0,
+      pagina: 1,
+      total: pedidos.length,
+      totalPaginas: pedidos.length > 0 ? 1 : 0,
+      ...paginacao,
+    },
+  }
+}
+
 beforeEach(() => {
   mocks.apiGet.mockReset()
   // Isola os testes: o componente lê os filtros da URL (preservação de contexto).
@@ -38,7 +61,7 @@ describe('PedidosLista', () => {
   })
 
   it('lista os pedidos com número, cliente e status textual (FEP-03)', async () => {
-    mocks.apiGet.mockResolvedValue({ pedidos: [PEDIDO] })
+    mocks.apiGet.mockResolvedValue(resposta())
     render(<PedidosLista onSelecionar={vi.fn()} />)
 
     const tabela = await screen.findByRole('table', { name: 'Pedidos' })
@@ -49,16 +72,14 @@ describe('PedidosLista', () => {
   })
 
   it('mostra estado vazio quando não há pedidos (FEP-03)', async () => {
-    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    mocks.apiGet.mockResolvedValue(resposta([]))
     render(<PedidosLista onSelecionar={vi.fn()} />)
 
     expect(await screen.findByText('Sem pedidos')).toBeInTheDocument()
   })
 
   it('mostra erro acessível e tentar de novo recarrega (FEP-13)', async () => {
-    mocks.apiGet
-      .mockRejectedValueOnce(new Error('falha'))
-      .mockResolvedValueOnce({ pedidos: [PEDIDO] })
+    mocks.apiGet.mockRejectedValueOnce(new Error('falha')).mockResolvedValueOnce(resposta())
     render(<PedidosLista onSelecionar={vi.fn()} />)
 
     const alert = await screen.findByRole('alert')
@@ -70,7 +91,7 @@ describe('PedidosLista', () => {
   })
 
   it('aplica os filtros de cliente, setor, status e período na consulta (FEP-03)', async () => {
-    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    mocks.apiGet.mockResolvedValue(resposta([]))
     render(<PedidosLista onSelecionar={vi.fn()} />)
 
     await screen.findByText('Sem pedidos')
@@ -89,7 +110,7 @@ describe('PedidosLista', () => {
   })
 
   it('oferece os setores por código como opções fixas, com "Todos" como padrão (LAC-04)', async () => {
-    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    mocks.apiGet.mockResolvedValue(resposta([]))
     render(<PedidosLista onSelecionar={vi.fn()} />)
     await screen.findByText('Sem pedidos')
 
@@ -108,7 +129,7 @@ describe('PedidosLista', () => {
   })
 
   it('não envia o setor quando "Todos" está selecionado (LAC-04)', async () => {
-    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    mocks.apiGet.mockResolvedValue(resposta([]))
     render(<PedidosLista onSelecionar={vi.fn()} />)
     await screen.findByText('Sem pedidos')
 
@@ -121,7 +142,7 @@ describe('PedidosLista', () => {
 
   it('restaura o setor da URL quando é um código válido (FEP-03)', async () => {
     window.history.replaceState({}, '', '/?setor=TELHAS')
-    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    mocks.apiGet.mockResolvedValue(resposta([]))
     render(<PedidosLista onSelecionar={vi.fn()} />)
 
     await screen.findByText('Sem pedidos')
@@ -131,7 +152,7 @@ describe('PedidosLista', () => {
 
   it('ignora setor inválido da URL e não o envia à API (LAC-04)', async () => {
     window.history.replaceState({}, '', '/?setor=Telhas')
-    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    mocks.apiGet.mockResolvedValue(resposta([]))
     render(<PedidosLista onSelecionar={vi.fn()} />)
 
     await screen.findByText('Sem pedidos')
@@ -140,21 +161,21 @@ describe('PedidosLista', () => {
   })
 
   it('documenta o filtro de cliente como substring sem diferenciar maiúsculas (QF-09)', async () => {
-    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    mocks.apiGet.mockResolvedValue(resposta([]))
     render(<PedidosLista onSelecionar={vi.fn()} />)
 
     expect(screen.getByText(/não diferencia maiúsculas/i)).toBeInTheDocument()
   })
 
   it('expõe foco visível no filtro de status (QF-04)', async () => {
-    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    mocks.apiGet.mockResolvedValue(resposta([]))
     render(<PedidosLista onSelecionar={vi.fn()} />)
 
     expect(screen.getByLabelText('Status')).toHaveClass('focus-visible:ring-2')
   })
 
   it('envia o cliente como substring, preservando o trecho digitado (QF-09)', async () => {
-    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    mocks.apiGet.mockResolvedValue(resposta([]))
     render(<PedidosLista onSelecionar={vi.fn()} />)
     await screen.findByText('Sem pedidos')
 
@@ -165,7 +186,7 @@ describe('PedidosLista', () => {
   })
 
   it('remove os espaços em volta do trecho de cliente (QF-09)', async () => {
-    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    mocks.apiGet.mockResolvedValue(resposta([]))
     render(<PedidosLista onSelecionar={vi.fn()} />)
     await screen.findByText('Sem pedidos')
 
@@ -176,7 +197,7 @@ describe('PedidosLista', () => {
   })
 
   it('omite o parâmetro de cliente quando o campo está vazio (QF-09)', async () => {
-    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    mocks.apiGet.mockResolvedValue(resposta([]))
     render(<PedidosLista onSelecionar={vi.fn()} />)
     await screen.findByText('Sem pedidos')
 
@@ -187,7 +208,7 @@ describe('PedidosLista', () => {
   })
 
   it('oferece o campo de número do pedido com orientação de trecho (FEP-03)', async () => {
-    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    mocks.apiGet.mockResolvedValue(resposta([]))
     render(<PedidosLista onSelecionar={vi.fn()} />)
 
     expect(screen.getByLabelText('Pesquisar por número')).toBeInTheDocument()
@@ -195,7 +216,7 @@ describe('PedidosLista', () => {
   })
 
   it('envia o número do pedido sem os espaços em volta (FEP-03)', async () => {
-    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    mocks.apiGet.mockResolvedValue(resposta([]))
     render(<PedidosLista onSelecionar={vi.fn()} />)
     await screen.findByText('Sem pedidos')
 
@@ -208,7 +229,7 @@ describe('PedidosLista', () => {
   })
 
   it('combina a pesquisa por número com os demais filtros (FEP-03)', async () => {
-    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    mocks.apiGet.mockResolvedValue(resposta([]))
     render(<PedidosLista onSelecionar={vi.fn()} />)
     await screen.findByText('Sem pedidos')
 
@@ -227,7 +248,7 @@ describe('PedidosLista', () => {
   })
 
   it('omite o número quando o campo está vazio (FEP-03)', async () => {
-    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    mocks.apiGet.mockResolvedValue(resposta([]))
     render(<PedidosLista onSelecionar={vi.fn()} />)
     await screen.findByText('Sem pedidos')
 
@@ -239,7 +260,7 @@ describe('PedidosLista', () => {
 
   it('restaura o número da URL ao voltar do detalhe (FEP-03)', async () => {
     window.history.replaceState({}, '', '/?numero=70435&setor=TELHAS')
-    mocks.apiGet.mockResolvedValue({ pedidos: [] })
+    mocks.apiGet.mockResolvedValue(resposta([]))
     render(<PedidosLista onSelecionar={vi.fn()} />)
 
     await screen.findByText('Sem pedidos')
@@ -249,7 +270,7 @@ describe('PedidosLista', () => {
 
   it('selecionar um pedido aciona o chamador com o pedido (FEP-03)', async () => {
     const onSelecionar = vi.fn()
-    mocks.apiGet.mockResolvedValue({ pedidos: [PEDIDO] })
+    mocks.apiGet.mockResolvedValue(resposta())
     render(<PedidosLista onSelecionar={onSelecionar} />)
 
     fireEvent.click(await screen.findByRole('button', { name: 'Abrir pedido 100' }))
@@ -258,10 +279,162 @@ describe('PedidosLista', () => {
   })
 
   it('permite rolagem horizontal interna da tabela em telas estreitas (VIS-11)', async () => {
-    mocks.apiGet.mockResolvedValue({ pedidos: [PEDIDO] })
+    mocks.apiGet.mockResolvedValue(resposta())
     render(<PedidosLista onSelecionar={vi.fn()} />)
 
     const tabela = await screen.findByRole('table', { name: 'Pedidos' })
     expect(tabela.parentElement).toHaveClass('overflow-x-auto')
+  })
+  it('mostra o total de pedidos e a página atual (A1)', async () => {
+    mocks.apiGet.mockResolvedValue(
+      resposta(
+        Array.from({ length: 20 }, (_, i) => ({ ...PEDIDO, id: `p${i}` })),
+        {
+          total: 137,
+          totalPaginas: 7,
+        },
+      ),
+    )
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+
+    expect(await screen.findByText(/137 pedido\(s\) encontrado\(s\)/)).toBeInTheDocument()
+    const paginacao = screen.getByRole('navigation', { name: 'Paginação' })
+    expect(within(paginacao).getByText(/página 1 de 7/i)).toBeInTheDocument()
+  })
+
+  it('navega para a próxima página enviando limite e offset (A1)', async () => {
+    mocks.apiGet
+      .mockResolvedValueOnce(resposta([PEDIDO], { total: 45, totalPaginas: 3 }))
+      .mockResolvedValueOnce(
+        resposta([{ ...PEDIDO, id: 'p2', numero: '200' }], {
+          offset: 20,
+          pagina: 2,
+          total: 45,
+          totalPaginas: 3,
+        }),
+      )
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+
+    await screen.findByText('Pedido 100')
+    fireEvent.click(screen.getByRole('button', { name: 'Próxima' }))
+
+    await waitFor(() =>
+      expect(mocks.apiGet).toHaveBeenLastCalledWith('/api/pedidos?limite=20&offset=20'),
+    )
+    expect(await screen.findByText('Pedido 200')).toBeInTheDocument()
+    const paginacao = screen.getByRole('navigation', { name: 'Paginação' })
+    expect(within(paginacao).getByText(/página 2 de 3/i)).toBeInTheDocument()
+  })
+
+  it('volta para a página anterior (A1)', async () => {
+    window.history.replaceState({}, '', '/?pagina=2')
+    mocks.apiGet
+      .mockResolvedValueOnce(
+        resposta([{ ...PEDIDO, id: 'p2', numero: '200' }], {
+          offset: 20,
+          pagina: 2,
+          total: 45,
+          totalPaginas: 3,
+        }),
+      )
+      .mockResolvedValueOnce(resposta([PEDIDO], { total: 45, totalPaginas: 3 }))
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+
+    await screen.findByText('Pedido 200')
+    fireEvent.click(screen.getByRole('button', { name: 'Anterior' }))
+
+    await waitFor(() => expect(mocks.apiGet).toHaveBeenLastCalledWith('/api/pedidos'))
+  })
+
+  it('desabilita Anterior na primeira página e Próxima na última (A1)', async () => {
+    mocks.apiGet.mockResolvedValue(resposta([PEDIDO], { total: 45, totalPaginas: 3 }))
+    const { unmount } = render(<PedidosLista onSelecionar={vi.fn()} />)
+
+    await screen.findByText('Pedido 100')
+    expect(screen.getByRole('button', { name: 'Anterior' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Próxima' })).toBeEnabled()
+    unmount()
+
+    window.history.replaceState({}, '', '/?pagina=3')
+    mocks.apiGet.mockResolvedValue(
+      resposta([PEDIDO], { offset: 40, pagina: 3, total: 45, totalPaginas: 3 }),
+    )
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+
+    expect(await screen.findByText('Pedido 100')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Próxima' })).toBeDisabled()
+  })
+
+  it('preserva os filtros ao trocar de página e os inclui na URL (A1)', async () => {
+    window.history.replaceState({}, '', '/?setor=TELHAS')
+    mocks.apiGet
+      .mockResolvedValueOnce(resposta([PEDIDO], { total: 45, totalPaginas: 3 }))
+      .mockResolvedValueOnce(
+        resposta([PEDIDO], { offset: 20, pagina: 2, total: 45, totalPaginas: 3 }),
+      )
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+
+    await screen.findByText('Pedido 100')
+    fireEvent.click(screen.getByRole('button', { name: 'Próxima' }))
+
+    await waitFor(() =>
+      expect(mocks.apiGet).toHaveBeenLastCalledWith(
+        '/api/pedidos?setor=TELHAS&limite=20&offset=20',
+      ),
+    )
+    expect(window.location.search).toContain('setor=TELHAS')
+    expect(window.location.search).toContain('pagina=2')
+  })
+
+  it('restaura a página da URL ao voltar do detalhe (A1)', async () => {
+    window.history.replaceState({}, '', '/?setor=TELHAS&pagina=2')
+    mocks.apiGet.mockResolvedValue(
+      resposta([PEDIDO], { offset: 20, pagina: 2, total: 45, totalPaginas: 3 }),
+    )
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+
+    await screen.findByText('Pedido 100')
+    expect(mocks.apiGet).toHaveBeenCalledWith('/api/pedidos?setor=TELHAS&limite=20&offset=20')
+  })
+
+  it('volta para a primeira página quando os filtros são alterados (A1)', async () => {
+    window.history.replaceState({}, '', '/?pagina=2')
+    mocks.apiGet.mockResolvedValue(
+      resposta([PEDIDO], { offset: 20, pagina: 2, total: 45, totalPaginas: 3 }),
+    )
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+
+    await screen.findByText('Pedido 100')
+    fireEvent.change(screen.getByLabelText('Cliente'), { target: { value: 'Ana' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Filtrar' }))
+
+    await waitFor(() => expect(mocks.apiGet).toHaveBeenLastCalledWith('/api/pedidos?cliente=Ana'))
+    expect(window.location.search).toBe('?cliente=Ana')
+  })
+
+  it('mostra a página inexistente com opção de voltar à primeira (A1, D2)', async () => {
+    window.history.replaceState({}, '', '/?pagina=4')
+    mocks.apiGet
+      .mockResolvedValueOnce(resposta([], { offset: 60, pagina: 4, total: 25, totalPaginas: 2 }))
+      .mockResolvedValueOnce(resposta([PEDIDO], { total: 25, totalPaginas: 2 }))
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+
+    expect(await screen.findByText('Página não encontrada')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Ir para a primeira página' }))
+
+    await waitFor(() => expect(mocks.apiGet).toHaveBeenLastCalledWith('/api/pedidos'))
+  })
+
+  it('volta para a primeira página ao recarregar após importar um pedido (A1, D5)', async () => {
+    window.history.replaceState({}, '', '/?pagina=2')
+    mocks.apiGet.mockResolvedValue(
+      resposta([PEDIDO], { offset: 20, pagina: 2, total: 45, totalPaginas: 3 }),
+    )
+    const { rerender } = render(<PedidosLista onSelecionar={vi.fn()} recarregarToken={0} />)
+
+    await screen.findByText('Pedido 100')
+    rerender(<PedidosLista onSelecionar={vi.fn()} recarregarToken={1} />)
+
+    await waitFor(() => expect(mocks.apiGet).toHaveBeenLastCalledWith('/api/pedidos'))
   })
 })

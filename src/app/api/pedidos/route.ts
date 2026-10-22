@@ -71,6 +71,6 @@ export async function GET(request: Request) {
     offset,
   }
 
-  const pedidos = await listarPedidos(filtros, prismaIndicadoresRepository)
-  return Response.json({ pedidos }, { status: 200 })
+  const pagina = await listarPedidos(filtros, prismaIndicadoresRepository)
+  return Response.json(pagina, { status: 200 })
 }

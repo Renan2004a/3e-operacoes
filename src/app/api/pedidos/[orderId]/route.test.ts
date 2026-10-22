@@ -16,10 +16,7 @@ interface ItemSeed {
 }
 
 const holder = vi.hoisted(() => ({
-  pedidos: {} as Record<
-    string,
-    { numero: string; cliente: string | null; itens: ItemSeed[] }
-  >,
+  pedidos: {} as Record<string, { numero: string; cliente: string | null; itens: ItemSeed[] }>,
   perfis: {} as Record<string, RoleCode[]>,
   repo: null as unknown as ConsultaPedidosRepository,
 }))
@@ -43,8 +40,8 @@ vi.mock('@/modules/usuarios/adapters/prisma-usuarios-repository', () => ({
 import { GET } from './route'
 
 holder.repo = {
-  async listarPedidosParaConsulta() {
-    return []
+  async consultarPedidos() {
+    return { pedidos: [], total: 0 }
   },
   async buscarCabecalhoPedido(orderId) {
     const pedido = holder.pedidos[orderId]
@@ -91,7 +88,12 @@ function seed(orderId: string, numero: string, cliente: string | null, itens: It
 }
 
 function item(id: string, solicitado: number, executado: number, entregue: number): ItemSeed {
-  return { id, solicitado: String(solicitado), executado: String(executado), entregue: String(entregue) }
+  return {
+    id,
+    solicitado: String(solicitado),
+    executado: String(executado),
+    entregue: String(entregue),
+  }
 }
 
 function request(opts: { userId?: string | null } = {}): Request {
@@ -165,11 +167,13 @@ describe('GET /api/pedidos/[orderId]', () => {
 
     const body = await response.json()
     expect(
-      body.pedido.totaisPorUnidade.map((total: { unidade: string; itens: number; solicitado: string }) => [
-        total.unidade,
-        total.itens,
-        total.solicitado,
-      ]),
+      body.pedido.totaisPorUnidade.map(
+        (total: { unidade: string; itens: number; solicitado: string }) => [
+          total.unidade,
+          total.itens,
+          total.solicitado,
+        ],
+      ),
     ).toEqual([
       ['metro', 1, '15'],
       ['peca', 2, '30'],

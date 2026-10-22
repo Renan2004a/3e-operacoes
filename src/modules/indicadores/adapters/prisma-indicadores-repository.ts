@@ -5,48 +5,60 @@ import type {
   CabecalhoPedido,
   ConsultaPedidosRepository,
   EspecificacaoItem,
-  PedidoConsultado,
+  ResultadoConsultaPedidos,
 } from '../consulta-pedidos'
+import { montarWherePedidos } from './filtros-pedidos-prisma'
 import type { AtividadeIndicador, PainelRepository } from '../painel'
 import type { AtividadeComPrazo, ExecucaoIndicador, PcpRepository } from '../pcp'
 import type { AlertasRepository, ItemParaAlerta } from '../alertas'
 
 /** Porta única de indicadores, composta pelas portas de cada caso de uso. */
 export interface IndicadoresRepository
-  extends ConsultaPedidosRepository,
-    PainelRepository,
-    PcpRepository,
-    AlertasRepository {}
+  extends ConsultaPedidosRepository, PainelRepository, PcpRepository, AlertasRepository {}
 
 /** Implementação Prisma da porta `IndicadoresRepository` (somente o banco do app). */
 export const prismaIndicadoresRepository: IndicadoresRepository = {
-  async listarPedidosParaConsulta(): Promise<PedidoConsultado[]> {
-    const rows = await prisma.order.findMany({
-      select: {
-        id: true,
-        legacyNumber: true,
-        customerName: true,
-        createdAt: true,
-        items: {
-          select: {
-            activities: { select: { status: true, sector: { select: { code: true } } } },
+  async consultarPedidos({ limite, offset, ...filtros }): Promise<ResultadoConsultaPedidos> {
+    const where = montarWherePedidos(filtros)
+
+    // Página e total no mesmo snapshot: uma importação concorrente não faz o
+    // total divergir da lista devolvida (A1).
+    const [rows, total] = await prisma.$transaction([
+      prisma.order.findMany({
+        where,
+        select: {
+          id: true,
+          legacyNumber: true,
+          customerName: true,
+          createdAt: true,
+          items: {
+            select: {
+              activities: { select: { status: true, sector: { select: { code: true } } } },
+            },
           },
         },
-      },
-    })
+        orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+        skip: offset,
+        take: limite,
+      }),
+      prisma.order.count({ where }),
+    ])
 
-    return rows.map((row) => ({
-      id: row.id,
-      numero: row.legacyNumber,
-      cliente: row.customerName,
-      criadoEm: row.createdAt,
-      atividades: row.items.flatMap((item) =>
-        item.activities.map((atividade) => ({
-          sectorCode: atividade.sector.code,
-          status: atividade.status,
-        })),
-      ),
-    }))
+    return {
+      pedidos: rows.map((row) => ({
+        id: row.id,
+        numero: row.legacyNumber,
+        cliente: row.customerName,
+        criadoEm: row.createdAt,
+        atividades: row.items.flatMap((item) =>
+          item.activities.map((atividade) => ({
+            sectorCode: atividade.sector.code,
+            status: atividade.status,
+          })),
+        ),
+      })),
+      total,
+    }
   },
 
   async buscarCabecalhoPedido(orderId): Promise<CabecalhoPedido | null> {

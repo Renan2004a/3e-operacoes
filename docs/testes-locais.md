@@ -114,5 +114,58 @@ Instruções de conexão: `docs/banco-de-dados.md` §7.
 - **E2E autenticado no CI**: o CI cobre a superfície pública (login/responsividade com API mockada). A validação autenticada foi feita localmente, contra o banco real, com o script Playwright acima.
 - **Leitor de tela e contraste**: não foram executados NVDA/VoiceOver nem ferramenta dedicada de contraste; a verificação foi semântica (rótulos, `role`, textos de estado).
 - **Integração real**: a importação real depende do conector local na rede da 3E. Os pedidos usados já estavam importados; a validação de importação nova exige o conector ativo.
-- **Volume**: a lista de pedidos não tem paginação; com volume maior, avaliar paginação e ordenação explícita.
+- **Volume**: a lista de pedidos passou a ser paginada no servidor na correção A1 (20 por página, teto 100, ordenação `createdAt desc, id asc`). O teste de integração com MySQL existe e deve ser executado antes de considerar a A1 concluída quando houver mudança na consulta:
+
+  ```bash
+  # banco de teste/integração já migrado (nunca o banco real)
+  RUN_INTEGRATION_TESTS=1 DATABASE_URL='mysql://usuario:senha@127.0.0.1:3306/3e_a1_integration' \
+    npx vitest run src/modules/indicadores/adapters/consulta-pedidos.integration.test.ts
+  ```
+
+  Sem `RUN_INTEGRATION_TESTS=1` e sem um banco cujo nome contenha `integration` ou `test`, os testes são ignorados explicitamente.
 - **Edição completa de usuário** (nome/perfis/setores) não tem tela; a API já suporta `PATCH`.
+- **Expedição**: a tela `/expedicao/entregas` continua consumindo `GET /api/pedidos` sem paginação explícita e vê apenas os 20 pedidos mais recentes. Comportamento anterior à A1, preservado por escopo; a paginação da Expedição fica para correção própria.
+
+---
+
+## 6. Validação manual da paginação (A1)
+
+### Preparação do ambiente
+
+```bash
+npm install
+npm run prisma:generate
+
+# Apenas em clone novo; não sobrescrever um .env já configurado:
+cp .env.example .env
+# Editar DATABASE_URL e SESSION_SECRET
+
+npm run db:up          # MySQL local via Docker; pular se usar um MySQL já migrado
+npm run prisma:deploy  # aplicar migrações
+npm run prisma:seed    # setores, motivos e usuários de demonstração
+npm run dev            # http://localhost:3000
+```
+
+- Vendedor: `vendedor@3e.local` / `vendedor123`
+- Gerente: `gerente@3e.local` / `gerente123`
+- Para exercitar a navegação é necessário um banco com **mais de 20 pedidos acessíveis**. Com 20 ou menos, os controles de página não aparecem por desenho.
+
+### Roteiro (repetir para Vendedor e Gerente)
+
+| # | Passo | Resultado esperado |
+| --- | --- | --- |
+| 1 | Entrar e abrir `Pedidos` | Primeira página com até 20 linhas; resumo “N pedido(s) encontrado(s) — página 1 de X”; “Anterior” desabilitado |
+| 2 | Conferir a requisição em DevTools → Network | `GET /api/pedidos` sem `offset` na primeira página |
+| 3 | Clicar em “Próxima” | Requisição com `limite=20&offset=20`; URL com `pagina=2`; linhas diferentes, sem repetir a página 1 |
+| 4 | Clicar em “Anterior” | Volta à página 1; URL sem `pagina`; requisição sem `offset` |
+| 5 | Ir até a última página | “Próxima” desabilitado; quantidade de linhas pode ser menor que 20; total permanece correto |
+| 6 | Pesquisar um número comercial que não apareça na primeira página | Pedido é encontrado; número, cliente e status corretos; total reflete o filtro |
+| 7 | Combinar cliente + setor + status + período | Somente pedidos que atendem a todos os critérios; total do resumo coerente com a lista |
+| 8 | Com filtros aplicados, avançar para a página 2 | Filtros continuam preenchidos; requisição leva filtros + `limite`/`offset`; URL mantém os filtros e `pagina=2` |
+| 9 | Na página 2, alterar um filtro e clicar em “Filtrar” | Volta para a página 1; requisição sem `offset`; URL contém apenas os filtros (sem `pagina`) |
+| 10 | Abrir um pedido da página 2 e usar “← Voltar para os pedidos” | Retorna à página 2 com os filtros preservados |
+| 11 | Alterar a URL manualmente para `?pagina=999` (com filtros) | “Página não encontrada” com botão “Ir para a primeira página”; total correto |
+| 12 | Conferir o total exibido | É o total de pedidos que atendem aos filtros, não o tamanho da página |
+| 13 | Repetir em largura de celular e com teclado | Sem rolagem horizontal da página; botões com alvo adequado e foco visível; leitor de tela anuncia a paginação |
+
+Registrar como evidência: perfil usado, URL da lista, quantidade total exibida, página acessada, captura de tela e qualquer divergência. A A1 permanece **aprovada provisoriamente** até esse roteiro ser concluído.

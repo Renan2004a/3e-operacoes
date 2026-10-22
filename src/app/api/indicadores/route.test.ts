@@ -55,8 +55,8 @@ holder.repo = {
       completedAt: atividade.completedAt ? new Date(atividade.completedAt) : null,
     }))
   },
-  async listarPedidosParaConsulta() {
-    return []
+  async consultarPedidos() {
+    return { pedidos: [], total: 0 }
   },
   async buscarCabecalhoPedido() {
     return null
