@@ -71,6 +71,17 @@ function pedido(classificationStatus: 'CLASSIFIED' | 'PENDING_CLASSIFICATION' = 
         classificationStatus,
       },
     ],
+    totaisPorUnidade: [
+      {
+        unidade: 'peca',
+        itens: 1,
+        solicitado: '10',
+        executado: '8',
+        disponivel: '5',
+        entregue: '3',
+        pendente: '2',
+      },
+    ],
   }
 }
 
@@ -126,6 +137,27 @@ describe('PedidoGerentePage', () => {
     expect(await screen.findByText('Resumo do pedido')).toBeInTheDocument()
     expect(screen.getAllByText('Telhas').length).toBeGreaterThan(0)
     expect(screen.getByText(/1 item\(ns\).*solicitado 10.*pendente 2/)).toBeInTheDocument()
+  })
+
+  it('mostra os totais por unidade sem somar peças com metros (RN01, RN02)', async () => {
+    const misto = {
+      ...pedido(),
+      itens: [
+        pedido().itens[0],
+        { ...pedido().itens[0], itemId: 'item_2', unit: 'm', solicitado: '6', executado: '1', disponivel: '1', entregue: '0', pendente: '5' },
+      ],
+      totaisPorUnidade: [
+        { unidade: 'peca', itens: 1, solicitado: '10', executado: '8', disponivel: '5', entregue: '3', pendente: '2' },
+        { unidade: 'm', itens: 1, solicitado: '6', executado: '1', disponivel: '1', entregue: '0', pendente: '5' },
+      ],
+    }
+    configurarApi(misto)
+    render(<PedidoGerentePage />)
+
+    expect(await screen.findByText('2 peca · 5 m')).toBeInTheDocument()
+    expect(screen.getByRole('progressbar', { name: 'Execução do pedido (peca)' })).toBeInTheDocument()
+    expect(screen.getByRole('progressbar', { name: 'Execução do pedido (m)' })).toBeInTheDocument()
+    expect(screen.queryByText('7')).not.toBeInTheDocument()
   })
 
   it('mostra erro acessível e permite tentar de novo (FEP-13)', async () => {

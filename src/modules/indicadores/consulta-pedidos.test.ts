@@ -422,3 +422,249 @@ describe('detalharPedido', () => {
     await expect(detalharPedido('ped_x', repo)).rejects.toBeInstanceOf(PedidoNaoEncontradoError)
   })
 })
+
+function especificacao(
+  itemId: string,
+  unit: string,
+  sectorName: string | null = null,
+): EspecificacaoItem {
+  return {
+    itemId,
+    description: null,
+    productCode: null,
+    unit,
+    classificationStatus: 'PENDING_CLASSIFICATION',
+    sectorName,
+  }
+}
+
+function dec(valor: number | string): Prisma.Decimal {
+  return new Prisma.Decimal(valor)
+}
+
+describe('detalharPedido — totais por unidade de medida (RN01–RN05)', () => {
+  it('soma os itens quando todos têm a mesma unidade (RN02)', async () => {
+    const repo = createRepo([
+      pedido({
+        id: 'ped_1',
+        numero: '1001',
+        itens: [
+          item({ id: 'item_1', solicitado: dec(20), executado: dec(5), entregue: dec(2) }),
+          item({ id: 'item_2', solicitado: dec(10), executado: dec(10), entregue: dec(4) }),
+        ],
+        especificacoes: [especificacao('item_1', 'UN'), especificacao('item_2', 'UN')],
+      }),
+    ])
+
+    const detalhe = await detalharPedido('ped_1', repo)
+
+    expect(detalhe.totaisPorUnidade).toHaveLength(1)
+    const [total] = detalhe.totaisPorUnidade
+    expect(total.unidade).toBe('UN')
+    expect(total.itens).toBe(2)
+    expect(total.solicitado.toString()).toBe('30')
+    expect(total.executado.toString()).toBe('15')
+    expect(total.disponivel.toString()).toBe('9')
+    expect(total.entregue.toString()).toBe('6')
+    expect(total.pendente.toString()).toBe('15')
+  })
+
+  it('separa os totais de unidades diferentes sem somá-las (RN01, RN02)', async () => {
+    const repo = createRepo([
+      pedido({
+        id: 'ped_1',
+        numero: '1001',
+        itens: [
+          item({ id: 'item_1', solicitado: dec(20) }),
+          item({ id: 'item_2', solicitado: dec(15) }),
+          item({ id: 'item_3', solicitado: dec(10) }),
+        ],
+        especificacoes: [
+          especificacao('item_1', 'peca'),
+          especificacao('item_2', 'metro'),
+          especificacao('item_3', 'peca'),
+        ],
+      }),
+    ])
+
+    const detalhe = await detalharPedido('ped_1', repo)
+
+    expect(
+      detalhe.totaisPorUnidade.map((total) => [total.unidade, total.itens, total.solicitado.toString()]),
+    ).toEqual([
+      ['metro', 1, '15'],
+      ['peca', 2, '30'],
+    ])
+  })
+
+  it('agrupa itens de setores diferentes pela mesma unidade (multi-setor)', async () => {
+    const repo = createRepo([
+      pedido({
+        id: 'ped_1',
+        numero: '1001',
+        itens: [
+          item({ id: 'item_1', solicitado: dec(4), executado: dec(4) }),
+          item({ id: 'item_2', solicitado: dec(6), executado: dec(1) }),
+        ],
+        especificacoes: [
+          especificacao('item_1', 'M', 'Telhas'),
+          especificacao('item_2', 'M', 'Corte e Dobra'),
+        ],
+      }),
+    ])
+
+    const detalhe = await detalharPedido('ped_1', repo)
+
+    expect(detalhe.totaisPorUnidade).toHaveLength(1)
+    expect(detalhe.totaisPorUnidade[0].solicitado.toString()).toBe('10')
+    expect(detalhe.totaisPorUnidade[0].executado.toString()).toBe('5')
+    expect(detalhe.totaisPorUnidade[0].pendente.toString()).toBe('5')
+  })
+
+  it('preserva a precisão das quantidades decimais em metro (RN04)', async () => {
+    const repo = createRepo([
+      pedido({
+        id: 'ped_1',
+        numero: '1001',
+        itens: [
+          item({ id: 'item_1', solicitado: dec('2.5'), executado: dec('0.1') }),
+          item({ id: 'item_2', solicitado: dec('0.25'), executado: dec('0.2') }),
+        ],
+        especificacoes: [especificacao('item_1', 'M'), especificacao('item_2', 'M')],
+      }),
+    ])
+
+    const detalhe = await detalharPedido('ped_1', repo)
+
+    expect(detalhe.totaisPorUnidade[0].solicitado.toString()).toBe('2.75')
+    expect(detalhe.totaisPorUnidade[0].executado.toString()).toBe('0.3')
+    expect(detalhe.totaisPorUnidade[0].pendente.toString()).toBe('2.45')
+  })
+
+  it('mantém zeros nos totais e na contagem de itens (quantidades zeradas)', async () => {
+    const repo = createRepo([
+      pedido({
+        id: 'ped_1',
+        numero: '1001',
+        itens: [item({ id: 'item_1' }), item({ id: 'item_2' })],
+        especificacoes: [especificacao('item_1', 'UN'), especificacao('item_2', 'UN')],
+      }),
+    ])
+
+    const detalhe = await detalharPedido('ped_1', repo)
+
+    expect(detalhe.totaisPorUnidade).toEqual([
+      {
+        unidade: 'UN',
+        itens: 2,
+        solicitado: dec(20),
+        executado: dec(0),
+        disponivel: dec(0),
+        entregue: dec(0),
+        pendente: dec(20),
+      },
+    ])
+  })
+
+  it('reflete a produção parcialmente concluída por unidade (RN03)', async () => {
+    const repo = createRepo([
+      pedido({
+        id: 'ped_1',
+        numero: '1001',
+        itens: [
+          item({ id: 'item_1', solicitado: dec(10), executado: dec(7) }),
+          item({ id: 'item_2', solicitado: dec(8), executado: dec(0) }),
+          item({ id: 'item_3', solicitado: dec(12), executado: dec(12) }),
+        ],
+        especificacoes: [
+          especificacao('item_1', 'UN'),
+          especificacao('item_2', 'UN'),
+          especificacao('item_3', 'M'),
+        ],
+      }),
+    ])
+
+    const detalhe = await detalharPedido('ped_1', repo)
+
+    const un = detalhe.totaisPorUnidade.find((total) => total.unidade === 'UN')
+    expect(un?.executado.toString()).toBe('7')
+    expect(un?.pendente.toString()).toBe('11')
+    expect(un?.disponivel.toString()).toBe('7')
+    const metro = detalhe.totaisPorUnidade.find((total) => total.unidade === 'M')
+    expect(metro?.pendente.toString()).toBe('0')
+  })
+
+  it('reflete entregas parciais e o disponível por unidade (RN03)', async () => {
+    const repo = createRepo([
+      pedido({
+        id: 'ped_1',
+        numero: '1001',
+        itens: [
+          item({ id: 'item_1', solicitado: dec(10), executado: dec(8), entregue: dec(3) }),
+          item({ id: 'item_2', solicitado: dec(5), executado: dec(5), entregue: dec(5) }),
+        ],
+        especificacoes: [especificacao('item_1', 'UN'), especificacao('item_2', 'UN')],
+      }),
+    ])
+
+    const detalhe = await detalharPedido('ped_1', repo)
+
+    expect(detalhe.totaisPorUnidade[0].entregue.toString()).toBe('8')
+    expect(detalhe.totaisPorUnidade[0].disponivel.toString()).toBe('5')
+    expect(detalhe.totaisPorUnidade[0].pendente.toString()).toBe('2')
+  })
+
+  it('preserva o saldo por item: os totais são a soma dos valores individuais (RN03)', async () => {
+    const repo = createRepo([
+      pedido({
+        id: 'ped_1',
+        numero: '1001',
+        itens: [
+          item({ id: 'item_1', solicitado: dec(10), executado: dec(8), entregue: dec(3) }),
+          item({ id: 'item_2', solicitado: dec(6), executado: dec(2), entregue: dec(0) }),
+        ],
+        especificacoes: [especificacao('item_1', 'UN'), especificacao('item_2', 'UN')],
+      }),
+    ])
+
+    const detalhe = await detalharPedido('ped_1', repo)
+
+    const somaDisponivel = detalhe.itens.reduce((total, i) => total.plus(i.disponivel), dec(0))
+    expect(detalhe.totaisPorUnidade[0].disponivel.toString()).toBe(somaDisponivel.toString())
+    expect(detalhe.itens[0].disponivel.toString()).toBe('5')
+    expect(detalhe.itens[0].pendente.toString()).toBe('2')
+    expect(detalhe.itens[1].pendente.toString()).toBe('4')
+  })
+
+  it('agrupa itens sem unidade válida em grupo próprio, sem inventar unidade (RN05)', async () => {
+    const repo = createRepo([
+      pedido({
+        id: 'ped_1',
+        numero: '1001',
+        itens: [
+          item({ id: 'item_1', solicitado: dec(4) }),
+          item({ id: 'item_2', solicitado: dec(9) }),
+          item({ id: 'item_3', solicitado: dec(3) }),
+        ],
+        especificacoes: [especificacao('item_1', 'UN'), especificacao('item_2', '   ')],
+      }),
+    ])
+
+    const detalhe = await detalharPedido('ped_1', repo)
+
+    expect(
+      detalhe.totaisPorUnidade.map((total) => [total.unidade, total.itens, total.solicitado.toString()]),
+    ).toEqual([
+      ['UN', 1, '4'],
+      [null, 2, '12'],
+    ])
+  })
+
+  it('pedido sem itens não tem totais por unidade', async () => {
+    const repo = createRepo([pedido({ id: 'ped_1', numero: '1001', itens: [] })])
+
+    const detalhe = await detalharPedido('ped_1', repo)
+
+    expect(detalhe.totaisPorUnidade).toEqual([])
+  })
+})

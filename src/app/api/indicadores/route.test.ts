@@ -7,7 +7,7 @@ import { SESSION_COOKIE } from '../../../shared/http/auth-context'
 
 const holder = vi.hoisted(() => ({
   atividades: [] as { id: string; sectorId: string; status: ActivityStatus }[],
-  execucoes: [] as { sectorId: string; quantidade: number }[],
+  execucoes: [] as { sectorId: string; unidade: string; quantidade: number }[],
   comPrazo: [] as {
     id: string
     sectorId: string
@@ -42,6 +42,7 @@ holder.repo = {
   async listarExecucoes() {
     return holder.execucoes.map((execucao) => ({
       sectorId: execucao.sectorId,
+      unidade: execucao.unidade,
       quantidade: new Prisma.Decimal(execucao.quantidade),
     }))
   },
@@ -125,17 +126,34 @@ describe('GET /api/indicadores', () => {
     expect(body.painel.pendencias).toBe(2)
   })
 
-  it('responde 200 com a produção por setor (IND-07)', async () => {
+  it('responde 200 com a produção por setor e unidade (IND-07)', async () => {
     holder.execucoes.push(
-      { sectorId: 'setor_telhas', quantidade: 4 },
-      { sectorId: 'setor_telhas', quantidade: 6 },
+      { sectorId: 'setor_telhas', unidade: 'M', quantidade: 4 },
+      { sectorId: 'setor_telhas', unidade: 'M', quantidade: 6 },
     )
 
     const response = await GET(request())
 
     expect(response.status).toBe(200)
     const body = await response.json()
-    expect(body.pcp.producaoPorSetor).toEqual([{ sectorId: 'setor_telhas', quantidade: '10' }])
+    expect(body.pcp.producaoPorSetor).toEqual([
+      { sectorId: 'setor_telhas', unidade: 'M', quantidade: '10' },
+    ])
+  })
+
+  it('não soma no mesmo setor produções de unidades diferentes (RN01, RN02)', async () => {
+    holder.execucoes.push(
+      { sectorId: 'setor_telhas', unidade: 'M', quantidade: 4 },
+      { sectorId: 'setor_telhas', unidade: 'UN', quantidade: 3 },
+    )
+
+    const response = await GET(request())
+
+    const body = await response.json()
+    expect(body.pcp.producaoPorSetor).toEqual([
+      { sectorId: 'setor_telhas', unidade: 'M', quantidade: '4' },
+      { sectorId: 'setor_telhas', unidade: 'UN', quantidade: '3' },
+    ])
   })
 
   it('responde 200 com o cumprimento de prazo (IND-08)', async () => {

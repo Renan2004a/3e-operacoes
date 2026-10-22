@@ -183,11 +183,18 @@ export const prismaIndicadoresRepository: IndicadoresRepository = {
     const rows = await prisma.execution.findMany({
       select: {
         quantity: true,
-        activity: { select: { sectorId: true, sector: { select: { name: true } } } },
+        activity: {
+          select: {
+            sectorId: true,
+            sector: { select: { name: true } },
+            orderItem: { select: { unit: true } },
+          },
+        },
       },
     })
     return rows.map((row) => ({
       sectorId: row.activity.sectorId,
+      unidade: row.activity.orderItem.unit,
       quantidade: row.quantity,
       sectorName: row.activity.sector.name,
     }))

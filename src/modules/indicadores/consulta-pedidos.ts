@@ -1,4 +1,6 @@
 import type { ActivityStatus } from '../producao/tipos'
+import { agruparPorUnidade, somarQuantidades } from '../producao/totais-por-unidade'
+import type { Quantidade } from '../producao/unidades'
 import { motivoBloqueioCorrecao, type RegistrosDaAtividade } from '../setores/corrigir-setor'
 import { sugerirSetor, type RegraProdutoSetor } from '../setores/sugerir-setor'
 import {
@@ -108,8 +110,24 @@ export interface ItemDetalhado extends ItemSaldo {
   remessas?: RemessaProgramada[]
 }
 
+/**
+ * Totais de um grupo de itens com a mesma unidade de medida (RN01, RN02). Não
+ * existe total geral entre unidades diferentes.
+ */
+export interface TotaisPorUnidade {
+  /** Unidade do grupo, ou `null` quando os itens não têm unidade informada (RN05). */
+  unidade: string | null
+  itens: number
+  solicitado: Quantidade
+  executado: Quantidade
+  disponivel: Quantidade
+  entregue: Quantidade
+  pendente: Quantidade
+}
+
 export interface PedidoDetalhado extends CabecalhoPedido {
   itens: ItemDetalhado[]
+  totaisPorUnidade: TotaisPorUnidade[]
 }
 
 /**
@@ -204,9 +222,26 @@ export async function listarPedidos(
 }
 
 /**
- * Detalha um pedido com os cinco valores por item e as especificações de
- * exibição: descrição, código e unidade por item e cliente/vendedor do pedido
- * (IND-04). Reusa o saldo da expedição; pedido inexistente é rejeitado (IND-10).
+ * Soma os valores de cada grupo de unidade. Itens de unidades diferentes ficam
+ * em grupos separados e nunca são somados entre si (RN01, RN02, RN03).
+ */
+export function totalizarPorUnidade(itens: readonly ItemDetalhado[]): TotaisPorUnidade[] {
+  return agruparPorUnidade(itens, (item) => item.unit).map((grupo) => ({
+    unidade: grupo.unidade,
+    itens: grupo.itens.length,
+    solicitado: somarQuantidades(grupo.itens.map((item) => item.solicitado)),
+    executado: somarQuantidades(grupo.itens.map((item) => item.executado)),
+    disponivel: somarQuantidades(grupo.itens.map((item) => item.disponivel)),
+    entregue: somarQuantidades(grupo.itens.map((item) => item.entregue)),
+    pendente: somarQuantidades(grupo.itens.map((item) => item.pendente)),
+  }))
+}
+
+/**
+ * Detalha um pedido com os cinco valores por item, as especificações de
+ * exibição (descrição, código e unidade por item; cliente/vendedor do pedido)
+ * e os totais por unidade de medida (IND-04). Reusa o saldo da expedição;
+ * pedido inexistente é rejeitado (IND-10).
  */
 export async function detalharPedido(
   orderId: string,
@@ -220,34 +255,37 @@ export async function detalharPedido(
   const porItem = new Map(especificacoes.map((especificacao) => [especificacao.itemId, especificacao]))
   const regras = await repo.listarRegrasProdutoSetor()
 
+  const itensDetalhados = itens.map((item): ItemDetalhado => {
+    const especificacao = porItem.get(item.itemId)
+    const suggestionavel = {
+      productCode: especificacao?.productCode ?? null,
+      description: especificacao?.description ?? null,
+    }
+    return {
+      ...item,
+      description: especificacao?.description ?? null,
+      productCode: especificacao?.productCode ?? null,
+      unit: especificacao?.unit ?? '',
+      classificationStatus: especificacao?.classificationStatus ?? 'PENDING_CLASSIFICATION',
+      sectorId: especificacao?.sectorId ?? null,
+      sectorCode: especificacao?.sectorCode ?? null,
+      sectorName: especificacao?.sectorName ?? null,
+      activityStatus: especificacao?.activityStatus ?? null,
+      suggestedSectorId:
+        especificacao?.classificationStatus === 'CLASSIFIED'
+          ? null
+          : sugerirSetor(suggestionavel, regras),
+      bloqueioCorrecaoSetor:
+        especificacao?.classificationStatus === 'CLASSIFIED'
+          ? motivoBloqueioCorrecao(especificacao.registrosAtividade ?? null)
+          : null,
+      remessas: especificacao?.remessas ?? [],
+    }
+  })
+
   return {
     ...cabecalho,
-    itens: itens.map((item) => {
-      const especificacao = porItem.get(item.itemId)
-      const suggestionavel = {
-        productCode: especificacao?.productCode ?? null,
-        description: especificacao?.description ?? null,
-      }
-      return {
-        ...item,
-        description: especificacao?.description ?? null,
-        productCode: especificacao?.productCode ?? null,
-        unit: especificacao?.unit ?? '',
-        classificationStatus: especificacao?.classificationStatus ?? 'PENDING_CLASSIFICATION',
-        sectorId: especificacao?.sectorId ?? null,
-        sectorCode: especificacao?.sectorCode ?? null,
-        sectorName: especificacao?.sectorName ?? null,
-        activityStatus: especificacao?.activityStatus ?? null,
-        suggestedSectorId:
-          especificacao?.classificationStatus === 'CLASSIFIED'
-            ? null
-            : sugerirSetor(suggestionavel, regras),
-        bloqueioCorrecaoSetor:
-          especificacao?.classificationStatus === 'CLASSIFIED'
-            ? motivoBloqueioCorrecao(especificacao.registrosAtividade ?? null)
-            : null,
-        remessas: especificacao?.remessas ?? [],
-      }
-    }),
+    itens: itensDetalhados,
+    totaisPorUnidade: totalizarPorUnidade(itensDetalhados),
   }
 }

@@ -154,6 +154,28 @@ describe('GET /api/pedidos/[orderId]', () => {
     })
   })
 
+  it('responde 200 com os totais por unidade de medida, sem somar unidades diferentes (RN02)', async () => {
+    seed('ped_1', '1001', 'Construtora X', [
+      { ...item('item_1', 20, 0, 0), unit: 'peca' },
+      { ...item('item_2', 15, 0, 0), unit: 'metro' },
+      { ...item('item_3', 10, 0, 0), unit: 'peca' },
+    ])
+
+    const response = await GET(request(), context('ped_1'))
+
+    const body = await response.json()
+    expect(
+      body.pedido.totaisPorUnidade.map((total: { unidade: string; itens: number; solicitado: string }) => [
+        total.unidade,
+        total.itens,
+        total.solicitado,
+      ]),
+    ).toEqual([
+      ['metro', 1, '15'],
+      ['peca', 2, '30'],
+    ])
+  })
+
   it('responde 200 com lista vazia quando o pedido não tem itens (IND-04)', async () => {
     seed('ped_1', '1001', null, [])
 

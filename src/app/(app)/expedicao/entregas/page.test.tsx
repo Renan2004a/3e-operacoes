@@ -46,6 +46,17 @@ function detalhe(disponivel: number) {
         pendente: '2',
       },
     ],
+    totaisPorUnidade: [
+      {
+        unidade: 'un',
+        itens: 1,
+        solicitado: '10',
+        executado: '8',
+        disponivel: String(disponivel),
+        entregue: String(8 - disponivel),
+        pendente: '2',
+      },
+    ],
   }
 }
 
@@ -196,5 +207,29 @@ describe('EntregasPage', () => {
     expect(await screen.findByText('Disponíveis')).toBeInTheDocument()
     expect(screen.getByText('Disponíveis').closest('div.rounded-card')).toHaveTextContent('5')
     expect(screen.getByText('Pendentes')).toBeInTheDocument()
+  })
+
+  it('resume disponíveis e pendentes por unidade, sem somar unidades diferentes (RN02)', async () => {
+    const base = detalhe(5)
+    configurarApi([
+      {
+        ...base,
+        itens: [
+          ...base.itens,
+          { ...base.itens[0], itemId: 'item_2', solicitado: '4', executado: '4', disponivel: '4', entregue: '0', pendente: '0' },
+        ],
+        totaisPorUnidade: [
+          { unidade: 'un', itens: 1, solicitado: '10', executado: '8', disponivel: '5', entregue: '3', pendente: '2' },
+          { unidade: 'm', itens: 1, solicitado: '4', executado: '4', disponivel: '4', entregue: '0', pendente: '0' },
+        ],
+      },
+    ])
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+
+    const disponiveis = (await screen.findByText('Disponíveis')).closest('div.rounded-card')
+    expect(disponiveis).toHaveTextContent('5 un · 4 m')
+    expect(screen.getByText('Pendentes').closest('div.rounded-card')).toHaveTextContent('2 un · 0 m')
   })
 })

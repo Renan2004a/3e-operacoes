@@ -76,6 +76,17 @@ function detalhe() {
         remessas: [],
       },
     ],
+    totaisPorUnidade: [
+      {
+        unidade: 'm',
+        itens: 1,
+        solicitado: '10',
+        executado: '8',
+        disponivel: '5',
+        entregue: '3',
+        pendente: '2',
+      },
+    ],
   }
 }
 
