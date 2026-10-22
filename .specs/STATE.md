@@ -29,12 +29,20 @@ Projeto em bootstrap. A estrutura inicial, documentação, skills locais e subag
 
 Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por número via conector local**, começando pela especificação e pelos contratos entre Railway, conector local e Top Gerente.
 
+*Atualização em 2026-10-22: a importação já está implementada. O próximo passo passou a ser o planejamento e a execução das correções do perfil Vendedor (ver "Handoff" de 2026-10-22).*
+
 ## Pontos ainda a validar com dados reais
 
 - Tabelas e joins exatos do Top Gerente para pedido, itens, categoria, cliente e vendedor.
 - Lista oficial de categorias e seu mapeamento operacional para os três setores.
 - Lista fechada real de motivos de perda, refugo e indisponibilidade.
 - Regra de Revenda para o significado final de “indisponível” no saldo pendente.
+- Cancelamento lógico de item: contrato do conector (indicador explícito) e campo em `OrderItem` (AD-010).
+- Critérios finais dos estados do pedido e impactos nos indicadores (AD-013).
+- Quem confirma remessa, significado de "confirmada", reconfirmação, remoção e auditoria (AD-016).
+- Responsáveis e ações de tratamento de divergências (AD-017).
+- Data original do pedido no Top Gerente como referência de filtro (AD-014).
+- Confirmação formal dos prazos em dois níveis (AD-009).
 
 ## Decisions
 
@@ -117,7 +125,99 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Date**: 2026-10-21
 - **Status**: active
 
+### AD-009
+
+- **Decision**: Prazos em dois níveis, opcionais e independentes. Item (`OrderItem.deadlineAt`) é o prazo de atendimento/entrega ao cliente; atividade (`Activity.deadlineAt`) é o prazo operacional do setor. Sem herança automática entre os níveis. Alertas de atraso consideram cada nível no seu escopo. Sem prazo: `SEM_PRAZO`, nunca atrasado. Nenhum campo novo.
+- **Reason**: Preserva o design de `prazos-e-alertas` (item = entrega; atividade = setor) e `decisoes.md` (data distinta por item/setor), sem criar herança não aprovada.
+- **Trade-off**: Duas datas podem divergir; a interface deve indicar qual prazo está em atraso. O alerta do item depende de AD-011 (atendimento integral), ainda não definido.
+- **Scope**: prazos, alertas, detalhe do pedido, indicadores.
+- **Date**: 2026-10-22
+- **Status**: proposed. Orientação adotada para o planejamento; confirmação formal pendente.
+
+### AD-010
+
+- **Decision**: Cancelamento lógico de item. Item cancelado no Top Gerente é preservado com seu histórico, sem exclusão. Ausência de item no payload **não** é cancelamento. O cancelamento deve ser informado explicitamente pelo conector.
+- **Reason**: Aprovado conceitualmente pelo responsável. Preserva o histórico operacional (RFN005, RFN006).
+- **Trade-off**: Exige mudança de contrato do conector e, possivelmente, campo em `OrderItem`. Comportamento nos indicadores e nas operações ainda deve ser definido antes da implementação.
+- **Scope**: integração (conector, contrato, importação), pedidos, saldo, indicadores, operações.
+- **Date**: 2026-10-22
+- **Status**: approved conceptually. Contrato do conector e campo de banco pendentes de aprovação; nenhuma alteração feita.
+
+### AD-011
+
+- **Decision**: RN004 mantida sem alteração de texto. "Entrega concluída" refere-se à quantidade executada. "Atendimento integral" refere-se à quantidade solicitada e é um conceito distinto, apresentado como indicador derivado, sem campo persistido. Pedido não é integralmente atendido apenas porque toda a quantidade executada foi entregue.
+- **Reason**: Opção A aprovada pelo responsável: manter a RN004 e criar a distinção, em vez de alterar a regra vigente.
+- **Trade-off**: Dois conceitos próximos exigem rótulos claros na interface.
+- **Scope**: expedição (status de entrega), indicadores, detalhe do pedido.
+- **Date**: 2026-10-22
+- **Status**: active (decisão). Implementação pendente.
+
+### AD-012
+
+- **Decision**: Revenda segue a RN031 literalmente: Pendente = Solicitado − Separado − Indisponível. Indisponível representa falta de estoque; não é quantidade separada nem disponível para entrega. Pedido de Revenda com indisponibilidade **não** é considerado atendido automaticamente.
+- **Reason**: Preserva a regra vigente. A validação formal do significado de "atendido" permanece pendente (T00.4).
+- **Trade-off**: Pedido de Revenda com indisponibilidade pode permanecer sem conclusão automática até a validação.
+- **Scope**: saldo da Revenda, indicadores, detalhe do pedido.
+- **Date**: 2026-10-22
+- **Status**: RN031 active (preservada). T00.4 pending. Nenhuma nova regra definitiva criada.
+
+### AD-013
+
+- **Decision**: Estados operacionais do pedido: Pendente, Em andamento e Produção concluída. Os critérios consideram todos os itens ativos, inclusive os não classificados. Pedido com item ativo não classificado não pode estar com produção concluída. `DIVERGENT` não é tratado automaticamente como produção concluída e deve ser sinalizado para análise. O status é derivado, sem novo estado persistido. Mapeamento proposto para os valores existentes: `PENDING` → Pendente, `IN_PROGRESS` → Em andamento, `COMPLETED` → Produção concluída.
+- **Reason**: Aprovação parcial pelo responsável. Os valores persistidos existentes são preservados; apenas o rótulo é ajustado.
+- **Trade-off**: Os critérios finais e os impactos em indicadores e em outros perfis ainda devem ser verificados antes da implementação. Atendimento integral é indicador separado (AD-011).
+- **Scope**: indicadores, lista e detalhe de pedidos, painel do gerente, PCP.
+- **Date**: 2026-10-22
+- **Status**: partially approved. Critérios detalhados pendentes.
+
+### AD-014
+
+- **Decision**: Filtros de data de pedidos: datas interpretadas em `America/Sao_Paulo`, último dia selecionado incluído integralmente. Referência do filtro mantida em `createdAt`.
+- **Reason**: Correção de tratamento de fuso horário, que hoje exclui o último dia (interpretação UTC de data sem horário). A semântica do filtro não muda.
+- **Trade-off**: Usar a data original do pedido no Top Gerente fica para validação posterior no ambiente de integração.
+- **Scope**: consulta de pedidos (vendedor e gerente).
+- **Date**: 2026-10-22
+- **Status**: active (correção aprovada). Implementação pendente.
+
+### AD-015
+
+- **Decision**: O Vendedor mantém a permissão `solicitar_importacao`. O usuário autenticado que solicitou a importação deve ser registrado, reutilizando `logs_auditoria`, sem nova coluna ou tabela.
+- **Reason**: `jobs_integracao` não guarda o solicitante, e RFN006 exige rastreabilidade das operações relevantes.
+- **Trade-off**: Nenhum campo novo. A auditoria passa a depender da gravação na mesma operação de criação do job.
+- **Scope**: integração (solicitação), auditoria, permissões (sem ampliação).
+- **Date**: 2026-10-22
+- **Status**: active. Implementação pendente.
+
+### AD-016
+
+- **Decision**: Remessas: sem alteração de comportamento nesta etapa. Mantidos: remessa por item, número, data prevista, confirmação opcional, sem alteração automática de saldo e sem vínculo automático com entregas.
+- **Reason**: Confirmação, reconfirmação, remoção e auditoria não têm decisão formal.
+- **Trade-off**: O comportamento atual (reconfirmação sobrescreve a data; remoção de confirmada permitida; sem auditoria) permanece até aprovação.
+- **Scope**: expedição (remessas), permissões, auditoria.
+- **Date**: 2026-10-22
+- **Status**: pending approval (D6).
+
+### AD-017
+
+- **Decision**: Divergências: nenhum novo fluxo de resolução ou permissão nesta etapa. Proposta registrada: Gerente de Produção para divergências operacionais; Responsável Técnico para falhas de integração; Vendedor apenas recebe avisos de leitura. O Vendedor não altera execução nem entrega.
+- **Reason**: Responsáveis e ações permitidas ainda não foram definidos.
+- **Trade-off**: Divergências seguem visíveis apenas em `logs_auditoria` e no evento do job até a definição do fluxo.
+- **Scope**: integração, indicadores, pedidos, permissões.
+- **Date**: 2026-10-22
+- **Status**: proposed (D7). Pending approval.
+
 ## Handoff
+
+- **Feature**: planejamento das correções do perfil Vendedor (X2 executado; D2 e demais implementações pendentes)
+- **Phase / Task**: documentação atualizada; aguardando autorização para o modo Build
+- **Completed**: `docs/requisitos.md`, `docs/banco-de-dados.md`, `docs/perfis-permissoes.md` e `.specs/STATE.md` atualizados com decisões aprovadas e pendentes (AD-009 a AD-017)
+- **In-progress**: nenhum
+- **Next step**: após autorização do Build, executar as correções técnicas independentes na ordem: filtro de data (AD-014), prazo na tela e alerta de atividade (AD-009), correção mínima do status (AD-013), auditoria de prazo e de solicitação de importação (AD-015). Depois: cancelamento lógico (AD-010), com contrato aprovado; Revenda (AD-012); estados completos (AD-013).
+- **Blockers**: aprovação do contrato do conector e de eventual campo em `OrderItem` (AD-010); T00.4 (AD-012); decisões D6 (AD-016) e D7 (AD-017); validação da data original do pedido no ambiente de integração
+- **Uncommitted files**: os quatro documentos listados acima
+- **Branch**: main
+
+## Handoff anterior (2026-10-21)
 
 - **Feature**: correção de setor (AD-006/AD-007) + totais por unidade (AD-008)
 - **Phase / Task**: concluído; próximo: deploy e validação hospedada das duas correções
