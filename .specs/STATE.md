@@ -83,6 +83,15 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Date**: 2026-10-20
 - **Status**: active
 
+### AD-006
+
+- **Decision**: Totais e somas de quantidades são agrupados pela **unidade de medida** do item. Não existe total geral entre unidades diferentes (RN01, RN02). O agrupamento compara a unidade sem espaços nas bordas e sem diferenciar maiúsculas; **não há conversão nem equivalência** entre códigos (ex.: `M`, `MT` e `M2` são unidades distintas). Item sem unidade informada forma grupo próprio, rotulado “sem unidade informada”, e nunca é somado com unidade válida (RN05); não se inventa unidade padrão. O cálculo fica no servidor (`totalizarPorUnidade` em `consulta-pedidos`, `montarPcpDe` em `pcp`, helper `agruparPorUnidade` em `producao/totais-por-unidade`); a interface apenas apresenta os valores.
+- **Reason**: RN01–RN05 do ajuste “Correção dos totais dos pedidos”. Antes, o detalhe do pedido, a entrega e a produção por setor somavam peças com metros.
+- **Trade-off**: Pedido com mais de uma unidade mostra vários totais em vez de um número único. Mudança de contrato aditiva: `GET /api/pedidos/[orderId]` ganha `totaisPorUnidade`; `GET /api/indicadores` passa a devolver uma entrada de `producaoPorSetor` por setor **e** unidade, com o campo `unidade`. Equivalência de códigos legados (M/MT, UN/PC) fica em aberto para o negócio.
+- **Scope**: indicadores (detalhe e PCP), expedição (entregas), painel do gerente e detalhe do pedido.
+- **Date**: 2026-10-21
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: revisão e correções do feedback dos docentes + padronização do banco em português
