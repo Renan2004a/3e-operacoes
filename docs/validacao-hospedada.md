@@ -69,7 +69,24 @@ Não houve diferença de comportamento observada entre local e hospedado.
 
 ---
 
-## 5. Próximos passos para go-live
+## 5. Atualização 2026-10-22 — correções dos PRs #2 e #3
+
+Os PRs do Marcelo foram revisados, mergeados e validados **localmente**:
+
+| Item | Local | Hospedado |
+| --- | --- | --- |
+| PR #2 — correção de setor (`AD-006`/`AD-007`) | ✅ | ⏳ pendente |
+| PR #3 — totais por unidade (`AD-008`) | ✅ | ⏳ pendente |
+| Testes | **785** verdes | — |
+| Lint / typecheck / build | 0 erros / OK / OK | — |
+| Playwright (390 px, navegação, setor, totais, impressão) | **11/11** | — |
+| Impressão | 1 página | — |
+
+**Pendência:** o deploy não pôde ser executado nesta rodada porque o **token do Railway foi revogado/expirou** (`Unauthorized`) e o CLI não tem sessão ativa. O ambiente hospedado continua no commit anterior (`6e21336`) e permanece saudável (`/api/health` 200); as migrations dos PRs não adicionam tabelas, então não há risco de incompatibilidade no banco.
+
+**Para publicar as correções:** autenticar o CLI (`railway login`) ou fornecer um token de projeto válido e rodar `railway up -p <PROJECT_ID> -s 3e-operacoes -e <ENV_ID> -c`; em seguida rodar `PLAYWRIGHT_BASE_URL=https://3e-operacoes-production.up.railway.app node scripts/validar-responsivo-impressao.mjs`.
+
+## 6. Próximos passos para go-live
 
 - Provisionar MySQL de produção dedicado e rodar `prisma migrate deploy` (não `reset`).
 - Configurar Cloudflare Tunnel/Access do conector e o usuário `SELECT` no Top Gerente real.
