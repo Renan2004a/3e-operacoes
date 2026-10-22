@@ -26,6 +26,13 @@ Se quantidade entregue > disponível:
 
 Ação `solicitar_importacao` (matriz vigente em `src/modules/usuarios/permissoes.ts`): Gerente de Produção, Responsável Técnico, Responsável pelo Sistema e Vendedor. O usuário autenticado que solicitou a importação deve ser registrado (aprovado em 2026-10-22; implementação pendente).
 
+## Prazos (AD-009)
+
+- **Leitura** de `OrderItem.deadlineAt` e `Activity.deadlineAt`: perfis com `consultar_pedidos` (todos os perfis autenticados). É leitura de dado já exibido no detalhe do pedido, não ampliação de escrita.
+- **Escrita do prazo de entrega** (`OrderItem.deadlineAt`): `definir_prazo` (Gerente de Produção e Vendedor). A matriz não mudou.
+- **Prazo operacional** (`Activity.deadlineAt`): a interface desta etapa é somente leitura (D5). A rota de escrita existente é preservada, mas não há tela de edição.
+- Nenhum perfil recebeu permissão nova. Operador e Expedição continuam sem alterar prazos.
+
 ## Limites do Vendedor
 
 - Não altera quantidade executada, ocorrência, entrega nem status de produção (já documentado acima).

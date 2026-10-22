@@ -84,11 +84,13 @@ export const prismaIndicadoresRepository: IndicadoresRepository = {
         description: true,
         productCode: true,
         unit: true,
+        deadlineAt: true,
         classificationStatus: true,
         activities: {
           select: {
             sectorId: true,
             status: true,
+            deadlineAt: true,
             sector: { select: { code: true, name: true } },
             _count: { select: { executions: true, occurrences: true } },
           },
@@ -109,6 +111,8 @@ export const prismaIndicadoresRepository: IndicadoresRepository = {
         description: row.description,
         productCode: row.productCode,
         unit: row.unit,
+        deadlineAt: row.deadlineAt,
+        activityDeadlineAt: atividade?.deadlineAt ?? null,
         classificationStatus: row.classificationStatus,
         sectorId: atividade?.sectorId ?? null,
         sectorCode: atividade?.sector.code ?? null,

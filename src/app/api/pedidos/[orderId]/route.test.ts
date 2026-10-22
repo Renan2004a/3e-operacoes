@@ -13,6 +13,8 @@ interface ItemSeed {
   description?: string | null
   productCode?: string | null
   unit?: string
+  deadlineAt?: Date | null
+  activityDeadlineAt?: Date | null
 }
 
 const holder = vi.hoisted(() => ({
@@ -63,6 +65,8 @@ holder.repo = {
       description: item.description ?? null,
       productCode: item.productCode ?? null,
       unit: item.unit ?? 'un',
+      deadlineAt: item.deadlineAt ?? null,
+      activityDeadlineAt: item.activityDeadlineAt ?? null,
       classificationStatus: 'PENDING_CLASSIFICATION' as const,
     }))
   },
@@ -145,6 +149,8 @@ describe('GET /api/pedidos/[orderId]', () => {
       description: null,
       productCode: null,
       unit: 'un',
+      deadlineAt: null,
+      activityDeadlineAt: null,
       classificationStatus: 'PENDING_CLASSIFICATION',
       sectorId: null,
       sectorCode: null,
@@ -154,6 +160,21 @@ describe('GET /api/pedidos/[orderId]', () => {
       bloqueioCorrecaoSetor: null,
       remessas: [],
     })
+  })
+
+  it('devolve o prazo de entrega do item e o prazo operacional da atividade (AD-009)', async () => {
+    const prazoEntrega = new Date('2026-02-02T02:59:59.999Z')
+    const prazoSetor = new Date('2026-03-11T02:59:59.999Z')
+    seed('ped_1', '1001', 'Construtora X', [
+      { ...item('item_1', 10, 8, 3), deadlineAt: prazoEntrega, activityDeadlineAt: prazoSetor },
+    ])
+
+    const response = await GET(request(), context('ped_1'))
+
+    expect(response.status).toBe(200)
+    const body = await response.json()
+    expect(body.pedido.itens[0].deadlineAt).toBe(prazoEntrega.toISOString())
+    expect(body.pedido.itens[0].activityDeadlineAt).toBe(prazoSetor.toISOString())
   })
 
   it('responde 200 com os totais por unidade de medida, sem somar unidades diferentes (RN02)', async () => {

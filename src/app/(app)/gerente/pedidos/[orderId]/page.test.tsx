@@ -50,7 +50,9 @@ const SETORES = [
   { id: 'setor_corte', code: 'CORTE_DOBRA', name: 'Corte e Dobra', active: true },
 ]
 
-function pedido(classificationStatus: 'CLASSIFIED' | 'PENDING_CLASSIFICATION' = 'PENDING_CLASSIFICATION') {
+function pedido(
+  classificationStatus: 'CLASSIFIED' | 'PENDING_CLASSIFICATION' = 'PENDING_CLASSIFICATION',
+) {
   return {
     id: 'p1',
     numero: '100',
@@ -68,6 +70,8 @@ function pedido(classificationStatus: 'CLASSIFIED' | 'PENDING_CLASSIFICATION' = 
         description: 'Chapa dobrada',
         productCode: 'PRD-77',
         unit: 'peca',
+        deadlineAt: null as string | null,
+        activityDeadlineAt: null as string | null,
         classificationStatus,
       },
     ],
@@ -144,18 +148,45 @@ describe('PedidoGerentePage', () => {
       ...pedido(),
       itens: [
         pedido().itens[0],
-        { ...pedido().itens[0], itemId: 'item_2', unit: 'm', solicitado: '6', executado: '1', disponivel: '1', entregue: '0', pendente: '5' },
+        {
+          ...pedido().itens[0],
+          itemId: 'item_2',
+          unit: 'm',
+          solicitado: '6',
+          executado: '1',
+          disponivel: '1',
+          entregue: '0',
+          pendente: '5',
+        },
       ],
       totaisPorUnidade: [
-        { unidade: 'peca', itens: 1, solicitado: '10', executado: '8', disponivel: '5', entregue: '3', pendente: '2' },
-        { unidade: 'm', itens: 1, solicitado: '6', executado: '1', disponivel: '1', entregue: '0', pendente: '5' },
+        {
+          unidade: 'peca',
+          itens: 1,
+          solicitado: '10',
+          executado: '8',
+          disponivel: '5',
+          entregue: '3',
+          pendente: '2',
+        },
+        {
+          unidade: 'm',
+          itens: 1,
+          solicitado: '6',
+          executado: '1',
+          disponivel: '1',
+          entregue: '0',
+          pendente: '5',
+        },
       ],
     }
     configurarApi(misto)
     render(<PedidoGerentePage />)
 
     expect(await screen.findByText('2 peca · 5 m')).toBeInTheDocument()
-    expect(screen.getByRole('progressbar', { name: 'Execução do pedido (peca)' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('progressbar', { name: 'Execução do pedido (peca)' }),
+    ).toBeInTheDocument()
     expect(screen.getByRole('progressbar', { name: 'Execução do pedido (m)' })).toBeInTheDocument()
     expect(screen.queryByText('7')).not.toBeInTheDocument()
   })
@@ -171,7 +202,9 @@ describe('PedidoGerentePage', () => {
 
   it('define o prazo do item e envia a data para a API (FEP-05)', async () => {
     configurarApi()
-    mocks.apiPatch.mockResolvedValue({ item: { id: 'item_1', deadlineAt: '2026-02-01T00:00:00.000Z' } })
+    mocks.apiPatch.mockResolvedValue({
+      item: { id: 'item_1', deadlineAt: '2026-02-02T02:59:59.999Z' },
+    })
     render(<PedidoGerentePage />)
 
     fireEvent.change(await screen.findByLabelText('Prazo do item 1'), {
@@ -186,9 +219,11 @@ describe('PedidoGerentePage', () => {
     )
   })
 
-  it('reflete o status de prazo após salvar (FEP-05)', async () => {
+  it('reflete o prazo persistido devolvido pela API após salvar (FEP-05, AD-009)', async () => {
     configurarApi()
-    mocks.apiPatch.mockResolvedValue({ item: { id: 'item_1', deadlineAt: '2026-02-01T00:00:00.000Z' } })
+    mocks.apiPatch.mockResolvedValue({
+      item: { id: 'item_1', deadlineAt: '2026-02-02T02:59:59.999Z' },
+    })
     render(<PedidoGerentePage />)
 
     fireEvent.change(await screen.findByLabelText('Prazo do item 1'), {
@@ -196,7 +231,26 @@ describe('PedidoGerentePage', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: 'Salvar prazo do item 1' }))
 
-    expect(await screen.findByText('Prazo definido: 2026-02-01')).toBeInTheDocument()
+    expect(await screen.findByText('Prazo de entrega: 01/02/2026')).toBeInTheDocument()
+  })
+
+  it('exibe o prazo já persistido ao carregar a página (AD-009)', async () => {
+    configurarApi({
+      ...pedido(),
+      itens: [{ ...pedido().itens[0], deadlineAt: '2026-02-02T02:59:59.999Z' }],
+    })
+    render(<PedidoGerentePage />)
+
+    expect(await screen.findByLabelText('Prazo do item 1')).toHaveValue('2026-02-01')
+    expect(screen.getByText('Prazo de entrega: 01/02/2026')).toBeInTheDocument()
+  })
+
+  it('exibe “Sem prazo” quando o item não tem prazo (AD-009)', async () => {
+    configurarApi()
+    render(<PedidoGerentePage />)
+
+    expect(await screen.findByText('Sem prazo')).toBeInTheDocument()
+    expect(screen.getByLabelText('Prazo do item 1')).toHaveValue('')
   })
 
   it('mostra pedido não encontrado quando a API responde 404 (FEP-13)', async () => {
@@ -277,9 +331,7 @@ describe('PedidoGerentePage', () => {
     render(<PedidoGerentePage />)
 
     expect(await screen.findByText('Item desmembrado')).toBeInTheDocument()
-    expect(
-      screen.queryByRole('button', { name: 'Classificar item 1' }),
-    ).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Classificar item 1' })).not.toBeInTheDocument()
   })
 
   it('marca como classificado quando a API responde 409 (LAC-05)', async () => {

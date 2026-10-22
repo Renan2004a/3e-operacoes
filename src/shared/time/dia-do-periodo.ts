@@ -58,3 +58,40 @@ export function inicioDoDiaNoFuso(valor: string, diasAdicionais = 0): Date | nul
       : inicioComoUtc - segundoDeslocamento,
   )
 }
+
+/**
+ * Texto `YYYY-MM-DD` do dia civil deslocado em `dias` dias, ou `null` quando o
+ * texto não é uma data real. Calculado no calendário UTC para não sofrer
+ * influência de fuso.
+ */
+function diaCivilDeslocado(valor: string, dias: number): string | null {
+  const casamento = DATA_SOMENTE_DIA.exec(valor.trim())
+  if (!casamento) return null
+
+  const [ano, mes, dia] = [casamento[1], casamento[2], casamento[3]].map(Number)
+  const original = new Date(Date.UTC(ano, mes - 1, dia))
+  if (original.getUTCDate() !== dia || original.getUTCMonth() !== mes - 1) return null
+
+  const deslocado = new Date(Date.UTC(ano, mes - 1, dia + dias))
+  const mesTexto = String(deslocado.getUTCMonth() + 1).padStart(2, '0')
+  const diaTexto = String(deslocado.getUTCDate()).padStart(2, '0')
+  return `${deslocado.getUTCFullYear()}-${mesTexto}-${diaTexto}`
+}
+
+/**
+ * Instante do último milissegundo do dia civil `YYYY-MM-DD` no fuso
+ * `APP_TIMEZONE` (D2). É o fim do dia, não a meia-noite: um prazo para hoje só
+ * fica atrasado depois que o dia termina. Retorna `null` quando o texto não é
+ * uma data real.
+ *
+ * O início do dia seguinte é calculado a partir do **dia civil seguinte**, e
+ * não somando 24 horas, para respeitar dias com horário de verão (23h ou 25h).
+ */
+export function fimDoDiaNoFuso(valor: string): Date | null {
+  const seguinte = diaCivilDeslocado(valor, 1)
+  if (!seguinte) return null
+
+  const inicioDoSeguinte = inicioDoDiaNoFuso(seguinte)
+  if (!inicioDoSeguinte) return null
+  return new Date(inicioDoSeguinte.getTime() - 1)
+}

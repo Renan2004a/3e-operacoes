@@ -85,8 +85,9 @@
 - **Sugestão de setor** (`REGRA_PRODUTO_SETOR`) é heurística: não classifica
   sozinha; só pré-seleciona o setor no desmembramento.
 - **Unidade** do item governa a granularidade; nunca misturar unidades.
-- **Prazo opcional** em `ITEM_PEDIDO` e `ATIVIDADE`; sem prazo = `SEM_PRAZO`,
-  nunca atrasado.
+- **Prazo opcional** em `ITEM_PEDIDO` e `ATIVIDADE`, em dois níveis independentes
+  (item = entrega; atividade = setor). Sem prazo = `SEM_PRAZO`, nunca atrasado.
+  A data é civil (`YYYY-MM-DD`), válida até o fim do dia em `America/Sao_Paulo`.
 - **Sincronização idempotente**: `chaveLegado`/`chaveItemLegado` fazem upsert;
   dados operacionais (execução, ocorrência, entrega, remessa) nunca são apagados.
 

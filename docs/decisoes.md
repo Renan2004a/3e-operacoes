@@ -27,11 +27,20 @@ A decisão mais recente substitui a formulação anterior que descontava perda/r
 
 ## Prazos
 
-- Pedido pode nascer sem data de entrega.
-- Sem data, exibir **Sem prazo** e nunca classificar como atrasado.
+Decisões formais do AD-009 (aprovadas em 2026-10-22).
+
+- Existem **dois níveis independentes** de prazo: `OrderItem.deadlineAt` (prazo de entrega do item) e `Activity.deadlineAt` (prazo operacional do setor). Não há herança automática entre eles: alterar um não altera o outro.
+- Prazo é opcional. Sem data, exibir **Sem prazo** e nunca classificar como atrasado.
 - Data pode ser definida posteriormente por gerente ou vendedor.
 - Pode existir data distinta por item/setor.
 - Alertas de atraso só são calculados para o escopo que possuir prazo definido.
+- O prazo é uma **data civil**: o texto aceito é `YYYY-MM-DD`, validado de forma estrita (datas inexistentes, formatos ambíguos e timestamps são rejeitados), e é persistido como o **fim do dia em `America/Sao_Paulo`**. Assim, um prazo para hoje não é atrasado; um prazo de ontem é. Datas exibidas usam o mesmo fuso, sem deslocamento de um dia.
+- A remoção de um prazo existente **não** faz parte desta etapa. Fica registrada no backlog.
+- Alertas **comerciais** por prazo de entrega não são implementados nesta etapa; dependem do critério de atendimento integral da AD-011. A quantidade executada não substitui a entregue.
+- A interface permite **apenas leitura** do prazo operacional. A edição do prazo operacional não faz parte desta etapa.
+- Datas de entrega do Top Gerente **não** são importadas nesta etapa; não existe regra de precedência entre ERP e alteração local.
+- A auditoria de alteração de prazo fica pendente para uma etapa de RFN006; nenhuma auditoria nova foi criada.
+- A leitura dos prazos segue a permissão `consultar_pedidos`. A escrita do prazo de entrega continua restrita a quem tem `definir_prazo` (Gerente de Produção e Vendedor). Nenhuma permissão foi ampliada.
 
 ## Permissões
 

@@ -42,7 +42,7 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - Quem confirma remessa, significado de "confirmada", reconfirmação, remoção e auditoria (AD-016).
 - Responsáveis e ações de tratamento de divergências (AD-017).
 - Data original do pedido no Top Gerente como referência de filtro (AD-014).
-- Confirmação formal dos prazos em dois níveis (AD-009).
+- Prazos antigos gravados com a semântica anterior (meia-noite UTC): verificar se existem dados reais antes de qualquer conversão (AD-009/D6).
 
 ## Decisions
 
@@ -127,12 +127,12 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 
 ### AD-009
 
-- **Decision**: Prazos em dois níveis, opcionais e independentes. Item (`OrderItem.deadlineAt`) é o prazo de atendimento/entrega ao cliente; atividade (`Activity.deadlineAt`) é o prazo operacional do setor. Sem herança automática entre os níveis. Alertas de atraso consideram cada nível no seu escopo. Sem prazo: `SEM_PRAZO`, nunca atrasado. Nenhum campo novo.
-- **Reason**: Preserva o design de `prazos-e-alertas` (item = entrega; atividade = setor) e `decisoes.md` (data distinta por item/setor), sem criar herança não aprovada.
-- **Trade-off**: Duas datas podem divergir; a interface deve indicar qual prazo está em atraso. O alerta do item depende de AD-011 (atendimento integral), ainda não definido.
-- **Scope**: prazos, alertas, detalhe do pedido, indicadores.
+- **Decision**: Prazos em dois níveis, opcionais e independentes. Item (`OrderItem.deadlineAt`) é o prazo de atendimento/entrega ao cliente; atividade (`Activity.deadlineAt`) é o prazo operacional do setor. Sem herança automática entre os níveis. Alertas de atraso consideram cada nível no seu escopo. Sem prazo: `SEM_PRAZO`, nunca atrasado. Nenhum campo novo. O prazo é uma **data civil** no formato estrito `YYYY-MM-DD`, persistida como o **fim do dia em `America/Sao_Paulo`**; a leitura do detalhe devolve `deadlineAt` e `activityDeadlineAt`; a interface hidrata o prazo do item e exibe o do setor somente para leitura.
+- **Reason**: Preserva o design de `prazos-e-alertas` (item = entrega; atividade = setor) e `decisoes.md` (data distinta por item/setor), sem criar herança não aprovada. A correção de 2026-10-22 eliminou a causa do “prazo que desaparece”: o dado sempre esteve no banco, mas a API de detalhe não o devolvia e a interface usava apenas estado local.
+- **Trade-off**: Duas datas podem divergir; a interface indica qual prazo está em atraso. O alerta comercial do item continua dependente da AD-011. Prazos antigos gravados em meia-noite UTC não são convertidos automaticamente. Remoção de prazo, edição do prazo operacional e auditoria ficam para etapas próprias.
+- **Scope**: prazos, leitura do detalhe, alertas operacionais (sem alteração de lógica), indicadores.
 - **Date**: 2026-10-22
-- **Status**: proposed. Orientação adotada para o planejamento; confirmação formal pendente.
+- **Status**: active (aprovada formalmente, implementada e validada localmente). Pendente: validação no navegador para Vendedor e Gerente.
 
 ### AD-010
 
@@ -232,6 +232,23 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Scope**: consulta de pedidos (Vendedor e Gerente), API `GET /api/pedidos`, lista de pedidos, testes e documentação. Filtros AD-014/A2/A6, status global, permissões, saldos e conclusão preservados.
 - **Date**: 2026-10-22
 - **Status**: active (aprovada e implementada). Testes unitários, de rota, de componente e de integração com MySQL local aprovados; validação no navegador pendente. Sem commit, push ou deploy.
+
+## Handoff AD-009 (prazos)
+
+- **Feature**: persistência, exibição e acompanhamento dos prazos (AD-009, correção do perfil Vendedor)
+- **Phase / Task**: implementação concluída e validada localmente; aguardando validação no navegador e autorização de commit
+- **Completed**:
+  - Causa: o prazo era gravado em `pedidos_itens.deadlineAt`, mas `GET /api/pedidos/[orderId]` não devolvia o campo e `PedidoDetalhe` usava apenas estado local (`salvos`). Após F5, o badge e o input ficavam vazios.
+  - Correção: `deadlineAt` e `activityDeadlineAt` no detalhe; input e badge hidratados da API; “Sem prazo”; prazo do setor somente leitura; `400` para data inválida/ambígua.
+  - Semântica: `YYYY-MM-DD` estrito convertido para o fim do dia em `America/Sao_Paulo` (`fimDoDiaNoFuso`); prazo de hoje não é atrasado; prazo de ontem é.
+  - Preservados: independência entre níveis, permissões (`consultar_pedidos`/`definir_prazo`), status, conclusão, entregas, remessas, filtros AD-014/AD-018/AD-019/A1 e conector.
+  - Sem migração, sem script de conversão, sem alteração de banco/CI.
+  - Testes: 866 automatizados + 23 de integração com MySQL de teste (17 de consulta + 6 de prazos); lint e typecheck sem erros; build OK.
+- **In-progress**: nenhum
+- **Next step**: executar o roteiro manual de `docs/testes-locais.md` §7 com Vendedor e Gerente (salvar, F5, novo login, hoje, vencido, independência). Depois, autorização para o commit.
+- **Blockers**: validação no navegador pendente; prazos antigos em meia-noite UTC não verificados no banco real (D6); alerta comercial e sinalização de atraso do item (critério de conclusão, AD-011); auditoria de prazo (RFN006); remoção de prazo; edição do prazo operacional; data do ERP.
+- **Uncommitted files**: `src/shared/time/dia-do-periodo.ts`, `src/shared/time/dia-civil.ts`, `src/modules/prazos/prazo.ts`, `src/modules/indicadores/consulta-pedidos.ts`, `src/modules/indicadores/adapters/prisma-indicadores-repository.ts`, `src/shared/ui/pedido-detalhe.tsx`, testes correspondentes, `src/modules/prazos/adapters/prazos.integration.test.ts`, documentos (`docs/decisoes.md`, `docs/requisitos.md`, `docs/regras-negocio.md`, `docs/banco-de-dados.md`, `docs/perfis-permissoes.md`, `docs/testes-locais.md`, `docs/backlog.md`, `docs/modelo-dados/mer.md`) e `.specs` (`features/prazos-e-alertas/*`, este arquivo). Nenhum commit foi feito.
+- **Branch**: fix/fluxos-vendedor1-preparação-decisões-negócio
 
 ## Handoff
 

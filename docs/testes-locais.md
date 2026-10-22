@@ -67,7 +67,7 @@ Evidências salvas em `docs/video/validacao/` (PNGs das telas e `ordem-producao.
 | Vendedor: desmembrar | Escolher setor → “Desmembrar” | Item fica “Desmembrado”; mensagem de sucesso |
 | Vendedor: remessa | “+ Adicionar remessa” → número/data → “Programar remessa” | Remessa aparece na lista; mensagem “Remessa criada com sucesso.” |
 | Vendedor: confirmar/remover remessa | “Confirmar” / “Remover” | Status atualiza; mensagens de sucesso |
-| Vendedor: prazo | Data → “Salvar prazo” | Badge “Prazo definido”; mensagem de sucesso |
+| Vendedor: prazo | Data → “Salvar prazo” → **F5** → novo login | Badge “Prazo de entrega: dd/mm/aaaa” e campo preenchido antes **e depois** de recarregar/entrar de novo (AD-009) |
 | Gerente: painel | Abrir painel | Alertas (atrasados/parados/não encaminhados) e progresso por setor com percentual |
 | Operador: fila/execução | Abrir atividade → registrar execução | Saldo atualizado; sucesso; progresso acessível |
 | Operador: ocorrência | Perda + motivo → registrar | Ocorrência registrada; saldo não reduz indevidamente |
@@ -169,3 +169,32 @@ npm run dev            # http://localhost:3000
 | 13 | Repetir em largura de celular e com teclado | Sem rolagem horizontal da página; botões com alvo adequado e foco visível; leitor de tela anuncia a paginação |
 
 Registrar como evidência: perfil usado, URL da lista, quantidade total exibida, página acessada, captura de tela e qualquer divergência. A A1 permanece **aprovada provisoriamente** até esse roteiro ser concluído.
+
+---
+
+## 7. Validação manual — AD-009 (prazos)
+
+**Gates automatizados desta correção (2026-10-22):** `npm test` 866 aprovados (+23 de integração MySQL executados à parte); `npm run lint` 0 erros; `npm run typecheck` OK; `npm run build` OK. A validação abaixo é a que falta.
+
+Executar com o app local e banco do app migrado. Repetir no **Vendedor** e no **Gerente**. Não executar em produção.
+
+| # | Passo | Resultado esperado |
+| --- | --- | --- |
+| 1 | Abrir um pedido sem prazo | Badge “Sem prazo”; campo de data vazio; nenhum “Atrasado” |
+| 2 | Informar uma data futura e salvar | Mensagem de sucesso; badge “Prazo de entrega: dd/mm/aaaa” com a **mesma data informada** |
+| 3 | Recarregar a página com **F5** | Badge e campo continuam preenchidos com a mesma data |
+| 4 | Sair e entrar novamente com o mesmo usuário | O prazo continua visível |
+| 5 | Abrir o mesmo pedido em outro navegador/aba anônima | O prazo continua visível |
+| 6 | Alterar o prazo para outra data e salvar | O novo valor substitui o anterior; após F5 permanece o novo |
+| 7 | Informar a **data de hoje** | Não aparece “Atrasado” durante o dia; no dia seguinte, passa a atrasado |
+| 8 | Informar uma data passada no prazo do item | O badge exibe a data informada; o atraso **do item** ainda não é sinalizado na interface (falta definir o critério de conclusão do item, AD-011). O prazo do setor, quando vencido, mostra “· Atrasado” |
+| 9 | Abrir um pedido com atividade de setor e prazo operacional | “Prazo do setor: dd/mm/aaaa” aparece em **modo leitura**; não há campo para editar |
+| 10 | Alterar o prazo de entrega do item e conferir o prazo do setor | O prazo do setor **não** muda |
+| 11 | Importar/reimportar o mesmo pedido | O prazo local continua o mesmo (o conector não envia data de entrega) |
+| 12 | Entrar com um perfil sem `definir_prazo` (ex.: Operador) e abrir o detalhe | O prazo é legível, mas não há ação de salvar prazo |
+| 13 | Acessar a rota sem sessão (ou usuário sem perfil) | A rota de detalhe continua negando o acesso (`401`/`403`), comportamento existente |
+| 14 | Conferir no banco (`pedidos_itens.deadlineAt`) | O valor corresponde ao fim do dia em São Paulo (ex.: `2026-02-01` → `2026-02-02 02:59:59.999`) |
+
+**Prazos antigos:** se o banco tiver prazos gravados antes desta correção (meia-noite UTC), o roteiro do passo 3 pode mostrar um dia a menos. Não há script de conversão nesta etapa. Em ambiente de demonstração, re-salvar o prazo pela interface (passos 2 e 3). Se houver dado real nesse formato, interromper e solicitar autorização específica antes de qualquer conversão.
+
+**Evidência mínima:** perfil, número do pedido, data informada, data exibida antes/depois do F5 e após novo login, captura de tela e valor lido no banco.

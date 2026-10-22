@@ -1,19 +1,23 @@
 # Prazos e Alertas — Design
 
 **Spec**: `.specs/features/prazos-e-alertas/spec.md`
-**Status**: Draft
+**Status**: Active (AD-009 revisado e implementado em 2026-10-22)
 
 ---
 
 ## Architecture Overview
 
-Domínio novo em `src/modules/prazos/` (prazo, atraso, alertas) com porta `PrazosRepository` e adapter Prisma. Prazo por item (`OrderItem.deadlineAt`) e por atividade (`Activity.deadlineAt`). O status de atraso é derivado; não há novo campo.
+Domínio em `src/modules/prazos/` (prazo, atraso, alertas) com porta `PrazosRepository` e adapter Prisma. Prazo por item (`OrderItem.deadlineAt`) e por atividade (`Activity.deadlineAt`), independentes. O status de atraso é derivado; não há novo campo.
+
+O **modelo de leitura** faz parte do desenho: `GET /api/pedidos/[orderId]` devolve `deadlineAt` (item) e `activityDeadlineAt` (setor), para a interface hidratar o formulário e o badge a partir do banco. O prazo é uma data civil persistida no fim do dia em `America/Sao_Paulo`.
 
 ```mermaid
 graph TD
     GE[Gerente/Vendedor] -->|PATCH .../prazo| DP[Definir prazo]
-    GE -->|GET /api/producao/alertas| AL[Alertas]
+    GE -->|GET /api/pedidos/:id| LD[Detalhe com prazos]
+    GE -->|GET /api/producao/alertas| AL[Alertas operacionais]
     DP --> DO[Domínio prazos]
+    LD --> DO
     AL --> DO
     DO --> DB[(MySQL do app)]
 ```
@@ -25,9 +29,12 @@ graph TD
 | Component | Location | How to Use |
 | --- | --- | --- |
 | Contexto de auth | `src/shared/http/auth-context.ts`, `autorizacao.ts` | Proteger as rotas; ação `definir_prazo`. |
-| Matriz de permissões | `src/modules/usuarios/permissoes.ts` | Já permite `definir_prazo` a gerente e vendedor. |
+| Matriz de permissões | `src/modules/usuarios/permissoes.ts` | Já permite `definir_prazo` a gerente e vendedor; leitura por `consultar_pedidos`. |
 | Cliente Prisma | `src/shared/db/prisma.ts` | Repositório. |
 | Schema Prisma | `prisma/schema.prisma` | `OrderItem.deadlineAt`, `Activity.deadlineAt`, `Activity.status`. |
+| Detalhe do pedido | `src/modules/indicadores/consulta-pedidos.ts` + adapter | Expor `deadlineAt` e `activityDeadlineAt` (AD-009). |
+| Helper de dia civil | `src/shared/time/dia-do-periodo.ts`, `dia-civil.ts` | Fim do dia em São Paulo e formatação sem deslocamento. |
+| Detalhe na UI | `src/shared/ui/pedido-detalhe.tsx` | Hidratar input/badge da API; leitura do prazo do setor. |
 
 ---
 
@@ -66,6 +73,10 @@ Sem mudança de schema. Usa `OrderItem.deadlineAt`, `Activity.deadlineAt`, `Acti
 
 Regra de status: `SEM_PRAZO` quando não há data; `ATRASADO` quando `agora > prazo` e não concluído; caso contrário `EM_DIA`.
 
+**Data civil (AD-009/D2):** o texto aceito é `YYYY-MM-DD` e é convertido para o último milissegundo do dia em `America/Sao_Paulo` (`fimDoDiaNoFuso`). Exemplo: `2026-02-01` → `2026-02-02T02:59:59.999Z`. Isso faz `agora > prazo` significar “o dia do prazo terminou”, mantendo as comparações de `atraso.ts` e `pcp.ts`. A exibição usa `formatarDiaCivil`/`diaCivilParaInput`, sempre com o fuso explícito.
+
+**Leitura:** `EspecificacaoItem` e `ItemDetalhado` ganham `deadlineAt` e `activityDeadlineAt`; o adapter seleciona os dois campos. Nenhum campo derivado persistido. O prazo operacional é exibido apenas para leitura (D5).
+
 ---
 
 ## Error Handling Strategy
@@ -83,9 +94,11 @@ Regra de status: `SEM_PRAZO` quando não há data; `ATRASADO` quando `agora > pr
 
 | Concern | Location | Impact | Mitigation |
 | --- | --- | --- | --- |
-| Fuso horário do prazo | datas | Atraso incorreto | Comparar em UTC (`agora`); exibir em `America/Sao_Paulo`. |
-| Prazo por item e por setor | `deadlineAt` duplicado | Ambiguidade | Item = entrega; atividade = setor. |
+| Fuso horário do prazo | datas | Atraso ou dia incorreto | Data civil ancorada no fim do dia em `America/Sao_Paulo`; exibição com fuso explícito. |
+| Prazo por item e por setor | `deadlineAt` duplicado | Ambiguidade | Item = entrega; atividade = setor; sem herança. |
+| Dados antigos em meia-noite UTC | `pedidos_itens` / `atividades` | Prazo exibido um dia antes | Sem conversão automática (D6). Em demonstração, re-salvar pela interface; dados reais exigem autorização. |
 | Sem alertas ativos | RF012 | Sem notificação | Aqui é consulta; notificação fica fora do escopo. |
+| Alerta comercial ausente | `indicadores/alertas` | “Atrasados” é operacional | D4: não implementar até a AD-011; não confundir os níveis. |
 
 ---
 
@@ -95,5 +108,8 @@ Regra de status: `SEM_PRAZO` quando não há data; `ATRASADO` quando `agora > pr
 | --- | --- | --- |
 | Status derivado | `SEM_PRAZO`/`EM_DIA`/`ATRASADO` | Sem novo campo. |
 | Atraso | Só com prazo e não concluído | `docs/regras-negocio.md`. |
-| Permissão | `definir_prazo` (gerente, vendedor) | Matriz existente. |
-| Alertas | Consulta de atividades atrasadas | RF012. |
+| Permissão | `definir_prazo` (gerente, vendedor); leitura `consultar_pedidos` | Matriz existente (D9). |
+| Alertas | Consulta de atividades atrasadas | RF012; alerta comercial adiado (D4). |
+| Data civil | `YYYY-MM-DD` estrito, fim do dia em SP | AD-009/D2. |
+| Leitura do detalhe | `deadlineAt` + `activityDeadlineAt` | Sem estado local efêmero. |
+| Prazo operacional na UI | Somente leitura | AD-009/D5. |

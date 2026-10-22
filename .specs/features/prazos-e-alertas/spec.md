@@ -17,6 +17,10 @@ O pedido pode nascer sem data de entrega e, mesmo com data, não há como sinali
 | --- | --- |
 | Notificações push/e-mail de alerta | Fora do escopo atual; aqui é consulta. |
 | Interface | Fase de frontend. |
+| Remoção de prazo | AD-009/D3: não faz parte desta etapa. |
+| Alerta comercial por prazo de entrega | AD-009/D4: depende do atendimento integral (AD-011). |
+| Importar data de entrega do Top Gerente | AD-009/D8: conector inalterado; sem precedência. |
+| Auditoria de alteração de prazo | AD-009/D7: etapa própria de RFN006. |
 | Prazos por item no Top Gerente | Não alterar o legado. |
 | Autenticação | Feature já concluída; usa a sessão. |
 
@@ -31,6 +35,13 @@ O pedido pode nascer sem data de entrega e, mesmo com data, não há como sinali
 | Atraso de atividade | Prazo da atividade ultrapassado e atividade não `COMPLETED` | `docs/regras-negocio.md` | sim |
 | Sem prazo | `SEM_PRAZO`, nunca atrasado | `docs/regras-negocio.md` | sim |
 | Fonte do prazo | `OrderItem.deadlineAt` e `Activity.deadlineAt` | Campos já existem no schema | sim |
+| Níveis independentes | Item = entrega; atividade = setor; sem herança | AD-009 | sim (2026-10-22) |
+| Formato do prazo | Data civil `YYYY-MM-DD`, estrita | AD-009/D2 | sim |
+| Semântica do dia | Fim do dia em `America/Sao_Paulo` | AD-009/D2 | sim |
+| Remoção de prazo | Não suportada nesta etapa | AD-009/D3 | sim |
+| Alerta comercial | Fora desta etapa (depende da AD-011) | AD-009/D4 | sim |
+| Prazo operacional na UI | Somente leitura | AD-009/D5 | sim |
+| Leitura | Perfis com `consultar_pedidos` | AD-009/D9 | sim |
 
 **Open questions:** none - all resolved or logged above.
 
@@ -87,6 +98,29 @@ O pedido pode nascer sem data de entrega e, mesmo com data, não há como sinali
 
 ---
 
+### P1: Persistência e exibição dos prazos ⭐ MVP (AD-009)
+
+**User Story**: Como Vendedor ou Gerente, quero ver o prazo que salvei mesmo depois de recarregar a página ou entrar novamente, para acompanhar a entrega sem perder a informação.
+
+**Why P1**: O prazo era gravado no banco, mas não era devolvido pela API de detalhe nem hidratado na interface.
+
+**Acceptance Criteria**:
+
+1. WHEN o detalhe do pedido é consultado THEN o sistema SHALL devolver `deadlineAt` do item, com o valor persistido.
+2. WHEN o detalhe do pedido é consultado THEN o sistema SHALL devolver `activityDeadlineAt` da atividade, quando houver.
+3. WHEN a página é recarregada ou um novo login é feito THEN o sistema SHALL exibir o mesmo prazo persistido.
+4. WHEN o item não tem prazo THEN o sistema SHALL exibir `Sem prazo` e o campo vazio.
+5. WHEN o prazo é informado THEN o sistema SHALL aceitar apenas `YYYY-MM-DD` real; formatos ambíguos, datas inexistentes e timestamps SHALL ser rejeitados com `400`.
+6. WHEN o prazo é para a data atual THEN o sistema SHALL considerá-lo `EM_DIA` até o fim do dia em `America/Sao_Paulo`.
+7. WHEN o prazo é de um dia anterior e o escopo não está concluído THEN o sistema SHALL considerá-lo `ATRASADO`.
+8. WHEN o prazo de um nível é alterado THEN o sistema SHALL NOT alterar o prazo do outro nível.
+9. WHEN o pedido é reimportado THEN o sistema SHALL preservar os prazos locais.
+10. WHEN o usuário tem `consultar_pedidos` THEN o sistema SHALL permitir leitura; a escrita SHALL exigir `definir_prazo`.
+
+**Independent Test**: Salvar um prazo, recarregar a página e ver o mesmo dia; salvar a data de hoje e não ver atraso; alterar o prazo do item e conferir que o do setor não mudou.
+
+---
+
 ## Edge Cases
 
 - IF a atividade não existir THEN o sistema SHALL responder `404`.
@@ -111,14 +145,27 @@ O pedido pode nascer sem data de entrega e, mesmo com data, não há como sinali
 | PRAZO-10 | P1: Alertas | Execute | T3, T4, T7 | Verified (T3, T7) |
 | PRAZO-11 | Edge: atividade inexistente | Execute | T1, T6 | Verified (T1, T6) |
 | PRAZO-12 | Edge: item inexistente | Execute | T1, T5 | Verified (T1) |
+| PRAZO-13 | P1: Persistência | Execute | T8 | Verified (T8) |
+| PRAZO-14 | P1: Persistência | Execute | T8 | Verified (T8) |
+| PRAZO-15 | P1: Persistência | Execute | T8, T9 | Verified (T8, T9) |
+| PRAZO-16 | P1: Persistência | Execute | T9 | Verified (T9) |
+| PRAZO-17 | P1: Datas | Execute | T8, T9 | Verified (T8, T9) |
+| PRAZO-18 | P1: Datas | Execute | T8 | Verified (T8) |
+| PRAZO-19 | P1: Independência | Execute | T8 | Verified (T8) |
+| PRAZO-20 | P1: Reimportação | Execute | T8 | Verified (T8) |
+| PRAZO-21 | P1: Permissões | Execute | T8 | Verified (T8) |
 
-**Coverage:** 12 total, 12 mapped to tasks, 0 unmapped
+**Coverage:** 21 total, 21 mapped to tasks, 0 unmapped
 
 ---
 
 ## Success Criteria
 
-- [ ] Sem prazo nunca é atrasado.
-- [ ] Prazo ultrapassado com produção pendente é `ATRASADO`.
-- [ ] Só gerente e vendedor definem prazo.
-- [ ] A lista de alertas traz apenas atividades atrasadas.
+- [x] Sem prazo nunca é atrasado.
+- [x] Prazo ultrapassado com produção pendente é `ATRASADO`.
+- [x] Só gerente e vendedor definem prazo.
+- [x] A lista de alertas traz apenas atividades atrasadas.
+- [x] O prazo do item sobrevive a F5 e a novo login.
+- [x] O prazo de hoje não é atrasado; o de ontem é.
+- [x] Item e atividade mantêm prazos independentes.
+- [x] Formato de data estrito, sem deslocamento de dia.

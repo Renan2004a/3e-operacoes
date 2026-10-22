@@ -109,6 +109,10 @@ export interface EspecificacaoItem {
   description: string | null
   productCode: string | null
   unit: string
+  /** Prazo de entrega do item (`OrderItem.deadlineAt`), quando definido (AD-009). */
+  deadlineAt?: Date | null
+  /** Prazo operacional da atividade do setor (`Activity.deadlineAt`), quando definido (AD-009). */
+  activityDeadlineAt?: Date | null
   /** Situação de classificação do item, base da classificação manual (LAC-04). */
   classificationStatus: StatusClassificacaoItem
   /** Setor da atividade do item, para o desmembramento. */
@@ -127,6 +131,10 @@ export interface ItemDetalhado extends ItemSaldo {
   description: string | null
   productCode: string | null
   unit: string
+  /** Prazo de entrega do item, ou `null` quando não definido (AD-009). */
+  deadlineAt: Date | null
+  /** Prazo operacional do setor, ou `null` quando não definido (AD-009, D5). */
+  activityDeadlineAt: Date | null
   classificationStatus: StatusClassificacaoItem
   sectorId?: string | null
   sectorCode?: string | null
@@ -297,6 +305,8 @@ export async function detalharPedido(
       description: especificacao?.description ?? null,
       productCode: especificacao?.productCode ?? null,
       unit: especificacao?.unit ?? '',
+      deadlineAt: especificacao?.deadlineAt ?? null,
+      activityDeadlineAt: especificacao?.activityDeadlineAt ?? null,
       classificationStatus: especificacao?.classificationStatus ?? 'PENDING_CLASSIFICATION',
       sectorId: especificacao?.sectorId ?? null,
       sectorCode: especificacao?.sectorCode ?? null,

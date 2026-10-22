@@ -76,7 +76,9 @@ O banco do app é um **registro operacional** construído em camadas. O fluxo re
 
 6. O vendedor/gerente escolhe o setor de cada item. Nasce uma **`atividades`** (item × setor) e o item fica `CLASSIFIED`.
 7. A sugestão de setor usa **`regras_produto_setor`** (heurística) e o de/para **`mapeamentos_categoria_setor`**. A decisão final é humana.
-8. O item também pode receber **prazo** (`deadlineAt`) e **remessas programadas** (`remessas_programadas`).
+8. O item também pode receber **prazo de entrega** (`OrderItem.deadlineAt`) e **remessas programadas** (`remessas_programadas`). A atividade recebe o **prazo operacional** (`Activity.deadlineAt`), independente do prazo do item.
+   - O prazo é uma **data civil** no formato `YYYY-MM-DD`, persistida como o **fim do dia em `America/Sao_Paulo`** (ex.: `2026-02-01` → `2026-02-02T02:59:59.999Z`). Por isso o prazo de hoje só fica atrasado depois que o dia termina.
+   - Prazos gravados antes do AD-009 (meia-noite UTC) não são convertidos automaticamente. Se houver dados reais nesse formato, a conversão exige autorização específica; em ambiente de demonstração, basta re-salvar o prazo pela interface.
 
 ### 4.3 Produção e ocorrências
 
@@ -329,9 +331,14 @@ Nenhuma migração foi executada nem aplicada nesta etapa. Esta tabela registra 
 | Mudança | Situação | Observação |
 | --- | --- | --- |
 | Usuário solicitante da importação | **Aprovada**, sem alteração de schema | Registrar em `logs_auditoria`, reutilizando o mecanismo existente. |
-| Auditoria de alteração de prazo (item e atividade) | **Documentada**, não implementada | Usar `logs_auditoria`. Ver correção no item 18 da seção 4.5. |
+| Semântica do prazo (AD-009) | **Aprovada**, sem alteração de schema | Data civil `YYYY-MM-DD` persistida no fim do dia em `America/Sao_Paulo`. Nenhuma migração. |
+| Auditoria de alteração de prazo (item e atividade) | **Adiada (D7)**, não implementada | Fica para etapa própria de RFN006. Nenhuma auditoria existente foi removida. |
+| Remoção de prazo | **Adiada (D3)** | Registrar no backlog; não há contrato para limpar `deadlineAt`. |
+| Alerta comercial por prazo de entrega | **Adiado (D4)** | Depende do critério de atendimento integral da AD-011. Não usar quantidade executada como substituta da entregue. |
+| Data de entrega do Top Gerente | **Não importada (D8)** | Conector e contrato inalterados; nenhuma regra de precedência criada. |
+| Normalização de prazos antigos | **Não executada (D6)** | Sem script e sem migration. Em ambiente de demonstração, re-salvar pela interface. Dados reais exigem autorização específica. |
 | Cancelamento lógico de item | **Pendente** | Conceito aprovado. Depende do contrato do conector e de decisão sobre o campo em `pedidos_itens`. Nenhum campo criado. |
-| Auditoria de remessas (programar, confirmar, remover) | **Pendente** | Aguarda decisão D6. |
+| Auditoria de remessas (programar, confirmar, remover) | **Pendente** | Aguarda decisão D6 de remessas (AD-016). |
 | Referência de data original do pedido | **Pendente** | Hoje `pedidos.sourceUpdatedAt` recebe `orcamento.Data` (data do orçamento, não de atualização). O nome do campo é enganoso. Validação no ambiente de integração antes de qualquer uso. |
 | Persistência do status do pedido | **Não aprovada** | Status é derivado a partir dos itens ativos. Evitar novo estado persistido. |
-| Tratamento de divergências (fluxo, tabela ou status) | **Pendente** | Aguarda D7. Hoje a divergência é gravada apenas em `logs_auditoria` e no evento do job. |
+| Tratamento de divergências (fluxo, tabela ou status) | **Pendente** | Aguarda D7 de divergências (AD-017). Hoje a divergência é gravada apenas em `logs_auditoria` e no evento do job. |

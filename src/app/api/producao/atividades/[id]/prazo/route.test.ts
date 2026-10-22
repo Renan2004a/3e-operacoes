@@ -67,24 +67,35 @@ describe('PATCH /api/producao/atividades/[id]/prazo', () => {
     else process.env.SESSION_SECRET = original
   })
 
-  it('responde 200 e persiste o prazo da atividade (PRAZO-02)', async () => {
+  it('responde 200 e persiste o prazo da atividade (PRAZO-02, D2)', async () => {
     mocks.atividades.set('act_1', null)
-    const prazo = '2026-10-20T09:30:00.000Z'
+    const prazo = '2026-10-20'
+    const esperado = new Date('2026-10-21T02:59:59.999Z')
 
     const response = await PATCH(request({ prazo }), context('act_1'))
 
     expect(response.status).toBe(200)
     const body = await response.json()
     expect(body.atividade.id).toBe('act_1')
-    expect(body.atividade.deadlineAt).toBe(prazo)
-    expect(mocks.atividades.get('act_1')).toEqual(new Date(prazo))
+    expect(body.atividade.deadlineAt).toBe(esperado.toISOString())
+    expect(mocks.atividades.get('act_1')).toEqual(esperado)
+  })
+
+  it('rejeita timestamp completo para não misturar data civil e instante (D2)', async () => {
+    mocks.atividades.set('act_1', null)
+
+    const response = await PATCH(request({ prazo: '2026-10-20T09:30:00.000Z' }), context('act_1'))
+
+    expect(response.status).toBe(400)
+    expect((await response.json()).error).toBe('invalid_deadline')
+    expect(mocks.atividades.get('act_1')).toBeNull()
   })
 
   it('responde 403 quando o perfil não pode definir prazo (PRAZO-03)', async () => {
     mocks.atividades.set('act_1', null)
 
     const response = await PATCH(
-      request({ prazo: '2026-10-20T09:30:00.000Z' }, { usuarioId: 'user_operador' }),
+      request({ prazo: '2026-10-20' }, { usuarioId: 'user_operador' }),
       context('act_1'),
     )
 
@@ -113,10 +124,7 @@ describe('PATCH /api/producao/atividades/[id]/prazo', () => {
   })
 
   it('responde 404 quando a atividade não existe (PRAZO-11)', async () => {
-    const response = await PATCH(
-      request({ prazo: '2026-10-20T09:30:00.000Z' }),
-      context('act_x'),
-    )
+    const response = await PATCH(request({ prazo: '2026-10-20' }), context('act_x'))
 
     expect(response.status).toBe(404)
     expect((await response.json()).error).toBe('activity_not_found')
@@ -126,7 +134,7 @@ describe('PATCH /api/producao/atividades/[id]/prazo', () => {
     mocks.atividades.set('act_1', null)
 
     const response = await PATCH(
-      request({ prazo: '2026-10-20T09:30:00.000Z' }, { usuarioId: null }),
+      request({ prazo: '2026-10-20' }, { usuarioId: null }),
       context('act_1'),
     )
 

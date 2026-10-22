@@ -69,6 +69,8 @@ function detalhe() {
         productCode: '470',
         unit: 'm',
         classificationStatus: 'PENDING_CLASSIFICATION',
+        deadlineAt: null,
+        activityDeadlineAt: null,
         sectorCode: null,
         sectorName: null,
         activityStatus: null,
@@ -126,6 +128,99 @@ describe('PedidoVendedorPage', () => {
     expect(screen.getByLabelText('Prazo do item 1')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Classificar item 1' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Adicionar remessa do item 1' })).toBeInTheDocument()
+  })
+
+  it('exibe o prazo persistido ao carregar e mantém após recarregar a página (AD-009)', async () => {
+    const comPrazo = {
+      ...detalhe(),
+      itens: [{ ...detalhe().itens[0], deadlineAt: '2026-02-02T02:59:59.999Z' }],
+    }
+    mocks.apiGet.mockImplementation((url: string) => {
+      if (url === '/api/pedidos/p1') return Promise.resolve({ pedido: comPrazo })
+      if (url === '/api/setores') return Promise.resolve({ sectors: SETORES })
+      return Promise.reject(new Error(`url inesperada: ${url}`))
+    })
+
+    const { unmount } = render(<PedidoVendedorPage />)
+
+    expect(await screen.findByLabelText('Prazo do item 1')).toHaveValue('2026-02-01')
+    expect(screen.getByText('Prazo de entrega: 01/02/2026')).toBeInTheDocument()
+
+    unmount()
+    render(<PedidoVendedorPage />)
+
+    expect(await screen.findByLabelText('Prazo do item 1')).toHaveValue('2026-02-01')
+    expect(screen.getByText('Prazo de entrega: 01/02/2026')).toBeInTheDocument()
+  })
+
+  it('exibe “Sem prazo” quando o item não tem prazo (AD-009)', async () => {
+    configurarApi()
+    render(<PedidoVendedorPage />)
+
+    expect(await screen.findByText('Sem prazo')).toBeInTheDocument()
+    expect(screen.getByLabelText('Prazo do item 1')).toHaveValue('')
+  })
+
+  it('usa o prazo devolvido pela API após salvar, sem deslocar o dia (AD-009)', async () => {
+    configurarApi()
+    mocks.apiPatch.mockResolvedValue({
+      item: { id: 'item_1', deadlineAt: '2026-03-11T02:59:59.999Z' },
+    })
+    render(<PedidoVendedorPage />)
+
+    fireEvent.change(await screen.findByLabelText('Prazo do item 1'), {
+      target: { value: '2026-03-10' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar prazo do item 1' }))
+
+    expect(await screen.findByText('Prazo de entrega: 10/03/2026')).toBeInTheDocument()
+    expect(screen.getByLabelText('Prazo do item 1')).toHaveValue('2026-03-10')
+  })
+
+  it('mostra o prazo operacional apenas para leitura (AD-009, D5)', async () => {
+    const comPrazoSetor = {
+      ...detalhe(),
+      itens: [
+        {
+          ...detalhe().itens[0],
+          classificationStatus: 'CLASSIFIED',
+          sectorId: 'setor_telhas',
+          sectorCode: 'TELHAS',
+          sectorName: 'Telhas',
+          activityStatus: 'PENDING',
+          activityDeadlineAt: '2026-02-02T02:59:59.999Z',
+        },
+      ],
+    }
+    mocks.apiGet.mockImplementation((url: string) => {
+      if (url === '/api/pedidos/p1') return Promise.resolve({ pedido: comPrazoSetor })
+      if (url === '/api/setores') return Promise.resolve({ sectors: SETORES })
+      return Promise.reject(new Error(`url inesperada: ${url}`))
+    })
+    render(<PedidoVendedorPage />)
+
+    expect(await screen.findByText('Prazo do setor: 01/02/2026 · Atrasado')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Prazo do setor')).not.toBeInTheDocument()
+  })
+
+  it('não oferece o formulário de prazo para perfil sem definir_prazo, mas mantém a leitura (D9)', async () => {
+    const comPrazo = {
+      ...detalhe(),
+      itens: [{ ...detalhe().itens[0], deadlineAt: '2026-02-02T02:59:59.999Z' }],
+    }
+    mocks.apiGet.mockImplementation((url: string) => {
+      if (url === '/api/pedidos/p1') return Promise.resolve({ pedido: comPrazo })
+      if (url === '/api/setores') return Promise.resolve({ sectors: SETORES })
+      if (url === '/api/auth/sessao') {
+        return Promise.resolve({ usuario: { id: 'user_1', expiraEm: null, roles: ['OPERATOR'] } })
+      }
+      return Promise.reject(new Error(`url inesperada: ${url}`))
+    })
+    render(<PedidoVendedorPage />)
+
+    expect(await screen.findByText('Prazo de entrega: 01/02/2026')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Prazo do item 1')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Salvar prazo do item 1' })).not.toBeInTheDocument()
   })
 
   it('desmembra o item e confirma o resultado', async () => {

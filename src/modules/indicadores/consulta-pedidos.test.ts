@@ -378,6 +378,62 @@ describe('detalharPedido', () => {
     expect(detalhe.itens[0].classificationStatus).toBe('PENDING_CLASSIFICATION')
   })
 
+  it('inclui o prazo de entrega do item e o prazo operacional da atividade (AD-009)', async () => {
+    const prazoEntrega = new Date('2026-02-02T02:59:59.999Z')
+    const prazoSetor = new Date('2026-03-11T02:59:59.999Z')
+    const repo = createRepo([
+      pedido({
+        id: 'ped_1',
+        numero: '1001',
+        cliente: 'Construtora X',
+        itens: [item({ id: 'item_1' }), item({ id: 'item_2' })],
+        especificacoes: [
+          {
+            itemId: 'item_1',
+            description: 'Chapa',
+            productCode: 'PRD-1',
+            unit: 'peca',
+            classificationStatus: 'CLASSIFIED',
+            deadlineAt: prazoEntrega,
+            activityDeadlineAt: prazoSetor,
+          },
+          {
+            itemId: 'item_2',
+            description: 'Telha',
+            productCode: 'PRD-2',
+            unit: 'm',
+            classificationStatus: 'PENDING_CLASSIFICATION',
+            deadlineAt: null,
+            activityDeadlineAt: null,
+          },
+        ],
+      }),
+    ])
+
+    const detalhe = await detalharPedido('ped_1', repo)
+
+    expect(detalhe.itens[0].deadlineAt).toEqual(prazoEntrega)
+    expect(detalhe.itens[0].activityDeadlineAt).toEqual(prazoSetor)
+    expect(detalhe.itens[1].deadlineAt).toBeNull()
+    expect(detalhe.itens[1].activityDeadlineAt).toBeNull()
+  })
+
+  it('devolve prazo nulo quando o item não tem especificação (AD-009)', async () => {
+    const repo = createRepo([
+      pedido({
+        id: 'ped_1',
+        numero: '1001',
+        cliente: 'Construtora X',
+        itens: [item({ id: 'item_1' })],
+      }),
+    ])
+
+    const detalhe = await detalharPedido('ped_1', repo)
+
+    expect(detalhe.itens[0].deadlineAt).toBeNull()
+    expect(detalhe.itens[0].activityDeadlineAt).toBeNull()
+  })
+
   it('inclui customerName e sellerLegacyCode no pedido (IND-04)', async () => {
     const repo = createRepo([
       pedido({

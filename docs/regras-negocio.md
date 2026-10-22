@@ -49,6 +49,9 @@ Item operacional: **solicitado → executado conforme o setor → disponível �
 - Sem prazo: status de prazo = `SEM_PRAZO`, nunca atrasado.
 - Prazo pode existir por item/setor e pode ser definido por gerente ou vendedor.
 - Atraso só existe quando o prazo aplicável é conhecido e foi ultrapassado sem conclusão correspondente.
+- Os dois níveis são independentes (AD-009): item = prazo de entrega; atividade = prazo operacional do setor. Não há herança entre eles.
+- O prazo é uma data civil interpretada em `America/Sao_Paulo` e vale até o **fim do dia**. O prazo de hoje não está atrasado; o de ontem está. O formato aceito é `YYYY-MM-DD`, sem horário.
+- Remoção de prazo, alerta comercial por prazo de entrega e auditoria de prazo não fazem parte desta etapa (ver `docs/backlog.md`).
 
 ## Sincronização e atualização de quantidade solicitada
 
