@@ -41,7 +41,7 @@ export interface FiltrosPedido {
   status?: StatusPedido
   /** Início do período, inclusive, sobre a data de criação do pedido. */
   de?: Date
-  /** Fim do período, inclusive. */
+  /** Fim do período, exclusivo (início do dia seguinte ao último dia selecionado). */
   ate?: Date
   limite?: number
   offset?: number
@@ -190,7 +190,7 @@ function clienteContem(cliente: string | null, filtro: string): boolean {
 
 function dentroDoPeriodo(pedido: PedidoConsultado, de?: Date, ate?: Date): boolean {
   if (de && pedido.criadoEm.getTime() < de.getTime()) return false
-  if (ate && pedido.criadoEm.getTime() > ate.getTime()) return false
+  if (ate && pedido.criadoEm.getTime() >= ate.getTime()) return false
   return true
 }
 

@@ -5,14 +5,17 @@ import {
   type StatusPedido,
 } from '../../../modules/indicadores/consulta-pedidos'
 import { autorizar } from '../../../shared/http/autorizacao'
+import { inicioDoDiaNoFuso } from '../../../shared/time/dia-do-periodo'
 
 const STATUS_VALIDOS: readonly StatusPedido[] = ['PENDING', 'IN_PROGRESS', 'COMPLETED']
 
-/** Data do parâmetro: `undefined` quando ausente, `null` quando inválida. */
-function lerData(valor: string | null): Date | null | undefined {
+/**
+ * Dia do filtro (`YYYY-MM-DD`, no fuso de São Paulo): `undefined` quando ausente,
+ * `null` quando inválido. `diasAdicionais: 1` devolve o início do dia seguinte.
+ */
+function lerDia(valor: string | null, diasAdicionais: 0 | 1): Date | null | undefined {
   if (valor === null || valor.trim() === '') return undefined
-  const data = new Date(valor)
-  return Number.isNaN(data.getTime()) ? null : data
+  return inicioDoDiaNoFuso(valor, diasAdicionais)
 }
 
 /** Inteiro não negativo do parâmetro: `undefined` quando ausente, `null` quando inválido. */
@@ -32,8 +35,8 @@ export async function GET(request: Request) {
 
   const params = new URL(request.url).searchParams
   const status = params.get('status')
-  const de = lerData(params.get('de'))
-  const ate = lerData(params.get('ate'))
+  const de = lerDia(params.get('de'), 0)
+  const ate = lerDia(params.get('ate'), 1)
   const limite = lerInteiro(params.get('limite'))
   const offset = lerInteiro(params.get('offset'))
 

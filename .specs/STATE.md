@@ -177,7 +177,7 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Trade-off**: Usar a data original do pedido no Top Gerente fica para validação posterior no ambiente de integração.
 - **Scope**: consulta de pedidos (vendedor e gerente).
 - **Date**: 2026-10-22
-- **Status**: active (correção aprovada). Implementação pendente.
+- **Status**: active (correção aprovada). Implementação concluída e aprovada provisoriamente com 796 testes; validação no navegador pendente. Limitação: a API aceita apenas `de`/`ate` no formato `YYYY-MM-DD` (timestamps ISO são rejeitados com 400).
 
 ### AD-015
 
@@ -207,6 +207,22 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Status**: proposed (D7). Pending approval.
 
 ## Handoff
+
+- **Feature**: filtro de data de pedidos (AD-014), primeira correção da Etapa 1
+- **Phase / Task**: implementação concluída e aprovada provisoriamente; aguardando autorização para a próxima correção
+- **Completed**:
+  - Filtro de período de `GET /api/pedidos` interpreta `de`/`ate` como dias civis em `America/Sao_Paulo`, com horário de verão tratado pelo helper `src/shared/time/dia-do-periodo.ts`.
+  - Intervalo `[de, ate)`: `de` inclusivo no início do dia; `ate` exclusivo, no início do dia seguinte.
+  - Referência do filtro mantida em `createdAt`; permissões e demais filtros inalterados.
+  - Testes: 796 testes aprovados (suíte completa), typecheck e lint sem erros nos arquivos alterados.
+  - Commit documental de referência: `2962b07`.
+- **In-progress**: nenhum
+- **Next step**: após autorização, próxima correção da Etapa 1: prazo na tela e alerta de atividade (AD-009). Validar o filtro de data no navegador antes de fechar a AD-014.
+- **Blockers**: validação no navegador do filtro de data pendente; aprovação do contrato do conector e de eventual campo em `OrderItem` (AD-010); T00.4 (AD-012); decisões D6 (AD-016) e D7 (AD-017); validação da data original do pedido no ambiente de integração.
+- **Uncommitted files**: alterações da AD-014 (`src/app/api/pedidos/route.ts`, `src/app/api/pedidos/route.test.ts`, `src/modules/indicadores/consulta-pedidos.ts`, `src/modules/indicadores/consulta-pedidos.test.ts`, `src/shared/time/dia-do-periodo.ts`, `src/shared/time/dia-do-periodo.test.ts`) e este `.specs/STATE.md`. Nenhum commit foi feito.
+- **Branch**: fix/fluxos-vendedor1-preparação-decisões-negócio (o registro anterior de `main` estava incorreto)
+
+## Handoff anterior (2026-10-22, planejamento Vendedor)
 
 - **Feature**: planejamento das correções do perfil Vendedor (X2 executado; D2 e demais implementações pendentes)
 - **Phase / Task**: documentação atualizada; aguardando autorização para o modo Build

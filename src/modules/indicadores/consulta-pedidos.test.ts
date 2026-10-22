@@ -169,15 +169,16 @@ describe('listarPedidos', () => {
     expect(lista.map((linha) => linha.id)).toEqual(['ped_1'])
   })
 
-  it('filtra por período de criação, inclusive nas bordas (IND-02)', async () => {
+  it('filtra por período de criação: início inclusivo, fim exclusivo (IND-02)', async () => {
     const repo = createRepo([
       pedido({ id: 'ped_1', numero: '1001', criadoEm: new Date('2026-01-01T00:00:00.000Z') }),
       pedido({ id: 'ped_2', numero: '1002', criadoEm: new Date('2026-06-01T00:00:00.000Z') }),
-      pedido({ id: 'ped_3', numero: '1003', criadoEm: new Date('2026-12-01T00:00:00.000Z') }),
+      pedido({ id: 'ped_3', numero: '1003', criadoEm: new Date('2026-06-02T00:00:00.000Z') }),
+      pedido({ id: 'ped_4', numero: '1004', criadoEm: new Date('2026-12-01T00:00:00.000Z') }),
     ])
 
     const lista = await listarPedidos(
-      { de: new Date('2026-06-01T00:00:00.000Z'), ate: new Date('2026-06-01T00:00:00.000Z') },
+      { de: new Date('2026-06-01T00:00:00.000Z'), ate: new Date('2026-06-02T00:00:00.000Z') },
       repo,
     )
 

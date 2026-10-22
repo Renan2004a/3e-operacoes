@@ -140,4 +140,73 @@ describe('GET /api/pedidos', () => {
     expect(response.status).toBe(403)
     expect((await response.json()).error).toBe('forbidden')
   })
+
+  describe('filtro de período por dia em America/Sao_Paulo (AD-014)', () => {
+    function pedidoCriadoEm(id: string, numero: string, criadoEm: string): PedidoConsultado {
+      return { ...pedido(id, numero, 'Cliente', 'PENDING'), criadoEm: new Date(criadoEm) }
+    }
+
+    async function numerosDoPeriodo(query: string, userId = 'user_vendedor') {
+      const response = await GET(request({ userId, query: `?${query}` }))
+      expect(response.status).toBe(200)
+      const body = await response.json()
+      return body.pedidos.map((linha: { numero: string }) => linha.numero)
+    }
+
+    it('inclui pedido criado às 23h30 de São Paulo no filtro do próprio dia', async () => {
+      mocks.pedidos.push(pedidoCriadoEm('ped_1', '2001', '2026-10-23T02:30:00.000Z'))
+
+      expect(await numerosDoPeriodo('de=2026-10-22&ate=2026-10-22')).toEqual(['2001'])
+    })
+
+    it('com início e fim iguais, retorna o dia inteiro', async () => {
+      mocks.pedidos.push(
+        pedidoCriadoEm('ped_antes', '2001', '2026-10-22T02:59:59.999Z'),
+        pedidoCriadoEm('ped_inicio', '2002', '2026-10-22T03:00:00.000Z'),
+        pedidoCriadoEm('ped_fim', '2003', '2026-10-23T02:59:59.999Z'),
+        pedidoCriadoEm('ped_depois', '2004', '2026-10-23T03:00:00.000Z'),
+      )
+
+      expect((await numerosDoPeriodo('de=2026-10-22&ate=2026-10-22')).sort()).toEqual([
+        '2002',
+        '2003',
+      ])
+    })
+
+    it('exclui pedidos anteriores ao início e posteriores ao fim do período', async () => {
+      mocks.pedidos.push(
+        pedidoCriadoEm('ped_antes', '2001', '2026-10-21T23:59:59.999-03:00'),
+        pedidoCriadoEm('ped_dentro', '2002', '2026-10-22T10:00:00.000-03:00'),
+        pedidoCriadoEm('ped_depois', '2003', '2026-10-23T00:00:00.000-03:00'),
+      )
+
+      expect(await numerosDoPeriodo('de=2026-10-22&ate=2026-10-22')).toEqual(['2002'])
+    })
+
+    it('filtra um intervalo de dias incluindo o último dia inteiro', async () => {
+      mocks.pedidos.push(
+        pedidoCriadoEm('ped_1', '2001', '2026-10-21T12:00:00.000-03:00'),
+        pedidoCriadoEm('ped_2', '2002', '2026-10-31T21:00:00.000-03:00'),
+        pedidoCriadoEm('ped_3', '2003', '2026-11-01T00:30:00.000-03:00'),
+      )
+
+      expect((await numerosDoPeriodo('de=2026-10-22&ate=2026-10-31')).sort()).toEqual(['2002'])
+    })
+
+    it('mantém o filtro para o Gerente', async () => {
+      mocks.perfis.user_gerente = ['PRODUCTION_MANAGER']
+      mocks.pedidos.push(pedidoCriadoEm('ped_1', '2001', '2026-10-23T02:30:00.000Z'))
+
+      expect(await numerosDoPeriodo('de=2026-10-22&ate=2026-10-22', 'user_gerente')).toEqual([
+        '2001',
+      ])
+    })
+
+    it('responde 400 para data que não existe no calendário', async () => {
+      const response = await GET(request({ query: '?de=2026-02-30' }))
+
+      expect(response.status).toBe(400)
+      expect((await response.json()).error).toBe('invalid_filters')
+    })
+  })
 })
