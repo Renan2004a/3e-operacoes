@@ -79,12 +79,19 @@ try {
   await verificarTela(page, 'vendedor-lista', '/vendedor/pedidos', 'table[aria-label="Pedidos"]')
 
   const pedidos = await (await page.request.get(`${BASE}/api/pedidos`)).json()
-  const primeiro = pedidos?.pedidos?.[0]
-  if (primeiro) {
+  let alvo = null
+  for (const p of pedidos?.pedidos ?? []) {
+    const detalhe = await (await page.request.get(`${BASE}/api/pedidos/${p.id}`)).json()
+    if (detalhe?.pedido?.itens?.[0]?.classificationStatus === 'CLASSIFIED') {
+      alvo = p
+      break
+    }
+  }
+  if (alvo) {
     await verificarTela(
       page,
       'vendedor-detalhe',
-      `/vendedor/pedidos/${primeiro.id}`,
+      `/vendedor/pedidos/${alvo.id}`,
       'text=Resumo do pedido',
     )
     // Correção de setor (AD-007): a ação aparece para o vendedor em item desmembrado.
