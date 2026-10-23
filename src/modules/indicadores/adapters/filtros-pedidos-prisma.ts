@@ -12,30 +12,38 @@ export function escaparCuringasLike(valor: string): string {
 }
 
 /**
- * Condição do status derivado (IND-01, A1, D7). Reproduz exatamente
- * `statusDoPedido`, sem incorporar regras pendentes da AD-013:
- * - PENDING: sem atividades ou todas PENDING;
- * - COMPLETED: existe ao menos uma atividade e todas COMPLETED;
+ * Item concluído para o status do pedido: precisa estar desmembrado e ter ao
+ * menos uma atividade, todas concluídas. Item não classificado ou sem
+ * atividade nunca satisfaz esta condição (AD-013).
+ */
+const ITEM_CONCLUIDO: Prisma.OrderItemWhereInput = {
+  classificationStatus: 'CLASSIFIED',
+  activities: { some: {}, every: { status: 'COMPLETED' } },
+}
+
+/**
+ * Condição do status derivado (IND-01, A1, AD-013). Reproduz exatamente
+ * `statusDoPedido`:
+ * - PENDING: todos os itens sem atividade ou com todas as atividades PENDING
+ *   (inclui item não desmembrado e pedido sem itens);
+ * - COMPLETED: existe ao menos um item e todos os itens estão concluídos;
  * - IN_PROGRESS: qualquer outro caso, inclusive PAUSED e DIVERGENT.
  */
 function whereDoStatus(status: StatusPedido): Prisma.OrderWhereInput {
-  const todasPendentes: Prisma.OrderWhereInput = {
+  const todosNaoIniciados: Prisma.OrderWhereInput = {
     items: { every: { activities: { every: { status: 'PENDING' } } } },
   }
-  const todasConcluidas: Prisma.OrderWhereInput = {
-    AND: [
-      { items: { some: { activities: { some: {} } } } },
-      { items: { every: { activities: { every: { status: 'COMPLETED' } } } } },
-    ],
+  const todosConcluidos: Prisma.OrderWhereInput = {
+    items: { some: {}, every: ITEM_CONCLUIDO },
   }
 
   switch (status) {
     case 'PENDING':
-      return todasPendentes
+      return todosNaoIniciados
     case 'COMPLETED':
-      return todasConcluidas
+      return todosConcluidos
     case 'IN_PROGRESS':
-      return { AND: [{ NOT: todasPendentes }, { NOT: todasConcluidas }] }
+      return { AND: [{ NOT: todosNaoIniciados }, { NOT: todosConcluidos }] }
   }
 }
 
