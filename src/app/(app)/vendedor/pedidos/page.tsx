@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import { ImportarPedido } from '@/shared/ui/importar-pedido'
 import { PageHead } from '@/shared/ui/page-head'
 import { PedidosLista } from '@/shared/ui/pedidos-lista'
+import { montarUrlDetalhe } from '@/shared/ui/retorno-lista'
 
 /**
  * Área de Vendas (FEP-03, FEP-04, FEP-05). O vendedor puxa o pedido do Top
@@ -69,7 +70,9 @@ export default function VendedorPedidosPage() {
         <h2 className="mb-3 text-lg font-semibold text-ink">Pedidos</h2>
         <PedidosLista
           recarregarToken={recarregarToken}
-          onSelecionar={(pedido) => router.push(`/vendedor/pedidos/${pedido.id}`)}
+          onSelecionar={(pedido, { retorno }) =>
+            router.push(montarUrlDetalhe('/vendedor/pedidos', pedido.id, retorno))
+          }
         />
       </div>
     </section>

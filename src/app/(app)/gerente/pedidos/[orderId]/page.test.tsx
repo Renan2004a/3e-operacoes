@@ -112,6 +112,16 @@ describe('PedidoGerentePage', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Carregando')
   })
 
+  it('mantém a listagem padrão do gerente quando não há contexto de retorno', async () => {
+    configurarApi()
+    render(<PedidoGerentePage />)
+
+    expect(await screen.findByRole('link', { name: /voltar para os pedidos/i })).toHaveAttribute(
+      'href',
+      '/gerente/pedidos',
+    )
+  })
+
   it('mostra os cinco valores por item (FEP-04)', async () => {
     configurarApi()
     render(<PedidoGerentePage />)

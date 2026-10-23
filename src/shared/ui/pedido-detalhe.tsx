@@ -23,6 +23,7 @@ import { Input } from './input'
 import { Metric } from './metric'
 import { PageHead } from './page-head'
 import { Progress, type ProgressTone } from './progress'
+import { resolverRetornoListagem } from './retorno-lista'
 import { Spinner } from './spinner'
 import { rotuloDaUnidade, valorPorUnidade, type TotalUnidadeView } from './totais-unidade'
 import { cn, FOCO_VISIVEL } from './utils'
@@ -166,6 +167,11 @@ export interface PedidoDetalheProps {
   orderId: string
   /** Rota da lista, usada no link de voltar. */
   basePath?: string
+  /**
+   * Contexto da listagem de origem (caminho + query), recebido da URL do
+   * detalhe. É validado contra `basePath` antes de compor o link de voltar.
+   */
+  retorno?: string | null
   /** Habilita a classificação manual dos itens pendentes (LAC-04, LAC-05, LAC-06). */
   permitirClassificacao?: boolean
 }
@@ -178,6 +184,7 @@ export interface PedidoDetalheProps {
 export function PedidoDetalhe({
   orderId,
   basePath = '/gerente/pedidos',
+  retorno = null,
   permitirClassificacao = false,
 }: PedidoDetalheProps) {
   const [pedido, setPedido] = useState<PedidoDetalhado | null>(null)
@@ -536,10 +543,11 @@ export function PedidoDetalhe({
   // servidor é a autoridade. A ação só desaparece quando sabemos que o perfil
   // não pode definir prazo (D9).
   const semPermissaoParaPrazo = perfis.length > 0 && !pode(perfis, 'definir_prazo')
+  const destinoVoltar = resolverRetornoListagem(retorno, basePath)
   return (
     <section className="grid gap-4">
       <div className="grid gap-2">
-        <Link href={basePath} className={cn('text-sm font-medium text-accent', FOCO_VISIVEL)}>
+        <Link href={destinoVoltar} className={cn('text-sm font-medium text-accent', FOCO_VISIVEL)}>
           ← Voltar para os pedidos
         </Link>
         <PageHead
