@@ -1,3 +1,5 @@
+import { fimDoDiaNoFuso } from '../../shared/time/dia-do-periodo'
+
 /** Prazo persistido, com a data efetiva em UTC (PRAZO-01, PRAZO-02). */
 export interface PrazoDefinido {
   id: string
@@ -9,10 +11,7 @@ export interface PrazoRepository {
   /** Grava `OrderItem.deadlineAt`; null quando o item não existe (PRAZO-12). */
   definirPrazoItem(input: { itemId: string; prazo: Date }): Promise<PrazoDefinido | null>
   /** Grava `Activity.deadlineAt`; null quando a atividade não existe (PRAZO-11). */
-  definirPrazoAtividade(input: {
-    atividadeId: string
-    prazo: Date
-  }): Promise<PrazoDefinido | null>
+  definirPrazoAtividade(input: { atividadeId: string; prazo: Date }): Promise<PrazoDefinido | null>
 }
 
 /** Data de prazo ausente ou não interpretável (HTTP 400, PRAZO-04). */
@@ -38,16 +37,26 @@ export class AtividadeNaoEncontradaError extends Error {
 }
 
 /**
- * Converte o valor recebido em uma data válida. Ausente, vazia ou não
- * interpretável é rejeitada (PRAZO-04).
+ * Converte o valor recebido em uma data de prazo válida (PRAZO-04, D2).
+ *
+ * Texto só é aceito no formato de dia civil `YYYY-MM-DD` e é ancorado no
+ * **fim do dia** em `America/Sao_Paulo`; um prazo para hoje não é atrasado.
+ * Formatos ambíguos (`01/02/2026`), datas inexistentes (`2026-02-30`) e
+ * timestamps completos são rejeitados. Um `Date` já resolvido é aceito como
+ * está (uso interno e testes), desde que seja um instante válido.
  */
 export function validarPrazo(valor: unknown): Date {
-  if (valor === null || valor === undefined || valor === '') throw new PrazoInvalidoError()
+  if (valor instanceof Date) {
+    if (Number.isNaN(valor.getTime())) throw new PrazoInvalidoError()
+    return valor
+  }
 
-  const data = valor instanceof Date ? valor : new Date(String(valor))
-  if (Number.isNaN(data.getTime())) throw new PrazoInvalidoError()
+  if (typeof valor !== 'string') throw new PrazoInvalidoError()
 
-  return data
+  const prazo = fimDoDiaNoFuso(valor.trim())
+  if (!prazo) throw new PrazoInvalidoError()
+
+  return prazo
 }
 
 /** Define o prazo do item, validando a data e a existência (PRAZO-01, PRAZO-04, PRAZO-12). */

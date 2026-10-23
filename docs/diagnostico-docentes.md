@@ -60,7 +60,7 @@
 
 ## 4. Fora de escopo / limitações registradas
 
-- **Paginação** de pedidos não foi implementada; a lista atual retorna todos os pedidos (volume real ainda pequeno). Fica como evolução.
+- **Paginação** de pedidos: implementada na correção A1 (paginação no servidor, 20 por página, navegação na interface e total). O histórico acima descreve o diagnóstico anterior a essa correção.
 - **Edição completa de usuário** (nome/perfis/setores) pela UI: a API suporta `PATCH`, mas a tela implementa criação e ativação/inativação. Edição de perfil/setores fica no backlog.
 - **E2E autenticado no CI** continua limitado à superfície pública; a validação autenticada foi feita localmente com Playwright contra o banco real.
 - **Integração real** depende do conector local na rede da 3E; os testes locais usaram o conector/banco configurado e pedidos reais já importados.

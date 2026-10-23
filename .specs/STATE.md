@@ -29,12 +29,20 @@ Projeto em bootstrap. A estrutura inicial, documentação, skills locais e subag
 
 Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por número via conector local**, começando pela especificação e pelos contratos entre Railway, conector local e Top Gerente.
 
+*Atualização em 2026-10-22: a importação já está implementada. O próximo passo passou a ser o planejamento e a execução das correções do perfil Vendedor (ver "Handoff" de 2026-10-22).*
+
 ## Pontos ainda a validar com dados reais
 
 - Tabelas e joins exatos do Top Gerente para pedido, itens, categoria, cliente e vendedor.
 - Lista oficial de categorias e seu mapeamento operacional para os três setores.
 - Lista fechada real de motivos de perda, refugo e indisponibilidade.
 - Regra de Revenda para o significado final de “indisponível” no saldo pendente.
+- Cancelamento lógico de item: contrato do conector (indicador explícito) e campo em `OrderItem` (AD-010).
+- Critérios finais dos estados do pedido e impactos nos indicadores (AD-013).
+- Quem confirma remessa, significado de "confirmada", reconfirmação, remoção e auditoria (AD-016).
+- Responsáveis e ações de tratamento de divergências (AD-017).
+- Data original do pedido no Top Gerente como referência de filtro (AD-014).
+- Prazos antigos gravados com a semântica anterior (meia-noite UTC): verificar se existem dados reais antes de qualquer conversão (AD-009/D6).
 
 ## Decisions
 
@@ -117,7 +125,207 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Date**: 2026-10-21
 - **Status**: active
 
+### AD-009
+
+- **Decision**: Prazos em dois níveis, opcionais e independentes. Item (`OrderItem.deadlineAt`) é o prazo de atendimento/entrega ao cliente; atividade (`Activity.deadlineAt`) é o prazo operacional do setor. Sem herança automática entre os níveis. Alertas de atraso consideram cada nível no seu escopo. Sem prazo: `SEM_PRAZO`, nunca atrasado. Nenhum campo novo. O prazo é uma **data civil** no formato estrito `YYYY-MM-DD`, persistida como o **fim do dia em `America/Sao_Paulo`**; a leitura do detalhe devolve `deadlineAt` e `activityDeadlineAt`; a interface hidrata o prazo do item e exibe o do setor somente para leitura.
+- **Reason**: Preserva o design de `prazos-e-alertas` (item = entrega; atividade = setor) e `decisoes.md` (data distinta por item/setor), sem criar herança não aprovada. A correção de 2026-10-22 eliminou a causa do “prazo que desaparece”: o dado sempre esteve no banco, mas a API de detalhe não o devolvia e a interface usava apenas estado local.
+- **Trade-off**: Duas datas podem divergir; a interface indica qual prazo está em atraso. O alerta comercial do item continua dependente da AD-011. Prazos antigos gravados em meia-noite UTC não são convertidos automaticamente. Remoção de prazo, edição do prazo operacional e auditoria ficam para etapas próprias.
+- **Scope**: prazos, leitura do detalhe, alertas operacionais (sem alteração de lógica), indicadores.
+- **Date**: 2026-10-22
+- **Status**: active (aprovada formalmente, implementada e validada localmente). Pendente: validação no navegador para Vendedor e Gerente.
+
+### AD-010
+
+- **Decision**: Cancelamento lógico de item. Item cancelado no Top Gerente é preservado com seu histórico, sem exclusão. Ausência de item no payload **não** é cancelamento. O cancelamento deve ser informado explicitamente pelo conector.
+- **Reason**: Aprovado conceitualmente pelo responsável. Preserva o histórico operacional (RFN005, RFN006).
+- **Trade-off**: Exige mudança de contrato do conector e, possivelmente, campo em `OrderItem`. Comportamento nos indicadores e nas operações ainda deve ser definido antes da implementação.
+- **Scope**: integração (conector, contrato, importação), pedidos, saldo, indicadores, operações.
+- **Date**: 2026-10-22
+- **Status**: approved conceptually. Contrato do conector e campo de banco pendentes de aprovação; nenhuma alteração feita.
+
+### AD-011
+
+- **Decision**: RN004 mantida sem alteração de texto. "Entrega concluída" refere-se à quantidade executada. "Atendimento integral" refere-se à quantidade solicitada e é um conceito distinto, apresentado como indicador derivado, sem campo persistido. Pedido não é integralmente atendido apenas porque toda a quantidade executada foi entregue.
+- **Reason**: Opção A aprovada pelo responsável: manter a RN004 e criar a distinção, em vez de alterar a regra vigente.
+- **Trade-off**: Dois conceitos próximos exigem rótulos claros na interface.
+- **Scope**: expedição (status de entrega), indicadores, detalhe do pedido.
+- **Date**: 2026-10-22
+- **Status**: active (decisão). Implementação pendente.
+
+### AD-012
+
+- **Decision**: Revenda segue a RN031 literalmente: Pendente = Solicitado − Separado − Indisponível. Indisponível representa falta de estoque; não é quantidade separada nem disponível para entrega. Pedido de Revenda com indisponibilidade **não** é considerado atendido automaticamente.
+- **Reason**: Preserva a regra vigente. A validação formal do significado de "atendido" permanece pendente (T00.4).
+- **Trade-off**: Pedido de Revenda com indisponibilidade pode permanecer sem conclusão automática até a validação.
+- **Scope**: saldo da Revenda, indicadores, detalhe do pedido.
+- **Date**: 2026-10-22
+- **Status**: RN031 active (preservada). T00.4 pending. Nenhuma nova regra definitiva criada.
+
+### AD-013
+
+- **Decision**: Estados operacionais do pedido: Pendente, Em andamento e Produção concluída. Os critérios consideram todos os itens ativos, inclusive os não classificados. Pedido com item ativo não classificado não pode estar com produção concluída. `DIVERGENT` não é tratado automaticamente como produção concluída e deve ser sinalizado para análise. O status é derivado, sem novo estado persistido. Mapeamento proposto para os valores existentes: `PENDING` → Pendente, `IN_PROGRESS` → Em andamento, `COMPLETED` → Produção concluída.
+- **Reason**: Aprovação parcial pelo responsável. Os valores persistidos existentes são preservados; apenas o rótulo é ajustado.
+- **Trade-off**: Os critérios finais e os impactos em indicadores e em outros perfis ainda devem ser verificados antes da implementação. Atendimento integral é indicador separado (AD-011).
+- **Scope**: indicadores, lista e detalhe de pedidos, painel do gerente, PCP.
+- **Date**: 2026-10-22
+- **Status**: partially approved. Critérios detalhados pendentes.
+
+### AD-014
+
+- **Decision**: Filtros de data de pedidos: datas interpretadas em `America/Sao_Paulo`, último dia selecionado incluído integralmente. Referência do filtro mantida em `createdAt`.
+- **Reason**: Correção de tratamento de fuso horário, que hoje exclui o último dia (interpretação UTC de data sem horário). A semântica do filtro não muda.
+- **Trade-off**: Usar a data original do pedido no Top Gerente fica para validação posterior no ambiente de integração.
+- **Scope**: consulta de pedidos (vendedor e gerente).
+- **Date**: 2026-10-22
+- **Status**: active (correção aprovada). Implementação concluída e aprovada provisoriamente com 796 testes; validação no navegador pendente. Limitação: a API aceita apenas `de`/`ate` no formato `YYYY-MM-DD` (timestamps ISO são rejeitados com 400).
+
+### AD-015
+
+- **Decision**: O Vendedor mantém a permissão `solicitar_importacao`. O usuário autenticado que solicitou a importação deve ser registrado, reutilizando `logs_auditoria`, sem nova coluna ou tabela.
+- **Reason**: `jobs_integracao` não guarda o solicitante, e RFN006 exige rastreabilidade das operações relevantes.
+- **Trade-off**: Nenhum campo novo. A auditoria passa a depender da gravação na mesma operação de criação do job.
+- **Scope**: integração (solicitação), auditoria, permissões (sem ampliação).
+- **Date**: 2026-10-22
+- **Status**: active. Implementação pendente.
+
+### AD-016
+
+- **Decision**: Remessas: sem alteração de comportamento nesta etapa. Mantidos: remessa por item, número, data prevista, confirmação opcional, sem alteração automática de saldo e sem vínculo automático com entregas.
+- **Reason**: Confirmação, reconfirmação, remoção e auditoria não têm decisão formal.
+- **Trade-off**: O comportamento atual (reconfirmação sobrescreve a data; remoção de confirmada permitida; sem auditoria) permanece até aprovação.
+- **Scope**: expedição (remessas), permissões, auditoria.
+- **Date**: 2026-10-22
+- **Status**: pending approval (D6).
+
+### AD-017
+
+- **Decision**: Divergências: nenhum novo fluxo de resolução ou permissão nesta etapa. Proposta registrada: Gerente de Produção para divergências operacionais; Responsável Técnico para falhas de integração; Vendedor apenas recebe avisos de leitura. O Vendedor não altera execução nem entrega.
+- **Reason**: Responsáveis e ações permitidas ainda não foram definidos.
+- **Trade-off**: Divergências seguem visíveis apenas em `logs_auditoria` e no evento do job até a definição do fluxo.
+- **Scope**: integração, indicadores, pedidos, permissões.
+- **Date**: 2026-10-22
+- **Status**: proposed (D7). Pending approval.
+
+### AD-018
+
+- **Decision**: O filtro por setor de `GET /api/pedidos` usa o **código do setor** (`CORTE_DOBRA`, `TELHAS`, `REVENDA`, enum `SectorCode`), e não o texto digitado nem o id interno (cuid). A interface oferece os setores como seleção fixa ("Todos" não envia o parâmetro). Código inexistente ou inválido responde `400 invalid_filters`. Pedido entra no filtro quando tem ao menos uma atividade no setor; pedido sem itens classificados não entra no filtro de setor, mas aparece sem filtro. O status do pedido continua calculado sobre **todos** os itens, independentemente do setor selecionado; as regras de status não foram alteradas.
+- **Reason**: O campo era texto livre e comparava com o id interno, então um nome como "Telhas" não retornava nada. O código é estável entre ambientes (o id muda entre bancos) e já é o enum do banco.
+- **Trade-off**: A API passa a rejeitar valores antes aceitos (mudança de contrato; único consumidor conhecido é a própria tela). Rótulos dos setores ficam fixos na interface; se o nome de um setor mudar no banco, o rótulo não acompanha. Nenhum campo ou tabela nova.
+- **Scope**: consulta de pedidos (vendedor e gerente), filtros da lista, status do pedido (somente preservado).
+- **Date**: 2026-10-22
+- **Status**: active (correção aprovada provisoriamente com 815 testes automatizados). Pendentes: validação no navegador e teste de integração com MySQL da consulta real.
+
+### AD-019
+
+- **Decision**: A pesquisa por número do pedido usa o **número comercial** `Order.legacyNumber` (origem `orcamento.Orc` no Top Gerente), nunca o id interno `Order.id`. O parâmetro da API é `numero`; a comparação é **parcial (contém)**, sem diferenciar maiúsculas e com espaços nas bordas removidos. Campo vazio ou só com espaços não restringe a consulta. A pesquisa é aplicada no servidor sobre todos os pedidos acessíveis, antes do limite padrão de 20, e combina com cliente, setor, status e período.
+- **Reason**: RF008 permite ao Vendedor pesquisar por número do pedido, mas a lista só oferecia cliente, setor, status e período. O número comercial é o identificador usado na importação e não coincide com o id interno.
+- **Trade-off**: Por ser parcial, um trecho curto pode retornar números semelhantes (ex.: `100` retorna `100`, `1000` e `2100`). O filtro continua em memória no servidor, após carregar todos os pedidos, como os demais filtros; não há paginação nova. O índice existente em `legacyNumber` não é usado pela busca parcial.
+- **Scope**: consulta de pedidos (vendedor e gerente), lista de pedidos, API `GET /api/pedidos`, documentação. Permissões, status, saldos e conclusão preservados.
+- **Date**: 2026-10-22
+- **Status**: active (aprovada provisoriamente em 2026-10-22). Decisões confirmadas: pesquisa parcial por `legacyNumber`, combinação com os demais filtros, permissões existentes preservadas e `Order.id` inalterado. Pendentes: validação no navegador, teste de integração com MySQL e otimização das consultas para não carregar todos os pedidos em memória na etapa **A1 — Paginação**. Sem alteração de banco, migração ou deploy.
+
+### AD-020
+
+- **Decision**: A lista de pedidos passa a ser paginada **no servidor**, no MySQL via Prisma. `limite` (padrão 20, teto 100) e `offset` continuam sendo os parâmetros; a resposta acrescenta `paginacao` com `pagina`, `total` e `totalPaginas`. Filtros de número comercial (parcial), cliente, setor, status derivado e período, além da ordenação `createdAt desc, id asc`, são aplicados no banco antes de `skip`/`take`. Página e total são lidos na mesma transação (`findMany` + `count`). O status derivado é traduzido para relation filters (`every`/`some`/`NOT`) reproduzindo exatamente `statusDoPedido`, sem incorporar as regras pendentes da AD-013. `%` e `_` são escapados e tratados como literais. Página inexistente responde `200` com lista vazia e total correto. A interface navega entre páginas, mantém os filtros na URL e volta à primeira página ao alterar/limpar filtros ou após importar um pedido. Nenhuma alteração de banco, migração, índice ou workflow de CI nesta etapa.
+- **Reason**: O limite de 20 era aplicado em memória (`slice`) após carregar todos os pedidos, itens e atividades; Vendedor e Gerente não conseguiam chegar ao 21º pedido. Filtros e contagem no banco eliminam o carregamento integral e permitem navegação completa.
+- **Trade-off**: A tradução do status para SQL é um espelho de `statusDoPedido` e precisa ser mantida em sincronia se a AD-013 for alterada. Por usar offset, uma importação concorrente pode deslocar um item entre páginas; a ordenação determinística evita duplicados na mesma resposta e a interface volta à primeira página após importar. A collation `utf8mb4_unicode_ci` torna a busca também insensível a acentos (mudança documentada). A busca parcial com `%...%` não usa o índice de `legacyNumber`. Índice em `createdAt` não foi criado (D6); desempenho deve ser medido com `EXPLAIN` antes de propor migração.
+- **Scope**: consulta de pedidos (Vendedor e Gerente), API `GET /api/pedidos`, lista de pedidos, testes e documentação. Filtros AD-014/A2/A6, status global, permissões, saldos e conclusão preservados.
+- **Date**: 2026-10-22
+- **Status**: active (aprovada e implementada). Testes unitários, de rota, de componente e de integração com MySQL local aprovados; validação no navegador pendente. Sem commit, push ou deploy.
+
+## Handoff AD-009 (prazos)
+
+- **Feature**: persistência, exibição e acompanhamento dos prazos (AD-009, correção do perfil Vendedor)
+- **Phase / Task**: implementação concluída e validada localmente; aguardando validação no navegador e autorização de commit
+- **Completed**:
+  - Causa: o prazo era gravado em `pedidos_itens.deadlineAt`, mas `GET /api/pedidos/[orderId]` não devolvia o campo e `PedidoDetalhe` usava apenas estado local (`salvos`). Após F5, o badge e o input ficavam vazios.
+  - Correção: `deadlineAt` e `activityDeadlineAt` no detalhe; input e badge hidratados da API; “Sem prazo”; prazo do setor somente leitura; `400` para data inválida/ambígua.
+  - Semântica: `YYYY-MM-DD` estrito convertido para o fim do dia em `America/Sao_Paulo` (`fimDoDiaNoFuso`); prazo de hoje não é atrasado; prazo de ontem é.
+  - Preservados: independência entre níveis, permissões (`consultar_pedidos`/`definir_prazo`), status, conclusão, entregas, remessas, filtros AD-014/AD-018/AD-019/A1 e conector.
+  - Sem migração, sem script de conversão, sem alteração de banco/CI.
+  - Testes: 866 automatizados + 23 de integração com MySQL de teste (17 de consulta + 6 de prazos); lint e typecheck sem erros; build OK.
+- **In-progress**: nenhum
+- **Next step**: executar o roteiro manual de `docs/testes-locais.md` §7 com Vendedor e Gerente (salvar, F5, novo login, hoje, vencido, independência). Depois, autorização para o commit.
+- **Blockers**: validação no navegador pendente; prazos antigos em meia-noite UTC não verificados no banco real (D6); alerta comercial e sinalização de atraso do item (critério de conclusão, AD-011); auditoria de prazo (RFN006); remoção de prazo; edição do prazo operacional; data do ERP.
+- **Uncommitted files**: `src/shared/time/dia-do-periodo.ts`, `src/shared/time/dia-civil.ts`, `src/modules/prazos/prazo.ts`, `src/modules/indicadores/consulta-pedidos.ts`, `src/modules/indicadores/adapters/prisma-indicadores-repository.ts`, `src/shared/ui/pedido-detalhe.tsx`, testes correspondentes, `src/modules/prazos/adapters/prazos.integration.test.ts`, documentos (`docs/decisoes.md`, `docs/requisitos.md`, `docs/regras-negocio.md`, `docs/banco-de-dados.md`, `docs/perfis-permissoes.md`, `docs/testes-locais.md`, `docs/backlog.md`, `docs/modelo-dados/mer.md`) e `.specs` (`features/prazos-e-alertas/*`, este arquivo). Nenhum commit foi feito.
+- **Branch**: fix/fluxos-vendedor1-preparação-decisões-negócio
+
 ## Handoff
+
+- **Feature**: paginação e otimização da consulta de pedidos (AD-020, correção A1)
+- **Phase / Task**: implementação concluída e validada localmente; aguardando validação no navegador e autorização para a próxima correção
+- **Completed**:
+  - Problema: o limite padrão de 20 era aplicado com `slice` depois de carregar todos os pedidos, itens e atividades; a interface não enviava `limite`/`offset` e não havia navegação por páginas nem total real.
+  - Correção: filtros, ordenação e paginação no MySQL via Prisma; `paginacao` na resposta; `count` e página na mesma transação; status derivado traduzido para SQL preservando os critérios atuais; `%`/`_` literais; navegação Anterior/Próxima, página na URL, reset para a primeira página ao filtrar/limpar/importar.
+  - Preservados: AD-014 (datas em `America/Sao_Paulo`, fim exclusivo), AD-018 (setor por código, status global), AD-019 (pesquisa parcial por `legacyNumber`) e permissões de Vendedor/Gerente.
+  - Sem alteração de banco, migração, índice, CI ou regras de negócio.
+  - Testes: 832 testes unitários, de rota e de componente aprovados; 17 testes de integração com MySQL local aprovados separadamente; 1 arquivo de integração ignorado na suíte padrão (`npm test`), conforme D8. `tsc`, lint e build executados (ver validação).
+- **In-progress**: nenhum
+- **Next step**: executar o roteiro manual de `docs/testes-locais.md` §6 (Vendedor e Gerente): primeira página, navegação, retorno, última página, pesquisa por número, filtros combinados, preservação/reset de filtros, retorno do detalhe e total. Avaliar `EXPLAIN` com volume real; propor índice em `(createdAt, id)` somente se justificado e autorizado. Aguardar autorização antes de iniciar outra correção.
+- **Blockers**: validação no navegador pendente; índice/`EXPLAIN` não avaliado com volume real; Expedição continua limitada à primeira página (fora do escopo da A1); aprovação do contrato do conector e de eventual campo em `OrderItem` (AD-010); T00.4 (AD-012); decisões D6 (AD-016) e D7 (AD-017); validação da data original do pedido no ambiente de integração
+- **Uncommitted files**: `src/modules/indicadores/consulta-pedidos.ts`, `src/modules/indicadores/consulta-pedidos.test.ts`, `src/modules/indicadores/adapters/filtros-pedidos-prisma.ts`, `src/modules/indicadores/adapters/filtros-pedidos-prisma.test.ts`, `src/modules/indicadores/adapters/prisma-indicadores-repository.ts`, `src/modules/indicadores/adapters/consulta-pedidos.integration.test.ts`, `src/app/api/pedidos/route.ts`, `src/app/api/pedidos/route.test.ts`, `src/app/api/pedidos/[orderId]/route.test.ts`, `src/app/api/indicadores/route.test.ts`, `src/shared/ui/pedidos-lista.tsx`, `src/shared/ui/pedidos-lista.test.tsx`, `docs/requisitos.md`, `docs/testes-locais.md`, `docs/diagnostico-docentes.md`, `.specs/features/indicadores-e-consulta/spec.md`, `.specs/features/indicadores-e-consulta/design.md`, `.specs/features/indicadores-e-consulta/validation.md` e `.specs/STATE.md`. Nenhum commit foi feito pelo agente.
+- **Branch**: fix/fluxos-vendedor1-preparação-decisões-negócio
+
+## Handoff anterior (AD-019, pesquisa por número)
+
+- **Feature**: pesquisa por número do pedido (AD-019, correção A6 do perfil Vendedor)
+- **Phase / Task**: implementação concluída e aprovada provisoriamente; decisões confirmadas em 2026-10-22; aguardando registro do commit pelo responsável e autorização para a próxima correção
+- **Completed**:
+  - Problema: a lista de pedidos permitia filtrar por cliente, setor, status e período, mas não pelo número comercial, apesar de RF008 prever pesquisa por número.
+  - Causa: `GET /api/pedidos` e `PedidosLista` não tinham o parâmetro/campo `numero`; o domínio também não filtrava por `PedidoConsultado.numero` (`Order.legacyNumber`).
+  - Correção: filtro parcial (contém) em `legacyNumber`, com `trim`; campo "Pesquisar por número" na lista; restauração pela URL; combinação com os demais filtros; filtro aplicado no servidor antes do limite de 20.
+  - Sem alteração de banco, migração, status, saldos, conclusão, permissões ou paginação.
+  - Testes: 839 testes automatizados aprovados (suíte completa), `tsc` sem erros e lint sem erros nos arquivos alterados.
+  - Decisões confirmadas: manter a pesquisa parcial; preservar a combinação com os demais filtros; manter as permissões existentes; não alterar `Order.id`.
+- **In-progress**: nenhum
+- **Next step**: aguardar o registro do commit pelo responsável. Após autorização, tratar a **A1 — Paginação**, incluindo a otimização das consultas para evitar carregar todos os pedidos em memória quando houver alternativa viável.
+- **Blockers**: validação no navegador dos filtros pendente; teste de integração com MySQL da consulta de pedidos não existe; otimização das consultas pendente na A1; aprovação do contrato do conector e de eventual campo em `OrderItem` (AD-010); T00.4 (AD-012); decisões D6 (AD-016) e D7 (AD-017); validação da data original do pedido no ambiente de integração
+- **Uncommitted files**: `src/modules/indicadores/consulta-pedidos.ts`, `src/modules/indicadores/consulta-pedidos.test.ts`, `src/app/api/pedidos/route.ts`, `src/app/api/pedidos/route.test.ts`, `src/shared/ui/pedidos-lista.tsx`, `src/shared/ui/pedidos-lista.test.tsx`, `docs/requisitos.md`, `.specs/features/indicadores-e-consulta/spec.md` e `.specs/STATE.md`. Nenhum commit foi feito pelo agente.
+- **Branch**: fix/fluxos-vendedor1-preparação-decisões-negócio
+
+## Handoff anterior (AD-018, filtro por setor)
+
+- **Feature**: filtro por setor de pedidos (AD-018, correção A2 do perfil Vendedor)
+- **Phase / Task**: implementação concluída e aprovada provisoriamente; documentação atualizada; aguardando autorização para a próxima correção
+- **Completed**:
+  - Problema: o filtro "Setor" era texto livre comparado ao id interno do setor; "Telhas" retornava lista vazia.
+  - Correção: filtro por código do setor (`SectorCode`), seleção fixa na interface, validação na API (`400 invalid_filters` para código inválido) e consulta comparando `sector.code`. Novo módulo `src/modules/setores/codigos-setor.ts`.
+  - Status do pedido preservado como global (todos os itens); regras de status inalteradas.
+  - Testes: 815 testes automatizados aprovados (suíte completa), `tsc` sem erros e lint sem erros nos arquivos alterados.
+- **In-progress**: nenhum
+- **Next step**: após autorização, próxima correção da Etapa 1: prazo na tela e alerta de atividade (AD-009). Antes de fechar a AD-014 e a AD-018, validar no navegador (Vendedor e Gerente) os filtros de data e de setor.
+- **Blockers**: validação no navegador dos filtros de data e de setor pendente; teste de integração com MySQL da consulta de pedidos não existe; aprovação do contrato do conector e de eventual campo em `OrderItem` (AD-010); T00.4 (AD-012); decisões D6 (AD-016) e D7 (AD-017); validação da data original do pedido no ambiente de integração
+- **Uncommitted files**: alterações da AD-014 e da AD-018 em código (`src/app/api/pedidos/route.ts`, `route.test.ts`, `src/modules/indicadores/consulta-pedidos.ts`, `consulta-pedidos.test.ts`, `src/modules/indicadores/adapters/prisma-indicadores-repository.ts`, `src/shared/ui/pedidos-lista.tsx`, `pedidos-lista.test.tsx`, `src/modules/setores/codigos-setor.ts`, `codigos-setor.test.ts`, `src/shared/time/dia-do-periodo.ts`, `dia-do-periodo.test.ts`) e a documentação `docs/requisitos.md` e `.specs/STATE.md`. Nenhum commit foi feito.
+- **Branch**: fix/fluxos-vendedor1-preparação-decisões-negócio
+
+## Handoff anterior (AD-014, filtro de data de pedidos)
+
+- **Feature**: filtro de data de pedidos (AD-014), primeira correção da Etapa 1
+- **Phase / Task**: implementação concluída e aprovada provisoriamente; aguardando autorização para a próxima correção
+- **Completed**:
+  - Filtro de período de `GET /api/pedidos` interpreta `de`/`ate` como dias civis em `America/Sao_Paulo`, com horário de verão tratado pelo helper `src/shared/time/dia-do-periodo.ts`.
+  - Intervalo `[de, ate)`: `de` inclusivo no início do dia; `ate` exclusivo, no início do dia seguinte.
+  - Referência do filtro mantida em `createdAt`; permissões e demais filtros inalterados.
+  - Testes: 796 testes aprovados (suíte completa), typecheck e lint sem erros nos arquivos alterados.
+  - Commit documental de referência: `2962b07`.
+- **In-progress**: nenhum
+- **Next step**: após autorização, próxima correção da Etapa 1: prazo na tela e alerta de atividade (AD-009). Validar o filtro de data no navegador antes de fechar a AD-014.
+- **Blockers**: validação no navegador do filtro de data pendente; aprovação do contrato do conector e de eventual campo em `OrderItem` (AD-010); T00.4 (AD-012); decisões D6 (AD-016) e D7 (AD-017); validação da data original do pedido no ambiente de integração.
+- **Uncommitted files**: alterações da AD-014 (`src/app/api/pedidos/route.ts`, `src/app/api/pedidos/route.test.ts`, `src/modules/indicadores/consulta-pedidos.ts`, `src/modules/indicadores/consulta-pedidos.test.ts`, `src/shared/time/dia-do-periodo.ts`, `src/shared/time/dia-do-periodo.test.ts`) e este `.specs/STATE.md`. Nenhum commit foi feito.
+- **Branch**: fix/fluxos-vendedor1-preparação-decisões-negócio (o registro anterior de `main` estava incorreto)
+
+## Handoff anterior (2026-10-22, planejamento Vendedor)
+
+- **Feature**: planejamento das correções do perfil Vendedor (X2 executado; D2 e demais implementações pendentes)
+- **Phase / Task**: documentação atualizada; aguardando autorização para o modo Build
+- **Completed**: `docs/requisitos.md`, `docs/banco-de-dados.md`, `docs/perfis-permissoes.md` e `.specs/STATE.md` atualizados com decisões aprovadas e pendentes (AD-009 a AD-017)
+- **In-progress**: nenhum
+- **Next step**: após autorização do Build, executar as correções técnicas independentes na ordem: filtro de data (AD-014), prazo na tela e alerta de atividade (AD-009), correção mínima do status (AD-013), auditoria de prazo e de solicitação de importação (AD-015). Depois: cancelamento lógico (AD-010), com contrato aprovado; Revenda (AD-012); estados completos (AD-013).
+- **Blockers**: aprovação do contrato do conector e de eventual campo em `OrderItem` (AD-010); T00.4 (AD-012); decisões D6 (AD-016) e D7 (AD-017); validação da data original do pedido no ambiente de integração
+- **Uncommitted files**: os quatro documentos listados acima
+- **Branch**: main
+
+## Handoff anterior (2026-10-21)
 
 - **Feature**: correção de setor (AD-006/AD-007) + totais por unidade (AD-008)
 - **Phase / Task**: concluído; próximo: deploy e validação hospedada das duas correções

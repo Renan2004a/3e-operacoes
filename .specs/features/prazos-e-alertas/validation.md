@@ -180,3 +180,58 @@ No blocking gaps. The spec-defined `403` outcome for unauthorized profiles is di
 **Issues found**: Only Gap 1 (minor, non-blocking) — add a SELLER route-level test if the team wants end-to-end proof of the seller path.
 
 **Next steps**: Feature is ready to archive. Optionally address Gap 1 in a follow-up test-only task.
+
+---
+
+# AD-009 — Persistência, exibição e acompanhamento dos prazos
+
+**Date**: 2026-10-22
+**Spec**: `.specs/features/prazos-e-alertas/spec.md` (PRAZO-13 a PRAZO-21)
+**Status**: ✅ Implementado e validado localmente. Validação no navegador pendente.
+
+## Causa identificada
+
+O prazo era gravado corretamente em `pedidos_itens.deadlineAt`, mas:
+
+1. `prisma-indicadores-repository.buscarEspecificacoesDosItens` não selecionava `deadlineAt` e `EspecificacaoItem`/`ItemDetalhado` não tinham o campo.
+2. `PedidoDetalhe` exibia apenas estado local (`salvos`), perdido ao desmontar/recarregar.
+
+O banco, a migration, a permissão `definir_prazo` e a sincronização foram verificados e **não** eram a causa. A sincronização preserva o campo porque o bloco `update` do upsert não o inclui.
+
+## Critérios e evidências
+
+| AC | Critério | Evidência | Resultado |
+| -- | --- | --- | --- |
+| PRAZO-13 | Detalhe devolve o prazo do item | `src/app/api/pedidos/[orderId]/route.test.ts` (teste “devolve o prazo de entrega…”), `src/modules/indicadores/consulta-pedidos.test.ts`, `prazos.integration.test.ts` (persistência e detalhe) | ✅ |
+| PRAZO-14 | Detalhe devolve o prazo da atividade | Mesmos testes; `activityDeadlineAt` no adapter e no detalhe | ✅ |
+| PRAZO-15 | F5 e novo login mantêm o prazo | `src/app/(app)/vendedor/pedidos/[orderId]/page.test.tsx` (desmonta e renderiza de novo), `prazos.integration.test.ts` (novo acesso ao banco) | ✅ |
+| PRAZO-16 | Sem prazo exibe “Sem prazo” | Testes do Vendedor e do Gerente; item sem prazo no detalhe | ✅ |
+| PRAZO-17 | Formato estrito; inválidos/ambíguos → 400 | `src/modules/prazos/prazo.test.ts` (`validarPrazo`), rotas do item e da atividade (timestamp rejeitado), `dia-do-periodo.test.ts` e `dia-civil.test.ts` | ✅ |
+| PRAZO-18 | Hoje não é atrasado; ontem é | `dia-do-periodo.test.ts` (`fimDoDiaNoFuso`), `atraso.test.ts` (fronteira) e integração com o fim do dia | ✅ |
+| PRAZO-19 | Níveis independentes | `prazos.integration.test.ts` (define item, confere atividade nula; define atividade, confere item inalterado) | ✅ |
+| PRAZO-20 | Reimportação preserva os prazos | `prazos.integration.test.ts` (`upsertOrder` após definir os dois prazos) | ✅ |
+| PRAZO-21 | Leitura `consultar_pedidos`; escrita `definir_prazo` | Rota do detalhe (sessão/perfil) e rota de prazo (403 para Operador, 200 para Vendedor); UI esconde o formulário quando os perfis carregados não podem definir prazo | ✅ |
+
+## Datas e fuso
+
+- `YYYY-MM-DD` → fim do dia em `America/Sao_Paulo` (`fimDoDiaNoFuso`), ex.: `2026-02-01` → `2026-02-02T02:59:59.999Z`.
+- Exibição e input usam `formatarDiaCivil`/`diaCivilParaInput` com fuso explícito.
+- Horário de verão histórico coberto (`2018-11-10`, `2019-02-16`), inclusive o dia com 25 horas.
+- Nenhum dado existente foi convertido (D6); não houve migração.
+
+## Testes executados
+
+| Gate | Comando | Resultado |
+| --- | --- | --- |
+| Testes | `npm test` | **866 aprovados**, 23 ignorados (2 arquivos de integração) |
+| Integração MySQL | `RUN_INTEGRATION_TESTS=1 npx vitest run …` (banco `3e_operacoes_integration`) | **23 aprovados** (17 de consulta + 6 de prazos) |
+| Lint | `npm run lint` | 0 erros; 4 avisos pré-existentes |
+| Typecheck | `npm run typecheck` | OK |
+| Build | `npm run build` | OK |
+
+## Riscos residuais
+
+- Prazos antigos em meia-noite UTC só são corrigidos re-salvando pela interface; não há script.
+- O detalhe usa uma atividade por item (`take: 1`), então itens com múltiplas atividades mostram apenas a primeira no prazo operacional.
+- O badge do item exibe a data sem sinalizar atraso. A indicação de atraso do item depende do critério de conclusão (AD-011); o cálculo de domínio (`calcularStatusPrazo`) já existe. Registrado no backlog.
+- Alerta comercial, remoção, auditoria e edição do prazo operacional seguem fora do escopo (D3, D4, D5, D7).

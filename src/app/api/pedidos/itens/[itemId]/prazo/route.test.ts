@@ -34,10 +34,7 @@ vi.mock('@/modules/usuarios/adapters/prisma-usuarios-repository', () => ({
 
 import { PATCH } from './route'
 
-function request(
-  body: unknown,
-  opts: { usuarioId?: string | null } = {},
-): Request {
+function request(body: unknown, opts: { usuarioId?: string | null } = {}): Request {
   const { usuarioId = 'user_mgr' } = opts
   const headers: Record<string, string> = { 'content-type': 'application/json' }
   if (usuarioId) {
@@ -70,24 +67,48 @@ describe('PATCH /api/pedidos/itens/[itemId]/prazo', () => {
     else process.env.SESSION_SECRET = original
   })
 
-  it('responde 200 e persiste o prazo do item (PRAZO-01)', async () => {
+  it('responde 200 e persiste o prazo do item (PRAZO-01, D2)', async () => {
     mocks.itens.set('item_1', null)
-    const prazo = '2026-10-15T12:00:00.000Z'
+    const prazo = '2026-10-15'
+    const esperado = new Date('2026-10-16T02:59:59.999Z')
 
     const response = await PATCH(request({ prazo }), context('item_1'))
 
     expect(response.status).toBe(200)
     const body = await response.json()
     expect(body.item.id).toBe('item_1')
-    expect(body.item.deadlineAt).toBe(prazo)
-    expect(mocks.itens.get('item_1')).toEqual(new Date(prazo))
+    expect(body.item.deadlineAt).toBe(esperado.toISOString())
+    expect(mocks.itens.get('item_1')).toEqual(esperado)
+  })
+
+  it('aceita o perfil Vendedor no caminho feliz (PRAZO-03)', async () => {
+    mocks.itens.set('item_1', null)
+    mocks.perfis.user_vendedor = ['SELLER']
+
+    const response = await PATCH(
+      request({ prazo: '2026-10-15' }, { usuarioId: 'user_vendedor' }),
+      context('item_1'),
+    )
+
+    expect(response.status).toBe(200)
+    expect(mocks.itens.get('item_1')).toEqual(new Date('2026-10-16T02:59:59.999Z'))
+  })
+
+  it('rejeita timestamp completo para não misturar data civil e instante (D2)', async () => {
+    mocks.itens.set('item_1', null)
+
+    const response = await PATCH(request({ prazo: '2026-10-15T12:00:00.000Z' }), context('item_1'))
+
+    expect(response.status).toBe(400)
+    expect((await response.json()).error).toBe('invalid_deadline')
+    expect(mocks.itens.get('item_1')).toBeNull()
   })
 
   it('responde 403 quando o perfil não pode definir prazo (PRAZO-03)', async () => {
     mocks.itens.set('item_1', null)
 
     const response = await PATCH(
-      request({ prazo: '2026-10-15T12:00:00.000Z' }, { usuarioId: 'user_operador' }),
+      request({ prazo: '2026-10-15' }, { usuarioId: 'user_operador' }),
       context('item_1'),
     )
 
@@ -115,8 +136,17 @@ describe('PATCH /api/pedidos/itens/[itemId]/prazo', () => {
     expect(mocks.itens.get('item_1')).toBeNull()
   })
 
+  it('não remove um prazo existente nesta etapa (D3)', async () => {
+    mocks.itens.set('item_1', new Date('2026-10-16T02:59:59.999Z'))
+
+    const response = await PATCH(request({ prazo: null }), context('item_1'))
+
+    expect(response.status).toBe(400)
+    expect(mocks.itens.get('item_1')).toEqual(new Date('2026-10-16T02:59:59.999Z'))
+  })
+
   it('responde 404 quando o item não existe (PRAZO-12)', async () => {
-    const response = await PATCH(request({ prazo: '2026-10-15T12:00:00.000Z' }), context('item_x'))
+    const response = await PATCH(request({ prazo: '2026-10-15' }), context('item_x'))
 
     expect(response.status).toBe(404)
     expect((await response.json()).error).toBe('item_not_found')
@@ -126,7 +156,7 @@ describe('PATCH /api/pedidos/itens/[itemId]/prazo', () => {
     mocks.itens.set('item_1', null)
 
     const response = await PATCH(
-      request({ prazo: '2026-10-15T12:00:00.000Z' }, { usuarioId: null }),
+      request({ prazo: '2026-10-15' }, { usuarioId: null }),
       context('item_1'),
     )
 

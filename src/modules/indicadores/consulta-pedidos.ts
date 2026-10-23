@@ -1,6 +1,7 @@
 import type { ActivityStatus } from '../producao/tipos'
 import { agruparPorUnidade, somarQuantidades } from '../producao/totais-por-unidade'
 import type { Quantidade } from '../producao/unidades'
+import type { CodigoSetor } from '../setores/codigos-setor'
 import { motivoBloqueioCorrecao, type RegistrosDaAtividade } from '../setores/corrigir-setor'
 import { sugerirSetor, type RegraProdutoSetor } from '../setores/sugerir-setor'
 import {
@@ -20,7 +21,7 @@ export type StatusPedido = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED'
 export type StatusClassificacaoItem = 'CLASSIFIED' | 'PENDING_CLASSIFICATION'
 
 export interface AtividadeDoPedido {
-  sectorId: string
+  sectorCode: CodigoSetor
   status: ActivityStatus
 }
 
@@ -34,14 +35,16 @@ export interface PedidoConsultado {
 }
 
 export interface FiltrosPedido {
+  /** Trecho do número comercial do pedido (legacyNumber), sem espaços nas bordas. */
+  numero?: string
   /** Trecho do nome do cliente, sem diferenciar maiúsculas. */
   cliente?: string
-  /** Id do setor; mantém pedidos com alguma atividade nesse setor. */
-  setor?: string
+  /** Código do setor; mantém pedidos com alguma atividade nesse setor. */
+  setor?: CodigoSetor
   status?: StatusPedido
   /** Início do período, inclusive, sobre a data de criação do pedido. */
   de?: Date
-  /** Fim do período, inclusive. */
+  /** Fim do período, exclusivo (início do dia seguinte ao último dia selecionado). */
   ate?: Date
   limite?: number
   offset?: number
@@ -52,6 +55,36 @@ export interface PedidoListado {
   numero: string
   cliente: string | null
   status: StatusPedido
+}
+
+/**
+ * Paginação aplicada no banco (A1). `total` é a contagem de pedidos que
+ * atendem aos filtros, não o tamanho da página.
+ */
+export interface PaginacaoPedidos {
+  limite: number
+  offset: number
+  pagina: number
+  total: number
+  totalPaginas: number
+}
+
+/** Página de pedidos e seus metadados de paginação. */
+export interface PaginaDePedidos {
+  pedidos: PedidoListado[]
+  paginacao: PaginacaoPedidos
+}
+
+/** Critérios já normalizados entregues ao repositório (filtros + paginação). */
+export interface ConsultaPedidosCriterios extends FiltrosPedido {
+  limite: number
+  offset: number
+}
+
+/** Página devolvida pelo repositório: linhas da página e total com os filtros. */
+export interface ResultadoConsultaPedidos {
+  pedidos: PedidoConsultado[]
+  total: number
 }
 
 export interface CabecalhoPedido {
@@ -76,6 +109,10 @@ export interface EspecificacaoItem {
   description: string | null
   productCode: string | null
   unit: string
+  /** Prazo de entrega do item (`OrderItem.deadlineAt`), quando definido (AD-009). */
+  deadlineAt?: Date | null
+  /** Prazo operacional da atividade do setor (`Activity.deadlineAt`), quando definido (AD-009). */
+  activityDeadlineAt?: Date | null
   /** Situação de classificação do item, base da classificação manual (LAC-04). */
   classificationStatus: StatusClassificacaoItem
   /** Setor da atividade do item, para o desmembramento. */
@@ -94,6 +131,10 @@ export interface ItemDetalhado extends ItemSaldo {
   description: string | null
   productCode: string | null
   unit: string
+  /** Prazo de entrega do item, ou `null` quando não definido (AD-009). */
+  deadlineAt: Date | null
+  /** Prazo operacional do setor, ou `null` quando não definido (AD-009, D5). */
+  activityDeadlineAt: Date | null
   classificationStatus: StatusClassificacaoItem
   sectorId?: string | null
   sectorCode?: string | null
@@ -135,8 +176,12 @@ export interface PedidoDetalhado extends CabecalhoPedido {
  * (IND-04). Somente leitura (RF008).
  */
 export interface ConsultaPedidosRepository extends SaldoPedidoRepository {
-  /** Todos os pedidos com suas atividades, base para filtro e status (IND-01, IND-02). */
-  listarPedidosParaConsulta(): Promise<PedidoConsultado[]>
+  /**
+   * Página de pedidos com filtros aplicados no banco, ordenada por criação
+   * decrescente e id crescente, e total de pedidos que atendem aos filtros
+   * (IND-01, IND-02, QF-07). Não carrega todos os pedidos em memória.
+   */
+  consultarPedidos(criterios: ConsultaPedidosCriterios): Promise<ResultadoConsultaPedidos>
   /** Cabeçalho do pedido, ou null se não existir (IND-10). */
   buscarCabecalhoPedido(orderId: string): Promise<CabecalhoPedido | null>
   /** Descrição, código e unidade de cada item, para exibição no detalhe (IND-04). */
@@ -163,16 +208,6 @@ function normalizarPaginacao(filtros: FiltrosPedido): { limite: number; offset: 
 }
 
 /**
- * Ordenação determinística: criação decrescente (mais recente primeiro) e, em
- * caso de empate, id crescente. Sem o desempate a paginação poderia repetir ou
- * pular pedidos (QF-07).
- */
-function compararPorCriacao(a: PedidoConsultado, b: PedidoConsultado): number {
-  const porData = b.criadoEm.getTime() - a.criadoEm.getTime()
-  return porData !== 0 ? porData : a.id.localeCompare(b.id)
-}
-
-/**
  * Status do pedido a partir das atividades dos itens: sem atividades ou todas
  * pendentes → `PENDING`; todas concluídas → `COMPLETED`; caso contrário →
  * `IN_PROGRESS` (IND-01).
@@ -184,41 +219,43 @@ export function statusDoPedido(atividades: readonly AtividadeDoPedido[]): Status
   return 'IN_PROGRESS'
 }
 
-function clienteContem(cliente: string | null, filtro: string): boolean {
-  return cliente !== null && cliente.toLowerCase().includes(filtro.trim().toLowerCase())
-}
-
-function dentroDoPeriodo(pedido: PedidoConsultado, de?: Date, ate?: Date): boolean {
-  if (de && pedido.criadoEm.getTime() < de.getTime()) return false
-  if (ate && pedido.criadoEm.getTime() > ate.getTime()) return false
-  return true
-}
-
 /**
- * Lista os pedidos aplicando os filtros de cliente, setor, status e período,
- * ordena por criação decrescente (id como desempate) e pagina por
- * limite/offset (IND-01, IND-02, IND-03, QF-07).
+ * Lista uma página de pedidos. Os filtros de número comercial, cliente, setor,
+ * status e período, a ordenação (criação decrescente, id crescente) e a
+ * paginação são aplicados no banco (IND-01, IND-02, IND-03, QF-07, A1).
+ * O status exibido continua derivado das atividades de cada pedido da página.
  */
 export async function listarPedidos(
   filtros: FiltrosPedido,
   repo: ConsultaPedidosRepository,
-): Promise<PedidoListado[]> {
-  const pedidos = await repo.listarPedidosParaConsulta()
+): Promise<PaginaDePedidos> {
   const { limite, offset } = normalizarPaginacao(filtros)
+  const { pedidos, total } = await repo.consultarPedidos({
+    numero: filtros.numero?.trim() || undefined,
+    cliente: filtros.cliente?.trim() || undefined,
+    setor: filtros.setor,
+    status: filtros.status,
+    de: filtros.de,
+    ate: filtros.ate,
+    limite,
+    offset,
+  })
 
-  return pedidos
-    .filter((pedido) => !filtros.cliente?.trim() || clienteContem(pedido.cliente, filtros.cliente))
-    .filter((pedido) => !filtros.setor || pedido.atividades.some((a) => a.sectorId === filtros.setor))
-    .filter((pedido) => !filtros.status || statusDoPedido(pedido.atividades) === filtros.status)
-    .filter((pedido) => dentroDoPeriodo(pedido, filtros.de, filtros.ate))
-    .sort(compararPorCriacao)
-    .slice(offset, offset + limite)
-    .map((pedido) => ({
+  return {
+    pedidos: pedidos.map((pedido) => ({
       id: pedido.id,
       numero: pedido.numero,
       cliente: pedido.cliente,
       status: statusDoPedido(pedido.atividades),
-    }))
+    })),
+    paginacao: {
+      limite,
+      offset,
+      pagina: Math.floor(offset / limite) + 1,
+      total,
+      totalPaginas: Math.ceil(total / limite),
+    },
+  }
 }
 
 /**
@@ -252,7 +289,9 @@ export async function detalharPedido(
   if (!cabecalho) throw new PedidoNaoEncontradoError(orderId)
 
   const especificacoes = await repo.buscarEspecificacoesDosItens(orderId)
-  const porItem = new Map(especificacoes.map((especificacao) => [especificacao.itemId, especificacao]))
+  const porItem = new Map(
+    especificacoes.map((especificacao) => [especificacao.itemId, especificacao]),
+  )
   const regras = await repo.listarRegrasProdutoSetor()
 
   const itensDetalhados = itens.map((item): ItemDetalhado => {
@@ -266,6 +305,8 @@ export async function detalharPedido(
       description: especificacao?.description ?? null,
       productCode: especificacao?.productCode ?? null,
       unit: especificacao?.unit ?? '',
+      deadlineAt: especificacao?.deadlineAt ?? null,
+      activityDeadlineAt: especificacao?.activityDeadlineAt ?? null,
       classificationStatus: especificacao?.classificationStatus ?? 'PENDING_CLASSIFICATION',
       sectorId: especificacao?.sectorId ?? null,
       sectorCode: especificacao?.sectorCode ?? null,

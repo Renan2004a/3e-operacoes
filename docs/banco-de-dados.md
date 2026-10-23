@@ -67,7 +67,7 @@ O banco do app é um **registro operacional** construído em camadas. O fluxo re
 ### 4.1 Importação (comercial → app)
 
 1. O usuário informa o número do pedido.
-2. O app cria um **job** em `jobs_integracao` (idempotente) e chama o conector.
+2. O app cria um **job** em `jobs_integracao` (idempotente) e chama o conector. O usuário autenticado que solicitou a importação deve ser registrado em `logs_auditoria` (aprovado em 2026-10-22; sem nova coluna nem tabela; implementação pendente).
 3. O conector lê `topgerente.orcamento` + `orcamento_itens` (somente leitura) e devolve o payload.
 4. O app grava (upsert) **`pedidos`** e **`pedidos_itens`**; cada transição vira um **`eventos_job_integracao`**.
 5. Se a nova quantidade solicitada conflitar com o que já foi executado/entregue, registra **`logs_auditoria`** (divergência) — nunca apaga histórico.
@@ -76,7 +76,9 @@ O banco do app é um **registro operacional** construído em camadas. O fluxo re
 
 6. O vendedor/gerente escolhe o setor de cada item. Nasce uma **`atividades`** (item × setor) e o item fica `CLASSIFIED`.
 7. A sugestão de setor usa **`regras_produto_setor`** (heurística) e o de/para **`mapeamentos_categoria_setor`**. A decisão final é humana.
-8. O item também pode receber **prazo** (`deadlineAt`) e **remessas programadas** (`remessas_programadas`).
+8. O item também pode receber **prazo de entrega** (`OrderItem.deadlineAt`) e **remessas programadas** (`remessas_programadas`). A atividade recebe o **prazo operacional** (`Activity.deadlineAt`), independente do prazo do item.
+   - O prazo é uma **data civil** no formato `YYYY-MM-DD`, persistida como o **fim do dia em `America/Sao_Paulo`** (ex.: `2026-02-01` → `2026-02-02T02:59:59.999Z`). Por isso o prazo de hoje só fica atrasado depois que o dia termina.
+   - Prazos gravados antes do AD-009 (meia-noite UTC) não são convertidos automaticamente. Se houver dados reais nesse formato, a conversão exige autorização específica; em ambiente de demonstração, basta re-salvar o prazo pela interface.
 
 ### 4.3 Produção e ocorrências
 
@@ -95,7 +97,7 @@ O banco do app é um **registro operacional** construído em camadas. O fluxo re
 
 16. Indicadores e alertas são **consultas** sobre `atividades`, `execucoes`, `entregas` e prazos (sem tabela de “dashboard”).
 17. **`usuarios`**, **`usuarios_perfis`** e **`usuarios_setores`** controlam quem entra e em quais setores atua.
-18. **`logs_auditoria`** registra ações sensíveis (exceções, mapeamentos, prazos, divergências).
+18. **`logs_auditoria`** registra ações sensíveis. Hoje grava: exceções de entrega, mapeamentos e correções de setor, e divergências de importação. *Correção de 2026-10-22:* a versão anterior dizia que prazos também eram auditados; **prazos e remessas ainda não gravam auditoria** no código. A auditoria de prazos é documentada como pendente de implementação, e a de remessas aguarda decisão (D6).
 
 ---
 
@@ -241,7 +243,8 @@ SELECT p.legacyNumber, p.customerName, COUNT(i.id) AS itens
 FROM pedidos p LEFT JOIN pedidos_itens i ON i.orderId = p.id
 GROUP BY p.id ORDER BY p.legacyNumber;
 
--- Saldo por item (pendente = solicitado - executado)
+-- Saldo por item de Corte e Dobra e Telhas (pendente = solicitado - executado).
+-- Não usar para Revenda: lá vale a RN031 (pendente = solicitado - separado - indisponível).
 SELECT p.legacyNumber, i.description, i.requestedQuantity,
        COALESCE(SUM(e.quantity), 0) AS executado,
        i.requestedQuantity - COALESCE(SUM(e.quantity), 0) AS pendente
@@ -318,3 +321,24 @@ Contagem de registros (ambiente AWS de desenvolvimento, sem dados pessoais):
 Pedidos reais usados na validação: `70435`, `82249`, `82250`, `82261`, `82262`, `82268`, `82269`.
 
 > O schema Prisma é a fonte da verdade: `prisma/schema.prisma`. O DER conceitual está em `docs/modelo-dados/der.html` e `der.mmd`.
+
+---
+
+## 13. Mudanças de banco: aprovadas, pendentes ou não necessárias (2026-10-22)
+
+Nenhuma migração foi executada nem aplicada nesta etapa. Esta tabela registra o que foi decidido para o planejamento das correções do Vendedor.
+
+| Mudança | Situação | Observação |
+| --- | --- | --- |
+| Usuário solicitante da importação | **Aprovada**, sem alteração de schema | Registrar em `logs_auditoria`, reutilizando o mecanismo existente. |
+| Semântica do prazo (AD-009) | **Aprovada**, sem alteração de schema | Data civil `YYYY-MM-DD` persistida no fim do dia em `America/Sao_Paulo`. Nenhuma migração. |
+| Auditoria de alteração de prazo (item e atividade) | **Adiada (D7)**, não implementada | Fica para etapa própria de RFN006. Nenhuma auditoria existente foi removida. |
+| Remoção de prazo | **Adiada (D3)** | Registrar no backlog; não há contrato para limpar `deadlineAt`. |
+| Alerta comercial por prazo de entrega | **Adiado (D4)** | Depende do critério de atendimento integral da AD-011. Não usar quantidade executada como substituta da entregue. |
+| Data de entrega do Top Gerente | **Não importada (D8)** | Conector e contrato inalterados; nenhuma regra de precedência criada. |
+| Normalização de prazos antigos | **Não executada (D6)** | Sem script e sem migration. Em ambiente de demonstração, re-salvar pela interface. Dados reais exigem autorização específica. |
+| Cancelamento lógico de item | **Pendente** | Conceito aprovado. Depende do contrato do conector e de decisão sobre o campo em `pedidos_itens`. Nenhum campo criado. |
+| Auditoria de remessas (programar, confirmar, remover) | **Pendente** | Aguarda decisão D6 de remessas (AD-016). |
+| Referência de data original do pedido | **Pendente** | Hoje `pedidos.sourceUpdatedAt` recebe `orcamento.Data` (data do orçamento, não de atualização). O nome do campo é enganoso. Validação no ambiente de integração antes de qualquer uso. |
+| Persistência do status do pedido | **Não aprovada** | Status é derivado a partir dos itens ativos. Evitar novo estado persistido. |
+| Tratamento de divergências (fluxo, tabela ou status) | **Pendente** | Aguarda D7 de divergências (AD-017). Hoje a divergência é gravada apenas em `logs_auditoria` e no evento do job. |

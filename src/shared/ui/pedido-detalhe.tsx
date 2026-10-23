@@ -10,8 +10,10 @@ import {
   validarMotivoCorrecao,
   type ErroMotivoCorrecao,
 } from '@/modules/setores/motivo-correcao'
+import { calcularStatusPrazo } from '@/modules/prazos/atraso'
 import { pode } from '@/modules/usuarios/permissoes'
 import { ApiError, apiDelete, apiGet, apiPatch, apiPost } from '@/shared/http/api-client'
+import { diaCivilParaInput, formatarDiaCivil } from '@/shared/time/dia-civil'
 import { Alert } from './alert'
 import { Badge } from './badge'
 import { Button } from './button'
@@ -22,11 +24,7 @@ import { Metric } from './metric'
 import { PageHead } from './page-head'
 import { Progress, type ProgressTone } from './progress'
 import { Spinner } from './spinner'
-import {
-  rotuloDaUnidade,
-  valorPorUnidade,
-  type TotalUnidadeView,
-} from './totais-unidade'
+import { rotuloDaUnidade, valorPorUnidade, type TotalUnidadeView } from './totais-unidade'
 import { cn, FOCO_VISIVEL } from './utils'
 
 interface ItemSaldo {
@@ -39,6 +37,10 @@ interface ItemSaldo {
   description: string | null
   productCode: string | null
   unit: string
+  /** Prazo de entrega do item, ou null quando não definido (AD-009). */
+  deadlineAt?: string | null
+  /** Prazo operacional da atividade do setor, ou null quando não definido (AD-009). */
+  activityDeadlineAt?: string | null
   classificationStatus: 'CLASSIFIED' | 'PENDING_CLASSIFICATION'
   sectorId?: string | null
   sectorCode?: string | null
@@ -183,7 +185,6 @@ export function PedidoDetalhe({
   const [erro, setErro] = useState<'falha' | 'nao_encontrado' | null>(null)
 
   const [rascunhos, setRascunhos] = useState<Record<string, string>>({})
-  const [salvos, setSalvos] = useState<Record<string, string>>({})
   const [salvando, setSalvando] = useState<string | null>(null)
 
   const [setores, setSetores] = useState<Setor[]>([])
@@ -261,12 +262,34 @@ export function PedidoDetalhe({
 
     setSalvando(itemId)
     try {
-      await apiPatch(`/api/pedidos/itens/${itemId}/prazo`, { prazo })
-      setSalvos((atual) => ({ ...atual, [itemId]: prazo }))
+      const resposta = await apiPatch<{ item: { id: string; deadlineAt: string } }>(
+        `/api/pedidos/itens/${itemId}/prazo`,
+        { prazo },
+      )
+      // A fonte de verdade é a resposta da API: o item passa a exibir o prazo
+      // persistido, não o texto digitado (AD-009). Ao limpar o rascunho, o
+      // input volta a refletir `item.deadlineAt` após qualquer recarregamento.
+      setPedido((atual) =>
+        atual
+          ? {
+              ...atual,
+              itens: atual.itens.map((item) =>
+                item.itemId === itemId ? { ...item, deadlineAt: resposta.item.deadlineAt } : item,
+              ),
+            }
+          : atual,
+      )
+      setRascunhos((atual) => {
+        const copia = { ...atual }
+        delete copia[itemId]
+        return copia
+      })
       setSucesso('Prazo atualizado com sucesso.')
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) {
         setErroAcao('Item não encontrado. Atualize a página e tente novamente.')
+      } else if (error instanceof ApiError && error.status === 400) {
+        setErroAcao('Informe uma data válida para o prazo.')
       } else {
         setErroAcao('Não foi possível salvar o prazo. Verifique sua conexão e tente novamente.')
       }
@@ -509,6 +532,10 @@ export function PedidoDetalhe({
   ).length
   const podeCorrigirSetor = pode(perfis, 'corrigir_setor')
   const exigeJustificativaCorrecao = pode(perfis, 'corrigir_setor_justificado')
+  // Enquanto os perfis não carregaram, o formulário continua visível; o
+  // servidor é a autoridade. A ação só desaparece quando sabemos que o perfil
+  // não pode definir prazo (D9).
+  const semPermissaoParaPrazo = perfis.length > 0 && !pode(perfis, 'definir_prazo')
   return (
     <section className="grid gap-4">
       <div className="grid gap-2">
@@ -604,6 +631,11 @@ export function PedidoDetalhe({
           const desmembrado =
             item.classificationStatus === 'CLASSIFIED' || classificados[item.itemId] === true
           const labelItem = `item ${indice + 1}`
+          const statusPrazoAtividade = calcularStatusPrazo({
+            prazo: item.activityDeadlineAt ? new Date(item.activityDeadlineAt) : null,
+            concluido: item.activityStatus === 'COMPLETED',
+            agora: new Date(),
+          })
 
           return (
             <Card key={item.itemId}>
@@ -670,38 +702,57 @@ export function PedidoDetalhe({
                     : ''}
                 </p>
 
-                <form
-                  className="grid gap-3 border-t border-line pt-4 sm:grid-cols-[1fr_auto] sm:items-end"
-                  onSubmit={(evento) => {
-                    evento.preventDefault()
-                    void salvarPrazo(item.itemId)
-                  }}
-                  noValidate
-                >
-                  <Field label={`Prazo do ${labelItem}`}>
-                    {(props) => (
-                      <Input
-                        {...props}
-                        type="date"
-                        value={rascunhos[item.itemId] ?? ''}
-                        onChange={(evento) =>
-                          setRascunhos((atual) => ({ ...atual, [item.itemId]: evento.target.value }))
-                        }
-                      />
-                    )}
-                  </Field>
-                  <Button
-                    type="submit"
-                    disabled={salvando === item.itemId}
-                    aria-label={`Salvar prazo do ${labelItem}`}
-                  >
-                    {salvando === item.itemId ? 'Salvando…' : 'Salvar prazo'}
-                  </Button>
-                </form>
-
-                {salvos[item.itemId] ? (
-                  <Badge variant="success">Prazo definido: {salvos[item.itemId]}</Badge>
+                {item.activityStatus || item.activityDeadlineAt ? (
+                  <p className="text-sm text-muted">
+                    Prazo do setor:{' '}
+                    {item.activityDeadlineAt
+                      ? formatarDiaCivil(item.activityDeadlineAt)
+                      : 'sem prazo'}
+                    {statusPrazoAtividade === 'ATRASADO' ? ' · Atrasado' : ''}
+                  </p>
                 ) : null}
+
+                {!semPermissaoParaPrazo ? (
+                  <form
+                    className="grid gap-3 border-t border-line pt-4 sm:grid-cols-[1fr_auto] sm:items-end"
+                    onSubmit={(evento) => {
+                      evento.preventDefault()
+                      void salvarPrazo(item.itemId)
+                    }}
+                    noValidate
+                  >
+                    <Field label={`Prazo do ${labelItem}`}>
+                      {(props) => (
+                        <Input
+                          {...props}
+                          type="date"
+                          value={rascunhos[item.itemId] ?? diaCivilParaInput(item.deadlineAt)}
+                          onChange={(evento) =>
+                            setRascunhos((atual) => ({
+                              ...atual,
+                              [item.itemId]: evento.target.value,
+                            }))
+                          }
+                        />
+                      )}
+                    </Field>
+                    <Button
+                      type="submit"
+                      disabled={salvando === item.itemId}
+                      aria-label={`Salvar prazo do ${labelItem}`}
+                    >
+                      {salvando === item.itemId ? 'Salvando…' : 'Salvar prazo'}
+                    </Button>
+                  </form>
+                ) : null}
+
+                {item.deadlineAt ? (
+                  <Badge variant="success">
+                    Prazo de entrega: {formatarDiaCivil(item.deadlineAt)}
+                  </Badge>
+                ) : (
+                  <Badge variant="neutral">Sem prazo</Badge>
+                )}
 
                 {permitirClassificacao ? (
                   <div className="grid gap-3 border-t border-line pt-4">

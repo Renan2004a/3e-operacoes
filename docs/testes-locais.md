@@ -67,7 +67,7 @@ Evidências salvas em `docs/video/validacao/` (PNGs das telas e `ordem-producao.
 | Vendedor: desmembrar | Escolher setor → “Desmembrar” | Item fica “Desmembrado”; mensagem de sucesso |
 | Vendedor: remessa | “+ Adicionar remessa” → número/data → “Programar remessa” | Remessa aparece na lista; mensagem “Remessa criada com sucesso.” |
 | Vendedor: confirmar/remover remessa | “Confirmar” / “Remover” | Status atualiza; mensagens de sucesso |
-| Vendedor: prazo | Data → “Salvar prazo” | Badge “Prazo definido”; mensagem de sucesso |
+| Vendedor: prazo | Data → “Salvar prazo” → **F5** → novo login | Badge “Prazo de entrega: dd/mm/aaaa” e campo preenchido antes **e depois** de recarregar/entrar de novo (AD-009) |
 | Gerente: painel | Abrir painel | Alertas (atrasados/parados/não encaminhados) e progresso por setor com percentual |
 | Operador: fila/execução | Abrir atividade → registrar execução | Saldo atualizado; sucesso; progresso acessível |
 | Operador: ocorrência | Perda + motivo → registrar | Ocorrência registrada; saldo não reduz indevidamente |
@@ -114,5 +114,87 @@ Instruções de conexão: `docs/banco-de-dados.md` §7.
 - **E2E autenticado no CI**: o CI cobre a superfície pública (login/responsividade com API mockada). A validação autenticada foi feita localmente, contra o banco real, com o script Playwright acima.
 - **Leitor de tela e contraste**: não foram executados NVDA/VoiceOver nem ferramenta dedicada de contraste; a verificação foi semântica (rótulos, `role`, textos de estado).
 - **Integração real**: a importação real depende do conector local na rede da 3E. Os pedidos usados já estavam importados; a validação de importação nova exige o conector ativo.
-- **Volume**: a lista de pedidos não tem paginação; com volume maior, avaliar paginação e ordenação explícita.
+- **Volume**: a lista de pedidos passou a ser paginada no servidor na correção A1 (20 por página, teto 100, ordenação `createdAt desc, id asc`). O teste de integração com MySQL existe e deve ser executado antes de considerar a A1 concluída quando houver mudança na consulta:
+
+  ```bash
+  # banco de teste/integração já migrado (nunca o banco real)
+  RUN_INTEGRATION_TESTS=1 DATABASE_URL='mysql://usuario:senha@127.0.0.1:3306/3e_a1_integration' \
+    npx vitest run src/modules/indicadores/adapters/consulta-pedidos.integration.test.ts
+  ```
+
+  Sem `RUN_INTEGRATION_TESTS=1` e sem um banco cujo nome contenha `integration` ou `test`, os testes são ignorados explicitamente.
 - **Edição completa de usuário** (nome/perfis/setores) não tem tela; a API já suporta `PATCH`.
+- **Expedição**: a tela `/expedicao/entregas` continua consumindo `GET /api/pedidos` sem paginação explícita e vê apenas os 20 pedidos mais recentes. Comportamento anterior à A1, preservado por escopo; a paginação da Expedição fica para correção própria.
+
+---
+
+## 6. Validação manual da paginação (A1)
+
+### Preparação do ambiente
+
+```bash
+npm install
+npm run prisma:generate
+
+# Apenas em clone novo; não sobrescrever um .env já configurado:
+cp .env.example .env
+# Editar DATABASE_URL e SESSION_SECRET
+
+npm run db:up          # MySQL local via Docker; pular se usar um MySQL já migrado
+npm run prisma:deploy  # aplicar migrações
+npm run prisma:seed    # setores, motivos e usuários de demonstração
+npm run dev            # http://localhost:3000
+```
+
+- Vendedor: `vendedor@3e.local` / `vendedor123`
+- Gerente: `gerente@3e.local` / `gerente123`
+- Para exercitar a navegação é necessário um banco com **mais de 20 pedidos acessíveis**. Com 20 ou menos, os controles de página não aparecem por desenho.
+
+### Roteiro (repetir para Vendedor e Gerente)
+
+| # | Passo | Resultado esperado |
+| --- | --- | --- |
+| 1 | Entrar e abrir `Pedidos` | Primeira página com até 20 linhas; resumo “N pedido(s) encontrado(s) — página 1 de X”; “Anterior” desabilitado |
+| 2 | Conferir a requisição em DevTools → Network | `GET /api/pedidos` sem `offset` na primeira página |
+| 3 | Clicar em “Próxima” | Requisição com `limite=20&offset=20`; URL com `pagina=2`; linhas diferentes, sem repetir a página 1 |
+| 4 | Clicar em “Anterior” | Volta à página 1; URL sem `pagina`; requisição sem `offset` |
+| 5 | Ir até a última página | “Próxima” desabilitado; quantidade de linhas pode ser menor que 20; total permanece correto |
+| 6 | Pesquisar um número comercial que não apareça na primeira página | Pedido é encontrado; número, cliente e status corretos; total reflete o filtro |
+| 7 | Combinar cliente + setor + status + período | Somente pedidos que atendem a todos os critérios; total do resumo coerente com a lista |
+| 8 | Com filtros aplicados, avançar para a página 2 | Filtros continuam preenchidos; requisição leva filtros + `limite`/`offset`; URL mantém os filtros e `pagina=2` |
+| 9 | Na página 2, alterar um filtro e clicar em “Filtrar” | Volta para a página 1; requisição sem `offset`; URL contém apenas os filtros (sem `pagina`) |
+| 10 | Abrir um pedido da página 2 e usar “← Voltar para os pedidos” | Retorna à página 2 com os filtros preservados |
+| 11 | Alterar a URL manualmente para `?pagina=999` (com filtros) | “Página não encontrada” com botão “Ir para a primeira página”; total correto |
+| 12 | Conferir o total exibido | É o total de pedidos que atendem aos filtros, não o tamanho da página |
+| 13 | Repetir em largura de celular e com teclado | Sem rolagem horizontal da página; botões com alvo adequado e foco visível; leitor de tela anuncia a paginação |
+
+Registrar como evidência: perfil usado, URL da lista, quantidade total exibida, página acessada, captura de tela e qualquer divergência. A A1 permanece **aprovada provisoriamente** até esse roteiro ser concluído.
+
+---
+
+## 7. Validação manual — AD-009 (prazos)
+
+**Gates automatizados desta correção (2026-10-22):** `npm test` 866 aprovados (+23 de integração MySQL executados à parte); `npm run lint` 0 erros; `npm run typecheck` OK; `npm run build` OK. A validação abaixo é a que falta.
+
+Executar com o app local e banco do app migrado. Repetir no **Vendedor** e no **Gerente**. Não executar em produção.
+
+| # | Passo | Resultado esperado |
+| --- | --- | --- |
+| 1 | Abrir um pedido sem prazo | Badge “Sem prazo”; campo de data vazio; nenhum “Atrasado” |
+| 2 | Informar uma data futura e salvar | Mensagem de sucesso; badge “Prazo de entrega: dd/mm/aaaa” com a **mesma data informada** |
+| 3 | Recarregar a página com **F5** | Badge e campo continuam preenchidos com a mesma data |
+| 4 | Sair e entrar novamente com o mesmo usuário | O prazo continua visível |
+| 5 | Abrir o mesmo pedido em outro navegador/aba anônima | O prazo continua visível |
+| 6 | Alterar o prazo para outra data e salvar | O novo valor substitui o anterior; após F5 permanece o novo |
+| 7 | Informar a **data de hoje** | Não aparece “Atrasado” durante o dia; no dia seguinte, passa a atrasado |
+| 8 | Informar uma data passada no prazo do item | O badge exibe a data informada; o atraso **do item** ainda não é sinalizado na interface (falta definir o critério de conclusão do item, AD-011). O prazo do setor, quando vencido, mostra “· Atrasado” |
+| 9 | Abrir um pedido com atividade de setor e prazo operacional | “Prazo do setor: dd/mm/aaaa” aparece em **modo leitura**; não há campo para editar |
+| 10 | Alterar o prazo de entrega do item e conferir o prazo do setor | O prazo do setor **não** muda |
+| 11 | Importar/reimportar o mesmo pedido | O prazo local continua o mesmo (o conector não envia data de entrega) |
+| 12 | Entrar com um perfil sem `definir_prazo` (ex.: Operador) e abrir o detalhe | O prazo é legível, mas não há ação de salvar prazo |
+| 13 | Acessar a rota sem sessão (ou usuário sem perfil) | A rota de detalhe continua negando o acesso (`401`/`403`), comportamento existente |
+| 14 | Conferir no banco (`pedidos_itens.deadlineAt`) | O valor corresponde ao fim do dia em São Paulo (ex.: `2026-02-01` → `2026-02-02 02:59:59.999`) |
+
+**Prazos antigos:** se o banco tiver prazos gravados antes desta correção (meia-noite UTC), o roteiro do passo 3 pode mostrar um dia a menos. Não há script de conversão nesta etapa. Em ambiente de demonstração, re-salvar o prazo pela interface (passos 2 e 3). Se houver dado real nesse formato, interromper e solicitar autorização específica antes de qualquer conversão.
+
+**Evidência mínima:** perfil, número do pedido, data informada, data exibida antes/depois do F5 e após novo login, captura de tela e valor lido no banco.

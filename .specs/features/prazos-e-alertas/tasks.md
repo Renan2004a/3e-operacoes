@@ -303,3 +303,30 @@ Phase 3: T7
 ## Task Verification Standards
 
 Every task follows `Done when` + `Tests` + `Gate`. Each `Done when` entry is specific, binary, and references the gate command. Test counts prevent silent deletions.
+
+---
+
+## Correção AD-009 (2026-10-22)
+
+**Status**: Done
+
+| Task | Scope | Requirement |
+| --- | --- | --- |
+| T8: leitura e semântica da data | `prazo.ts`, `dia-do-periodo.ts`, `dia-civil.ts`, adapter de indicadores, rotas de prazo | PRAZO-13, PRAZO-14, PRAZO-17, PRAZO-18, PRAZO-19, PRAZO-20, PRAZO-21 |
+| T9: hidratação e exibição | `pedido-detalhe.tsx`, testes das páginas do Vendedor e do Gerente | PRAZO-15, PRAZO-16, PRAZO-17 |
+
+**T8 — leitura e semântica da data**
+
+- What: aceitar apenas `YYYY-MM-DD`, ancorar no fim do dia em São Paulo, devolver os prazos no detalhe.
+- Where: `src/modules/prazos/prazo.ts`, `src/shared/time/dia-do-periodo.ts`, `src/shared/time/dia-civil.ts`, `src/modules/indicadores/consulta-pedidos.ts`, `src/modules/indicadores/adapters/prisma-indicadores-repository.ts`.
+- Done when: `GET /api/pedidos/[orderId]` devolve os dois prazos; datas inválidas/ambíguas respondem `400`; nenhum dado existente é convertido.
+- Tests: unitários de data/domínio, rota do detalhe, rotas de prazo e integração MySQL.
+
+**T9 — hidratação e exibição**
+
+- What: hidratar input e badge a partir da API, exibir `Sem prazo` e o prazo do setor em leitura.
+- Where: `src/shared/ui/pedido-detalhe.tsx` e testes das páginas.
+- Done when: salvar, recarregar (F5) e entrar novamente mantêm a mesma data; o prazo do setor não é editável.
+- Tests: componente (Testing Library).
+
+**Gate**: `npm run lint && npm run typecheck && npm test && npm run build` + integração com MySQL de teste (`RUN_INTEGRATION_TESTS=1`).

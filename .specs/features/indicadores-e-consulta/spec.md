@@ -6,7 +6,7 @@ O vendedor não tem uma visão dos pedidos e o gerente não tem um painel consol
 
 ## Goals
 
-- [ ] Consultar pedidos com filtros (cliente, setor, status, período).
+- [ ] Consultar pedidos com filtros (número do pedido, cliente, setor, status, período).
 - [ ] Vendedor consulta todos os pedidos, somente leitura.
 - [ ] Painel consolidado por setor e status, com pendências.
 - [ ] Indicadores de produção por setor e cumprimento de prazo.
@@ -27,7 +27,7 @@ O vendedor não tem uma visão dos pedidos e o gerente não tem um painel consol
 | Assumption / decision | Chosen default | Rationale | Confirmed? |
 | --- | --- | --- | --- |
 | Fonte dos indicadores | Somente o banco do app | Não consultar o legado para indicadores | sim |
-| Paginação | Limite e offset | Consulta previsível | não |
+| Paginação | Limite e offset no banco, com `total` e `totalPaginas` | Consulta previsível e navegável (A1) | sim |
 | Cumprimento de prazo | Concluídas no prazo ÷ concluídas com prazo | Sem prazo não entra | sim |
 | Produção por setor | Soma de `Execution.quantity` por setor | Dado já existente | sim |
 | Permissão | `consultar_pedidos` (todos os perfis) | RF008 | sim |
@@ -47,11 +47,17 @@ O vendedor não tem uma visão dos pedidos e o gerente não tem um painel consol
 **Acceptance Criteria**:
 
 1. WHEN um usuário consulta a lista de pedidos THEN o sistema SHALL retornar pedidos com número, cliente e status.
-2. WHEN filtros são informados THEN o sistema SHALL filtrar por cliente, setor, status e período.
-3. WHEN o vendedor consulta THEN o sistema SHALL permitir ver todos os pedidos, somente leitura.
-4. WHEN um pedido é consultado THEN o sistema SHALL retornar os itens com solicitado, executado, disponível, entregue e pendente.
+2. WHEN filtros são informados THEN o sistema SHALL filtrar por número do pedido, cliente, setor, status e período.
+3. WHEN o número do pedido é informado THEN o sistema SHALL pesquisar o número comercial (`legacyNumber`) como trecho, no servidor, sem usar o id interno; campo vazio não restringe a consulta.
+4. WHEN o número é combinado com outros filtros THEN o sistema SHALL aplicar todos os critérios em conjunto.
+5. WHEN o vendedor consulta THEN o sistema SHALL permitir ver todos os pedidos, somente leitura.
+6. WHEN um pedido é consultado THEN o sistema SHALL retornar os itens com solicitado, executado, disponível, entregue e pendente.
+7. WHEN a lista é consultada THEN o sistema SHALL aplicar filtros, ordenação (criação decrescente, id crescente) e paginação no banco, retornando no máximo `limite` pedidos (padrão 20, teto 100).
+8. WHEN a lista é paginada THEN o sistema SHALL retornar `paginacao` com `limite`, `offset`, `pagina`, `total` e `totalPaginas`, sendo `total` a contagem de pedidos que atendem aos filtros.
+9. WHEN a página informada não existe THEN o sistema SHALL responder `200` com lista vazia e `total` correto.
+10. WHEN o usuário troca de página THEN a interface SHALL manter os filtros, e SHALL voltar à primeira página quando os filtros forem alterados, limpos ou após uma importação.
 
-**Independent Test**: Filtrar por cliente e ver só os pedidos dele; abrir um pedido e ver os cinco valores por item.
+**Independent Test**: Filtrar por número e por cliente e ver só os pedidos correspondentes; avançar até a última página e conferir que nenhum pedido se repete; buscar um pedido que ficaria fora dos 20 primeiros.
 
 ---
 
@@ -90,6 +96,8 @@ O vendedor não tem uma visão dos pedidos e o gerente não tem um painel consol
 
 - IF o pedido não existir THEN o sistema SHALL responder `404`.
 - IF o usuário não tiver sessão THEN o sistema SHALL responder `401`.
+- IF a página estiver além do total THEN o sistema SHALL responder `200` com lista vazia.
+- IF o termo de pesquisa contiver `%` ou `_` THEN o sistema SHALL tratá-los como texto literal.
 
 ---
 
@@ -108,14 +116,17 @@ O vendedor não tem uma visão dos pedidos e o gerente não tem um painel consol
 | IND-09 | P2: PCP | Execute | T3 | Verified (T3) |
 | IND-10 | Edge: pedido inexistente | Execute | T1, T6 | Verified (T1, T6) |
 | IND-11 | Edge: sem sessão | Execute | T5, T6, T7 | Verified (T5, T6, T7) |
+| IND-12 | P1: Consulta (A1) | Execute | T1, T4, T5 | Verified (unit, rota, integração MySQL, UI) |
+| IND-13 | P1: Consulta (A1) | Execute | T1, T4, T5 | Verified (unit, rota, integração MySQL, UI) |
 
-**Coverage:** 11 total, 11 mapped to tasks, 0 unmapped
+**Coverage:** 13 total, 13 mapped to tasks, 0 unmapped
 
 ---
 
 ## Success Criteria
 
 - [ ] A lista de pedidos respeita os filtros.
+- [ ] A lista de pedidos permite navegar por todas as páginas com filtros preservados (A1).
 - [ ] O detalhe do pedido traz os cinco valores por item.
 - [ ] O painel traz contagem por setor/status e pendências.
 - [ ] Os indicadores trazem produção por setor e cumprimento de prazo.

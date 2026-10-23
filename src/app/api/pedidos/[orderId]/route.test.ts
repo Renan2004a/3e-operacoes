@@ -13,13 +13,12 @@ interface ItemSeed {
   description?: string | null
   productCode?: string | null
   unit?: string
+  deadlineAt?: Date | null
+  activityDeadlineAt?: Date | null
 }
 
 const holder = vi.hoisted(() => ({
-  pedidos: {} as Record<
-    string,
-    { numero: string; cliente: string | null; itens: ItemSeed[] }
-  >,
+  pedidos: {} as Record<string, { numero: string; cliente: string | null; itens: ItemSeed[] }>,
   perfis: {} as Record<string, RoleCode[]>,
   repo: null as unknown as ConsultaPedidosRepository,
 }))
@@ -43,8 +42,8 @@ vi.mock('@/modules/usuarios/adapters/prisma-usuarios-repository', () => ({
 import { GET } from './route'
 
 holder.repo = {
-  async listarPedidosParaConsulta() {
-    return []
+  async consultarPedidos() {
+    return { pedidos: [], total: 0 }
   },
   async buscarCabecalhoPedido(orderId) {
     const pedido = holder.pedidos[orderId]
@@ -66,6 +65,8 @@ holder.repo = {
       description: item.description ?? null,
       productCode: item.productCode ?? null,
       unit: item.unit ?? 'un',
+      deadlineAt: item.deadlineAt ?? null,
+      activityDeadlineAt: item.activityDeadlineAt ?? null,
       classificationStatus: 'PENDING_CLASSIFICATION' as const,
     }))
   },
@@ -91,7 +92,12 @@ function seed(orderId: string, numero: string, cliente: string | null, itens: It
 }
 
 function item(id: string, solicitado: number, executado: number, entregue: number): ItemSeed {
-  return { id, solicitado: String(solicitado), executado: String(executado), entregue: String(entregue) }
+  return {
+    id,
+    solicitado: String(solicitado),
+    executado: String(executado),
+    entregue: String(entregue),
+  }
 }
 
 function request(opts: { userId?: string | null } = {}): Request {
@@ -143,6 +149,8 @@ describe('GET /api/pedidos/[orderId]', () => {
       description: null,
       productCode: null,
       unit: 'un',
+      deadlineAt: null,
+      activityDeadlineAt: null,
       classificationStatus: 'PENDING_CLASSIFICATION',
       sectorId: null,
       sectorCode: null,
@@ -152,6 +160,21 @@ describe('GET /api/pedidos/[orderId]', () => {
       bloqueioCorrecaoSetor: null,
       remessas: [],
     })
+  })
+
+  it('devolve o prazo de entrega do item e o prazo operacional da atividade (AD-009)', async () => {
+    const prazoEntrega = new Date('2026-02-02T02:59:59.999Z')
+    const prazoSetor = new Date('2026-03-11T02:59:59.999Z')
+    seed('ped_1', '1001', 'Construtora X', [
+      { ...item('item_1', 10, 8, 3), deadlineAt: prazoEntrega, activityDeadlineAt: prazoSetor },
+    ])
+
+    const response = await GET(request(), context('ped_1'))
+
+    expect(response.status).toBe(200)
+    const body = await response.json()
+    expect(body.pedido.itens[0].deadlineAt).toBe(prazoEntrega.toISOString())
+    expect(body.pedido.itens[0].activityDeadlineAt).toBe(prazoSetor.toISOString())
   })
 
   it('responde 200 com os totais por unidade de medida, sem somar unidades diferentes (RN02)', async () => {
@@ -165,11 +188,13 @@ describe('GET /api/pedidos/[orderId]', () => {
 
     const body = await response.json()
     expect(
-      body.pedido.totaisPorUnidade.map((total: { unidade: string; itens: number; solicitado: string }) => [
-        total.unidade,
-        total.itens,
-        total.solicitado,
-      ]),
+      body.pedido.totaisPorUnidade.map(
+        (total: { unidade: string; itens: number; solicitado: string }) => [
+          total.unidade,
+          total.itens,
+          total.solicitado,
+        ],
+      ),
     ).toEqual([
       ['metro', 1, '15'],
       ['peca', 2, '30'],
