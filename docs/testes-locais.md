@@ -198,3 +198,21 @@ Executar com o app local e banco do app migrado. Repetir no **Vendedor** e no **
 **Prazos antigos:** se o banco tiver prazos gravados antes desta correção (meia-noite UTC), o roteiro do passo 3 pode mostrar um dia a menos. Não há script de conversão nesta etapa. Em ambiente de demonstração, re-salvar o prazo pela interface (passos 2 e 3). Se houver dado real nesse formato, interromper e solicitar autorização específica antes de qualquer conversão.
 
 **Evidência mínima:** perfil, número do pedido, data informada, data exibida antes/depois do F5 e após novo login, captura de tela e valor lido no banco.
+
+---
+
+## 8. Validação manual — transparência da reimportação e unidade
+
+**Status:** roteiro pendente; não executado nesta alteração. Requer aplicação, conector local e ambiente de teste com dados controlados.
+
+| # | Passo | Resultado esperado |
+| --- | --- | --- |
+| 1 | Importar um pedido válido e conferir o link **“Abrir pedido”** | Abre o detalhe correto do pedido importado |
+| 2 | Repetir a importação dentro de 60 s, sem alterar o Top Gerente | Mensagem de **resultado anterior**, deixando claro que **não houve nova consulta** |
+| 3 | Reimportar efetivamente um pedido antigo e abrir pelo link, com filtros que o excluiriam | Detalhe abre corretamente; `createdAt` não muda |
+| 4 | Em ambiente de teste, alterar a unidade de origem de item com execução/entrega/remessa/atividade iniciada e reimportar | Unidade e histórico anteriores são preservados; divergência de unidade aparece no resultado |
+| 5 | Alterar a unidade de um item sem registros operacionais e reimportar | Unidade e quantidade são atualizadas, sem conversão automática |
+| 6 | Conferir os logs/eventos | `UNIT_DIVERGENCE` no `AuditLog` e no job; nenhum registro operacional apagado |
+| 7 | Conferir o pedido na listagem | Nenhuma duplicação de pedido e `createdAt` inalterado |
+
+**Evidência mínima:** perfil, número do pedido, origem da solicitação (nova/em andamento/anterior), unidade anterior e nova, mensagem exibida, link aberto e captura de tela.

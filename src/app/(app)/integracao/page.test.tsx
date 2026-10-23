@@ -26,6 +26,24 @@ vi.mock('@/shared/http/api-client', () => ({
 
 import ImportarPedidoPage from './page'
 
+const SOLICITADO_EM = '2026-10-23T10:00:00.000Z'
+const EVENTO_EM = '2026-10-23T10:00:10.000Z'
+
+function inicio(overrides: Record<string, unknown> = {}) {
+  return {
+    jobId: 'job_1',
+    orderId: null,
+    status: 'PENDING',
+    origem: 'NOVA',
+    solicitadoEm: SOLICITADO_EM,
+    ...overrides,
+  }
+}
+
+function evento(type: string, detail: string | null = null, createdAt = EVENTO_EM) {
+  return { type, detail, createdAt }
+}
+
 function preencherNumero(valor: string) {
   fireEvent.change(screen.getByLabelText('Número do pedido'), { target: { value: valor } })
   fireEvent.click(screen.getByRole('button', { name: 'Importar pedido' }))
@@ -56,8 +74,13 @@ describe('ImportarPedidoPage', () => {
   })
 
   it('número válido importa e mostra o status do job (LAC-01)', async () => {
-    mocks.apiPost.mockResolvedValue({ jobId: 'job_1' })
-    mocks.apiGet.mockResolvedValue({ jobId: 'job_1', status: 'SUCCEEDED', events: [] })
+    mocks.apiPost.mockResolvedValue(inicio())
+    mocks.apiGet.mockResolvedValue({
+      jobId: 'job_1',
+      orderId: 'order_1',
+      status: 'SUCCEEDED',
+      events: [evento('SUCCEEDED', 'IMPORTED')],
+    })
     render(<ImportarPedidoPage />)
 
     preencherNumero('70435')
@@ -68,17 +91,23 @@ describe('ImportarPedidoPage', () => {
       }),
     )
     expect(await screen.findByText('Job job_1')).toBeInTheDocument()
+    expect(await screen.findByText('Importação concluída')).toBeInTheDocument()
   })
 
   it('atualiza o status até concluir (LAC-03)', async () => {
-    mocks.apiPost.mockResolvedValue({ jobId: 'job_1' })
+    mocks.apiPost.mockResolvedValue(inicio())
     let chamadas = 0
     mocks.apiGet.mockImplementation(() => {
       chamadas += 1
       return Promise.resolve(
         chamadas === 1
-          ? { jobId: 'job_1', status: 'DISPATCHED', events: [] }
-          : { jobId: 'job_1', status: 'SUCCEEDED', events: [] },
+          ? { jobId: 'job_1', orderId: null, status: 'DISPATCHED', events: [] }
+          : {
+              jobId: 'job_1',
+              orderId: 'order_1',
+              status: 'SUCCEEDED',
+              events: [evento('SUCCEEDED', 'IMPORTED')],
+            },
       )
     })
     render(<ImportarPedidoPage />)
@@ -89,18 +118,19 @@ describe('ImportarPedidoPage', () => {
     expect(await screen.findByText('Concluído', {}, { timeout: 3000 })).toBeInTheDocument()
   })
 
-  it('mostra o errorCode quando a importação falha (edge case)', async () => {
-    mocks.apiPost.mockResolvedValue({ jobId: 'job_1' })
+  it('mostra o código técnico quando a importação falha', async () => {
+    mocks.apiPost.mockResolvedValue(inicio())
     mocks.apiGet.mockResolvedValue({
       jobId: 'job_1',
+      orderId: null,
       status: 'FAILED',
-      events: [{ type: 'FAILED', detail: 'ORDER_NOT_FOUND' }],
+      events: [evento('FAILED', 'ORDER_NOT_FOUND')],
     })
     render(<ImportarPedidoPage />)
 
     preencherNumero('70435')
 
-    expect(await screen.findByText('Código do erro: ORDER_NOT_FOUND')).toBeInTheDocument()
+    expect(await screen.findByText('Código técnico: ORDER_NOT_FOUND')).toBeInTheDocument()
   })
 
   it('mostra erro acessível quando a API recusa o número (LAC-02)', async () => {
@@ -113,7 +143,7 @@ describe('ImportarPedidoPage', () => {
   })
 
   it('mostra erro quando o job não é encontrado na consulta de status (edge case)', async () => {
-    mocks.apiPost.mockResolvedValue({ jobId: 'job_1' })
+    mocks.apiPost.mockResolvedValue(inicio())
     mocks.apiGet.mockRejectedValue(new mocks.ApiError(404, 'job_not_found'))
     render(<ImportarPedidoPage />)
 

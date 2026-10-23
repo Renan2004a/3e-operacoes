@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => {
   interface Job {
     id: string
+    orderId: string | null
     legacyOrderNumber: string
     idempotencyKey: string
     status: string
@@ -41,6 +42,7 @@ const mocks = vi.hoisted(() => {
       seq += 1
       const job: Job = {
         id: `job_${seq}`,
+        orderId: null,
         legacyOrderNumber,
         idempotencyKey,
         status: 'PENDING',
@@ -58,6 +60,7 @@ const mocks = vi.hoisted(() => {
       jobId,
       status,
       now,
+      orderId,
       errorCode,
       errorMessage,
       completedAt,
@@ -65,6 +68,7 @@ const mocks = vi.hoisted(() => {
       jobId: string
       status: string
       now: Date
+      orderId?: string | null
       errorCode?: string | null
       errorMessage?: string | null
       completedAt?: Date | null
@@ -73,6 +77,7 @@ const mocks = vi.hoisted(() => {
       if (!job) throw new Error('job não encontrado')
       job.status = status
       job.updatedAt = now
+      if (orderId !== undefined) job.orderId = orderId
       if (errorCode !== undefined) job.errorCode = errorCode
       if (errorMessage !== undefined) job.errorMessage = errorMessage
       if (completedAt !== undefined) job.completedAt = completedAt
@@ -187,7 +192,12 @@ describe('POST /api/integracao/pedidos', () => {
     const response = await POST(request({ orderNumber: '70435' }))
 
     expect(response.status).toBe(202)
-    expect(await response.json()).toEqual({ jobId: 'job_1' })
+    expect(await response.json()).toMatchObject({
+      jobId: 'job_1',
+      orderId: null,
+      status: 'PENDING',
+      origem: 'NOVA',
+    })
     expect(mocks.jobs).toHaveLength(1)
     expect(mocks.jobs[0].legacyOrderNumber).toBe('70435')
     expect(mocks.jobs[0].status).toBe('PENDING')
@@ -270,6 +280,59 @@ describe('POST /api/integracao/pedidos', () => {
     expect(mocks.events[3].detail).toBe('CONNECTOR_TIMEOUT')
   })
 
+  it('classifica resultado final recente como anterior e devolve o pedido vinculado', async () => {
+    await POST(request({ orderNumber: '70435' }))
+    mocks.jobs[0].status = 'SUCCEEDED'
+    mocks.jobs[0].orderId = 'order_1'
+    mocks.scheduled.length = 0
+
+    const response = await POST(request({ orderNumber: '70435' }))
+
+    expect(await response.json()).toMatchObject({
+      jobId: 'job_1',
+      orderId: 'order_1',
+      status: 'SUCCEEDED',
+      origem: 'RESULTADO_ANTERIOR',
+    })
+    expect(mocks.scheduled).toHaveLength(0)
+  })
+
+  it('não duplica despacho de tentativa ativa antiga e a classifica em andamento', async () => {
+    await POST(request({ orderNumber: '70435' }))
+    mocks.jobs[0].status = 'RUNNING'
+    mocks.jobs[0].createdAt = new Date(Date.now() - 120_000)
+    mocks.jobs[0].updatedAt = mocks.jobs[0].createdAt
+    mocks.scheduled.length = 0
+
+    const response = await POST(request({ orderNumber: '70435' }))
+
+    expect(await response.json()).toMatchObject({
+      jobId: 'job_1',
+      status: 'RUNNING',
+      origem: 'EM_ANDAMENTO',
+    })
+    expect(mocks.scheduled).toHaveLength(0)
+  })
+
+  it('não devolve estado final antigo como resultado de uma consulta nova', async () => {
+    await POST(request({ orderNumber: '70435' }))
+    mocks.jobs[0].status = 'SUCCEEDED'
+    mocks.jobs[0].orderId = 'order_1'
+    mocks.jobs[0].createdAt = new Date(Date.now() - 120_000)
+    mocks.jobs[0].updatedAt = mocks.jobs[0].createdAt
+    mocks.scheduled.length = 0
+
+    const response = await POST(request({ orderNumber: '70435' }))
+
+    expect(await response.json()).toMatchObject({
+      jobId: 'job_1',
+      orderId: 'order_1',
+      status: 'PENDING',
+      origem: 'NOVA',
+    })
+    expect(mocks.scheduled).toHaveLength(1)
+  })
+
   it('reutiliza o job dentro da janela e não agenda novo despacho', async () => {
     await POST(request({ orderNumber: '70435' }))
     mocks.scheduled.length = 0
@@ -277,7 +340,11 @@ describe('POST /api/integracao/pedidos', () => {
     const response = await POST(request({ orderNumber: '70435' }))
 
     expect(response.status).toBe(202)
-    expect(await response.json()).toEqual({ jobId: 'job_1' })
+    expect(await response.json()).toMatchObject({
+      jobId: 'job_1',
+      status: 'PENDING',
+      origem: 'EM_ANDAMENTO',
+    })
     expect(mocks.jobs).toHaveLength(1)
     expect(mocks.scheduled).toHaveLength(0)
   })

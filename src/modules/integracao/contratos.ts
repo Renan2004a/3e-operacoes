@@ -51,6 +51,8 @@ export type CallbackPayload = z.infer<typeof callbackSchema>
 
 export interface IntegrationJob {
   id: string
+  /** Pedido do app vinculado após um callback de importação bem-sucedido. */
+  orderId?: string | null
   legacyOrderNumber: string
   idempotencyKey: string
   status: JobStatus
@@ -85,6 +87,7 @@ export interface IntegracaoRepository {
     jobId: string
     status: JobStatus
     now: Date
+    orderId?: string | null
     errorCode?: string | null
     errorMessage?: string | null
     completedAt?: Date | null

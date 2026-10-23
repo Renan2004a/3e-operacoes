@@ -60,15 +60,32 @@ export async function processarCallback(
   try {
     const result = await importarPedido(toPedidoImportado(data), deps.pedidos, deps.classificacao)
 
+    // A divergência de unidade precisa estar visível antes do evento final;
+    // do contrário o polling pode encerrar no SUCCEEDED e não exibi-la.
+    if (result.divergenciasUnidade.length > 0) {
+      await deps.integracao.appendEvent({
+        jobId: job.id,
+        type: 'UNIT_DIVERGENCE',
+        detail: JSON.stringify(result.divergenciasUnidade),
+        now,
+      })
+    }
+
     await deps.integracao.updateStatus({
       jobId: job.id,
       status: 'SUCCEEDED',
       now,
+      orderId: result.orderId,
       completedAt: now,
     })
-    await deps.integracao.appendEvent({ jobId: job.id, type: 'SUCCEEDED', now })
+    await deps.integracao.appendEvent({
+      jobId: job.id,
+      type: 'SUCCEEDED',
+      detail: result.reimportado ? 'REIMPORTED' : 'IMPORTED',
+      now,
+    })
 
-    if (result.divergente) {
+    if (result.divergencias.length > 0) {
       await deps.integracao.appendEvent({
         jobId: job.id,
         type: 'DIVERGENCE',

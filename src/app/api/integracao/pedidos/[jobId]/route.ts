@@ -13,7 +13,12 @@ export async function GET(request: Request, context: { params: Promise<{ jobId: 
   try {
     const result = await consultarStatus(jobId, prismaIntegracaoRepository)
     return Response.json(
-      { jobId: result.jobId, status: result.status, events: result.events },
+      {
+        jobId: result.jobId,
+        orderId: result.orderId,
+        status: result.status,
+        events: result.events,
+      },
       { status: result.final ? 200 : 202 },
     )
   } catch (error) {

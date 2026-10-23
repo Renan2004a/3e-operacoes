@@ -49,11 +49,12 @@ function createIntegracaoFake(seedJobs: IntegrationJob[] = [], seedEvents: Integ
     async create() {
       throw new Error('não usado')
     },
-    async updateStatus({ jobId, status, now, errorCode, errorMessage, completedAt }) {
+    async updateStatus({ jobId, status, now, orderId, errorCode, errorMessage, completedAt }) {
       const job = jobs.find((candidate) => candidate.id === jobId)
       if (!job) throw new Error('job não encontrado')
       job.status = status
       job.updatedAt = now
+      if (orderId !== undefined) job.orderId = orderId
       if (errorCode !== undefined) job.errorCode = errorCode
       if (errorMessage !== undefined) job.errorMessage = errorMessage
       if (completedAt !== undefined) job.completedAt = completedAt
@@ -96,7 +97,11 @@ interface FakeOrder {
   items: FakeOrderItem[]
 }
 
-function createPedidosFake(options: { failUpsert?: boolean; seed?: FakeOrder[] } = {}) {
+function createPedidosFake(options: {
+  failUpsert?: boolean
+  seed?: FakeOrder[]
+  divergenciasUnidade?: import('../pedidos/importar-pedido').DivergenciaUnidade[]
+} = {}) {
   const orders = [...(options.seed ?? [])]
   let seq = orders.length
 
@@ -149,7 +154,10 @@ function createPedidosFake(options: { failUpsert?: boolean; seed?: FakeOrder[] }
         }
       }
 
-      return { orderId: order.id }
+      return {
+        orderId: order.id,
+        divergenciasUnidade: options.divergenciasUnidade ?? [],
+      }
     },
     async registrarDivergencia() {
       // A escrita do AuditLog é verificada no adapter Prisma; aqui basta satisfazer a porta.
@@ -325,8 +333,55 @@ describe('processarCallback', () => {
     })
 
     expect(integracao.jobs[0].status).toBe('SUCCEEDED')
+    expect(integracao.jobs[0].orderId).toBe(pedidos.orders[0].id)
     expect(integracao.jobs[0].completedAt).toEqual(NOW)
     expect(integracao.events.map((event) => event.type)).toEqual(['SUCCEEDED'])
+    expect(integracao.events[0].detail).toBe('IMPORTED')
+  })
+
+  it('marca REIMPORTED quando o pedido já existia e registra divergência de unidade', async () => {
+    const integracao = createIntegracaoFake([makeJob('job_1', 'RUNNING')])
+    const pedidos = createPedidosFake({
+      seed: [
+        {
+          id: 'order_1',
+          legacyOrderKey: '1:70435',
+          customerName: null,
+          items: [
+            {
+              legacyItemKey: '1',
+              requestedQuantity: '5.000',
+              executedQuantity: '0.000',
+              deliveredQuantity: '0.000',
+            },
+          ],
+        },
+      ],
+      divergenciasUnidade: [
+        {
+          legacyItemKey: '1',
+          description: 'TELHA',
+          unidadeAnterior: 'UN',
+          unidadeNova: 'M',
+          motivo: 'REGISTROS_OPERACIONAIS',
+        },
+      ],
+    })
+
+    await processarCallback(validCallback(), {
+      integracao: integracao.repo,
+      pedidos: pedidos.repo,
+      now: () => NOW,
+    })
+
+    expect(integracao.jobs[0].status).toBe('SUCCEEDED')
+    expect(integracao.events.map((event) => event.type)).toEqual([
+      'UNIT_DIVERGENCE',
+      'SUCCEEDED',
+    ])
+    expect(integracao.events[0].detail).toContain('"unidadeAnterior":"UN"')
+    expect(integracao.events[0].detail).toContain('"unidadeNova":"M"')
+    expect(integracao.events[1].detail).toBe('REIMPORTED')
   })
 
   it('faz o upsert do pedido com os itens normalizados', async () => {
