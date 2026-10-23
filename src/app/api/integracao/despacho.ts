@@ -75,20 +75,50 @@ export async function despacharComRetry(
   const sleep = deps.sleep ?? ((ms) => new Promise<void>((resolve) => setTimeout(resolve, ms)))
   const now = deps.now ?? (() => new Date())
 
-  await repo.updateStatus({ jobId, status: 'DISPATCHED', now: now() })
+  // Limpa o erro da tentativa anterior para que o status atual não exiba um
+  // código antigo quando o usuário solicitar nova tentativa.
+  await repo.updateStatus({
+    jobId,
+    status: 'DISPATCHED',
+    now: now(),
+    errorCode: null,
+    errorMessage: null,
+    completedAt: null,
+  })
   await repo.appendEvent({ jobId, type: 'DISPATCHED', now: now() })
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
       // RUNNING é marcado ANTES do despacho: o conector só responde após o
       // callback, que marca SUCCEEDED; marcar depois sobrescreveria o sucesso.
-      await repo.updateStatus({ jobId, status: 'RUNNING', now: now() })
+      await repo.updateStatus({
+        jobId,
+        status: 'RUNNING',
+        now: now(),
+        errorCode: null,
+        errorMessage: null,
+        completedAt: null,
+      })
       await conector.despachar({ jobId, orderNumber })
       return
     } catch (error) {
       const code = error instanceof ConectorLegadoError ? error.code : 'DISPATCH_FAILED'
       const message = error instanceof Error ? error.message : String(error)
       const transitorio = error instanceof ConectorLegadoError && erroTransitorio(code)
+      console.error('[integracao] falha no despacho', {
+        jobId,
+        orderNumber,
+        errorCode: code,
+        attempt,
+        maxAttempts,
+        message,
+      })
+
+      // Um callback pode ter concluído o job durante a tentativa (inclusive
+      // após um timeout do despacho). Um status final com código específico
+      // (ex.: INVALID_CALLBACK_PAYLOAD) não é sobrescrito por erro de transporte.
+      const depois = await repo.findById(jobId).catch(() => null)
+      if (depois?.status === 'SUCCEEDED' || depois?.status === 'FAILED') return
 
       if (!transitorio || attempt >= maxAttempts) {
         const failedAt = now()

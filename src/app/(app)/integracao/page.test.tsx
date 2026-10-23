@@ -89,18 +89,88 @@ describe('ImportarPedidoPage', () => {
     expect(await screen.findByText('Concluído', {}, { timeout: 3000 })).toBeInTheDocument()
   })
 
-  it('mostra o errorCode quando a importação falha (edge case)', async () => {
+  it('orienta o usuário quando o pedido não existe no Top Gerente', async () => {
     mocks.apiPost.mockResolvedValue({ jobId: 'job_1' })
     mocks.apiGet.mockResolvedValue({
       jobId: 'job_1',
       status: 'FAILED',
+      errorCode: 'ORDER_NOT_FOUND',
       events: [{ type: 'FAILED', detail: 'ORDER_NOT_FOUND' }],
     })
     render(<ImportarPedidoPage />)
 
-    preencherNumero('70435')
+    preencherNumero('82269')
 
-    expect(await screen.findByText('Código do erro: ORDER_NOT_FOUND')).toBeInTheDocument()
+    expect(
+      await screen.findByText(/Pedido não encontrado no Top Gerente\. Confira o número informado/),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/pode ser diferente do número no 3E/)).toBeInTheDocument()
+    expect(screen.getByText(/Código técnico: ORDER_NOT_FOUND/)).toBeInTheDocument()
+  })
+
+  it('mostra a falha atual e não um UPSERT_FAILED antigo do mesmo job', async () => {
+    mocks.apiPost.mockResolvedValue({ jobId: 'job_1' })
+    mocks.apiGet.mockResolvedValue({
+      jobId: 'job_1',
+      status: 'FAILED',
+      errorCode: 'CONNECTOR_UNAVAILABLE',
+      events: [
+        { type: 'FAILED', detail: 'UPSERT_FAILED' },
+        { type: 'RETRY', detail: 'CONNECTOR_UNAVAILABLE (tentativa 1/3)' },
+        { type: 'FAILED', detail: 'CONNECTOR_UNAVAILABLE' },
+      ],
+    })
+    render(<ImportarPedidoPage />)
+
+    preencherNumero('82269')
+
+    expect(
+      await screen.findByText('Integração com o Top Gerente indisponível'),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/Código técnico: UPSERT_FAILED/)).not.toBeInTheDocument()
+    expect(screen.getByText(/Código técnico: CONNECTOR_UNAVAILABLE/)).toBeInTheDocument()
+  })
+
+  it('preserva o número digitado após a falha para permitir nova tentativa', async () => {
+    mocks.apiPost.mockResolvedValue({ jobId: 'job_1' })
+    mocks.apiGet.mockResolvedValue({
+      jobId: 'job_1',
+      status: 'FAILED',
+      errorCode: 'UPSERT_FAILED',
+      events: [{ type: 'FAILED', detail: 'UPSERT_FAILED' }],
+    })
+    render(<ImportarPedidoPage />)
+
+    preencherNumero('82269')
+
+    expect(await screen.findByText('Falha ao salvar os dados importados')).toBeInTheDocument()
+    expect(screen.getByLabelText('Número do pedido')).toHaveValue('82269')
+    expect(screen.getByRole('button', { name: 'Importar pedido' })).toBeEnabled()
+  })
+
+  it('informa quando o pedido já existia e foi atualizado (reimportação)', async () => {
+    mocks.apiPost.mockResolvedValue({ jobId: 'job_1' })
+    mocks.apiGet.mockResolvedValue({
+      jobId: 'job_1',
+      status: 'SUCCEEDED',
+      events: [{ type: 'SUCCEEDED', detail: 'REIMPORTED' }],
+    })
+    render(<ImportarPedidoPage />)
+
+    preencherNumero('82269')
+
+    expect(await screen.findByText('Pedido atualizado')).toBeInTheDocument()
+    expect(screen.getByText(/histórico operacional foi preservado/)).toBeInTheDocument()
+  })
+
+  it('orienta a usar o número do Top Gerente junto ao campo', () => {
+    render(<ImportarPedidoPage />)
+
+    expect(
+      screen.getByText(
+        'Informe o número do pedido no Top Gerente. Ele pode ser diferente do número exibido no 3E.',
+      ),
+    ).toBeInTheDocument()
   })
 
   it('mostra erro acessível quando a API recusa o número (LAC-02)', async () => {

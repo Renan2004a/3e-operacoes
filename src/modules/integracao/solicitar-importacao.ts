@@ -34,7 +34,20 @@ export async function solicitarImportacao(
   const since = new Date(input.now.getTime() - IDEMPOTENCY_WINDOW_MS)
 
   const existing = await repo.findRecentByIdempotencyKey(idempotencyKey, since)
-  if (existing) return { jobId: existing.id, reused: true }
+  if (existing) {
+    // Um job que falhou pode ser tentado novamente na hora. Cria um novo job
+    // (como o reprocessamento) para o acompanhamento não começar com o status
+    // e os eventos antigos da falha anterior.
+    if (existing.status === 'FAILED') {
+      const retry = await repo.create({
+        legacyOrderNumber: orderNumber,
+        idempotencyKey: `${idempotencyKey}:retry:${input.now.getTime()}`,
+        now: input.now,
+      })
+      return { jobId: retry.id, reused: false }
+    }
+    return { jobId: existing.id, reused: true }
+  }
 
   const job = await repo.create({
     legacyOrderNumber: orderNumber,

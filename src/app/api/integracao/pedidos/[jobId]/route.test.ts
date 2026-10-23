@@ -129,6 +129,21 @@ describe('GET /api/integracao/pedidos/[jobId]', () => {
     }
   })
 
+  it('devolve o código da falha da tentativa atual', async () => {
+    mocks.jobs.push({
+      ...makeJob('job_1', 'FAILED'),
+      errorCode: 'CONNECTOR_UNAVAILABLE',
+      errorMessage: 'fetch failed',
+    })
+
+    const response = await GET(request(), context('job_1'))
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body.errorCode).toBe('CONNECTOR_UNAVAILABLE')
+    expect(body.errorMessage).toBeUndefined()
+  })
+
   it('responde 401 quando não há sessão', async () => {
     const response = await GET(request({ usuarioId: null }), context('job_1'))
 

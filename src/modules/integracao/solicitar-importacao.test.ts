@@ -125,6 +125,22 @@ describe('solicitarImportacao', () => {
     expect(repo.jobs).toHaveLength(1)
   })
 
+  it('permite nova tentativa imediata quando o job recente falhou', async () => {
+    const repo = createFakeRepo()
+    const first = await solicitarImportacao({ orderNumber: '70435', now: NOW }, repo)
+    repo.jobs[0].status = 'FAILED'
+
+    const later = new Date(NOW.getTime() + 10_000)
+    const second = await solicitarImportacao({ orderNumber: '70435', now: later }, repo)
+
+    expect(second.reused).toBe(false)
+    expect(second.jobId).not.toBe(first.jobId)
+    expect(repo.jobs).toHaveLength(2)
+    expect(repo.jobs[1].status).toBe('PENDING')
+    expect(repo.jobs[1].idempotencyKey).toBe(`pedido:70435:retry:${later.getTime()}`)
+    expect(repo.jobs[0].status).toBe('FAILED')
+  })
+
   it('após a janela, reaproveita o job mas sinaliza novo despacho', async () => {
     const repo = createFakeRepo()
     const first = await solicitarImportacao({ orderNumber: '70435', now: NOW }, repo)

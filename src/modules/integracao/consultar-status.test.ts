@@ -88,6 +88,19 @@ describe('consultarStatus', () => {
     })
   })
 
+  it('devolve o código da falha apenas em job FAILED', async () => {
+    const failed = { ...makeJob('job_failed', 'FAILED'), errorCode: 'CONNECTOR_UNAVAILABLE' }
+    const succeeded = { ...makeJob('job_succeeded', 'SUCCEEDED'), errorCode: 'CONNECTOR_TIMEOUT' }
+    const repo = createFakeRepo([failed, succeeded])
+
+    await expect(consultarStatus('job_failed', repo)).resolves.toMatchObject({
+      errorCode: 'CONNECTOR_UNAVAILABLE',
+    })
+    await expect(consultarStatus('job_succeeded', repo)).resolves.toMatchObject({
+      errorCode: null,
+    })
+  })
+
   it('devolve o status e a lista de eventos do job', async () => {
     const events: IntegrationJobEventRecord[] = [
       { id: 'evt_1', jobId: 'job_1', type: 'CREATED', detail: null, createdAt: NOW },

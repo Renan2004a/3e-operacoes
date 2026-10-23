@@ -73,6 +73,8 @@ export interface PedidosRepository {
 
 export interface ImportarPedidoResult {
   orderId: string
+  /** true quando o pedido já existia no 3E e foi atualizado (reimportação). */
+  reimportado: boolean
   divergente: boolean
   divergencias: DivergenciaItem[]
 }
@@ -158,5 +160,10 @@ export async function importarPedido(
     await repo.registrarDivergencia({ legacyOrderKey: pedido.legacyOrderKey, divergencia })
   }
 
-  return { orderId, divergente: divergencias.length > 0, divergencias }
+  return {
+    orderId,
+    reimportado: snapshot !== null,
+    divergente: divergencias.length > 0,
+    divergencias,
+  }
 }
