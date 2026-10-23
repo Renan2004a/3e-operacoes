@@ -198,3 +198,20 @@ Executar com o app local e banco do app migrado. Repetir no **Vendedor** e no **
 **Prazos antigos:** se o banco tiver prazos gravados antes desta correção (meia-noite UTC), o roteiro do passo 3 pode mostrar um dia a menos. Não há script de conversão nesta etapa. Em ambiente de demonstração, re-salvar o prazo pela interface (passos 2 e 3). Se houver dado real nesse formato, interromper e solicitar autorização específica antes de qualquer conversão.
 
 **Evidência mínima:** perfil, número do pedido, data informada, data exibida antes/depois do F5 e após novo login, captura de tela e valor lido no banco.
+
+---
+
+## 8. Validação manual — nova tentativa de importação após falha
+
+**Status:** roteiro pendente; não executado nesta alteração. Requer aplicação, conector local e uma condição de falha controlada em ambiente de teste.
+
+| # | Passo | Resultado esperado |
+| --- | --- | --- |
+| 1 | Entrar como Vendedor e abrir a área de Vendas | Formulário de importação disponível |
+| 2 | Provocar uma falha de importação (por exemplo, conector indisponível ou número inexistente) | Mensagem compreensível, código técnico para suporte e número digitado preservado |
+| 3 | Clicar em **“Tentar novamente”** antes e depois de 60 s | Um novo job é criado; a tela passa a mostrar o novo `jobId`, sem o erro anterior |
+| 4 | Repetir o clique enquanto a tentativa está ativa | Nenhum processamento duplicado; a tentativa ativa é reutilizada |
+| 5 | Restaurar a condição e aguardar a conclusão | Acompanhamento até `SUCCEEDED`, com mensagem de sucesso sem erro antigo |
+| 6 | Conferir os jobs no banco/API | O job falho anterior permanece no histórico; o novo job tem chave `:retry` e eventos próprios |
+
+**Evidência mínima:** perfil, número, `jobId` antigo e novo, mensagem exibida, status final e captura de tela.

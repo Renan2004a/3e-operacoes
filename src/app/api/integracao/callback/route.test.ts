@@ -314,7 +314,8 @@ describe('POST /api/integracao/callback', () => {
 
     expect(response.status).toBe(400)
     expect(mocks.upsertCalls).toHaveLength(0)
-    expect(mocks.jobs[0].status).toBe('RUNNING')
+    expect(mocks.jobs[0].status).toBe('FAILED')
+    expect(mocks.jobs[0].errorCode).toBe('INVALID_CALLBACK_PAYLOAD')
   })
 
   it('responde 404 quando o job não existe', async () => {

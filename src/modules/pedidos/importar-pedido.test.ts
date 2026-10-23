@@ -174,6 +174,7 @@ describe('importarPedido', () => {
     )
 
     expect(result.divergente).toBe(false)
+    expect(result.reimportado).toBe(false)
     expect(orders).toHaveLength(1)
     expect(result.orderId).toBe(orders[0].id)
     expect(orders[0].items.map((saved) => saved.legacyItemKey)).toEqual(['1', '2'])
@@ -187,6 +188,8 @@ describe('importarPedido', () => {
     const second = await importarPedido(pedido(), repo)
 
     expect(orders).toHaveLength(1)
+    expect(first.reimportado).toBe(false)
+    expect(second.reimportado).toBe(true)
     expect(second.orderId).toBe(first.orderId)
   })
 

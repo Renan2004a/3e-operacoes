@@ -8,6 +8,8 @@ import {
 export interface ConsultarStatusResult {
   jobId: string
   status: JobStatus
+  /** Código da falha da tentativa atual; null quando não há falha. */
+  errorCode: string | null
   /** true quando o job atingiu um estado final (SUCCEEDED ou FAILED). */
   final: boolean
   events: IntegrationJobEventRecord[]
@@ -23,5 +25,11 @@ export async function consultarStatus(
   if (!job) throw new JobNotFoundError(jobId)
 
   const events = await repo.listEvents(jobId)
-  return { jobId: job.id, status: job.status, final: FINAL_STATUSES.includes(job.status), events }
+  return {
+    jobId: job.id,
+    status: job.status,
+    errorCode: job.status === 'FAILED' ? job.errorCode : null,
+    final: FINAL_STATUSES.includes(job.status),
+    events,
+  }
 }

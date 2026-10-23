@@ -7,6 +7,7 @@ import {
 import type {
   ConectorLegadoPort,
   IntegracaoRepository,
+  JobStatus,
 } from '../../../modules/integracao/contratos'
 
 let cachedConector: ConectorLegadoPort | null = null
@@ -65,30 +66,66 @@ export interface DespachoDeps {
  * tentativa frustrada que gera nova tentativa é registrada em evento `RETRY`.
  */
 export async function despacharComRetry(
-  input: { jobId: string; orderNumber: string },
+  input: { jobId: string; orderNumber: string; atualizadoEmEsperado?: Date },
   deps: DespachoDeps,
 ): Promise<void> {
-  const { jobId, orderNumber } = input
+  const { jobId, orderNumber, atualizadoEmEsperado } = input
   const { repo, conector } = deps
   const maxAttempts = deps.maxAttempts ?? resolverMaxAttempts()
   const backoffMs = deps.backoffMs ?? resolverRetryBackoffMs()
   const sleep = deps.sleep ?? ((ms) => new Promise<void>((resolve) => setTimeout(resolve, ms)))
   const now = deps.now ?? (() => new Date())
 
-  await repo.updateStatus({ jobId, status: 'DISPATCHED', now: now() })
+  // Limpa o erro da tentativa anterior para que o status atual não exiba um
+  // código antigo quando o usuário solicitar nova tentativa. Quando o adapter
+  // oferece reserva atômica, só uma execução move PENDING → DISPATCHED.
+  if (repo.iniciarDespacho) {
+    const reservado = await repo.iniciarDespacho(jobId, now(), atualizadoEmEsperado)
+    if (!reservado) return
+  } else {
+    await repo.updateStatus({
+      jobId,
+      status: 'DISPATCHED',
+      now: now(),
+      errorCode: null,
+      errorMessage: null,
+      completedAt: null,
+    })
+  }
   await repo.appendEvent({ jobId, type: 'DISPATCHED', now: now() })
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
       // RUNNING é marcado ANTES do despacho: o conector só responde após o
       // callback, que marca SUCCEEDED; marcar depois sobrescreveria o sucesso.
-      await repo.updateStatus({ jobId, status: 'RUNNING', now: now() })
+      await repo.updateStatus({
+        jobId,
+        status: 'RUNNING',
+        now: now(),
+        errorCode: null,
+        errorMessage: null,
+        completedAt: null,
+      })
       await conector.despachar({ jobId, orderNumber })
       return
     } catch (error) {
       const code = error instanceof ConectorLegadoError ? error.code : 'DISPATCH_FAILED'
       const message = error instanceof Error ? error.message : String(error)
       const transitorio = error instanceof ConectorLegadoError && erroTransitorio(code)
+      console.error('[integracao] falha no despacho', {
+        jobId,
+        orderNumber,
+        errorCode: code,
+        attempt,
+        maxAttempts,
+        message,
+      })
+
+      // Um callback pode ter concluído o job durante a tentativa (inclusive
+      // após um timeout do despacho). Um status final com código específico
+      // (ex.: INVALID_CALLBACK_PAYLOAD) não é sobrescrito por erro de transporte.
+      const depois = await repo.findById(jobId).catch(() => null)
+      if (depois?.status === 'SUCCEEDED' || depois?.status === 'FAILED') return
 
       if (!transitorio || attempt >= maxAttempts) {
         const failedAt = now()
@@ -119,11 +156,39 @@ export async function despacharComRetry(
  * Agenda o despacho em background após o `202`, com retry/backoff antes de
  * marcar `FAILED` (LAC-11).
  */
-export function agendarDespacho(input: { jobId: string; orderNumber: string }): void {
+export function agendarDespacho(input: {
+  jobId: string
+  orderNumber: string
+  /** Estado esperado no momento da solicitação; ausente = job novo (PENDING). */
+  statusEsperado?: JobStatus
+  /** Carimbo da tentativa capturado na solicitação, contra tarefas duplicadas. */
+  atualizadoEmEsperado?: Date
+}): void {
+  const statusEsperado = input.statusEsperado ?? 'PENDING'
+
   after(async () => {
-    await despacharComRetry(input, {
-      repo: prismaIntegracaoRepository,
-      conector: getConectorLegado(),
-    })
+    // Cliques repetidos podem agendar o mesmo job mais de uma vez. Só despacha
+    // se o job ainda estiver no estado capturado na solicitação; a primeira
+    // execução o move e as demais não repetem a chamada ao conector.
+    const job = await prismaIntegracaoRepository.findById(input.jobId)
+    if (!job || job.status !== statusEsperado) return
+    if (
+      input.atualizadoEmEsperado &&
+      job.updatedAt.getTime() !== input.atualizadoEmEsperado.getTime()
+    ) {
+      return
+    }
+
+    await despacharComRetry(
+      {
+        jobId: input.jobId,
+        orderNumber: input.orderNumber,
+        atualizadoEmEsperado: input.atualizadoEmEsperado,
+      },
+      {
+        repo: prismaIntegracaoRepository,
+        conector: getConectorLegado(),
+      },
+    )
   })
 }
