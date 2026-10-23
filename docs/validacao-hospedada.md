@@ -69,22 +69,21 @@ Não houve diferença de comportamento observada entre local e hospedado.
 
 ---
 
-## 5. Atualização 2026-10-22 — correções dos PRs #2 e #3
-
-Os PRs do Marcelo foram revisados, mergeados e validados **localmente**:
+## 5. Atualizações dos PRs #2, #3 e #4 (2026-10-22/23)
 
 | Item | Local | Hospedado |
 | --- | --- | --- |
-| PR #2 — correção de setor (`AD-006`/`AD-007`) | ✅ | ⏳ pendente |
-| PR #3 — totais por unidade (`AD-008`) | ✅ | ⏳ pendente |
-| Testes | **785** verdes | — |
+| PR #2 — correção de setor (`AD-006`/`AD-007`) | ✅ | ✅ |
+| PR #3 — totais por unidade (`AD-008`) | ✅ | ✅ |
+| PR #4 — consulta, filtros, paginação e prazos | ✅ | ✅ |
+| Testes | **866** verdes + 23 de integração ignorados (gated) | — |
 | Lint / typecheck / build | 0 erros / OK / OK | — |
-| Playwright (390 px, navegação, setor, totais, impressão) | **11/11** | — |
-| Impressão | 1 página | — |
+| Playwright (390 px, navegação, setor, totais, impressão) | **11/11** | **11/11** |
+| Impressão | 1 página | 1 página |
 
-**Pendência (atualizada em 2026-10-22):** com um token de projeto válido, o CLI autentica (consulta o serviço normalmente), mas o Railway responde **“Deploys have been paused temporarily”** ao tentar `railway up`/`redeploy`. Não é falha de código: o último deploy (`200dfb21`) está `SUCCESS` (20/10 20:51) e o app segue saudável (`/api/health` 200). É um bloqueio de conta/projeto (trial/uso ou pausa manual), que precisa ser resolvido no dashboard.
+**Deploy concluído em 2026-10-23:** o bloqueio “Deploys have been paused temporarily” foi resolvido no projeto e o `railway up` publicou o commit `f64cc9a`. A validação Playwright em produção passou **11/11** e `/api/health` responde `200`.
 
-**Para publicar as correções:** no dashboard do projeto `reliable-enchantment` → serviço `3e-operacoes`, verificar o aviso de trial/uso e **despausar os deploys** (ou adicionar forma de pagamento/upgrade). Depois rodar `railway up -p <PROJECT_ID> -s 3e-operacoes -e <ENV_ID> -c` e a validação com `PLAYWRIGHT_BASE_URL=https://3e-operacoes-production.up.railway.app node scripts/validar-responsivo-impressao.mjs`.
+> Os testes de integração (`*.integration.test.ts`) só rodam com `RUN_INTEGRATION_TESTS=1` e um banco com `test`/`integration` no nome. No ambiente atual ficam **ignorados de propósito**, sem tocar o banco do app.
 
 ## 6. Próximos passos para go-live
 
