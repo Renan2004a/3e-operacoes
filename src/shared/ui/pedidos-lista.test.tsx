@@ -17,12 +17,12 @@ vi.mock('next/navigation', () => ({
   useParams: () => ({}),
 }))
 
-import { PedidosLista } from './pedidos-lista'
+import { PedidosLista, type PedidoListado } from './pedidos-lista'
 
 const PEDIDO = { id: 'p1', numero: '100', cliente: 'Ana', status: 'PENDING' as const }
 
 function resposta(
-  pedidos = [PEDIDO],
+  pedidos: PedidoListado[] = [PEDIDO],
   paginacao: Partial<{
     limite: number
     offset: number
@@ -69,6 +69,20 @@ describe('PedidosLista', () => {
     expect(within(tabela).getByText('Ana')).toBeInTheDocument()
     expect(within(tabela).getByText('Pendente')).toBeInTheDocument()
     expect(mocks.apiGet).toHaveBeenCalledWith('/api/pedidos')
+  })
+
+  it('usa "Produção concluída" como rótulo do status COMPLETED (AD-013)', async () => {
+    mocks.apiGet.mockResolvedValue(
+      resposta([{ id: 'p2', numero: '200', cliente: 'Bia', status: 'COMPLETED' as const }]),
+    )
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+
+    const tabela = await screen.findByRole('table', { name: 'Pedidos' })
+    expect(within(tabela).getByText('Produção concluída')).toBeInTheDocument()
+    expect(
+      within(screen.getByLabelText('Status')).getByText('Produção concluída'),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('Concluído')).not.toBeInTheDocument()
   })
 
   it('mostra estado vazio quando não há pedidos (FEP-03)', async () => {

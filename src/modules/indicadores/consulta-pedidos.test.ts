@@ -4,12 +4,15 @@ import { PedidoNaoEncontradoError, type ItemDoPedido } from '../expedicao/saldo-
 import {
   detalharPedido,
   listarPedidos,
+  statusDoPedido,
   type AtividadeDoPedido,
   type ConsultaPedidosCriterios,
   type ConsultaPedidosRepository,
   type EspecificacaoItem,
+  type ItemDoPedidoConsultado,
   type PedidoConsultado,
   type ResultadoConsultaPedidos,
+  type StatusClassificacaoItem,
 } from './consulta-pedidos'
 
 interface PedidoSeed {
@@ -19,7 +22,8 @@ interface PedidoSeed {
   customerName?: string | null
   sellerLegacyCode?: string | null
   criadoEm: Date
-  atividades: AtividadeDoPedido[]
+  /** Itens usados na consulta/lista; `itens` abaixo é o saldo usado no detalhe. */
+  itensConsulta?: ItemDoPedidoConsultado[]
   itens?: ItemDoPedido[]
   especificacoes?: EspecificacaoItem[]
 }
@@ -32,7 +36,7 @@ function pedido(overrides: Partial<PedidoSeed> & Pick<PedidoSeed, 'id' | 'numero
     customerName: overrides.customerName,
     sellerLegacyCode: overrides.sellerLegacyCode,
     criadoEm: overrides.criadoEm ?? new Date('2026-10-07T12:00:00.000Z'),
-    atividades: overrides.atividades ?? [],
+    itensConsulta: overrides.itensConsulta ?? [],
     itens: overrides.itens,
     especificacoes: overrides.especificacoes,
   }
@@ -47,7 +51,10 @@ function createRepo(pedidos: PedidoSeed[]): ConsultaPedidosRepository {
           numero: p.numero,
           cliente: p.cliente,
           criadoEm: p.criadoEm,
-          atividades: p.atividades.map((a) => ({ ...a })),
+          itens: (p.itensConsulta ?? []).map((item) => ({
+            ...item,
+            atividades: item.atividades.map((atividade) => ({ ...atividade })),
+          })),
         })),
         total: pedidos.length,
       }
@@ -89,7 +96,15 @@ function item(overrides: Partial<ItemDoPedido> & Pick<ItemDoPedido, 'id'>): Item
 }
 
 describe('listarPedidos', () => {
-  const atividades: AtividadeDoPedido[] = [{ sectorCode: 'TELHAS', status: 'PENDING' }]
+  function itemConsultado(
+    status: AtividadeDoPedido['status'] = 'PENDING',
+    classificationStatus: StatusClassificacaoItem = 'CLASSIFIED',
+  ): ItemDoPedidoConsultado {
+    return {
+      classificationStatus,
+      atividades: [{ sectorCode: 'TELHAS', status }],
+    }
+  }
 
   function consultado(
     id: string,
@@ -102,7 +117,7 @@ describe('listarPedidos', () => {
       numero,
       cliente,
       criadoEm: new Date('2026-10-07T12:00:00.000Z'),
-      atividades: [{ ...atividades[0], status }],
+      itens: [itemConsultado(status)],
     }
   }
 
@@ -286,27 +301,32 @@ describe('listarPedidos', () => {
     expect(resultado.pedidos.map((linha) => linha.id)).toEqual(['ped_c', 'ped_a', 'ped_b'])
   })
 
-  it('deriva o status de cada pedido a partir das atividades (IND-01)', async () => {
+  it('deriva o status de cada pedido a partir de todos os itens ativos (IND-01, AD-013)', async () => {
     const { repo } = createConsultaRepo({
       pedidos: [
         {
           ...consultado('ped_1', '1001', 'Construtora X'),
-          atividades: [{ sectorCode: 'TELHAS', status: 'COMPLETED' }],
+          itens: [itemConsultado('COMPLETED')],
         },
         {
           ...consultado('ped_2', '1002', 'Mercado Y'),
-          atividades: [{ sectorCode: 'CORTE_DOBRA', status: 'PENDING' }],
+          itens: [itemConsultado('PENDING')],
         },
         {
           ...consultado('ped_3', '1003', 'Loja Z'),
-          atividades: [
-            { sectorCode: 'TELHAS', status: 'COMPLETED' },
-            { sectorCode: 'CORTE_DOBRA', status: 'IN_PROGRESS' },
-          ],
+          itens: [itemConsultado('COMPLETED'), itemConsultado('IN_PROGRESS')],
         },
-        { ...consultado('ped_4', '1004', 'Sem produção'), atividades: [] },
+        { ...consultado('ped_4', '1004', 'Sem produção'), itens: [] },
+        {
+          ...consultado('ped_5', '1005', 'Não desmembrado'),
+          itens: [itemConsultado('PENDING', 'PENDING_CLASSIFICATION')],
+        },
+        {
+          ...consultado('ped_6', '1006', 'Concluído com pendência'),
+          itens: [itemConsultado('COMPLETED'), itemConsultado('PENDING', 'PENDING_CLASSIFICATION')],
+        },
       ],
-      total: 4,
+      total: 6,
     })
 
     const resultado = await listarPedidos({}, repo)
@@ -316,7 +336,85 @@ describe('listarPedidos', () => {
       ['1002', 'Mercado Y', 'PENDING'],
       ['1003', 'Loja Z', 'IN_PROGRESS'],
       ['1004', 'Sem produção', 'PENDING'],
+      ['1005', 'Não desmembrado', 'PENDING'],
+      ['1006', 'Concluído com pendência', 'IN_PROGRESS'],
     ])
+  })
+})
+
+describe('statusDoPedido (AD-013)', () => {
+  function itemConsultado(
+    classificationStatus: StatusClassificacaoItem,
+    ...status: AtividadeDoPedido['status'][]
+  ): ItemDoPedidoConsultado {
+    return {
+      classificationStatus,
+      atividades: status.map((statusAtividade) => ({
+        sectorCode: 'TELHAS',
+        status: statusAtividade,
+      })),
+    }
+  }
+
+  it('pedido sem itens permanece pendente', () => {
+    expect(statusDoPedido([])).toBe('PENDING')
+  })
+
+  it('item ativo sem desmembramento não conclui a produção', () => {
+    expect(statusDoPedido([itemConsultado('PENDING_CLASSIFICATION')])).toBe('PENDING')
+  })
+
+  it('item não desmembrado com atividade concluída não conclui a produção', () => {
+    expect(statusDoPedido([itemConsultado('PENDING_CLASSIFICATION', 'COMPLETED')])).toBe(
+      'IN_PROGRESS',
+    )
+  })
+
+  it('atividade concluída com outro item ativo não desmembrado fica em andamento', () => {
+    expect(
+      statusDoPedido([
+        itemConsultado('CLASSIFIED', 'COMPLETED'),
+        itemConsultado('PENDING_CLASSIFICATION', 'COMPLETED'),
+      ]),
+    ).toBe('IN_PROGRESS')
+  })
+
+  it('todos os itens ativos desmembrados e concluídos resultam em produção concluída', () => {
+    expect(
+      statusDoPedido([
+        itemConsultado('CLASSIFIED', 'COMPLETED'),
+        itemConsultado('CLASSIFIED', 'COMPLETED'),
+      ]),
+    ).toBe('COMPLETED')
+  })
+
+  it('atividades pendentes mantêm o pedido pendente', () => {
+    expect(
+      statusDoPedido([
+        itemConsultado('CLASSIFIED', 'PENDING'),
+        itemConsultado('CLASSIFIED', 'PENDING'),
+      ]),
+    ).toBe('PENDING')
+  })
+
+  it('atividade em andamento, pausada ou divergente resulta em em andamento', () => {
+    for (const status of ['IN_PROGRESS', 'PAUSED', 'DIVERGENT'] as const) {
+      expect(statusDoPedido([itemConsultado('CLASSIFIED', status)])).toBe('IN_PROGRESS')
+    }
+  })
+
+  it('item classificado sem atividade não é considerado concluído', () => {
+    expect(
+      statusDoPedido([itemConsultado('CLASSIFIED'), itemConsultado('CLASSIFIED', 'COMPLETED')]),
+    ).toBe('IN_PROGRESS')
+  })
+
+  it('atividade de Revenda concluída conta como produção concluída no status, sem decidir atendimento (AD-012/T00.4)', () => {
+    const revenda: ItemDoPedidoConsultado = {
+      classificationStatus: 'CLASSIFIED',
+      atividades: [{ sectorCode: 'REVENDA', status: 'COMPLETED' }],
+    }
+    expect(statusDoPedido([revenda])).toBe('COMPLETED')
   })
 })
 

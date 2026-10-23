@@ -58,14 +58,19 @@ function pedido(
   id: string,
   numero: string,
   cliente: string | null,
-  status: PedidoConsultado['atividades'][number]['status'],
+  status: PedidoConsultado['itens'][number]['atividades'][number]['status'],
 ): PedidoConsultado {
   return {
     id,
     numero,
     cliente,
     criadoEm: new Date('2026-10-07T12:00:00.000Z'),
-    atividades: [{ sectorCode: 'TELHAS', status }],
+    itens: [
+      {
+        classificationStatus: 'CLASSIFIED',
+        atividades: [{ sectorCode: 'TELHAS', status }],
+      },
+    ],
   }
 }
 

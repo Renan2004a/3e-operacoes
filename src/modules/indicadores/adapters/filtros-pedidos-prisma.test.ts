@@ -49,34 +49,39 @@ describe('montarWherePedidos', () => {
     expect(montarWherePedidos({ ate })).toEqual({ createdAt: { lt: ate } })
   })
 
-  it('traduz PENDING para todas as atividades pendentes (IND-01, D7)', () => {
+  it('traduz PENDING para todos os itens sem atividade ou com atividades pendentes (AD-013)', () => {
     expect(montarWherePedidos({ status: 'PENDING' })).toEqual({
       items: { every: { activities: { every: { status: 'PENDING' } } } },
     })
   })
 
-  it('traduz COMPLETED exigindo ao menos uma atividade, toda concluída (IND-01, D7)', () => {
+  it('traduz COMPLETED exigindo item, item desmembrado e todas as atividades concluídas (AD-013)', () => {
     expect(montarWherePedidos({ status: 'COMPLETED' })).toEqual({
-      AND: [
-        { items: { some: { activities: { some: {} } } } },
-        { items: { every: { activities: { every: { status: 'COMPLETED' } } } } },
-      ],
+      items: {
+        some: {},
+        every: {
+          classificationStatus: 'CLASSIFIED',
+          activities: { some: {}, every: { status: 'COMPLETED' } },
+        },
+      },
     })
   })
 
-  it('traduz IN_PROGRESS como o que não é pendente nem concluído (IND-01, D7)', () => {
-    expect(montarWherePedidos({ status: 'IN_PROGRESS' })).toEqual({
-      AND: [
-        { NOT: { items: { every: { activities: { every: { status: 'PENDING' } } } } } },
-        {
-          NOT: {
-            AND: [
-              { items: { some: { activities: { some: {} } } } },
-              { items: { every: { activities: { every: { status: 'COMPLETED' } } } } },
-            ],
-          },
+  it('traduz IN_PROGRESS como o que não é pendente nem concluído (AD-013)', () => {
+    const todosNaoIniciados = {
+      items: { every: { activities: { every: { status: 'PENDING' } } } },
+    }
+    const todosConcluidos = {
+      items: {
+        some: {},
+        every: {
+          classificationStatus: 'CLASSIFIED',
+          activities: { some: {}, every: { status: 'COMPLETED' } },
         },
-      ],
+      },
+    }
+    expect(montarWherePedidos({ status: 'IN_PROGRESS' })).toEqual({
+      AND: [{ NOT: todosNaoIniciados }, { NOT: todosConcluidos }],
     })
   })
 

@@ -12,7 +12,7 @@ import {
 } from '../expedicao/saldo-pedido'
 
 /**
- * Situação consolidada do pedido, derivada das atividades dos seus itens.
+ * Situação consolidada do pedido, derivada dos itens ativos e das atividades.
  * O pedido não possui status próprio no banco do app (IND-01).
  */
 export type StatusPedido = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED'
@@ -25,13 +25,22 @@ export interface AtividadeDoPedido {
   status: ActivityStatus
 }
 
-/** Pedido como o repositório entrega para consulta: cabeçalho e atividades. */
+/**
+ * Item como o repositório entrega para a consulta. A classificação é necessária
+ * porque item ativo sem desmembramento não pode concluir a produção (AD-013).
+ */
+export interface ItemDoPedidoConsultado {
+  classificationStatus: StatusClassificacaoItem
+  atividades: AtividadeDoPedido[]
+}
+
+/** Pedido como o repositório entrega para consulta: cabeçalho e itens. */
 export interface PedidoConsultado {
   id: string
   numero: string
   cliente: string | null
   criadoEm: Date
-  atividades: AtividadeDoPedido[]
+  itens: ItemDoPedidoConsultado[]
 }
 
 export interface FiltrosPedido {
@@ -208,14 +217,34 @@ function normalizarPaginacao(filtros: FiltrosPedido): { limite: number; offset: 
 }
 
 /**
- * Status do pedido a partir das atividades dos itens: sem atividades ou todas
- * pendentes → `PENDING`; todas concluídas → `COMPLETED`; caso contrário →
- * `IN_PROGRESS` (IND-01).
+ * Situação de um item ativo. Só é `COMPLETED` quando o item foi desmembrado e
+ * todas as suas atividades foram concluídas; item não classificado nunca conta
+ * como produção concluída (AD-013). Sem atividades, o item é considerado não
+ * iniciado, e não concluído.
  */
-export function statusDoPedido(atividades: readonly AtividadeDoPedido[]): StatusPedido {
-  if (atividades.length === 0) return 'PENDING'
-  if (atividades.every((atividade) => atividade.status === 'COMPLETED')) return 'COMPLETED'
-  if (atividades.every((atividade) => atividade.status === 'PENDING')) return 'PENDING'
+function situacaoDoItem(item: ItemDoPedidoConsultado): StatusPedido {
+  const concluido =
+    item.classificationStatus === 'CLASSIFIED' &&
+    item.atividades.length > 0 &&
+    item.atividades.every((atividade) => atividade.status === 'COMPLETED')
+  if (concluido) return 'COMPLETED'
+  if (item.atividades.every((atividade) => atividade.status === 'PENDING')) return 'PENDING'
+  return 'IN_PROGRESS'
+}
+
+/**
+ * Status do pedido a partir de todos os itens ativos, inclusive os ainda não
+ * desmembrados (AD-013): todos concluídos → `COMPLETED`; todos não iniciados →
+ * `PENDING`; caso contrário → `IN_PROGRESS`. Pedido sem itens permanece
+ * `PENDING`, preservando o comportamento anterior. O cancelamento lógico de
+ * item (AD-010) ainda não tem campo/contrato; por isso não há item inativo a
+ * excluir deste cálculo.
+ */
+export function statusDoPedido(itens: readonly ItemDoPedidoConsultado[]): StatusPedido {
+  if (itens.length === 0) return 'PENDING'
+  const situacoes = itens.map(situacaoDoItem)
+  if (situacoes.every((situacao) => situacao === 'COMPLETED')) return 'COMPLETED'
+  if (situacoes.every((situacao) => situacao === 'PENDING')) return 'PENDING'
   return 'IN_PROGRESS'
 }
 
@@ -223,7 +252,7 @@ export function statusDoPedido(atividades: readonly AtividadeDoPedido[]): Status
  * Lista uma página de pedidos. Os filtros de número comercial, cliente, setor,
  * status e período, a ordenação (criação decrescente, id crescente) e a
  * paginação são aplicados no banco (IND-01, IND-02, IND-03, QF-07, A1).
- * O status exibido continua derivado das atividades de cada pedido da página.
+ * O status exibido é derivado de todos os itens ativos de cada pedido da página.
  */
 export async function listarPedidos(
   filtros: FiltrosPedido,
@@ -246,7 +275,7 @@ export async function listarPedidos(
       id: pedido.id,
       numero: pedido.numero,
       cliente: pedido.cliente,
-      status: statusDoPedido(pedido.atividades),
+      status: statusDoPedido(pedido.itens),
     })),
     paginacao: {
       limite,

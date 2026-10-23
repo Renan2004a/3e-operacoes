@@ -24,6 +24,8 @@ type Setor = 'TELHAS' | 'CORTE_DOBRA' | 'REVENDA'
 interface AtividadeSeed {
   setor: Setor
   status: StatusAtividade
+  /** Padrão `CLASSIFIED`; permite semear a inconsistência item com atividade e sem desmembrar. */
+  classificacao?: 'CLASSIFIED' | 'PENDING_CLASSIFICATION'
 }
 
 interface PedidoSeed {
@@ -72,6 +74,8 @@ async function criarPedido(seed: PedidoSeed) {
         legacyItemKey: `item-${indice++}`,
         unit: 'UN',
         requestedQuantity: 1,
+        // Item com atividade é um item já desmembrado no fluxo real (AD-003).
+        classificationStatus: atividade.classificacao ?? 'CLASSIFIED',
       },
     })
     await prisma.activity.create({
@@ -307,6 +311,50 @@ describe.skipIf(!ativo)('consulta de pedidos no MySQL (integração A1)', () => 
     expect(pendentes.pedidos.map((l) => l.numero).sort()).toEqual(['s1', 's2'])
     expect(concluidos.pedidos.map((l) => l.numero)).toEqual(['s3'])
     expect(andamento.pedidos.map((l) => l.numero).sort()).toEqual(['s4', 's5', 's6'])
+  })
+
+  it('item ativo sem desmembramento impede produção concluída no cálculo e no filtro (AD-013)', async () => {
+    await criarPedido({
+      numero: 'nd1',
+      criadoEm: data('2026-10-22T10:00:00.000-03:00'),
+      atividades: [{ setor: 'TELHAS', status: 'COMPLETED' }],
+      itensSemAtividade: 1,
+    })
+    await criarPedido({
+      numero: 'nd2',
+      criadoEm: data('2026-10-22T10:01:00.000-03:00'),
+      atividades: [{ setor: 'TELHAS', status: 'COMPLETED' }],
+    })
+    await criarPedido({
+      numero: 'nd3',
+      criadoEm: data('2026-10-22T10:02:00.000-03:00'),
+      atividades: [
+        {
+          setor: 'TELHAS',
+          status: 'COMPLETED',
+          classificacao: 'PENDING_CLASSIFICATION',
+        },
+      ],
+    })
+    await criarPedido({
+      numero: 'nd4',
+      criadoEm: data('2026-10-22T10:03:00.000-03:00'),
+    })
+
+    const pendentes = await listarPedidos({ status: 'PENDING' }, repo)
+    const concluidos = await listarPedidos({ status: 'COMPLETED' }, repo)
+    const andamento = await listarPedidos({ status: 'IN_PROGRESS' }, repo)
+    const todos = await listarPedidos({}, repo)
+
+    expect(pendentes.pedidos.map((linha) => linha.numero)).toEqual(['nd4'])
+    expect(concluidos.pedidos.map((linha) => linha.numero)).toEqual(['nd2'])
+    expect(andamento.pedidos.map((linha) => linha.numero).sort()).toEqual(['nd1', 'nd3'])
+    expect(Object.fromEntries(todos.pedidos.map((linha) => [linha.numero, linha.status]))).toEqual({
+      nd1: 'IN_PROGRESS',
+      nd2: 'COMPLETED',
+      nd3: 'IN_PROGRESS',
+      nd4: 'PENDING',
+    })
   })
 
   it('filtro de setor não altera o status global ao combinar com status (AD-018)', async () => {
