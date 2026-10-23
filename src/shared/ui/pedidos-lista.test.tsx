@@ -268,14 +268,17 @@ describe('PedidosLista', () => {
     expect(mocks.apiGet).toHaveBeenCalledWith('/api/pedidos?numero=70435&setor=TELHAS')
   })
 
-  it('selecionar um pedido aciona o chamador com o pedido (FEP-03)', async () => {
+  it('selecionar um pedido aciona o chamador com o pedido e o contexto da listagem (FEP-03)', async () => {
+    window.history.replaceState({}, '', '/vendedor/pedidos?cliente=Ana&pagina=2')
     const onSelecionar = vi.fn()
     mocks.apiGet.mockResolvedValue(resposta())
     render(<PedidosLista onSelecionar={onSelecionar} />)
 
     fireEvent.click(await screen.findByRole('button', { name: 'Abrir pedido 100' }))
 
-    expect(onSelecionar).toHaveBeenCalledWith(PEDIDO)
+    expect(onSelecionar).toHaveBeenCalledWith(PEDIDO, {
+      retorno: '/vendedor/pedidos?cliente=Ana&pagina=2',
+    })
   })
 
   it('permite rolagem horizontal interna da tabela em telas estreitas (VIS-11)', async () => {

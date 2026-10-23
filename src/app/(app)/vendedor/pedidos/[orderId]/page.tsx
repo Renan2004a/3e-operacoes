@@ -1,6 +1,6 @@
 'use client'
 
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import { PedidoDetalhe } from '@/shared/ui/pedido-detalhe'
 
 /**
@@ -10,11 +10,13 @@ import { PedidoDetalhe } from '@/shared/ui/pedido-detalhe'
  */
 export default function PedidoVendedorPage() {
   const params = useParams<{ orderId: string }>()
+  const searchParams = useSearchParams()
 
   return (
     <PedidoDetalhe
       orderId={params.orderId}
       basePath="/vendedor/pedidos"
+      retorno={searchParams.get('retorno')}
       permitirClassificacao
     />
   )
