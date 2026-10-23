@@ -19,6 +19,14 @@ Importar ou atualizar um pedido específico sem polling contínuo e sem expor o 
 
 A integração não varre o banco legado continuamente. Isso reduz carga imprevisível e evita consultas repetitivas sem necessidade. A leitura ocorre somente por requisição de importação/atualização de um pedido.
 
+## Nova tentativa após falha
+
+- Uma solicitação depois de um job `FAILED` cria um novo job de tentativa (`<job falho>:retry`) e agenda novo despacho, inclusive dentro da janela de 60 s e para um job falho antigo. O job falho anterior é preservado para auditoria.
+- Enquanto a tentativa mais recente estiver ativa (`PENDING`, `DISPATCHED` ou `RUNNING`) e dentro da janela, novas solicitações reutilizam esse job e não disparam outro processamento. Fora da janela, um job `SUCCEEDED` é reimportado e um job ativo antigo pode ser recuperado.
+- A reserva do despacho é atômica e usa o carimbo da tentativa: apenas a execução que encontra o job no estado capturado o move para `DISPATCHED`; cliques repetidos não chamam o conector duas vezes para o mesmo job.
+- A interface mantém o número informado, oferece **“Tentar novamente”** após a falha e acompanha o novo `jobId`, sem reutilizar status ou eventos da tentativa anterior.
+- Os códigos técnicos continuam nos logs e podem ser exibidos para suporte; a mensagem principal é traduzida para o usuário.
+
 ## Atualização de pedido existente
 
 - Nova sincronização usa a chave comercial do pedido para upsert, nunca cria duplicata.

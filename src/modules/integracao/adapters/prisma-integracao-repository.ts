@@ -62,9 +62,40 @@ export const prismaIntegracaoRepository: IntegracaoRepository & ListaJobsReposit
     return row ? toJob(row) : null
   },
 
+  async findLatestByOrderNumberSince(legacyOrderNumber, since) {
+    const row = await prisma.integrationJob.findFirst({
+      where: { legacyOrderNumber, createdAt: { gte: since } },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    })
+    return row ? toJob(row) : null
+  },
+
   async findById(jobId) {
     const row = await prisma.integrationJob.findUnique({ where: { id: jobId } })
     return row ? toJob(row) : null
+  },
+
+  async iniciarDespacho(jobId, now, atualizadoEmEsperado) {
+    const resultado = await prisma.integrationJob.updateMany({
+      where: {
+        id: jobId,
+        // Sem carimbo de tentativa, só um job novo (PENDING) pode ser
+        // despachado. Com o carimbo, a solicitação explícita pode reiniciar o
+        // job no estado capturado — inclusive um final ou um RUNNING antigo —
+        // desde que ninguém o tenha alterado desde a leitura.
+        ...(atualizadoEmEsperado
+          ? { updatedAt: atualizadoEmEsperado }
+          : { status: 'PENDING' as const }),
+      },
+      data: {
+        status: 'DISPATCHED',
+        updatedAt: now,
+        errorCode: null,
+        errorMessage: null,
+        completedAt: null,
+      },
+    })
+    return resultado.count === 1
   },
 
   async create({ legacyOrderNumber, idempotencyKey, now }) {

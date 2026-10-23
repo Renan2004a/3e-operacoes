@@ -73,8 +73,28 @@ export interface IntegrationJobEventRecord {
 export interface IntegracaoRepository {
   /** Busca um job pela chave de idempotência criado em ou após `since`. */
   findRecentByIdempotencyKey(idempotencyKey: string, since: Date): Promise<IntegrationJob | null>
+  /**
+   * Busca o job mais recente do pedido criado em ou após `since`, incluindo
+   * tentativas (`:retry`). Usado para reconhecer uma tentativa ativa e não
+   * duplicar o processamento em cliques repetidos.
+   */
+  findLatestByOrderNumberSince?(
+    legacyOrderNumber: string,
+    since: Date,
+  ): Promise<IntegrationJob | null>
   /** Busca um job pelo id. */
   findById(jobId: string): Promise<IntegrationJob | null>
+  /**
+   * Reserva atomicamente um job para despacho. Sem `atualizadoEmEsperado`,
+   * aceita somente `PENDING`; com o carimbo da tentativa, aceita também
+   * `SUCCEEDED`/`FAILED` para uma reimportação explícita. Retorna `false` quando
+   * outra execução já alterou o job, evitando chamadas duplicadas ao conector.
+   */
+  iniciarDespacho?(
+    jobId: string,
+    now: Date,
+    atualizadoEmEsperado?: Date,
+  ): Promise<boolean>
   /**
    * Cria um job. Deve garantir unicidade de `idempotencyKey`: se a chave já
    * existir, retorna o job existente em vez de criar um segundo.

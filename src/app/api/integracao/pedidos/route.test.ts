@@ -26,7 +26,35 @@ const mocks = vi.hoisted(() => {
     findRecentByIdempotencyKey: async (idempotencyKey: string, since: Date) =>
       jobs.find((job) => job.idempotencyKey === idempotencyKey && job.createdAt.getTime() >= since.getTime()) ??
       null,
+    findLatestByOrderNumberSince: async (legacyOrderNumber: string, since: Date) =>
+      jobs
+        .filter(
+          (job) =>
+            job.legacyOrderNumber === legacyOrderNumber &&
+            job.createdAt.getTime() >= since.getTime(),
+        )
+        .sort(
+          (a, b) =>
+            b.createdAt.getTime() - a.createdAt.getTime() || b.id.localeCompare(a.id),
+        )[0] ?? null,
     findById: async (jobId: string) => jobs.find((job) => job.id === jobId) ?? null,
+    iniciarDespacho: async (jobId: string, now: Date, atualizadoEmEsperado?: Date) => {
+      const job = jobs.find((candidate) => candidate.id === jobId)
+      if (!job) return false
+      if (
+        atualizadoEmEsperado &&
+        job.updatedAt.getTime() !== atualizadoEmEsperado.getTime()
+      ) {
+        return false
+      }
+      if (!atualizadoEmEsperado && job.status !== 'PENDING') return false
+      job.status = 'DISPATCHED'
+      job.updatedAt = now
+      job.errorCode = null
+      job.errorMessage = null
+      job.completedAt = null
+      return true
+    },
     create: async ({
       legacyOrderNumber,
       idempotencyKey,
@@ -280,5 +308,108 @@ describe('POST /api/integracao/pedidos', () => {
     expect(await response.json()).toEqual({ jobId: 'job_1' })
     expect(mocks.jobs).toHaveLength(1)
     expect(mocks.scheduled).toHaveLength(0)
+  })
+
+  it('cria novo job e agenda novo despacho após FAILED dentro da janela', async () => {
+    await POST(request({ orderNumber: '70435' }))
+    mocks.jobs[0].status = 'FAILED'
+    mocks.scheduled.length = 0
+
+    const response = await POST(request({ orderNumber: '70435' }))
+
+    expect(response.status).toBe(202)
+    expect(await response.json()).toEqual({ jobId: 'job_2' })
+    expect(mocks.jobs).toHaveLength(2)
+    expect(mocks.jobs[1].status).toBe('PENDING')
+    expect(mocks.scheduled).toHaveLength(1)
+
+    await mocks.scheduled[0]()
+    // Uma segunda execução agendada do mesmo job não repete o conector.
+    await mocks.scheduled[0]()
+
+    expect(mocks.dispatchCalls).toEqual([{ jobId: 'job_2', orderNumber: '70435' }])
+    expect(mocks.jobs[1].status).toBe('RUNNING')
+  })
+
+  it('não agenda processamento duplicado em cliques repetidos após a falha', async () => {
+    await POST(request({ orderNumber: '70435' }))
+    mocks.jobs[0].status = 'FAILED'
+    mocks.scheduled.length = 0
+
+    const first = await POST(request({ orderNumber: '70435' }))
+    const second = await POST(request({ orderNumber: '70435' }))
+
+    expect(await first.json()).toEqual({ jobId: 'job_2' })
+    expect(await second.json()).toEqual({ jobId: 'job_2' })
+    expect(mocks.jobs).toHaveLength(2)
+    expect(mocks.scheduled).toHaveLength(1)
+
+    await mocks.scheduled[0]()
+
+    expect(mocks.dispatchCalls).toEqual([{ jobId: 'job_2', orderNumber: '70435' }])
+  })
+
+  it('duas solicitações concorrentes após a falha despacham o mesmo job uma única vez', async () => {
+    await POST(request({ orderNumber: '70435' }))
+    mocks.jobs[0].status = 'FAILED'
+    mocks.scheduled.length = 0
+
+    const [a, b] = await Promise.all([
+      POST(request({ orderNumber: '70435' })),
+      POST(request({ orderNumber: '70435' })),
+    ])
+
+    expect(await a.json()).toEqual({ jobId: 'job_2' })
+    expect(await b.json()).toEqual({ jobId: 'job_2' })
+    expect(mocks.jobs).toHaveLength(2)
+
+    for (const tarefa of mocks.scheduled) await tarefa()
+
+    expect(mocks.dispatchCalls).toEqual([{ jobId: 'job_2', orderNumber: '70435' }])
+  })
+
+  it.each(['SUCCEEDED', 'RUNNING'] as const)(
+    'reimporta ou recupera um job %s antigo, fora da janela, sem perder o despacho',
+    async (status) => {
+      await POST(request({ orderNumber: '70435' }))
+      const antigo = mocks.jobs[0]
+      antigo.status = status
+      antigo.createdAt = new Date(Date.now() - 120_000)
+      antigo.updatedAt = antigo.createdAt
+      mocks.scheduled.length = 0
+
+      const response = await POST(request({ orderNumber: '70435' }))
+
+      expect(response.status).toBe(202)
+      expect(await response.json()).toEqual({ jobId: 'job_1' })
+      expect(mocks.jobs).toHaveLength(1)
+      expect(mocks.scheduled).toHaveLength(1)
+
+      await mocks.scheduled[0]()
+
+      expect(mocks.dispatchCalls).toEqual([{ jobId: 'job_1', orderNumber: '70435' }])
+      expect(mocks.jobs[0].status).toBe('RUNNING')
+    },
+  )
+
+  it('cria novo job ao tentar um FAILED antigo, fora da janela, e o despacha', async () => {
+    await POST(request({ orderNumber: '70435' }))
+    const antigo = mocks.jobs[0]
+    antigo.status = 'FAILED'
+    antigo.createdAt = new Date(Date.now() - 120_000)
+    antigo.updatedAt = antigo.createdAt
+    mocks.scheduled.length = 0
+
+    const response = await POST(request({ orderNumber: '70435' }))
+
+    expect(response.status).toBe(202)
+    expect(await response.json()).toEqual({ jobId: 'job_2' })
+    expect(mocks.jobs).toHaveLength(2)
+    expect(mocks.scheduled).toHaveLength(1)
+
+    await mocks.scheduled[0]()
+
+    expect(mocks.dispatchCalls).toEqual([{ jobId: 'job_2', orderNumber: '70435' }])
+    expect(mocks.jobs[1].status).toBe('RUNNING')
   })
 })

@@ -168,6 +168,34 @@ describe('despacharComRetry', () => {
     expect(repo.events.map((event) => event.type)).toEqual(['DISPATCHED'])
   })
 
+  it('não despacha quando outra execução já reservou o job (cliques repetidos)', async () => {
+    const repo = criarRepoFake()
+    repo.iniciarDespacho = async () => false
+    const { conector, chamadas } = conectorFake([sucesso()])
+
+    await despacharComRetry({ jobId: 'job_1', orderNumber: '70435' }, { repo, conector })
+
+    expect(chamadas).toHaveLength(0)
+    expect(repo.events).toHaveLength(0)
+  })
+
+  it('despacha uma única vez quando a reserva atômica é conquistada', async () => {
+    const repo = criarRepoFake()
+    const reserva = vi.fn(async () => {
+      repo.status = 'DISPATCHED'
+      return true
+    })
+    repo.iniciarDespacho = reserva
+    const { conector, chamadas } = conectorFake([sucesso()])
+
+    await despacharComRetry({ jobId: 'job_1', orderNumber: '70435' }, { repo, conector })
+
+    expect(reserva).toHaveBeenCalledWith('job_1', expect.any(Date), undefined)
+    expect(chamadas).toHaveLength(1)
+    expect(repo.status).toBe('RUNNING')
+    expect(repo.events.map((event) => event.type)).toEqual(['DISPATCHED'])
+  })
+
   it('repete a falha transitória e sucede na segunda tentativa (LAC-11)', async () => {
     const repo = criarRepoFake()
     const { conector, chamadas } = conectorFake([falha('CONNECTOR_TIMEOUT'), sucesso()])

@@ -7,6 +7,7 @@ import {
 import type {
   ConectorLegadoPort,
   IntegracaoRepository,
+  JobStatus,
 } from '../../../modules/integracao/contratos'
 
 let cachedConector: ConectorLegadoPort | null = null
@@ -65,10 +66,10 @@ export interface DespachoDeps {
  * tentativa frustrada que gera nova tentativa é registrada em evento `RETRY`.
  */
 export async function despacharComRetry(
-  input: { jobId: string; orderNumber: string },
+  input: { jobId: string; orderNumber: string; atualizadoEmEsperado?: Date },
   deps: DespachoDeps,
 ): Promise<void> {
-  const { jobId, orderNumber } = input
+  const { jobId, orderNumber, atualizadoEmEsperado } = input
   const { repo, conector } = deps
   const maxAttempts = deps.maxAttempts ?? resolverMaxAttempts()
   const backoffMs = deps.backoffMs ?? resolverRetryBackoffMs()
@@ -76,15 +77,21 @@ export async function despacharComRetry(
   const now = deps.now ?? (() => new Date())
 
   // Limpa o erro da tentativa anterior para que o status atual não exiba um
-  // código antigo quando o usuário solicitar nova tentativa.
-  await repo.updateStatus({
-    jobId,
-    status: 'DISPATCHED',
-    now: now(),
-    errorCode: null,
-    errorMessage: null,
-    completedAt: null,
-  })
+  // código antigo quando o usuário solicitar nova tentativa. Quando o adapter
+  // oferece reserva atômica, só uma execução move PENDING → DISPATCHED.
+  if (repo.iniciarDespacho) {
+    const reservado = await repo.iniciarDespacho(jobId, now(), atualizadoEmEsperado)
+    if (!reservado) return
+  } else {
+    await repo.updateStatus({
+      jobId,
+      status: 'DISPATCHED',
+      now: now(),
+      errorCode: null,
+      errorMessage: null,
+      completedAt: null,
+    })
+  }
   await repo.appendEvent({ jobId, type: 'DISPATCHED', now: now() })
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
@@ -149,11 +156,39 @@ export async function despacharComRetry(
  * Agenda o despacho em background após o `202`, com retry/backoff antes de
  * marcar `FAILED` (LAC-11).
  */
-export function agendarDespacho(input: { jobId: string; orderNumber: string }): void {
+export function agendarDespacho(input: {
+  jobId: string
+  orderNumber: string
+  /** Estado esperado no momento da solicitação; ausente = job novo (PENDING). */
+  statusEsperado?: JobStatus
+  /** Carimbo da tentativa capturado na solicitação, contra tarefas duplicadas. */
+  atualizadoEmEsperado?: Date
+}): void {
+  const statusEsperado = input.statusEsperado ?? 'PENDING'
+
   after(async () => {
-    await despacharComRetry(input, {
-      repo: prismaIntegracaoRepository,
-      conector: getConectorLegado(),
-    })
+    // Cliques repetidos podem agendar o mesmo job mais de uma vez. Só despacha
+    // se o job ainda estiver no estado capturado na solicitação; a primeira
+    // execução o move e as demais não repetem a chamada ao conector.
+    const job = await prismaIntegracaoRepository.findById(input.jobId)
+    if (!job || job.status !== statusEsperado) return
+    if (
+      input.atualizadoEmEsperado &&
+      job.updatedAt.getTime() !== input.atualizadoEmEsperado.getTime()
+    ) {
+      return
+    }
+
+    await despacharComRetry(
+      {
+        jobId: input.jobId,
+        orderNumber: input.orderNumber,
+        atualizadoEmEsperado: input.atualizadoEmEsperado,
+      },
+      {
+        repo: prismaIntegracaoRepository,
+        conector: getConectorLegado(),
+      },
+    )
   })
 }

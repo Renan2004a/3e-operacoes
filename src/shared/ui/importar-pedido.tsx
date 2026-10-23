@@ -116,8 +116,7 @@ export function ImportarPedido({ onConcluido, titulo, descricao }: ImportarPedid
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobId])
 
-  async function importar(evento: React.FormEvent<HTMLFormElement>) {
-    evento.preventDefault()
+  async function executarImportacao() {
     setErroValidacao(null)
     setErroEnvio(null)
     setJobId(null)
@@ -146,6 +145,11 @@ export function ImportarPedido({ onConcluido, titulo, descricao }: ImportarPedid
     } finally {
       setImportando(false)
     }
+  }
+
+  async function importar(evento: React.FormEvent<HTMLFormElement>) {
+    evento.preventDefault()
+    await executarImportacao()
   }
 
   return (
@@ -215,7 +219,21 @@ export function ImportarPedido({ onConcluido, titulo, descricao }: ImportarPedid
               ? (() => {
                   const falha = mensagemFalhaImportacao(errorCode)
                   return (
-                    <Alert variant="error" title={falha.titulo}>
+                    <Alert
+                      variant="error"
+                      title={falha.titulo}
+                      action={
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={importando}
+                          onClick={() => void executarImportacao()}
+                        >
+                          {importando ? 'Tentando…' : 'Tentar novamente'}
+                        </Button>
+                      }
+                    >
                       <p>{falha.mensagem}</p>
                       {errorCode ? (
                         <p className="mt-2 text-xs opacity-80">
