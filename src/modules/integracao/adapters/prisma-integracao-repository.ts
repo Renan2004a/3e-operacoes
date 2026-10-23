@@ -8,6 +8,7 @@ import type {
 
 interface IntegrationJobRow {
   id: string
+  orderId: string | null
   legacyOrderNumber: string
   idempotencyKey: string
   status: IntegrationJob['status']
@@ -30,6 +31,7 @@ interface IntegrationJobEventRow {
 function toJob(row: IntegrationJobRow): IntegrationJob {
   return {
     id: row.id,
+    orderId: row.orderId,
     legacyOrderNumber: row.legacyOrderNumber,
     idempotencyKey: row.idempotencyKey,
     status: row.status,
@@ -83,12 +85,13 @@ export const prismaIntegracaoRepository: IntegracaoRepository & ListaJobsReposit
     return toJob(row)
   },
 
-  async updateStatus({ jobId, status, now, errorCode, errorMessage, completedAt }) {
+  async updateStatus({ jobId, status, now, orderId, errorCode, errorMessage, completedAt }) {
     const row = await prisma.integrationJob.update({
       where: { id: jobId },
       data: {
         status,
         updatedAt: now,
+        ...(orderId !== undefined ? { orderId } : {}),
         ...(errorCode !== undefined ? { errorCode } : {}),
         ...(errorMessage !== undefined ? { errorMessage } : {}),
         ...(completedAt !== undefined ? { completedAt } : {}),

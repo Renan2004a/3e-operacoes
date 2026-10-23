@@ -39,7 +39,10 @@ interface FakeOrder {
   items: FakeItem[]
 }
 
-function createFakeRepo(seed: FakeOrder[] = []) {
+function createFakeRepo(
+  seed: FakeOrder[] = [],
+  divergenciasUnidade: import('./importar-pedido').DivergenciaUnidade[] = [],
+) {
   const orders = [...seed]
   const divergenciasRegistradas: Array<{ legacyOrderKey: string; divergencia: DivergenciaItem }> = []
   let seq = seed.length
@@ -103,7 +106,7 @@ function createFakeRepo(seed: FakeOrder[] = []) {
         }
       }
 
-      return { orderId: order.id }
+      return { orderId: order.id, divergenciasUnidade }
     },
     async registrarDivergencia(input) {
       divergenciasRegistradas.push(input)
@@ -174,6 +177,8 @@ describe('importarPedido', () => {
     )
 
     expect(result.divergente).toBe(false)
+    expect(result.reimportado).toBe(false)
+    expect(result.divergenciasUnidade).toEqual([])
     expect(orders).toHaveLength(1)
     expect(result.orderId).toBe(orders[0].id)
     expect(orders[0].items.map((saved) => saved.legacyItemKey)).toEqual(['1', '2'])
@@ -188,6 +193,8 @@ describe('importarPedido', () => {
 
     expect(orders).toHaveLength(1)
     expect(second.orderId).toBe(first.orderId)
+    expect(first.reimportado).toBe(false)
+    expect(second.reimportado).toBe(true)
   })
 
   it('atualiza campos comerciais e quantidade na reimportação', async () => {
@@ -363,7 +370,7 @@ function createHarness(seedMappings: CategorySectorMapping[] = []) {
           })
         }
       }
-      return { orderId: order.id }
+      return { orderId: order.id, divergenciasUnidade: [] }
     },
     async registrarDivergencia() {},
   }
@@ -567,5 +574,49 @@ describe('importarPedido com auto-classificação', () => {
     expect(result.divergente).toBe(true)
     expect(result.divergencias[0].requestedQuantity).toBe('3.000')
     expect(divergenciasRegistradas).toHaveLength(1)
+  })
+
+  it('não compara quantidade entre unidades quando a unidade foi preservada', async () => {
+    const divergenciasUnidade = [
+      {
+        legacyItemKey: '1',
+        description: 'TELHA',
+        unidadeAnterior: 'UN',
+        unidadeNova: 'M',
+        motivo: 'REGISTROS_OPERACIONAIS' as const,
+      },
+    ]
+    const { repo, divergenciasRegistradas } = createFakeRepo(
+      [seedOrder('5.000', '0.000')],
+      divergenciasUnidade,
+    )
+
+    const result = await importarPedido(
+      pedido({ items: [item({ legacyItemKey: '1', requestedQuantity: '3.000' })] }),
+      repo,
+    )
+
+    expect(result.divergencias).toEqual([])
+    expect(result.divergenciasUnidade).toEqual(divergenciasUnidade)
+    expect(divergenciasRegistradas).toHaveLength(0)
+  })
+
+  it('devolve divergência de unidade para o resultado da importação', async () => {
+    const divergenciasUnidade = [
+      {
+        legacyItemKey: '1',
+        description: 'TELHA',
+        unidadeAnterior: 'UN',
+        unidadeNova: 'M',
+        motivo: 'REGISTROS_OPERACIONAIS' as const,
+      },
+    ]
+    const { repo } = createFakeRepo([seedOrder('0.000', '0.000')], divergenciasUnidade)
+
+    const result = await importarPedido(pedido(), repo)
+
+    expect(result.reimportado).toBe(true)
+    expect(result.divergente).toBe(true)
+    expect(result.divergenciasUnidade).toEqual(divergenciasUnidade)
   })
 })

@@ -125,6 +125,17 @@ describe('solicitarImportacao', () => {
     expect(repo.jobs).toHaveLength(1)
   })
 
+  it('reutiliza no limite exato da janela de 60 s', async () => {
+    const repo = createFakeRepo()
+    const first = await solicitarImportacao({ orderNumber: '70435', now: NOW }, repo)
+
+    const noLimite = new Date(NOW.getTime() + IDEMPOTENCY_WINDOW_MS)
+    const second = await solicitarImportacao({ orderNumber: '70435', now: noLimite }, repo)
+
+    expect(second).toEqual({ jobId: first.jobId, reused: true })
+    expect(repo.jobs).toHaveLength(1)
+  })
+
   it('após a janela, reaproveita o job mas sinaliza novo despacho', async () => {
     const repo = createFakeRepo()
     const first = await solicitarImportacao({ orderNumber: '70435', now: NOW }, repo)

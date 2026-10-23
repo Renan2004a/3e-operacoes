@@ -1,6 +1,12 @@
 import { Prisma } from '@/generated/prisma/client'
 import { prisma } from '@/shared/db/prisma'
-import type { OrderSnapshot, PedidosRepository } from '../importar-pedido'
+import type {
+  DivergenciaUnidade,
+  OrderSnapshot,
+  PedidosRepository,
+} from '../importar-pedido'
+import { avaliarMudancaUnidade } from '../mudanca-unidade'
+import { chaveUnidade } from '../../producao/totais-por-unidade'
 
 function sumDecimal(values: Prisma.Decimal[]): string {
   return values.reduce((total, value) => total.plus(value), new Prisma.Decimal(0)).toString()
@@ -36,57 +42,171 @@ export const prismaPedidosRepository: PedidosRepository = {
   async upsertOrder(input) {
     const now = new Date()
 
-    // O pedido é gravado primeiro (fora da transação) para satisfazer a chave
-    // estrangeira dos itens; em seguida os itens são gravados em uma transação
-    // em lote. Evita o timeout da transação interativa em bancos com latência.
-    const order = await prisma.order.upsert({
-      where: { legacyOrderKey: input.legacyOrderKey },
-      create: {
-        legacyOrderKey: input.legacyOrderKey,
-        legacyNumber: input.legacyNumber,
-        customerName: input.customerName,
-        sellerLegacyCode: input.sellerLegacyCode,
-        sourceUpdatedAt: input.sourceUpdatedAt,
-        lastSyncedAt: now,
-      },
-      update: {
-        legacyNumber: input.legacyNumber,
-        customerName: input.customerName,
-        sellerLegacyCode: input.sellerLegacyCode,
-        sourceUpdatedAt: input.sourceUpdatedAt,
-        lastSyncedAt: now,
-      },
-    })
-
-    await prisma.$transaction(
-      input.items.map((item) =>
-        prisma.orderItem.upsert({
-          where: {
-            orderId_legacyItemKey: { orderId: order.id, legacyItemKey: item.legacyItemKey },
-          },
+    // Pedido, itens e auditoria na mesma transação: uma falha inesperada não
+    // deixa o pedido ou parte dos itens atualizados sem resultado explícito.
+    return prisma.$transaction(
+      async (tx) => {
+        const order = await tx.order.upsert({
+          where: { legacyOrderKey: input.legacyOrderKey },
           create: {
-            orderId: order.id,
-            legacyItemKey: item.legacyItemKey,
-            productCode: item.productCode,
-            description: item.description,
-            unit: item.unit,
-            requestedQuantity: item.requestedQuantity,
-            legacyCategory: item.legacyCategory,
-            classificationStatus: 'PENDING_CLASSIFICATION',
+            legacyOrderKey: input.legacyOrderKey,
+            legacyNumber: input.legacyNumber,
+            customerName: input.customerName,
+            sellerLegacyCode: input.sellerLegacyCode,
+            sourceUpdatedAt: input.sourceUpdatedAt,
+            lastSyncedAt: now,
           },
           update: {
+            legacyNumber: input.legacyNumber,
+            customerName: input.customerName,
+            sellerLegacyCode: input.sellerLegacyCode,
+            sourceUpdatedAt: input.sourceUpdatedAt,
+            lastSyncedAt: now,
+          },
+        })
+
+        const existentes = await tx.orderItem.findMany({
+          where: {
+            orderId: order.id,
+            legacyItemKey: { in: input.items.map((item) => item.legacyItemKey) },
+          },
+          select: {
+            id: true,
+            legacyItemKey: true,
+            description: true,
+            unit: true,
+            requestedQuantity: true,
+            activities: {
+              select: {
+                status: true,
+                _count: { select: { executions: true, occurrences: true } },
+              },
+            },
+            _count: { select: { deliveries: true, scheduledDeliveries: true } },
+          },
+        })
+        const porChave = new Map(existentes.map((item) => [item.legacyItemKey, item]))
+        const divergenciasUnidade: DivergenciaUnidade[] = []
+
+        async function registrarDivergencia(
+          existente: (typeof existentes)[number],
+          item: (typeof input.items)[number],
+        ) {
+          divergenciasUnidade.push({
+            legacyItemKey: existente.legacyItemKey,
+            description: item.description ?? existente.description,
+            unidadeAnterior: existente.unit,
+            unidadeNova: item.unit,
+            motivo: 'REGISTROS_OPERACIONAIS',
+          })
+          await tx.auditLog.create({
+            data: {
+              action: 'UNIT_DIVERGENCE',
+              entityType: 'OrderItem',
+              entityId: `${input.legacyOrderKey}:${existente.legacyItemKey}`,
+              beforeJson: {
+                unit: existente.unit,
+                requestedQuantity: existente.requestedQuantity.toString(),
+              },
+              afterJson: {
+                unit: item.unit,
+                requestedQuantity: item.requestedQuantity,
+                motivo: 'REGISTROS_OPERACIONAIS',
+              },
+              reason: 'Mudança de unidade bloqueada por registros operacionais',
+            },
+          })
+        }
+
+        for (const item of input.items) {
+          const existente = porChave.get(item.legacyItemKey)
+          if (!existente) {
+            await tx.orderItem.create({
+              data: {
+                orderId: order.id,
+                legacyItemKey: item.legacyItemKey,
+                productCode: item.productCode,
+                description: item.description,
+                unit: item.unit,
+                requestedQuantity: item.requestedQuantity,
+                legacyCategory: item.legacyCategory,
+                classificationStatus: 'PENDING_CLASSIFICATION',
+              },
+            })
+            continue
+          }
+
+          const decisao = avaliarMudancaUnidade({
+            unidadeAtual: existente.unit,
+            unidadeNova: item.unit,
+            registros: {
+              atividades: existente.activities.map((atividade) => ({
+                status: atividade.status,
+                execucoes: atividade._count.executions,
+                ocorrencias: atividade._count.occurrences,
+              })),
+              entregas: existente._count.deliveries,
+              remessas: existente._count.scheduledDeliveries,
+            },
+          })
+
+          if (decisao.tipo === 'BLOQUEAR') {
+            await registrarDivergencia(existente, item)
+            continue
+          }
+
+          const dados = {
             productCode: item.productCode,
             description: item.description,
-            unit: item.unit,
+            // Em SEM_MUDANCA, não reescreve a unidade: apenas diferença de
+            // escrita não deve reverter uma alteração concorrente.
+            ...(decisao.tipo === 'ATUALIZAR' ? { unit: item.unit } : {}),
             requestedQuantity: item.requestedQuantity,
             legacyCategory: item.legacyCategory,
-          },
-        }),
-      ),
+          }
+
+          if (decisao.tipo === 'ATUALIZAR') {
+            // Condição atômica: se uma execução/ocorrência/entrega/atividade
+            // iniciada surgir entre a leitura e a gravação, a unidade não muda.
+            const atualizados = await tx.orderItem.updateMany({
+              where: {
+                id: existente.id,
+                unit: existente.unit,
+                deliveries: { none: {} },
+                scheduledDeliveries: { none: {} },
+                activities: {
+                  none: {
+                    OR: [
+                      { status: { not: 'PENDING' } },
+                      { executions: { some: {} } },
+                      { occurrences: { some: {} } },
+                    ],
+                  },
+                },
+              },
+              data: dados,
+            })
+            if (atualizados.count !== 1) {
+              const atual = await tx.orderItem.findUnique({
+                where: { id: existente.id },
+                select: { unit: true },
+              })
+              // Outra execução pode ter aplicado a mesma unidade (ou removido
+              // o item); nesses casos não há divergência a apresentar.
+              if (atual && chaveUnidade(atual.unit) !== chaveUnidade(item.unit)) {
+                await registrarDivergencia(existente, item)
+              }
+            }
+            continue
+          }
+
+          await tx.orderItem.update({ where: { id: existente.id }, data: dados })
+        }
+
+        return { orderId: order.id, divergenciasUnidade }
+      },
       { timeout: 30000, maxWait: 10000 },
     )
-
-    return { orderId: order.id }
   },
 
   async registrarDivergencia({ legacyOrderKey, divergencia }) {

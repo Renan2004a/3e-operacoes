@@ -59,22 +59,41 @@ export interface RegistrarDivergenciaInput {
   divergencia: DivergenciaItem
 }
 
+/** Divergência de unidade: o item foi preservado com a unidade anterior. */
+export interface DivergenciaUnidade {
+  legacyItemKey: string
+  description: string | null
+  unidadeAnterior: string
+  unidadeNova: string
+  motivo: 'REGISTROS_OPERACIONAIS'
+}
+
+export interface UpsertPedidoResult {
+  orderId: string
+  divergenciasUnidade: DivergenciaUnidade[]
+}
+
 export interface PedidosRepository {
   /** Estado comercial/operacional atual do pedido, ou null se ainda não existe. */
   findOrderByLegacyKey(legacyOrderKey: string): Promise<OrderSnapshot | null>
   /**
    * Upsert transacional do pedido por `legacyOrderKey` e dos itens por
    * `(orderId, legacyItemKey)`. Não remove registros operacionais existentes.
+   * Itens com mudança real de unidade e histórico operacional não são
+   * atualizados; a decisão volta em `divergenciasUnidade`.
    */
-  upsertOrder(input: UpsertPedidoInput): Promise<{ orderId: string }>
+  upsertOrder(input: UpsertPedidoInput): Promise<UpsertPedidoResult>
   /** Registra a divergência de quantidade detectada no `AuditLog`. */
   registrarDivergencia(input: RegistrarDivergenciaInput): Promise<void>
 }
 
 export interface ImportarPedidoResult {
   orderId: string
+  /** true quando o pedido já existia e foi atualizado. */
+  reimportado: boolean
   divergente: boolean
   divergencias: DivergenciaItem[]
+  divergenciasUnidade: DivergenciaUnidade[]
 }
 
 export interface ClassificacaoAutomaticaItem {
@@ -128,7 +147,7 @@ export async function importarPedido(
     }
   }
 
-  const { orderId } = await repo.upsertOrder({
+  const { orderId, divergenciasUnidade } = await repo.upsertOrder({
     legacyOrderKey: pedido.legacyOrderKey,
     legacyNumber: pedido.legacyNumber,
     customerName: pedido.customerName,
@@ -154,9 +173,24 @@ export async function importarPedido(
     })
   }
 
-  for (const divergencia of divergencias) {
+  // Quantidades de unidades diferentes não são comparáveis: quando a unidade
+  // foi preservada, a divergência de unidade é o resultado exibido.
+  const chavesComUnidadePreservada = new Set(
+    divergenciasUnidade.map((divergencia) => divergencia.legacyItemKey),
+  )
+  const divergenciasDeQuantidade = divergencias.filter(
+    (divergencia) => !chavesComUnidadePreservada.has(divergencia.legacyItemKey),
+  )
+
+  for (const divergencia of divergenciasDeQuantidade) {
     await repo.registrarDivergencia({ legacyOrderKey: pedido.legacyOrderKey, divergencia })
   }
 
-  return { orderId, divergente: divergencias.length > 0, divergencias }
+  return {
+    orderId,
+    reimportado: snapshot !== null,
+    divergente: divergenciasDeQuantidade.length > 0 || divergenciasUnidade.length > 0,
+    divergencias: divergenciasDeQuantidade,
+    divergenciasUnidade,
+  }
 }

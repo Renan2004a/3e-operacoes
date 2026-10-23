@@ -19,6 +19,19 @@ Importar ou atualizar um pedido específico sem polling contínuo e sem expor o 
 
 A integração não varre o banco legado continuamente. Isso reduz carga imprevisível e evita consultas repetitivas sem necessidade. A leitura ocorre somente por requisição de importação/atualização de um pedido.
 
+## Transparência da reimportação
+
+- A solicitação informa se houve **consulta nova**, reutilização de **tentativa em andamento** ou reutilização de **resultado anterior**. Resultado reutilizado não é apresentado como nova sincronização.
+- Em consulta nova, o resultado distingue importação de pedido novo (`SUCCEEDED`/`IMPORTED`) de atualização de pedido existente (`SUCCEEDED`/`REIMPORTED`).
+- O job devolve o `orderId` vinculado após sucesso; a interface oferece **“Abrir pedido”** sem alterar `createdAt` e sem depender dos filtros atuais da listagem.
+- O polling só aceita o estado final antigo como resultado da consulta atual quando existe evento novo posterior à solicitação, evitando exibir sucesso antigo antes do novo despacho.
+
+## Unidade e histórico operacional
+
+- A unidade é comparada pela normalização de escrita existente; mudança real com execução, ocorrência, entrega, remessa programada ou atividade iniciada é bloqueada.
+- O item mantém a unidade anterior e o histórico; a divergência (`UNIT_DIVERGENCE`) é registrada em auditoria, no evento do job e exibida ao Vendedor.
+- Sem registros operacionais, a unidade e a quantidade solicitada são atualizadas na mesma transação. Não há conversão automática entre unidades.
+
 ## Atualização de pedido existente
 
 - Nova sincronização usa a chave comercial do pedido para upsert, nunca cria duplicata.

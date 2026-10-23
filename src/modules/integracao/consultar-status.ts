@@ -7,6 +7,8 @@ import {
 
 export interface ConsultarStatusResult {
   jobId: string
+  /** Pedido do app vinculado após sucesso; null enquanto não houver. */
+  orderId: string | null
   status: JobStatus
   /** true quando o job atingiu um estado final (SUCCEEDED ou FAILED). */
   final: boolean
@@ -23,5 +25,11 @@ export async function consultarStatus(
   if (!job) throw new JobNotFoundError(jobId)
 
   const events = await repo.listEvents(jobId)
-  return { jobId: job.id, status: job.status, final: FINAL_STATUSES.includes(job.status), events }
+  return {
+    jobId: job.id,
+    orderId: job.orderId ?? null,
+    status: job.status,
+    final: FINAL_STATUSES.includes(job.status),
+    events,
+  }
 }
