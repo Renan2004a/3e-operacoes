@@ -95,6 +95,9 @@ describe('PedidosLista', () => {
     render(<PedidosLista onSelecionar={vi.fn()} />)
 
     await screen.findByText('Sem pedidos')
+    expect(screen.getByRole('group', { name: 'Data de importação' })).toHaveAccessibleDescription(
+      'Considera a entrada do pedido no 3E.',
+    )
     fireEvent.change(screen.getByLabelText('Cliente'), { target: { value: 'Ana' } })
     fireEvent.change(screen.getByLabelText('Setor'), { target: { value: 'CORTE_DOBRA' } })
     fireEvent.change(screen.getByLabelText('Status'), { target: { value: 'PENDING' } })
