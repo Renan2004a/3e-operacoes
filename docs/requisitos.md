@@ -61,7 +61,7 @@ Registro das decisões do planejamento das correções do Vendedor. Decisões **
 - **Revenda com indisponibilidade:** conclusão automática e critério de atendimento (T00.4).
 - **Estados de pedido:** critérios finais e impactos em indicadores e nos demais perfis.
 - **Data original do pedido no Top Gerente** como referência de filtro: validação no ambiente de integração.
-- **Remessas:** quem confirma, significado de "confirmada", reconfirmação, remoção de remessa confirmada e auditoria.
+- **Remessas:** quem confirma, significado de "confirmada", reconfirmação, remoção de remessa confirmada e auditoria. *Proteções de interface contra duplo envio e exclusão acidental implementadas; remoção de remessa confirmada e auditoria continuam pendentes (D6).*
 - **Divergências:** responsáveis, ações de resolução e avisos ao Vendedor.
 - **Alerta de atraso do item:** depende do critério de atendimento integral.
 - **Filtro de setor de pedidos:** validação no navegador (Vendedor e Gerente) e teste de integração com MySQL da consulta real; nenhum dos dois foi executado.

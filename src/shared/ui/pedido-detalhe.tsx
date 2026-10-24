@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import type { RoleCode } from '@/generated/prisma/client'
 import {
@@ -196,6 +196,17 @@ export function PedidoDetalhe({
   const [remessaNumero, setRemessaNumero] = useState<Record<string, string>>({})
   const [remessaData, setRemessaData] = useState<Record<string, string>>({})
   const [remessaSalvando, setRemessaSalvando] = useState<string | null>(null)
+  const [remessaProcessando, setRemessaProcessando] = useState<
+    Record<string, 'confirmar' | 'remover'>
+  >({})
+  const [remessaParaExcluir, setRemessaParaExcluir] = useState<{
+    id: string
+    itemId: string
+  } | null>(null)
+  const operacoesRemessaRef = useRef(new Set<string>())
+  const removerRemessaRefs = useRef<Record<string, HTMLButtonElement | null>>({})
+  const cancelarExclusaoRef = useRef<HTMLButtonElement | null>(null)
+  const focoRemoverRef = useRef<string | null>(null)
 
   const [perfis, setPerfis] = useState<RoleCode[]>([])
   const [correcaoAberta, setCorrecaoAberta] = useState<Record<string, boolean>>({})
@@ -225,6 +236,19 @@ export function PedidoDetalhe({
   useEffect(() => {
     void buscar()
   }, [buscar])
+
+  // Ao abrir a confirmação, foca a ação menos destrutiva; ao fechar, devolve o
+  // foco ao botão que iniciou a exclusão (quando ele ainda existe).
+  useEffect(() => {
+    if (remessaParaExcluir) {
+      cancelarExclusaoRef.current?.focus()
+      return
+    }
+    const id = focoRemoverRef.current
+    if (id === null) return
+    focoRemoverRef.current = null
+    removerRemessaRefs.current[id]?.focus()
+  }, [remessaParaExcluir])
 
   useEffect(() => {
     let ativo = true
@@ -411,7 +435,26 @@ export function PedidoDetalhe({
     }
   }
 
+  function iniciarOperacaoRemessa(id: string, acao: 'confirmar' | 'remover'): boolean {
+    // Guarda síncrona: o estado do React só atualiza após a renderização, então
+    // dois cliques rápidos precisam ser barrados por uma referência imediata.
+    if (operacoesRemessaRef.current.has(id)) return false
+    operacoesRemessaRef.current.add(id)
+    setRemessaProcessando((atual) => ({ ...atual, [id]: acao }))
+    return true
+  }
+
+  function finalizarOperacaoRemessa(id: string) {
+    operacoesRemessaRef.current.delete(id)
+    setRemessaProcessando((atual) => {
+      const proximo = { ...atual }
+      delete proximo[id]
+      return proximo
+    })
+  }
+
   async function confirmarRemessa(id: string, itemId: string) {
+    if (!iniciarOperacaoRemessa(id, 'confirmar')) return
     limparFeedback()
     try {
       const resposta = await apiPatch<{ remessa: Remessa }>(`/api/pedidos/remessas/${id}`, {})
@@ -421,17 +464,42 @@ export function PedidoDetalhe({
       setSucesso('Remessa confirmada.')
     } catch {
       setErroAcao('Não foi possível confirmar a remessa. Tente novamente.')
+    } finally {
+      finalizarOperacaoRemessa(id)
     }
   }
 
-  async function removerRemessa(id: string, itemId: string) {
+  function solicitarExclusaoRemessa(remessa: Remessa, itemId: string) {
+    if (operacoesRemessaRef.current.has(remessa.id)) return
+    limparFeedback()
+    focoRemoverRef.current = remessa.id
+    setRemessaParaExcluir({
+      id: remessa.id,
+      itemId,
+    })
+  }
+
+  function cancelarExclusaoRemessa() {
+    if (remessaParaExcluir && operacoesRemessaRef.current.has(remessaParaExcluir.id)) return
+    setRemessaParaExcluir(null)
+  }
+
+  async function excluirRemessa() {
+    const alvo = remessaParaExcluir
+    if (!alvo || !iniciarOperacaoRemessa(alvo.id, 'remover')) return
     limparFeedback()
     try {
-      await apiDelete(`/api/pedidos/remessas/${id}`)
-      atualizarRemessas(itemId, (remessas) => remessas.filter((remessa) => remessa.id !== id))
-      setSucesso('Remessa removida.')
+      await apiDelete(`/api/pedidos/remessas/${alvo.id}`)
+      atualizarRemessas(alvo.itemId, (remessas) =>
+        remessas.filter((remessa) => remessa.id !== alvo.id),
+      )
+      setRemessaParaExcluir(null)
+      setSucesso('Remessa excluída.')
     } catch {
-      setErroAcao('Não foi possível remover a remessa. Tente novamente.')
+      // Mantém a remessa e a confirmação na tela para permitir nova tentativa.
+      setErroAcao('Não foi possível excluir a remessa. Tente novamente.')
+    } finally {
+      finalizarOperacaoRemessa(alvo.id)
     }
   }
 
@@ -943,43 +1011,106 @@ export function PedidoDetalhe({
 
                     {item.remessas && item.remessas.length > 0 ? (
                       <ul className="grid gap-2 text-sm text-ink">
-                        {item.remessas.map((remessa) => (
-                          <li
-                            key={remessa.id}
-                            className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line p-2"
-                          >
-                            <span>
-                              {remessa.remessa}ª remessa · prevista para{' '}
-                              {formatarDataRemessa(remessa.scheduledAt)}
-                            </span>
-                            <span className="flex flex-wrap items-center gap-2">
-                              {remessa.confirmedAt ? (
-                                <Badge variant="success">
-                                  Confirmada em {formatarDataRemessa(remessa.confirmedAt)}
-                                </Badge>
-                              ) : (
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => void confirmarRemessa(remessa.id, item.itemId)}
-                                  aria-label={`Confirmar ${remessa.remessa}ª remessa do ${labelItem}`}
-                                >
-                                  Confirmar
-                                </Button>
-                              )}
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => void removerRemessa(remessa.id, item.itemId)}
-                                aria-label={`Remover ${remessa.remessa}ª remessa do ${labelItem}`}
-                              >
-                                Remover
-                              </Button>
-                            </span>
-                          </li>
-                        ))}
+                        {item.remessas.map((remessa) => {
+                          const processando = remessaProcessando[remessa.id]
+                          const emConfirmacaoExclusao = remessaParaExcluir?.id === remessa.id
+                          const tituloExclusao = `excluir-remessa-titulo-${remessa.id}`
+                          const descricaoExclusao = `excluir-remessa-descricao-${remessa.id}`
+                          return (
+                            <li
+                              key={remessa.id}
+                              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line p-2"
+                            >
+                              <span>
+                                {remessa.remessa}ª remessa · prevista para{' '}
+                                {formatarDataRemessa(remessa.scheduledAt)}
+                              </span>
+                              <div className="flex flex-wrap items-center gap-2">
+                                {remessa.confirmedAt ? (
+                                  <Badge variant="success">
+                                    Confirmada em {formatarDataRemessa(remessa.confirmedAt)}
+                                  </Badge>
+                                ) : (
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => void confirmarRemessa(remessa.id, item.itemId)}
+                                    disabled={processando !== undefined || emConfirmacaoExclusao}
+                                    aria-busy={processando === 'confirmar'}
+                                    aria-label={`Confirmar ${remessa.remessa}ª remessa do ${labelItem}`}
+                                  >
+                                    {processando === 'confirmar' ? 'Confirmando…' : 'Confirmar'}
+                                  </Button>
+                                )}
+                                {emConfirmacaoExclusao ? (
+                                  <div
+                                    role="alertdialog"
+                                    aria-modal="false"
+                                    aria-labelledby={tituloExclusao}
+                                    aria-describedby={descricaoExclusao}
+                                    className="grid w-full gap-2 rounded-lg border border-danger/40 bg-danger-bg p-2 text-danger"
+                                    onKeyDown={(evento) => {
+                                      if (evento.key === 'Escape') {
+                                        evento.stopPropagation()
+                                        cancelarExclusaoRemessa()
+                                      }
+                                    }}
+                                  >
+                                    <div>
+                                      <p id={tituloExclusao} className="text-sm font-semibold">
+                                        Excluir {remessa.remessa}ª remessa?
+                                      </p>
+                                      <p id={descricaoExclusao} className="text-xs">
+                                        {remessa.confirmedAt
+                                          ? `A remessa prevista para ${formatarDataRemessa(remessa.scheduledAt)} está confirmada. A exclusão removerá também o registro da confirmação. Entregas e saldos não serão alterados.`
+                                          : `A remessa prevista para ${formatarDataRemessa(remessa.scheduledAt)} será removida. Entregas e saldos não serão alterados.`}
+                                      </p>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        ref={cancelarExclusaoRef}
+                                        onClick={cancelarExclusaoRemessa}
+                                        disabled={processando === 'remover'}
+                                      >
+                                        Cancelar
+                                      </Button>
+                                      <Button
+                                        type="button"
+                                        variant="danger"
+                                        size="sm"
+                                        onClick={() => void excluirRemessa()}
+                                        disabled={processando === 'remover'}
+                                        aria-busy={processando === 'remover'}
+                                      >
+                                        {processando === 'remover'
+                                          ? 'Excluindo…'
+                                          : 'Excluir remessa'}
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    ref={(elemento) => {
+                                      removerRemessaRefs.current[remessa.id] = elemento
+                                    }}
+                                    onClick={() => solicitarExclusaoRemessa(remessa, item.itemId)}
+                                    disabled={processando !== undefined}
+                                    aria-label={`Remover ${remessa.remessa}ª remessa do ${labelItem}`}
+                                  >
+                                    Remover
+                                  </Button>
+                                )}
+                              </div>
+                            </li>
+                          )
+                        })}
                       </ul>
                     ) : (
                       <p className="text-sm text-muted">Sem remessa programada.</p>

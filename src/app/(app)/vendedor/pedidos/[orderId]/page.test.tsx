@@ -75,7 +75,7 @@ function detalhe() {
         sectorName: null,
         activityStatus: null,
         suggestedSectorId: 'setor_telhas',
-        remessas: [],
+        remessas: [] as RemessaMock[],
       },
     ],
     totaisPorUnidade: [
@@ -98,6 +98,54 @@ function configurarApi() {
     if (url === '/api/setores') return Promise.resolve({ sectors: SETORES })
     return Promise.reject(new Error(`url inesperada: ${url}`))
   })
+}
+
+function configurarApiCom(pedido: ReturnType<typeof detalhe>) {
+  mocks.apiGet.mockImplementation((url: string) => {
+    if (url === '/api/pedidos/p1') return Promise.resolve({ pedido })
+    if (url === '/api/setores') return Promise.resolve({ sectors: SETORES })
+    return Promise.reject(new Error(`url inesperada: ${url}`))
+  })
+}
+
+function itemDetalhe(
+  overrides: Partial<ReturnType<typeof detalhe>['itens'][number]> = {},
+): ReturnType<typeof detalhe>['itens'][number] {
+  return { ...detalhe().itens[0], ...overrides }
+}
+
+interface RemessaMock {
+  id: string
+  remessa: number
+  scheduledAt: string
+  confirmedAt: string | null
+}
+
+function remessaDetalhe(overrides: Partial<RemessaMock> = {}): RemessaMock {
+  return {
+    id: 'r1',
+    remessa: 1,
+    scheduledAt: '2026-12-15T15:00:00.000Z',
+    confirmedAt: null,
+    ...overrides,
+  }
+}
+
+function configurarApiComRemessas(remessas: RemessaMock[]) {
+  configurarApiCom({
+    ...detalhe(),
+    itens: [itemDetalhe({ remessas })],
+  })
+}
+
+function promessaAdiada<T>() {
+  let resolver!: (valor: T) => void
+  let rejeitar!: (erro?: unknown) => void
+  const promessa = new Promise<T>((resolve, reject) => {
+    resolver = resolve
+    rejeitar = reject
+  })
+  return { promessa, resolver, rejeitar }
 }
 
 beforeEach(() => {
@@ -417,5 +465,169 @@ describe('correção de setor do item desmembrado', () => {
     expect(
       await screen.findByText('O item já possui registros operacionais e não pode mudar de setor.'),
     ).toBeInTheDocument()
+  })
+})
+
+describe('proteção das ações de remessas', () => {
+  it('faz uma única confirmação em cliques rápidos e mantém remessas independentes', async () => {
+    configurarApiComRemessas([
+      remessaDetalhe(),
+      remessaDetalhe({ id: 'r2', remessa: 2, scheduledAt: '2026-12-20T15:00:00.000Z' }),
+    ])
+    const adiada = promessaAdiada<{ remessa: RemessaMock }>()
+    mocks.apiPatch.mockReturnValue(adiada.promessa)
+    render(<PedidoVendedorPage />)
+
+    const confirmar1 = await screen.findByRole('button', {
+      name: 'Confirmar 1ª remessa do item 1',
+    })
+    fireEvent.click(confirmar1)
+    fireEvent.click(confirmar1)
+
+    await waitFor(() => expect(mocks.apiPatch).toHaveBeenCalledTimes(1))
+    expect(mocks.apiPatch).toHaveBeenCalledWith('/api/pedidos/remessas/r1', {})
+    await waitFor(() => expect(confirmar1).toHaveTextContent('Confirmando…'))
+    expect(screen.getByRole('button', { name: 'Remover 1ª remessa do item 1' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Confirmar 2ª remessa do item 1' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Remover 2ª remessa do item 1' })).toBeEnabled()
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+
+    adiada.resolver({
+      remessa: remessaDetalhe({ confirmedAt: '2026-12-16T15:00:00.000Z' }),
+    })
+    expect(await screen.findByText('Remessa confirmada.')).toBeInTheDocument()
+    expect(screen.getByText(/Confirmada em/)).toBeInTheDocument()
+    expect(mocks.apiPatch).toHaveBeenCalledTimes(1)
+  })
+
+  it('pede confirmação antes de excluir e cancelar não envia requisição', async () => {
+    configurarApiComRemessas([remessaDetalhe()])
+    render(<PedidoVendedorPage />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Remover 1ª remessa do item 1' }))
+
+    const dialogo = await screen.findByRole('alertdialog')
+    expect(dialogo).toHaveAccessibleName('Excluir 1ª remessa?')
+    expect(dialogo).toHaveTextContent(/15\/12\/2026/)
+    expect(dialogo).toHaveTextContent(/Entregas e saldos não serão alterados/)
+    expect(mocks.apiDelete).not.toHaveBeenCalled()
+
+    const cancelar = screen.getByRole('button', { name: 'Cancelar' })
+    await waitFor(() => expect(cancelar).toHaveFocus())
+    fireEvent.click(cancelar)
+
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+    expect(screen.getByText(/1ª remessa · prevista para/)).toBeInTheDocument()
+    expect(mocks.apiDelete).not.toHaveBeenCalled()
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Remover 1ª remessa do item 1' })).toHaveFocus(),
+    )
+  })
+
+  it('fecha a confirmação com Escape sem excluir', async () => {
+    configurarApiComRemessas([remessaDetalhe()])
+    render(<PedidoVendedorPage />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Remover 1ª remessa do item 1' }))
+    const dialogo = await screen.findByRole('alertdialog')
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Cancelar' })).toHaveFocus())
+
+    fireEvent.keyDown(dialogo, { key: 'Escape' })
+
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+    expect(screen.getByText(/1ª remessa · prevista para/)).toBeInTheDocument()
+    expect(mocks.apiDelete).not.toHaveBeenCalled()
+  })
+
+  it('exclui uma única vez após a confirmação e atualiza a tela', async () => {
+    configurarApiComRemessas([remessaDetalhe()])
+    const adiada = promessaAdiada<void>()
+    mocks.apiDelete.mockReturnValue(adiada.promessa)
+    render(<PedidoVendedorPage />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Remover 1ª remessa do item 1' }))
+    const excluir = await screen.findByRole('button', { name: 'Excluir remessa' })
+    fireEvent.click(excluir)
+    fireEvent.click(excluir)
+
+    await waitFor(() => expect(mocks.apiDelete).toHaveBeenCalledTimes(1))
+    expect(mocks.apiDelete).toHaveBeenCalledWith('/api/pedidos/remessas/r1')
+    await waitFor(() => expect(excluir).toHaveTextContent('Excluindo…'))
+    expect(screen.getByRole('button', { name: 'Cancelar' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Confirmar 1ª remessa do item 1' })).toBeDisabled()
+    expect(mocks.apiPatch).not.toHaveBeenCalled()
+    expect(mocks.apiPost).not.toHaveBeenCalled()
+
+    adiada.resolver()
+    expect(await screen.findByText('Remessa excluída.')).toBeInTheDocument()
+    expect(screen.queryByText(/1ª remessa · prevista para/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+  })
+
+  it('falha na exclusão preserva a remessa e permite nova tentativa', async () => {
+    configurarApiComRemessas([remessaDetalhe()])
+    mocks.apiDelete.mockRejectedValueOnce(new Error('falha')).mockResolvedValueOnce(undefined)
+    render(<PedidoVendedorPage />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Remover 1ª remessa do item 1' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Excluir remessa' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Não foi possível excluir a remessa. Tente novamente.',
+    )
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument()
+    expect(screen.getByText(/1ª remessa · prevista para/)).toBeInTheDocument()
+    const tentarNovamente = screen.getByRole('button', { name: 'Excluir remessa' })
+    expect(tentarNovamente).toBeEnabled()
+
+    fireEvent.click(tentarNovamente)
+
+    expect(await screen.findByText('Remessa excluída.')).toBeInTheDocument()
+    expect(mocks.apiDelete).toHaveBeenCalledTimes(2)
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+  })
+
+  it('falha na confirmação preserva a remessa e permite nova tentativa', async () => {
+    configurarApiComRemessas([remessaDetalhe()])
+    mocks.apiPatch.mockRejectedValueOnce(new Error('falha')).mockResolvedValueOnce({
+      remessa: remessaDetalhe({ confirmedAt: '2026-12-16T15:00:00.000Z' }),
+    })
+    render(<PedidoVendedorPage />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar 1ª remessa do item 1' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Não foi possível confirmar a remessa. Tente novamente.',
+    )
+    expect(screen.getByText(/1ª remessa · prevista para/)).toBeInTheDocument()
+    const tentarNovamente = screen.getByRole('button', {
+      name: 'Confirmar 1ª remessa do item 1',
+    })
+    expect(tentarNovamente).toBeEnabled()
+
+    fireEvent.click(tentarNovamente)
+
+    expect(await screen.findByText('Remessa confirmada.')).toBeInTheDocument()
+    expect(mocks.apiPatch).toHaveBeenCalledTimes(2)
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('avisa sobre o registro de confirmação ao excluir remessa confirmada (D6 pendente)', async () => {
+    configurarApiComRemessas([remessaDetalhe({ confirmedAt: '2026-12-16T15:00:00.000Z' })])
+    mocks.apiDelete.mockResolvedValue(undefined)
+    render(<PedidoVendedorPage />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Remover 1ª remessa do item 1' }))
+    const dialogo = await screen.findByRole('alertdialog')
+    expect(dialogo).toHaveTextContent(/está confirmada/)
+    expect(dialogo).toHaveTextContent(/registro da confirmação/)
+    expect(mocks.apiDelete).not.toHaveBeenCalled()
+
+    // AD-016/D6 segue pendente: a remoção de remessa confirmada permanece
+    // permitida, sem alterar entregas ou saldos. Nenhuma auditoria foi criada.
+    fireEvent.click(screen.getByRole('button', { name: 'Excluir remessa' }))
+
+    expect(await screen.findByText('Remessa excluída.')).toBeInTheDocument()
+    expect(mocks.apiDelete).toHaveBeenCalledWith('/api/pedidos/remessas/r1')
   })
 })

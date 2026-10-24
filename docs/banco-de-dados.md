@@ -338,7 +338,7 @@ Nenhuma migração foi executada nem aplicada nesta etapa. Esta tabela registra 
 | Data de entrega do Top Gerente | **Não importada (D8)** | Conector e contrato inalterados; nenhuma regra de precedência criada. |
 | Normalização de prazos antigos | **Não executada (D6)** | Sem script e sem migration. Em ambiente de demonstração, re-salvar pela interface. Dados reais exigem autorização específica. |
 | Cancelamento lógico de item | **Pendente** | Conceito aprovado. Depende do contrato do conector e de decisão sobre o campo em `pedidos_itens`. Nenhum campo criado. |
-| Auditoria de remessas (programar, confirmar, remover) | **Pendente** | Aguarda decisão D6 de remessas (AD-016). |
+| Auditoria de remessas (programar, confirmar, remover) | **Pendente** | Aguarda decisão D6 de remessas (AD-016). As proteções de interface contra duplo envio e exclusão acidental foram implementadas sem criar auditoria nem alterar a regra de remoção. |
 | Referência de data original do pedido | **Pendente** | Hoje `pedidos.sourceUpdatedAt` recebe `orcamento.Data` (data do orçamento, não de atualização). O nome do campo é enganoso. Validação no ambiente de integração antes de qualquer uso. |
 | Persistência do status do pedido | **Não aprovada** | Status é derivado a partir dos itens ativos. Evitar novo estado persistido. |
 | Tratamento de divergências (fluxo, tabela ou status) | **Pendente** | Aguarda D7 de divergências (AD-017). Hoje a divergência é gravada apenas em `logs_auditoria` e no evento do job. |

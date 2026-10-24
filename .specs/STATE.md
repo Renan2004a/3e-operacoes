@@ -195,7 +195,7 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Trade-off**: O comportamento atual (reconfirmação sobrescreve a data; remoção de confirmada permitida; sem auditoria) permanece até aprovação.
 - **Scope**: expedição (remessas), permissões, auditoria.
 - **Date**: 2026-10-22
-- **Status**: pending approval (D6).
+- **Status**: pending approval (D6). As proteções de interface contra duplo envio e exclusão acidental foram implementadas sem alterar esta decisão; remoção de remessa confirmada e auditoria continuam pendentes.
 
 ### AD-017
 
@@ -232,6 +232,25 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Scope**: consulta de pedidos (Vendedor e Gerente), API `GET /api/pedidos`, lista de pedidos, testes e documentação. Filtros AD-014/A2/A6, status global, permissões, saldos e conclusão preservados.
 - **Date**: 2026-10-22
 - **Status**: active (aprovada e implementada). Testes unitários, de rota, de componente e de integração com MySQL local aprovados; validação no navegador pendente. Sem commit, push ou deploy.
+
+## Handoff — proteção das ações de remessas (Vendedor)
+
+- **Feature**: proteção contra exclusão acidental e duplo envio nas ações de remessas
+- **Phase / Task**: implementação concluída e validada localmente; aguardando validação manual no navegador e revisão
+- **Completed**:
+  - Confirmar e excluir passaram a ter estado de processamento por remessa, com guarda síncrona por `useRef` para barrar cliques rápidos antes da próxima renderização.
+  - Ações conflitantes na mesma remessa ficam bloqueadas; remessas independentes continuam disponíveis.
+  - Exclusão pede confirmação acessível (`role="alertdialog"`, título/descrição, foco no “Cancelar”, fechamento por Escape) e identifica a remessa, a data prevista e a consequência da ação.
+  - Falha na API preserva a remessa na tela, mostra erro e reabilita a nova tentativa; sucesso atualiza a lista.
+  - Backend conferido: `update`/`delete` por id não criam duplicatas; a restrição única por item/remessa permanece. Nenhum contrato ou permissão foi alterado.
+  - D6/AD-016 permanece pendente: a remoção de remessa confirmada continua permitida e **não** foi criada auditoria. A interface apenas avisa que o registro da confirmação será removido.
+- **In-progress**: nenhum
+- **Next step**: executar o roteiro manual com Vendedor (cliques rápidos, cancelar, excluir, falha simulada e remessa confirmada) e obter a decisão D6 para remoção de confirmada e auditoria.
+- **Blockers**: D6/AD-016 pendente; validação no navegador/MySQL não executada por ausência de `.env`, credenciais de banco e acesso ao Docker neste ambiente.
+- **Files changed**: `src/shared/ui/pedido-detalhe.tsx`, `src/app/(app)/vendedor/pedidos/[orderId]/page.test.tsx`, `src/app/api/pedidos/remessas/[id]/route.test.ts`, `docs/requisitos.md`, `docs/banco-de-dados.md`, `docs/perfis-permissoes.md` e este arquivo.
+- **Commit**: `c156eaf` — `fix: protege ações de remessas contra exclusão acidental e duplo envio`.
+- **PR**: #10 (Draft), separado dos anteriores; sem merge.
+- **Branch**: fix/vendedor-protecao-acoes-remessas
 
 ## Handoff AD-009 (prazos)
 

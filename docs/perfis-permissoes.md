@@ -40,5 +40,5 @@ Ação `solicitar_importacao` (matriz vigente em `src/modules/usuarios/permissoe
 
 ## Pendências de permissão (não aprovadas)
 
-- **Remessas (D6):** quem confirma, remoção de remessa confirmada e auditoria. O comportamento atual é mantido até decisão formal.
+- **Remessas (D6):** quem confirma, remoção de remessa confirmada e auditoria. O comportamento atual é mantido até decisão formal. As proteções de interface contra duplo envio e exclusão acidental foram implementadas sem ampliar permissões.
 - **Divergências (D7):** proposta de responsabilidade do Gerente de Produção para divergências operacionais, do Responsável Técnico para falhas de integração e de aviso de leitura ao Vendedor. Não há fluxo de resolução nem nova permissão aprovados.
