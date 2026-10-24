@@ -186,7 +186,7 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Trade-off**: Nenhum campo novo. A auditoria passa a depender da gravação na mesma operação de criação do job.
 - **Scope**: integração (solicitação), auditoria, permissões (sem ampliação).
 - **Date**: 2026-10-22
-- **Status**: active. Implementação pendente.
+- **Status**: active. Implementado em 2026-10-24: o usuário autenticado é obtido da sessão e propagado ao caso de uso; o job e o `AuditLog` (`IMPORT_REQUESTED`) são gravados na mesma transação. Cada solicitação bem-sucedida gera uma linha append-only; `NEW_ATTEMPT` e `REUSED_JOB` distinguem nova tentativa de reutilização. A consolidação de repetições do mesmo usuário permanece pendente de decisão.
 
 ### AD-016
 
@@ -232,6 +232,24 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Scope**: consulta de pedidos (Vendedor e Gerente), API `GET /api/pedidos`, lista de pedidos, testes e documentação. Filtros AD-014/A2/A6, status global, permissões, saldos e conclusão preservados.
 - **Date**: 2026-10-22
 - **Status**: active (aprovada e implementada). Testes unitários, de rota, de componente e de integração com MySQL local aprovados; validação no navegador pendente. Sem commit, push ou deploy.
+
+## Handoff — auditoria da solicitação de importação (AD-015)
+
+- **Feature**: rastreabilidade do usuário autenticado que solicita importação de pedido
+- **Phase / Task**: implementação concluída e validada localmente; aguardando validação transacional no MySQL de teste e revisão
+- **Completed**:
+  - `POST /api/integracao/pedidos` obtém o usuário exclusivamente da sessão (`auth.usuario.userId`); `userId`/`actorId` enviados no corpo são ignorados.
+  - O caso de uso exige `requestedByUserId`; autoria vazia é rejeitada, sem criar job nem auditoria.
+  - Job e `AuditLog` são gravados na mesma transação (`criarComAuditoria`); o despacho só é agendado depois que a transação retorna.
+  - Reutilização dentro da janela grava `REUSED_JOB` com `newDispatch: false`; criação/novo despacho grava `NEW_ATTEMPT` com `newDispatch: true`.
+  - A auditoria `IMPORT_REQUESTED` registra usuário, job, número do pedido, chave de idempotência e momento, sem tokens, sessão ou payload. É append-only e não sobrescreve autoria anterior.
+  - A rota explícita `/reprocessar` e o retry automático não foram alterados; o PR #5 (aberto) mexe nesse fluxo e não foi incorporado.
+- **In-progress**: nenhum
+- **Next step**: executar teste transacional no MySQL de teste (criação conjunta e rollback real) e confirmar a granularidade de auditoria para repetições do mesmo usuário.
+- **Blockers**: sem `.env`/credenciais de MySQL neste ambiente; PRs #5 e #8 abertos tocam os mesmos arquivos e exigirão resolução de conflito; granularidade de solicitações repetidas pendente de decisão.
+- **Files changed**: `src/app/api/integracao/pedidos/route.ts`, `route.test.ts`, `src/modules/integracao/solicitar-importacao.ts`, `solicitar-importacao.test.ts`, `src/modules/integracao/adapters/prisma-integracao-repository.ts`, `prisma-integracao-repository.test.ts`, `docs/requisitos.md`, `docs/banco-de-dados.md`, `docs/perfis-permissoes.md`, `docs/integracao-top-gerente.md` e este arquivo.
+- **PR**: #11 (Draft), separado dos anteriores; sem merge.
+- **Branch**: fix/vendedor-auditoria-solicitacao-importacao
 
 ## Handoff AD-009 (prazos)
 

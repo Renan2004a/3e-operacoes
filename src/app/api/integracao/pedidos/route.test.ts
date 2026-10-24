@@ -16,43 +16,85 @@ const mocks = vi.hoisted(() => {
   }
 
   const jobs: Job[] = []
-  const events: Array<{ id: string; jobId: string; type: string; detail: string | null; createdAt: Date }> = []
+  const events: Array<{
+    id: string
+    jobId: string
+    type: string
+    detail: string | null
+    createdAt: Date
+  }> = []
+  interface Audit {
+    jobId: string
+    legacyOrderNumber: string
+    idempotencyKey: string
+    requestedByUserId: string
+    now: Date
+    requestKind: 'NEW_ATTEMPT' | 'REUSED_JOB'
+    newDispatch: boolean
+  }
+  const audits: Audit[] = []
   const dispatchCalls: Array<{ jobId: string; orderNumber: string }> = []
   const scheduled: Array<() => unknown> = []
   let seq = 0
+  let auditError: unknown = null
   const perfis: Record<string, RoleCode[]> = {}
+
+  function criarJob(input: { legacyOrderNumber: string; idempotencyKey: string; now: Date }): Job {
+    const existing = jobs.find((job) => job.idempotencyKey === input.idempotencyKey)
+    if (existing) return existing
+    seq += 1
+    const job: Job = {
+      id: `job_${seq}`,
+      legacyOrderNumber: input.legacyOrderNumber,
+      idempotencyKey: input.idempotencyKey,
+      status: 'PENDING',
+      attemptCount: 0,
+      errorCode: null,
+      errorMessage: null,
+      createdAt: input.now,
+      updatedAt: input.now,
+      completedAt: null,
+    }
+    jobs.push(job)
+    return job
+  }
 
   const repo = {
     findRecentByIdempotencyKey: async (idempotencyKey: string, since: Date) =>
-      jobs.find((job) => job.idempotencyKey === idempotencyKey && job.createdAt.getTime() >= since.getTime()) ??
-      null,
+      jobs.find(
+        (job) =>
+          job.idempotencyKey === idempotencyKey && job.createdAt.getTime() >= since.getTime(),
+      ) ?? null,
     findById: async (jobId: string) => jobs.find((job) => job.id === jobId) ?? null,
-    create: async ({
-      legacyOrderNumber,
-      idempotencyKey,
-      now,
-    }: {
+    create: async (input: { legacyOrderNumber: string; idempotencyKey: string; now: Date }) =>
+      criarJob(input),
+    criarComAuditoria: async (input: {
       legacyOrderNumber: string
       idempotencyKey: string
       now: Date
+      requestedByUserId: string
     }) => {
-      const existing = jobs.find((job) => job.idempotencyKey === idempotencyKey)
-      if (existing) return existing
-      seq += 1
-      const job: Job = {
-        id: `job_${seq}`,
-        legacyOrderNumber,
-        idempotencyKey,
-        status: 'PENDING',
-        attemptCount: 0,
-        errorCode: null,
-        errorMessage: null,
-        createdAt: now,
-        updatedAt: now,
-        completedAt: null,
+      const job = criarJob(input)
+      if (auditError) {
+        // Simula o rollback da transação para o teste de despacho.
+        const indice = jobs.findIndex((candidato) => candidato.id === job.id)
+        if (indice >= 0) jobs.splice(indice, 1)
+        throw auditError
       }
-      jobs.push(job)
+      audits.push({
+        jobId: job.id,
+        legacyOrderNumber: input.legacyOrderNumber,
+        idempotencyKey: input.idempotencyKey,
+        requestedByUserId: input.requestedByUserId,
+        now: input.now,
+        requestKind: 'NEW_ATTEMPT',
+        newDispatch: true,
+      })
       return job
+    },
+    registrarAuditoriaSolicitacao: async (input: Audit) => {
+      if (auditError) throw auditError
+      audits.push(input)
     },
     updateStatus: async ({
       jobId,
@@ -110,17 +152,35 @@ const mocks = vi.hoisted(() => {
     dispatchError = error
   }
 
+  function setAuditError(error: unknown) {
+    auditError = error
+  }
+
   function reset() {
     jobs.length = 0
     events.length = 0
+    audits.length = 0
     dispatchCalls.length = 0
     scheduled.length = 0
     dispatchError = null
+    auditError = null
     seq = 0
     for (const key of Object.keys(perfis)) delete perfis[key]
   }
 
-  return { jobs, events, dispatchCalls, scheduled, repo, conector, setDispatchError, reset, perfis }
+  return {
+    jobs,
+    events,
+    audits,
+    dispatchCalls,
+    scheduled,
+    repo,
+    conector,
+    setDispatchError,
+    setAuditError,
+    reset,
+    perfis,
+  }
 })
 
 vi.mock('next/server', () => ({
@@ -141,7 +201,9 @@ vi.mock('@/modules/usuarios/adapters/prisma-usuarios-repository', () => ({
 
 vi.mock('../../../../modules/integracao/adapters/http-conector-legado', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('../../../../modules/integracao/adapters/http-conector-legado')>()
+    await importOriginal<
+      typeof import('../../../../modules/integracao/adapters/http-conector-legado')
+    >()
   return { ...actual, createHttpConectorLegado: () => mocks.conector }
 })
 
@@ -191,31 +253,43 @@ describe('POST /api/integracao/pedidos', () => {
     expect(mocks.jobs).toHaveLength(1)
     expect(mocks.jobs[0].legacyOrderNumber).toBe('70435')
     expect(mocks.jobs[0].status).toBe('PENDING')
+    expect(mocks.audits).toEqual([
+      {
+        jobId: 'job_1',
+        legacyOrderNumber: '70435',
+        idempotencyKey: 'pedido:70435',
+        requestedByUserId: 'user_import',
+        now: expect.any(Date),
+        requestKind: 'NEW_ATTEMPT',
+        newDispatch: true,
+      },
+    ])
   })
 
-  it('responde 401 e não cria job quando não há sessão', async () => {
+  it('responde 401 e não cria job nem auditoria quando não há sessão', async () => {
     const response = await POST(request({ orderNumber: '70435' }, { usuarioId: null }))
 
     expect(response.status).toBe(401)
     expect(mocks.jobs).toHaveLength(0)
+    expect(mocks.audits).toHaveLength(0)
   })
 
-  it('responde 403 e não cria job quando o perfil não é autorizado', async () => {
+  it('responde 403 e não cria job nem auditoria quando o perfil não é autorizado', async () => {
     mocks.perfis.user_vendedor = ['OPERATOR']
 
-    const response = await POST(
-      request({ orderNumber: '70435' }, { usuarioId: 'user_vendedor' }),
-    )
+    const response = await POST(request({ orderNumber: '70435' }, { usuarioId: 'user_vendedor' }))
 
     expect(response.status).toBe(403)
     expect(mocks.jobs).toHaveLength(0)
+    expect(mocks.audits).toHaveLength(0)
   })
 
-  it('responde 400 e não cria job para número não inteiro', async () => {
+  it('responde 400 e não cria job nem auditoria para número não inteiro', async () => {
     const response = await POST(request({ orderNumber: '1.5' }))
 
     expect(response.status).toBe(400)
     expect(mocks.jobs).toHaveLength(0)
+    expect(mocks.audits).toHaveLength(0)
   })
 
   it('responde 400 quando orderNumber está ausente', async () => {
@@ -223,6 +297,7 @@ describe('POST /api/integracao/pedidos', () => {
 
     expect(response.status).toBe(400)
     expect(mocks.jobs).toHaveLength(0)
+    expect(mocks.audits).toHaveLength(0)
   })
 
   it('agenda o despacho e move o job para RUNNING ao executar a tarefa de background', async () => {
@@ -280,5 +355,87 @@ describe('POST /api/integracao/pedidos', () => {
     expect(await response.json()).toEqual({ jobId: 'job_1' })
     expect(mocks.jobs).toHaveLength(1)
     expect(mocks.scheduled).toHaveLength(0)
+    expect(mocks.audits).toHaveLength(2)
+    expect(mocks.audits[1]).toMatchObject({
+      jobId: 'job_1',
+      requestedByUserId: 'user_import',
+      requestKind: 'REUSED_JOB',
+      newDispatch: false,
+    })
+  })
+
+  it('ignora autoria enviada pelo cliente e usa exclusivamente a sessão', async () => {
+    const response = await POST(
+      request({ orderNumber: '70435', userId: 'user_forjado', actorId: 'user_forjado' }),
+    )
+
+    expect(response.status).toBe(202)
+    expect(mocks.audits).toHaveLength(1)
+    expect(mocks.audits[0].requestedByUserId).toBe('user_import')
+  })
+
+  it('preserva a autoria de outro solicitante ao reutilizar o job', async () => {
+    mocks.perfis.user_outro = ['SELLER']
+
+    await POST(request({ orderNumber: '70435' }))
+    mocks.scheduled.length = 0
+    await POST(request({ orderNumber: '70435' }, { usuarioId: 'user_outro' }))
+
+    expect(mocks.jobs).toHaveLength(1)
+    expect(mocks.audits).toHaveLength(2)
+    expect(mocks.audits[0].requestedByUserId).toBe('user_import')
+    expect(mocks.audits[1]).toMatchObject({
+      jobId: 'job_1',
+      requestedByUserId: 'user_outro',
+      requestKind: 'REUSED_JOB',
+      newDispatch: false,
+    })
+  })
+
+  it('após a janela, audita nova tentativa e agenda novo despacho', async () => {
+    await POST(request({ orderNumber: '70435' }))
+    mocks.scheduled.length = 0
+    mocks.jobs[0].createdAt = new Date(Date.now() - 61_000)
+    mocks.jobs[0].status = 'FAILED'
+
+    const response = await POST(request({ orderNumber: '70435' }))
+
+    expect(response.status).toBe(202)
+    expect(await response.json()).toEqual({ jobId: 'job_1' })
+    expect(mocks.jobs).toHaveLength(1)
+    expect(mocks.scheduled).toHaveLength(1)
+    expect(mocks.audits).toHaveLength(2)
+    expect(mocks.audits[1]).toMatchObject({
+      jobId: 'job_1',
+      requestedByUserId: 'user_import',
+      requestKind: 'NEW_ATTEMPT',
+      newDispatch: true,
+    })
+  })
+
+  it('falha na auditoria impede o despacho', async () => {
+    mocks.setAuditError(new Error('falha de auditoria'))
+
+    await expect(POST(request({ orderNumber: '70435' }))).rejects.toThrow('falha de auditoria')
+
+    expect(mocks.scheduled).toHaveLength(0)
+    expect(mocks.jobs).toHaveLength(0)
+    expect(mocks.audits).toHaveLength(0)
+  })
+
+  it('solicitações concorrentes mantêm um job e uma auditoria por solicitante', async () => {
+    const [a, b] = await Promise.all([
+      POST(request({ orderNumber: '70435' })),
+      POST(request({ orderNumber: '70435' })),
+    ])
+
+    expect(a.status).toBe(202)
+    expect(b.status).toBe(202)
+    expect(mocks.jobs).toHaveLength(1)
+    expect(mocks.audits).toHaveLength(2)
+    expect(mocks.audits.map((audit) => audit.requestedByUserId)).toEqual([
+      'user_import',
+      'user_import',
+    ])
   })
 })

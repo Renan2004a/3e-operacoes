@@ -26,7 +26,14 @@ export async function POST(request: Request) {
 
   let result: Awaited<ReturnType<typeof solicitarImportacao>>
   try {
-    result = await solicitarImportacao({ orderNumber, now: new Date() }, prismaIntegracaoRepository)
+    result = await solicitarImportacao(
+      {
+        orderNumber,
+        now: new Date(),
+        requestedByUserId: auth.usuario.userId,
+      },
+      prismaIntegracaoRepository,
+    )
   } catch (error) {
     if (error instanceof InvalidOrderNumberError) {
       return Response.json({ error: 'invalid_order_number' }, { status: 400 })
