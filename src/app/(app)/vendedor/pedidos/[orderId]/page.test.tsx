@@ -2,7 +2,7 @@
 import '@testing-library/jest-dom/vitest'
 import type { AnchorHTMLAttributes, ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
 const mocks = vi.hoisted(() => ({
   apiGet: vi.fn(),
@@ -68,13 +68,14 @@ function detalhe() {
         description: 'Telha',
         productCode: '470',
         unit: 'm',
-        classificationStatus: 'PENDING_CLASSIFICATION',
-        deadlineAt: null,
-        activityDeadlineAt: null,
-        sectorCode: null,
-        sectorName: null,
-        activityStatus: null,
-        suggestedSectorId: 'setor_telhas',
+        classificationStatus: 'PENDING_CLASSIFICATION' as 'CLASSIFIED' | 'PENDING_CLASSIFICATION',
+        deadlineAt: null as string | null,
+        activityDeadlineAt: null as string | null,
+        sectorId: null as string | null,
+        sectorCode: null as string | null,
+        sectorName: null as string | null,
+        activityStatus: null as string | null,
+        suggestedSectorId: 'setor_telhas' as string | null,
         remessas: [],
       },
     ],
@@ -93,11 +94,21 @@ function detalhe() {
 }
 
 function configurarApi() {
+  configurarApiCom(detalhe())
+}
+
+function configurarApiCom(pedido: ReturnType<typeof detalhe>) {
   mocks.apiGet.mockImplementation((url: string) => {
-    if (url === '/api/pedidos/p1') return Promise.resolve({ pedido: detalhe() })
+    if (url === '/api/pedidos/p1') return Promise.resolve({ pedido })
     if (url === '/api/setores') return Promise.resolve({ sectors: SETORES })
     return Promise.reject(new Error(`url inesperada: ${url}`))
   })
+}
+
+function itemDetalhe(
+  overrides: Partial<ReturnType<typeof detalhe>['itens'][number]> = {},
+): ReturnType<typeof detalhe>['itens'][number] {
+  return { ...detalhe().itens[0], ...overrides }
 }
 
 beforeEach(() => {
@@ -264,6 +275,237 @@ describe('PedidoVendedorPage', () => {
 
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent(/não foi possível carregar o pedido/i)
+  })
+})
+
+describe('quantidades e vocabulário por setor no detalhe do Vendedor', () => {
+  it('formata as quantidades por item e no resumo por setor com a regra de Telhas', async () => {
+    configurarApiCom({
+      ...detalhe(),
+      itens: [
+        itemDetalhe({
+          itemId: 'item_1',
+          unit: 'm',
+          solicitado: '10.1',
+          executado: '8.05',
+          disponivel: '5.5',
+          entregue: '3.25',
+          pendente: '2.05',
+          classificationStatus: 'CLASSIFIED',
+          sectorId: 'setor_telhas',
+          sectorCode: 'TELHAS',
+          sectorName: 'Telhas',
+          activityStatus: 'IN_PROGRESS',
+          suggestedSectorId: null,
+        }),
+        itemDetalhe({
+          itemId: 'item_2',
+          description: 'Telha 2',
+          unit: 'M',
+          solicitado: '10.1999',
+          executado: '0',
+          disponivel: '0',
+          entregue: '0',
+          pendente: '10.1999',
+          classificationStatus: 'CLASSIFIED',
+          sectorId: 'setor_telhas',
+          sectorCode: 'TELHAS',
+          sectorName: 'Telhas',
+          activityStatus: 'PENDING',
+          suggestedSectorId: null,
+        }),
+      ],
+      totaisPorUnidade: [
+        {
+          unidade: 'm',
+          itens: 2,
+          solicitado: '20.2999',
+          executado: '8.05',
+          disponivel: '5.5',
+          entregue: '3.25',
+          pendente: '12.2499',
+        },
+      ],
+    })
+    render(<PedidoVendedorPage />)
+
+    const valores1 = await screen.findByLabelText('Valores do item 1')
+    expect(within(valores1).getByText('10.10')).toBeInTheDocument()
+    expect(within(valores1).getByText('8.05')).toBeInTheDocument()
+    expect(within(valores1).getByText('5.50')).toBeInTheDocument()
+    expect(within(valores1).getByText('3.25')).toBeInTheDocument()
+    expect(within(valores1).getByText('2.05')).toBeInTheDocument()
+
+    const valores2 = screen.getByLabelText('Valores do item 2')
+    expect(within(valores2).getAllByText('10.20')).toHaveLength(2)
+    expect(within(valores2).getAllByText('0.00')).toHaveLength(3)
+
+    expect(screen.getByRole('progressbar', { name: 'Execução do pedido (m)' })).toBeInTheDocument()
+    expect(screen.getByText('8.05 de 20.30 m executadas.')).toBeInTheDocument()
+    expect(
+      screen.getByText(/solicitado 20\.30 m · pendente de produção 12\.25 m/),
+    ).toBeInTheDocument()
+  })
+
+  it('usa o vocabulário de separação na Revenda, inclusive no resumo e no topo', async () => {
+    configurarApiCom({
+      ...detalhe(),
+      itens: [
+        itemDetalhe({
+          itemId: 'item_1',
+          unit: 'UN',
+          solicitado: '20',
+          executado: '16',
+          disponivel: '16',
+          entregue: '10',
+          pendente: '4',
+          classificationStatus: 'CLASSIFIED',
+          sectorId: 'setor_revenda',
+          sectorCode: 'REVENDA',
+          sectorName: 'Revenda',
+          activityStatus: 'IN_PROGRESS',
+          suggestedSectorId: null,
+        }),
+      ],
+      totaisPorUnidade: [
+        {
+          unidade: 'UN',
+          itens: 1,
+          solicitado: '20',
+          executado: '16',
+          disponivel: '16',
+          entregue: '10',
+          pendente: '4',
+        },
+      ],
+    })
+    render(<PedidoVendedorPage />)
+
+    expect(await screen.findByText('Pendentes de separação')).toBeInTheDocument()
+    expect(
+      screen.getByRole('progressbar', { name: 'Separação do pedido (UN)' }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('progressbar', { name: 'Separação do item 1' })).toBeInTheDocument()
+    expect(screen.getAllByText('16 de 20 UN separadas.')).toHaveLength(2)
+    expect(screen.queryByText('Pendentes de produção')).not.toBeInTheDocument()
+
+    const valores = screen.getByLabelText('Valores do item 1')
+    expect(within(valores).getByText('Separado')).toBeInTheDocument()
+    expect(within(valores).queryByText('Executado')).not.toBeInTheDocument()
+    expect(within(valores).getByText('20')).toBeInTheDocument()
+    expect(within(valores).getAllByText('16')).toHaveLength(2)
+    expect(within(valores).getByText('10')).toBeInTheDocument()
+    expect(within(valores).getByText('4')).toBeInTheDocument()
+    expect(screen.getByText(/pendente de separação 4 UN/)).toBeInTheDocument()
+    expect(screen.getByText('Setor: Revenda · Em separação')).toBeInTheDocument()
+  })
+
+  it('aplica o vocabulário de cada setor em pedido misto', async () => {
+    configurarApiCom({
+      ...detalhe(),
+      itens: [
+        itemDetalhe({
+          itemId: 'item_1',
+          unit: 'UN',
+          solicitado: '4',
+          executado: '2',
+          disponivel: '2',
+          entregue: '0',
+          pendente: '2',
+          classificationStatus: 'CLASSIFIED',
+          sectorId: 'setor_revenda',
+          sectorCode: 'REVENDA',
+          sectorName: 'Revenda',
+          activityStatus: 'IN_PROGRESS',
+          suggestedSectorId: null,
+        }),
+        itemDetalhe({
+          itemId: 'item_2',
+          description: 'Telha',
+          unit: 'M',
+          solicitado: '10',
+          executado: '8',
+          disponivel: '8',
+          entregue: '0',
+          pendente: '2',
+          classificationStatus: 'CLASSIFIED',
+          sectorId: 'setor_telhas',
+          sectorCode: 'TELHAS',
+          sectorName: 'Telhas',
+          activityStatus: 'IN_PROGRESS',
+          suggestedSectorId: null,
+        }),
+      ],
+      totaisPorUnidade: [
+        {
+          unidade: 'UN',
+          itens: 1,
+          solicitado: '4',
+          executado: '2',
+          disponivel: '2',
+          entregue: '0',
+          pendente: '2',
+        },
+        {
+          unidade: 'M',
+          itens: 1,
+          solicitado: '10',
+          executado: '8',
+          disponivel: '8',
+          entregue: '0',
+          pendente: '2',
+        },
+      ],
+    })
+    render(<PedidoVendedorPage />)
+
+    expect(await screen.findByText('Pendentes de produção e separação')).toBeInTheDocument()
+    expect(screen.getByRole('progressbar', { name: 'Separação do item 1' })).toBeInTheDocument()
+    expect(screen.getByRole('progressbar', { name: 'Execução do item 2' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('progressbar', { name: 'Separação do pedido (UN)' }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('progressbar', { name: 'Execução do pedido (M)' })).toBeInTheDocument()
+
+    const valores1 = screen.getByLabelText('Valores do item 1')
+    const valores2 = screen.getByLabelText('Valores do item 2')
+    expect(within(valores1).getByText('Separado')).toBeInTheDocument()
+    expect(within(valores2).getByText('Executado')).toBeInTheDocument()
+    expect(screen.getByText(/pendente de separação 2 UN/)).toBeInTheDocument()
+    expect(screen.getByText(/pendente de produção 2\.00 M/)).toBeInTheDocument()
+  })
+
+  it('apresenta as quantidades sem disparar persistência', async () => {
+    configurarApiCom({
+      ...detalhe(),
+      itens: [
+        itemDetalhe({
+          unit: 'M',
+          solicitado: '10.5',
+          executado: '8.25',
+          disponivel: '8.25',
+          entregue: '0',
+          pendente: '2.25',
+        }),
+      ],
+      totaisPorUnidade: [
+        {
+          unidade: 'M',
+          itens: 1,
+          solicitado: '10.5',
+          executado: '8.25',
+          disponivel: '8.25',
+          entregue: '0',
+          pendente: '2.25',
+        },
+      ],
+    })
+    render(<PedidoVendedorPage />)
+
+    expect(await screen.findByLabelText('Valores do item 1')).toBeInTheDocument()
+    expect(mocks.apiPatch).not.toHaveBeenCalled()
+    expect(mocks.apiPost).not.toHaveBeenCalled()
+    expect(mocks.apiDelete).not.toHaveBeenCalled()
   })
 })
 
