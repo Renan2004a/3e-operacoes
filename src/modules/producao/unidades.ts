@@ -1,22 +1,11 @@
 import { Prisma } from '@/generated/prisma/client'
+import { QuantidadeInvalidaError, unidadeUsaCasasDecimais } from './unidade-medida'
+import { formatarQuantidade } from './formato-quantidade'
+
+export { QuantidadeInvalidaError, unidadeUsaCasasDecimais, formatarQuantidade }
 
 /** Quantidade validada conforme a unidade do item (RN003, RN010, RN020, RN022). */
 export type Quantidade = Prisma.Decimal
-
-export class QuantidadeInvalidaError extends Error {
-  constructor(unidade: string, valor: string) {
-    super(`Quantidade inválida para a unidade "${unidade}": ${valor}`)
-    this.name = 'QuantidadeInvalidaError'
-  }
-}
-
-/** Unidades medidas em metro: aceitam decimais e padronizam 2 casas (RN020, RN022). */
-const UNIDADES_METRO = new Set(['M', 'MT', 'M2', 'M²', 'METRO', 'METROS'])
-
-/** Peça/unidade é inteira; metro aceita decimais (RN003, RN010, RN020). */
-export function unidadeUsaCasasDecimais(unidade: string): boolean {
-  return UNIDADES_METRO.has(unidade.trim().toUpperCase())
-}
 
 function paraDecimal(unidade: string, valor: Prisma.Decimal | string | number): Prisma.Decimal {
   try {
@@ -42,13 +31,4 @@ export function validarQuantidade(
     throw new QuantidadeInvalidaError(unidade, String(valor))
   }
   return unidadeUsaCasasDecimais(unidade) ? quantidade.toDecimalPlaces(2) : quantidade
-}
-
-/** Formata a quantidade para exibição: peça inteira, metro com 2 casas (RN022). */
-export function formatarQuantidade(
-  unidade: string,
-  valor: Prisma.Decimal | string | number,
-): string {
-  const quantidade = paraDecimal(unidade, valor)
-  return unidadeUsaCasasDecimais(unidade) ? quantidade.toFixed(2) : quantidade.toFixed(0)
 }
