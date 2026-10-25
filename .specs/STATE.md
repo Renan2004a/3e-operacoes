@@ -233,6 +233,21 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Date**: 2026-10-22
 - **Status**: active (aprovada e implementada). Testes unitários, de rota, de componente e de integração com MySQL local aprovados; validação no navegador pendente. Sem commit, push ou deploy.
 
+## Handoff — revisão integrada pós-merges (2026-10-25)
+
+- **Feature**: revisão do perfil Vendedor e das correções dos PRs #5–#13 após os merges
+- **Phase / Task**: correções técnicas aplicadas em `fix/vendedor-integracao-pos-merge`; aguardando revisão e PR
+- **Completed**:
+  - Reaplicação do #13 sobre a UI de transparência do #8: limite técnico de 60s, pausa do polling, consulta manual do mesmo job e falha de consulta separada de falha da importação.
+  - Recuperação das mensagens de erro do #5: o código técnico continua visível, mas a orientação traduzida (`mensagens-importacao`) voltou a ser usada.
+  - Auditoria do #11 corrigida para job ativo antigo: `REUSED_JOB`/`newDispatch: false`, pois não há novo despacho.
+  - Retorno do detalhe do Gerente passou a preservar filtros e página, como no Vendedor (componente compartilhado do #7).
+  - Preservados: transparência de reimportação e unidade do #8, quantidades/vocabulário do #9, proteção de remessas do #10, rótulo do período do #12, filtros AD-014/AD-018/AD-019 e paginação A1.
+- **In-progress**: nenhum
+- **Next step**: revisar o diff e abrir PR para `main`; validação no navegador do fluxo de espera prolongada e do retorno do Gerente.
+- **Blockers**: conector local/ambiente com dados controlados para simular job lento; decisões pendentes AD-010, AD-012/T00.4, AD-013, AD-016/D6 e AD-017/D7.
+- **Branch**: fix/vendedor-integracao-pos-merge
+
 ## Handoff — auditoria da solicitação de importação (AD-015)
 
 - **Feature**: rastreabilidade do usuário autenticado que solicita importação de pedido

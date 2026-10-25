@@ -109,7 +109,7 @@ Os 9 PRs abertos do Marcelo foram revisados, integrados com resolução de confl
 
 - **Commit no `main`**: `ccd8f8d` (branch de integração `integracao-prs`).
 - **Conflitos resolvidos**: importação (#5/#8/#11/#13), lista/detalhe (#6/#7/#9/#10/#12) e `STATE.md` (ADs).
-- **Decisão de conflito**: a UI de importação do **#8** (transparência/reimportação) foi mantida como vigente; o #13 (espera prolongada) fica para reaplicação. A política do #8 de **não duplicar** job ativo antigo foi preservada, com o teste do #5 ajustado.
-- **Auditoria (#11)** combinada com a leitura do job mais recente/retry (#8): `criarComAuditoria` + `registrarAuditoriaSolicitacao` convivem com `findLatestByOrderNumberSince`.
+- **Decisão de conflito**: a UI de importação do **#8** (transparência/reimportação) foi mantida como vigente; o #13 (espera prolongada) foi reaplicado sobre ela na revisão pós-merge (`fix/vendedor-integracao-pos-merge`). A política do #8 de **não duplicar** job ativo antigo foi preservada, com o teste do #5 ajustado.
+- **Auditoria (#11)** combinada com a leitura do job mais recente/retry (#8): `criarComAuditoria` + `registrarAuditoriaSolicitacao` convivem com `findLatestByOrderNumberSince`. Na revisão pós-merge, job ativo antigo passou a ser auditado como `REUSED_JOB` (`newDispatch: false`), coerente com a ausência de novo despacho.
 
 > Os PRs foram integrados por merge local (a `main` contém todas as mudanças); os PRs no GitHub foram fechados com a referência do commit, já que os branches conflitavam entre si.

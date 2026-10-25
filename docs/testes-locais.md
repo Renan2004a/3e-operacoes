@@ -214,5 +214,9 @@ Executar com o app local e banco do app migrado. Repetir no **Vendedor** e no **
 | 5 | Alterar a unidade de um item sem registros operacionais e reimportar | Unidade e quantidade são atualizadas, sem conversão automática |
 | 6 | Conferir os logs/eventos | `UNIT_DIVERGENCE` no `AuditLog` e no job; nenhum registro operacional apagado |
 | 7 | Conferir o pedido na listagem | Nenhuma duplicação de pedido e `createdAt` inalterado |
+| 8 | Manter um job sem concluir por mais de 60 s (conector lento ou pausado) | O acompanhamento automático é pausado; o status conhecido permanece e a tela informa que a importação está demorando |
+| 9 | Clicar em **Consultar andamento** | Consulta o mesmo job, sem criar novo despacho nem nova importação |
+| 10 | Forçar uma falha definitiva (ex.: pedido inexistente) | A tela mostra a orientação específica além do código técnico; uma falha de consulta não é apresentada como falha da importação |
+| 11 | Reabrir a lista após um sucesso e voltar do detalhe (Vendedor e Gerente) | Filtros e página são preservados na URL de retorno |
 
-**Evidência mínima:** perfil, número do pedido, origem da solicitação (nova/em andamento/anterior), unidade anterior e nova, mensagem exibida, link aberto e captura de tela.
+**Evidência mínima:** perfil, número do pedido, origem da solicitação (nova/em andamento/anterior), unidade anterior e nova, mensagem exibida, link aberto, tempo de espera observado e captura de tela.
