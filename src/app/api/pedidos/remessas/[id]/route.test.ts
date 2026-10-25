@@ -100,6 +100,50 @@ describe('PATCH/DELETE /api/pedidos/remessas/[id]', () => {
     expect(response.status).toBe(403)
   })
 
+  it('responde 403 ao remover sem permissão', async () => {
+    const response = await DELETE(request('DELETE', { usuarioId: 'user_operador' }), context('r1'))
+    expect(response.status).toBe(403)
+  })
+
+  it('permite que o Vendedor confirme e remova a remessa (permissão preservada)', async () => {
+    mocks.perfis.user_seller = ['SELLER']
+
+    const confirmacao = await PATCH(request('PATCH', { usuarioId: 'user_seller' }), context('r1'))
+    expect(confirmacao.status).toBe(200)
+
+    const remocao = await DELETE(request('DELETE', { usuarioId: 'user_seller' }), context('r1'))
+    expect(remocao.status).toBe(204)
+  })
+
+  it('confirmações repetidas não duplicam a remessa', async () => {
+    const respostas = await Promise.all([
+      PATCH(request('PATCH'), context('r1')),
+      PATCH(request('PATCH'), context('r1')),
+    ])
+
+    expect(respostas.map((resposta) => resposta.status)).toEqual([200, 200])
+    expect(mocks.remessas).toHaveLength(1)
+  })
+
+  it('exclusões concorrentes removem a remessa uma única vez', async () => {
+    const respostas = await Promise.all([
+      DELETE(request('DELETE'), context('r1')),
+      DELETE(request('DELETE'), context('r1')),
+    ])
+
+    expect(respostas.map((resposta) => resposta.status).sort()).toEqual([204, 404])
+    expect(mocks.remessas).toHaveLength(0)
+  })
+
+  it('mantém a remoção de remessa confirmada enquanto a D6 estiver pendente (AD-016)', async () => {
+    mocks.remessas[0].confirmedAt = new Date('2026-11-21T12:00:00.000Z')
+
+    const response = await DELETE(request('DELETE'), context('r1'))
+
+    expect(response.status).toBe(204)
+    expect(mocks.remessas).toHaveLength(0)
+  })
+
   it('responde 401 sem sessão', async () => {
     const response = await PATCH(request('PATCH', { usuarioId: null }), context('r1'))
     expect(response.status).toBe(401)
