@@ -92,3 +92,24 @@ Não houve diferença de comportamento observada entre local e hospedado.
 - Trocar `TOPGERENTE_*` no conector (mesma porta/adapter) e importar um pedido conhecido para comparar.
 - Revisar usuários/senhas de seed e remover dados de demonstração.
 - Rotacionar segredos que circularam.
+
+---
+
+## 7. Atualização 2026-10-25 — PRs #5 a #13 (9 PRs do Vendedor)
+
+Os 9 PRs abertos do Marcelo foram revisados, integrados com resolução de conflitos e publicados.
+
+| Item | Local | Hospedado |
+| --- | --- | --- |
+| PRs #5–#13 (importação, filtros, prazos, quantidades, remessas) | ✅ integrados | ✅ |
+| Testes | **1005** verdes + 24 de integração ignorados | — |
+| Lint / typecheck / build | 0 erros / OK / OK | — |
+| Playwright (390 px, navegação, setor, totais, impressão) | **11/11** | **11/11** |
+| `/api/health` / `/login` | — | **200 / 200** |
+
+- **Commit no `main`**: `ccd8f8d` (branch de integração `integracao-prs`).
+- **Conflitos resolvidos**: importação (#5/#8/#11/#13), lista/detalhe (#6/#7/#9/#10/#12) e `STATE.md` (ADs).
+- **Decisão de conflito**: a UI de importação do **#8** (transparência/reimportação) foi mantida como vigente; o #13 (espera prolongada) fica para reaplicação. A política do #8 de **não duplicar** job ativo antigo foi preservada, com o teste do #5 ajustado.
+- **Auditoria (#11)** combinada com a leitura do job mais recente/retry (#8): `criarComAuditoria` + `registrarAuditoriaSolicitacao` convivem com `findLatestByOrderNumberSince`.
+
+> Os PRs foram integrados por merge local (a `main` contém todas as mudanças); os PRs no GitHub foram fechados com a referência do commit, já que os branches conflitavam entre si.
