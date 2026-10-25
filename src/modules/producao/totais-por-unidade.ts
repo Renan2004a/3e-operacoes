@@ -1,25 +1,9 @@
 import { Prisma } from '@/generated/prisma/client'
 import type { Quantidade } from './unidades'
 
-/**
- * Chave de agrupamento da unidade: sem espaços nas bordas e sem diferenciar
- * maiúsculas. Não há conversão entre unidades diferentes (RN01, RN04).
- */
-export function chaveUnidade(unidade: string): string {
-  return unidade.trim().toUpperCase()
-}
+import { chaveUnidade, compararUnidades, rotuloUnidade } from './unidade-medida'
 
-/** Unidade para exibição; `null` quando ausente ou vazia, sem inventar padrão (RN05). */
-export function rotuloUnidade(unidade: string): string | null {
-  const limpa = unidade.trim()
-  return limpa === '' ? null : limpa
-}
-
-/** Ordena por rótulo; o grupo sem unidade informada fica por último (RN05). */
-export function compararUnidades(a: string | null, b: string | null): number {
-  if (a === null || b === null) return a === b ? 0 : a === null ? 1 : -1
-  return a.localeCompare(b)
-}
+export { chaveUnidade, compararUnidades, rotuloUnidade } from './unidade-medida'
 
 export interface GrupoPorUnidade<T> {
   /** Unidade do grupo, ou `null` quando os itens não têm unidade informada (RN05). */

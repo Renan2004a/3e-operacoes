@@ -150,7 +150,9 @@ describe('PedidoGerentePage', () => {
 
     expect(await screen.findByText('Resumo do pedido')).toBeInTheDocument()
     expect(screen.getAllByText('Telhas').length).toBeGreaterThan(0)
-    expect(screen.getByText(/1 item\(ns\).*solicitado 10.*pendente 2/)).toBeInTheDocument()
+    expect(
+      screen.getByText(/1 item\(ns\).*solicitado 10.*pendente de produção 2/),
+    ).toBeInTheDocument()
   })
 
   it('mostra os totais por unidade sem somar peças com metros (RN01, RN02)', async () => {

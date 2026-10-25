@@ -11,6 +11,7 @@ import {
   type ErroMotivoCorrecao,
 } from '@/modules/setores/motivo-correcao'
 import { calcularStatusPrazo } from '@/modules/prazos/atraso'
+import { chaveUnidade } from '@/modules/producao/unidade-medida'
 import { pode } from '@/modules/usuarios/permissoes'
 import { ApiError, apiDelete, apiGet, apiPatch, apiPost } from '@/shared/http/api-client'
 import { diaCivilParaInput, formatarDiaCivil } from '@/shared/time/dia-civil'
@@ -25,7 +26,22 @@ import { PageHead } from './page-head'
 import { Progress, type ProgressTone } from './progress'
 import { resolverRetornoListagem } from './retorno-lista'
 import { Spinner } from './spinner'
-import { rotuloDaUnidade, valorPorUnidade, type TotalUnidadeView } from './totais-unidade'
+import {
+  agruparPorSetor,
+  formatarQuantidadeParaExibicao,
+  rotuloDaUnidade,
+  valorPorUnidade,
+  type TotalUnidadeView,
+} from './totais-unidade'
+import {
+  ehRevenda,
+  participioExecucao,
+  rotuloExecucao,
+  rotuloExecutado,
+  rotuloSituacaoDoSetor,
+  vocabularioDoSetor,
+  type VocabularioSetor,
+} from './vocabulario-setor'
 import { cn, FOCO_VISIVEL } from './utils'
 
 interface ItemSaldo {
@@ -103,34 +119,21 @@ function mensagemErroCorrecao(codigo: string): string {
   }
 }
 
-const ROTULO_SITUACAO: Record<string, string> = {
-  PENDING: 'Pendente',
-  IN_PROGRESS: 'Em execução',
-  PAUSED: 'Pausada',
-  COMPLETED: 'Concluída',
-  DIVERGENT: 'Divergente',
-}
-
 /**
- * Agrupa os itens por setor e unidade para o desmembramento operacional.
- * Unidades diferentes ficam em linhas separadas (RN01, RN02).
+ * Vocabulário de um total por unidade. Como o total agrega setores, só é
+ * separação quando todos os itens daquela unidade são de Revenda; se houver
+ * produção misturada, preserva o vocabulário de produção.
  */
-function agruparPorSetor(itens: ItemSaldo[]) {
-  const mapa = new Map<
-    string,
-    { setor: string; unidade: string | null; itens: number; solicitado: number; pendente: number }
-  >()
-  for (const item of itens) {
-    const setor = item.sectorName ?? 'Não classificado'
-    const unidade = item.unit.trim() === '' ? null : item.unit.trim()
-    const chave = `${setor}\u0000${unidade?.toUpperCase() ?? ''}`
-    const atual = mapa.get(chave) ?? { setor, unidade, itens: 0, solicitado: 0, pendente: 0 }
-    atual.itens += 1
-    atual.solicitado += Number(item.solicitado) || 0
-    atual.pendente += Number(item.pendente) || 0
-    mapa.set(chave, atual)
-  }
-  return Array.from(mapa.values())
+function vocabularioDoTotal(
+  total: TotalUnidadeView,
+  itens: readonly ItemSaldo[],
+): VocabularioSetor {
+  const chave = chaveUnidade(total.unidade ?? '')
+  const doGrupo = itens.filter((item) => chaveUnidade(item.unit) === chave)
+  if (doGrupo.length === 0) return 'producao'
+  return doGrupo.every((item) => ehRevenda(item.sectorCode, item.sectorName))
+    ? 'separacao'
+    : 'producao'
 }
 
 function numero(valor: string | number): number {
@@ -544,6 +547,21 @@ export function PedidoDetalhe({
   // não pode definir prazo (D9).
   const semPermissaoParaPrazo = perfis.length > 0 && !pode(perfis, 'definir_prazo')
   const destinoVoltar = resolverRetornoListagem(retorno, basePath)
+
+  const temRevenda = pedido.itens.some((item) => ehRevenda(item.sectorCode, item.sectorName))
+  const temProducao = pedido.itens.some((item) => !ehRevenda(item.sectorCode, item.sectorName))
+  const rotuloPendentes =
+    temRevenda && temProducao
+      ? 'Pendentes de produção e separação'
+      : temRevenda
+        ? 'Pendentes de separação'
+        : 'Pendentes de produção'
+  const helperPendentes =
+    temRevenda && temProducao
+      ? 'A produzir ou separar, por unidade.'
+      : temRevenda
+        ? 'A separar, por unidade.'
+        : 'A produzir, por unidade.'
   return (
     <section className="grid gap-4">
       <div className="grid gap-2">
@@ -570,9 +588,9 @@ export function PedidoDetalhe({
           helper="Itens sem setor definido."
         />
         <Metric
-          label="Pendentes de produção"
+          label={rotuloPendentes}
           value={valorPorUnidade(pedido.totaisPorUnidade, 'pendente')}
-          helper="A produzir ou separar, por unidade."
+          helper={helperPendentes}
         />
       </div>
 
@@ -587,31 +605,43 @@ export function PedidoDetalhe({
             pedido.totaisPorUnidade.map((total) => {
               const percentual = percentualExecutado(total)
               const unidade = rotuloDaUnidade(total.unidade)
+              const vocabulario = vocabularioDoTotal(total, pedido.itens)
               return (
                 <Progress
                   key={total.unidade ?? 'sem-unidade'}
-                  label={`Execução do pedido (${unidade})`}
+                  label={`${rotuloExecucao(vocabulario)} do pedido (${unidade})`}
                   value={percentual}
                   tone={percentual >= 100 ? 'success' : 'accent'}
-                  helper={`${total.executado} de ${total.solicitado} ${unidade} executadas.`}
+                  helper={`${formatarQuantidadeParaExibicao(total.unidade, total.executado)} de ${formatarQuantidadeParaExibicao(total.unidade, total.solicitado)} ${unidade} ${participioExecucao(vocabulario)}.`}
                 />
               )
             })
           )}
           <ul className="grid gap-2 text-sm text-ink">
-            {agruparPorSetor(pedido.itens).map((grupo) => (
-              <li
-                key={`${grupo.setor}-${grupo.unidade ?? ''}`}
-                className="flex flex-wrap items-center justify-between gap-2"
-              >
-                <span className="font-medium">{grupo.setor}</span>
-                <span className="text-muted">
-                  {grupo.itens} item(ns) · solicitado {grupo.solicitado}{' '}
-                  {rotuloDaUnidade(grupo.unidade)} · pendente {grupo.pendente}{' '}
-                  {rotuloDaUnidade(grupo.unidade)}
-                </span>
-              </li>
-            ))}
+            {agruparPorSetor(pedido.itens).map((grupo) => {
+              const vocabulario = vocabularioDoSetor(grupo.sectorCode, grupo.setor)
+              const unidade = rotuloDaUnidade(grupo.unidade)
+              const rotuloPendente =
+                grupo.setor === 'Não classificado'
+                  ? 'pendente'
+                  : vocabulario === 'separacao'
+                    ? 'pendente de separação'
+                    : 'pendente de produção'
+              return (
+                <li
+                  key={`${grupo.setor}-${grupo.unidade ?? ''}`}
+                  className="flex flex-wrap items-center justify-between gap-2"
+                >
+                  <span className="font-medium">{grupo.setor}</span>
+                  <span className="text-muted">
+                    {grupo.itens} item(ns) · solicitado{' '}
+                    {formatarQuantidadeParaExibicao(grupo.unidade, grupo.solicitado)} {unidade} ·{' '}
+                    {rotuloPendente} {formatarQuantidadeParaExibicao(grupo.unidade, grupo.pendente)}{' '}
+                    {unidade}
+                  </span>
+                </li>
+              )
+            })}
           </ul>
         </CardContent>
       </Card>
@@ -639,6 +669,10 @@ export function PedidoDetalhe({
           const desmembrado =
             item.classificationStatus === 'CLASSIFIED' || classificados[item.itemId] === true
           const labelItem = `item ${indice + 1}`
+          const vocabulario = vocabularioDoSetor(item.sectorCode, item.sectorName)
+          const statusAtividade = item.activityStatus
+            ? (rotuloSituacaoDoSetor(item.activityStatus, vocabulario) ?? item.activityStatus)
+            : ''
           const statusPrazoAtividade = calcularStatusPrazo({
             prazo: item.activityDeadlineAt ? new Date(item.activityDeadlineAt) : null,
             concluido: item.activityStatus === 'COMPLETED',
@@ -667,10 +701,10 @@ export function PedidoDetalhe({
               </CardHeader>
               <CardContent className="grid gap-4">
                 <Progress
-                  label={`Execução do ${labelItem}`}
+                  label={`${rotuloExecucao(vocabulario)} do ${labelItem}`}
                   value={percentual}
                   tone={tomDoProgresso(item, percentual)}
-                  helper={`${item.executado} de ${item.solicitado} ${item.unit} executadas.`}
+                  helper={`${formatarQuantidadeParaExibicao(item.unit, item.executado)} de ${formatarQuantidadeParaExibicao(item.unit, item.solicitado)} ${item.unit} ${participioExecucao(vocabulario)}.`}
                 />
 
                 <dl
@@ -679,23 +713,33 @@ export function PedidoDetalhe({
                 >
                   <div>
                     <dt className="text-muted">Solicitado</dt>
-                    <dd className="font-semibold">{item.solicitado}</dd>
+                    <dd className="font-semibold">
+                      {formatarQuantidadeParaExibicao(item.unit, item.solicitado)}
+                    </dd>
                   </div>
                   <div>
-                    <dt className="text-muted">Executado</dt>
-                    <dd className="font-semibold">{item.executado}</dd>
+                    <dt className="text-muted">{rotuloExecutado(vocabulario)}</dt>
+                    <dd className="font-semibold">
+                      {formatarQuantidadeParaExibicao(item.unit, item.executado)}
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-muted">Disponível</dt>
-                    <dd className="font-semibold">{item.disponivel}</dd>
+                    <dd className="font-semibold">
+                      {formatarQuantidadeParaExibicao(item.unit, item.disponivel)}
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-muted">Entregue</dt>
-                    <dd className="font-semibold">{item.entregue}</dd>
+                    <dd className="font-semibold">
+                      {formatarQuantidadeParaExibicao(item.unit, item.entregue)}
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-muted">Pendente</dt>
-                    <dd className="font-semibold">{item.pendente}</dd>
+                    <dd className="font-semibold">
+                      {formatarQuantidadeParaExibicao(item.unit, item.pendente)}
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-muted">Unidade</dt>
@@ -705,9 +749,7 @@ export function PedidoDetalhe({
 
                 <p className="text-sm text-muted">
                   Setor: {item.sectorName ?? 'Não classificado'}
-                  {item.activityStatus
-                    ? ` · ${ROTULO_SITUACAO[item.activityStatus] ?? item.activityStatus}`
-                    : ''}
+                  {statusAtividade ? ` · ${statusAtividade}` : ''}
                 </p>
 
                 {item.activityStatus || item.activityDeadlineAt ? (
