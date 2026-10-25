@@ -15,6 +15,8 @@ vi.mock('@/shared/http/api-client', () => ({
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mocks.push }),
   useParams: () => ({}),
+  useSearchParams: () =>
+    new URLSearchParams(typeof window === 'undefined' ? '' : window.location.search),
 }))
 
 import PedidosGerentePage from './page'
