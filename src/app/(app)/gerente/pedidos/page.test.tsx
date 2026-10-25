@@ -22,6 +22,7 @@ import PedidosGerentePage from './page'
 const PEDIDO = { id: 'p1', numero: '100', cliente: 'Ana', status: 'PENDING' as const }
 
 beforeEach(() => {
+  window.history.replaceState({}, '', '/')
   mocks.apiGet.mockReset()
   mocks.push.mockReset()
 })
@@ -44,6 +45,18 @@ describe('PedidosGerentePage', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Abrir pedido 100' }))
 
     expect(mocks.push).toHaveBeenCalledWith('/gerente/pedidos/p1')
+  })
+
+  it('preserva filtros e página ao abrir o detalhe (PR #7)', async () => {
+    window.history.replaceState({}, '', '/gerente/pedidos?cliente=Ana&pagina=2')
+    mocks.apiGet.mockResolvedValue({ pedidos: [PEDIDO] })
+    render(<PedidosGerentePage />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Abrir pedido 100' }))
+
+    expect(mocks.push).toHaveBeenCalledWith(
+      '/gerente/pedidos/p1?retorno=%2Fgerente%2Fpedidos%3Fcliente%3DAna%26pagina%3D2',
+    )
   })
 
   it('mostra o estado de carregando enquanto busca (FEP-03)', () => {
