@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { apiGet } from '@/shared/http/api-client'
 import { CODIGOS_SETOR, ehCodigoSetor, type CodigoSetor } from '@/modules/setores/codigos-setor'
 import { Alert } from './alert'
@@ -159,6 +159,7 @@ export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProp
   const primeiraCarga = useRef(true)
   const filtrosIniciais = useRef(filtros)
   const paginaInicial = useRef(pagina)
+  const ajudaPeriodoId = useId()
 
   const buscar = useCallback(
     (aplicados: Filtros, paginaBuscada: number) =>
@@ -307,29 +308,44 @@ export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProp
           )}
         </Field>
 
-        <Field label="De">
-          {(props) => (
-            <Input
-              {...props}
-              type="date"
-              name="de"
-              value={filtros.de}
-              onChange={(evento) => setFiltros((atual) => ({ ...atual, de: evento.target.value }))}
-            />
-          )}
-        </Field>
+        <fieldset
+          className="grid min-w-0 gap-1.5 border-0 p-0 sm:col-span-2 lg:col-span-2"
+          aria-describedby={ajudaPeriodoId}
+        >
+          <legend className="text-sm font-semibold text-ink">Data de importação</legend>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="De">
+              {(props) => (
+                <Input
+                  {...props}
+                  type="date"
+                  name="de"
+                  value={filtros.de}
+                  onChange={(evento) =>
+                    setFiltros((atual) => ({ ...atual, de: evento.target.value }))
+                  }
+                />
+              )}
+            </Field>
 
-        <Field label="Até">
-          {(props) => (
-            <Input
-              {...props}
-              type="date"
-              name="ate"
-              value={filtros.ate}
-              onChange={(evento) => setFiltros((atual) => ({ ...atual, ate: evento.target.value }))}
-            />
-          )}
-        </Field>
+            <Field label="Até">
+              {(props) => (
+                <Input
+                  {...props}
+                  type="date"
+                  name="ate"
+                  value={filtros.ate}
+                  onChange={(evento) =>
+                    setFiltros((atual) => ({ ...atual, ate: evento.target.value }))
+                  }
+                />
+              )}
+            </Field>
+          </div>
+          <p id={ajudaPeriodoId} className="text-sm text-muted">
+            Considera a entrada do pedido no 3E.
+          </p>
+        </fieldset>
 
         <div className="flex flex-wrap gap-2 sm:col-span-2 lg:col-span-3">
           <Button type="submit">Filtrar</Button>
