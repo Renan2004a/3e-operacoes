@@ -49,8 +49,20 @@ function criarRepoFake(): FakeRepo {
     async findRecentByIdempotencyKey() {
       return null
     },
-    async findById() {
-      return null
+    async findById(jobId) {
+      if (repo.status === null) return null
+      return {
+        id: jobId,
+        legacyOrderNumber: '70435',
+        idempotencyKey: 'pedido:70435',
+        status: repo.status,
+        attemptCount: 0,
+        errorCode: repo.errorCode,
+        errorMessage: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        completedAt: null,
+      } satisfies IntegrationJob
     },
     async create() {
       throw new Error('não usado')
@@ -156,6 +168,34 @@ describe('despacharComRetry', () => {
     expect(repo.events.map((event) => event.type)).toEqual(['DISPATCHED'])
   })
 
+  it('não despacha quando outra execução já reservou o job (cliques repetidos)', async () => {
+    const repo = criarRepoFake()
+    repo.iniciarDespacho = async () => false
+    const { conector, chamadas } = conectorFake([sucesso()])
+
+    await despacharComRetry({ jobId: 'job_1', orderNumber: '70435' }, { repo, conector })
+
+    expect(chamadas).toHaveLength(0)
+    expect(repo.events).toHaveLength(0)
+  })
+
+  it('despacha uma única vez quando a reserva atômica é conquistada', async () => {
+    const repo = criarRepoFake()
+    const reserva = vi.fn(async () => {
+      repo.status = 'DISPATCHED'
+      return true
+    })
+    repo.iniciarDespacho = reserva
+    const { conector, chamadas } = conectorFake([sucesso()])
+
+    await despacharComRetry({ jobId: 'job_1', orderNumber: '70435' }, { repo, conector })
+
+    expect(reserva).toHaveBeenCalledWith('job_1', expect.any(Date), undefined)
+    expect(chamadas).toHaveLength(1)
+    expect(repo.status).toBe('RUNNING')
+    expect(repo.events.map((event) => event.type)).toEqual(['DISPATCHED'])
+  })
+
   it('repete a falha transitória e sucede na segunda tentativa (LAC-11)', async () => {
     const repo = criarRepoFake()
     const { conector, chamadas } = conectorFake([falha('CONNECTOR_TIMEOUT'), sucesso()])
@@ -230,6 +270,62 @@ describe('despacharComRetry', () => {
 
     expect(chamadas).toHaveLength(2)
     expect(repo.status).toBe('FAILED')
+  })
+
+  it('despacha novamente um job SUCCEEDED quando a reimportação é solicitada', async () => {
+    const repo = criarRepoFake()
+    repo.status = 'SUCCEEDED'
+    const { conector, chamadas } = conectorFake([sucesso()])
+
+    await despacharComRetry({ jobId: 'job_1', orderNumber: '70435' }, { repo, conector })
+
+    expect(chamadas).toHaveLength(1)
+    expect(repo.status).toBe('RUNNING')
+    expect(repo.events.map((event) => event.type)).toEqual(['DISPATCHED'])
+  })
+
+  it('limpa o erro anterior ao iniciar nova tentativa de um job FAILED', async () => {
+    const repo = criarRepoFake()
+    repo.status = 'FAILED'
+    repo.errorCode = 'CONNECTOR_TIMEOUT'
+    const { conector } = conectorFake([sucesso()])
+
+    await despacharComRetry({ jobId: 'job_1', orderNumber: '70435' }, { repo, conector })
+
+    expect(repo.status).toBe('RUNNING')
+    expect(repo.errorCode).toBeNull()
+  })
+
+  it('não marca FAILED quando o callback conclui o job durante a tentativa', async () => {
+    const repo = criarRepoFake()
+    const conector: ConectorLegadoPort = {
+      async despachar() {
+        repo.status = 'SUCCEEDED'
+        throw new ConectorLegadoError('CONNECTOR_TIMEOUT', 'tempo limite')
+      },
+    }
+
+    await despacharComRetry({ jobId: 'job_1', orderNumber: '70435' }, { repo, conector })
+
+    expect(repo.status).toBe('SUCCEEDED')
+    expect(repo.events.map((event) => event.type)).toEqual(['DISPATCHED'])
+  })
+
+  it('não sobrescreve uma falha específica já registrada pelo callback', async () => {
+    const repo = criarRepoFake()
+    const conector: ConectorLegadoPort = {
+      async despachar() {
+        repo.status = 'FAILED'
+        repo.errorCode = 'INVALID_CALLBACK_PAYLOAD'
+        throw new ConectorLegadoError('CONNECTOR_HTTP_ERROR', 'conector respondeu 502')
+      },
+    }
+
+    await despacharComRetry({ jobId: 'job_1', orderNumber: '70435' }, { repo, conector })
+
+    expect(repo.status).toBe('FAILED')
+    expect(repo.errorCode).toBe('INVALID_CALLBACK_PAYLOAD')
+    expect(repo.events.map((event) => event.type)).toEqual(['DISPATCHED'])
   })
 
   it('aguarda o backoff configurado entre as tentativas (LAC-11)', async () => {

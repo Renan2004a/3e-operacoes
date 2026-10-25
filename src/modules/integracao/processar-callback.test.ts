@@ -299,8 +299,10 @@ describe('processarCallback', () => {
     ).rejects.toBeInstanceOf(InvalidCallbackPayloadError)
 
     expect(pedidos.orders).toHaveLength(0)
-    expect(integracao.events).toHaveLength(0)
-    expect(integracao.jobs[0].status).toBe('RUNNING')
+    expect(integracao.jobs[0].status).toBe('FAILED')
+    expect(integracao.jobs[0].errorCode).toBe('INVALID_CALLBACK_PAYLOAD')
+    expect(integracao.events.map((event) => event.type)).toEqual(['FAILED'])
+    expect(integracao.events[0].detail).toBe('INVALID_CALLBACK_PAYLOAD')
   })
 
   it('lança JobNotFoundError quando o job não existe', async () => {
@@ -327,6 +329,74 @@ describe('processarCallback', () => {
     expect(integracao.jobs[0].status).toBe('SUCCEEDED')
     expect(integracao.jobs[0].completedAt).toEqual(NOW)
     expect(integracao.events.map((event) => event.type)).toEqual(['SUCCEEDED'])
+  })
+
+  it('distingue a primeira importação da reimportação no evento de sucesso', async () => {
+    const integracao = createIntegracaoFake([makeJob('job_1', 'RUNNING')])
+    const pedidos = createPedidosFake({
+      seed: [
+        {
+          id: 'order_1',
+          legacyOrderKey: '1:70435',
+          customerName: 'CLIENTE ANTIGO',
+          items: [
+            {
+              legacyItemKey: '1',
+              requestedQuantity: '5.000',
+              executedQuantity: '0.000',
+              deliveredQuantity: '0.000',
+            },
+          ],
+        },
+      ],
+    })
+
+    await processarCallback(validCallback(), {
+      integracao: integracao.repo,
+      pedidos: pedidos.repo,
+      now: () => NOW,
+    })
+
+    expect(integracao.events.find((event) => event.type === 'SUCCEEDED')?.detail).toBe(
+      'REIMPORTED',
+    )
+  })
+
+  it('limpa o erro de uma tentativa anterior ao concluir com sucesso', async () => {
+    const integracao = createIntegracaoFake([makeJob('job_1', 'RUNNING')])
+    integracao.jobs[0].errorCode = 'CONNECTOR_TIMEOUT'
+    integracao.jobs[0].errorMessage = 'Conector não respondeu no tempo limite'
+    const pedidos = createPedidosFake()
+
+    await processarCallback(validCallback(), {
+      integracao: integracao.repo,
+      pedidos: pedidos.repo,
+      now: () => NOW,
+    })
+
+    expect(integracao.jobs[0].errorCode).toBeNull()
+    expect(integracao.jobs[0].errorMessage).toBeNull()
+  })
+
+  it('não rebaixa para FAILED um job já concluído por callback concorrente', async () => {
+    const integracao = createIntegracaoFake([makeJob('job_1', 'RUNNING')])
+    const pedidos = createPedidosFake({ failUpsert: true })
+    let leituras = 0
+    const repo: IntegracaoRepository = {
+      ...integracao.repo,
+      async findById(jobId) {
+        leituras += 1
+        if (leituras >= 2) integracao.jobs[0].status = 'SUCCEEDED'
+        return integracao.repo.findById(jobId)
+      },
+    }
+
+    await expect(
+      processarCallback(validCallback(), { integracao: repo, pedidos: pedidos.repo, now: () => NOW }),
+    ).resolves.toBeUndefined()
+
+    expect(integracao.jobs[0].status).toBe('SUCCEEDED')
+    expect(integracao.events).toHaveLength(0)
   })
 
   it('faz o upsert do pedido com os itens normalizados', async () => {

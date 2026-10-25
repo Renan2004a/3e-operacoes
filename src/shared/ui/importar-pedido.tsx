@@ -2,6 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { ApiError, apiGet, apiPost } from '@/shared/http/api-client'
+import {
+  codigoFalhaAtual,
+  mensagemFalhaImportacao,
+  mensagemSucessoImportacao,
+  sucessoFoiReimportacao,
+} from '@/modules/integracao/mensagens-importacao'
 import { Alert } from './alert'
 import { Badge } from './badge'
 import { Button } from './button'
@@ -20,6 +26,8 @@ interface JobEvent {
 interface JobStatusResponse {
   jobId: string
   status: JobStatus
+  /** Código da falha da tentativa atual (não o histórico de tentativas antigas). */
+  errorCode?: string | null
   events: JobEvent[]
 }
 
@@ -69,6 +77,7 @@ export function ImportarPedido({ onConcluido, titulo, descricao }: ImportarPedid
   const [jobId, setJobId] = useState<string | null>(null)
   const [status, setStatus] = useState<JobStatus | null>(null)
   const [errorCode, setErrorCode] = useState<string | null>(null)
+  const [reimportado, setReimportado] = useState(false)
   const [importando, setImportando] = useState(false)
 
   const final = status !== null && STATUS_FINAIS.includes(status)
@@ -83,8 +92,8 @@ export function ImportarPedido({ onConcluido, titulo, descricao }: ImportarPedid
         const dados = await apiGet<JobStatusResponse>(`/api/integracao/pedidos/${jobId}`)
         if (cancelado) return
         setStatus(dados.status)
-        const falha = dados.events?.find((event) => event.type === 'FAILED')
-        setErrorCode(falha?.detail ?? null)
+        setErrorCode(codigoFalhaAtual(dados.status, dados.errorCode, dados.events))
+        setReimportado(sucessoFoiReimportacao(dados.status, dados.events))
         if (dados.status === 'SUCCEEDED') onConcluido?.(numero)
         if (!STATUS_FINAIS.includes(dados.status)) {
           timer = setTimeout(consultar, INTERVALO_POLL_MS)
@@ -107,13 +116,13 @@ export function ImportarPedido({ onConcluido, titulo, descricao }: ImportarPedid
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobId])
 
-  async function importar(evento: React.FormEvent<HTMLFormElement>) {
-    evento.preventDefault()
+  async function executarImportacao() {
     setErroValidacao(null)
     setErroEnvio(null)
     setJobId(null)
     setStatus(null)
     setErrorCode(null)
+    setReimportado(false)
 
     if (!numeroValido(numero)) {
       setErroValidacao('Informe um número de pedido válido (somente dígitos).')
@@ -138,6 +147,11 @@ export function ImportarPedido({ onConcluido, titulo, descricao }: ImportarPedid
     }
   }
 
+  async function importar(evento: React.FormEvent<HTMLFormElement>) {
+    evento.preventDefault()
+    await executarImportacao()
+  }
+
   return (
     <div className="grid gap-4">
       <Card>
@@ -154,7 +168,10 @@ export function ImportarPedido({ onConcluido, titulo, descricao }: ImportarPedid
 
             <Field
               label="Número do pedido"
-              hint={descricao ?? 'Somente dígitos, como aparece no Top Gerente.'}
+              hint={
+                descricao ??
+                'Informe o número do pedido no Top Gerente. Ele pode ser diferente do número exibido no 3E.'
+              }
               error={erroValidacao ?? undefined}
               required
             >
@@ -187,19 +204,48 @@ export function ImportarPedido({ onConcluido, titulo, descricao }: ImportarPedid
 
             {!final ? <Spinner label="Atualizando status…" /> : null}
 
-            {status === 'SUCCEEDED' ? (
-              <Alert variant="success" title="Importação concluída">
-                O pedido foi importado com sucesso.
-              </Alert>
-            ) : null}
+            {status === 'SUCCEEDED'
+              ? (() => {
+                  const sucesso = mensagemSucessoImportacao(reimportado)
+                  return (
+                    <Alert variant="success" title={sucesso.titulo}>
+                      <p>{sucesso.mensagem}</p>
+                    </Alert>
+                  )
+                })()
+              : null}
 
-            {status === 'FAILED' ? (
-              <Alert variant="error" title="Importação falhou">
-                {errorCode
-                  ? `Código do erro: ${errorCode}`
-                  : 'O pedido não pôde ser importado. Tente novamente.'}
-              </Alert>
-            ) : null}
+            {status === 'FAILED'
+              ? (() => {
+                  const falha = mensagemFalhaImportacao(errorCode)
+                  return (
+                    <Alert
+                      variant="error"
+                      title={falha.titulo}
+                      action={
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={importando}
+                          onClick={() => void executarImportacao()}
+                        >
+                          {importando ? 'Tentando…' : 'Tentar novamente'}
+                        </Button>
+                      }
+                    >
+                      <p>{falha.mensagem}</p>
+                      {errorCode ? (
+                        <p className="mt-2 text-xs opacity-80">
+                          Código técnico: {errorCode}
+                          {jobId ? ` — Job: ${jobId}` : ''}. Informe este código ao responsável
+                          pelo sistema.
+                        </p>
+                      ) : null}
+                    </Alert>
+                  )
+                })()
+              : null}
           </CardContent>
         </Card>
       ) : null}
