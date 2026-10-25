@@ -168,7 +168,7 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Trade-off**: Os critérios finais e os impactos em indicadores e em outros perfis ainda devem ser verificados antes da implementação. Atendimento integral é indicador separado (AD-011).
 - **Scope**: indicadores, lista e detalhe de pedidos, painel do gerente, PCP.
 - **Date**: 2026-10-22
-- **Status**: partially approved. Correção mínima implementada: item ativo não classificado (ou classificado sem atividade) impede `COMPLETED`/“Produção concluída” no cálculo e no filtro. Critérios completos e sinalização de `DIVERGENT` permanecem pendentes. Cancelamento lógico de item segue sem campo/contrato (AD-010).
+- **Status**: partially approved. Critérios detalhados pendentes.
 
 ### AD-014
 
@@ -186,7 +186,7 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Trade-off**: Nenhum campo novo. A auditoria passa a depender da gravação na mesma operação de criação do job.
 - **Scope**: integração (solicitação), auditoria, permissões (sem ampliação).
 - **Date**: 2026-10-22
-- **Status**: active. Implementação pendente.
+- **Status**: active. Implementado em 2026-10-24: o usuário autenticado é obtido da sessão e propagado ao caso de uso; o job e o `AuditLog` (`IMPORT_REQUESTED`) são gravados na mesma transação. Cada solicitação bem-sucedida gera uma linha append-only; `NEW_ATTEMPT` e `REUSED_JOB` distinguem nova tentativa de reutilização. A consolidação de repetições do mesmo usuário permanece pendente de decisão.
 
 ### AD-016
 
@@ -195,7 +195,7 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Trade-off**: O comportamento atual (reconfirmação sobrescreve a data; remoção de confirmada permitida; sem auditoria) permanece até aprovação.
 - **Scope**: expedição (remessas), permissões, auditoria.
 - **Date**: 2026-10-22
-- **Status**: pending approval (D6). As proteções de interface contra duplo envio e exclusão acidental foram implementadas sem alterar esta decisão; remoção de remessa confirmada e auditoria continuam pendentes.
+- **Status**: pending approval (D6).
 
 ### AD-017
 
@@ -226,31 +226,30 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 
 ### AD-020
 
-- **Decision**: A lista de pedidos passa a ser paginada **no servidor**, no MySQL via Prisma. `limite` (padrão 20, teto 100) e `offset` continuam sendo os parâmetros; a resposta acrescenta `paginacao` com `pagina`, `total` e `totalPaginas`. Filtros de número comercial (parcial), cliente, setor, status derivado e período, além da ordenação `createdAt desc, id asc`, são aplicados no banco antes de `skip`/`take`. Página e total são lidos na mesma transação (`findMany` + `count`). O status derivado é traduzido para relation filters (`every`/`some`/`NOT`) reproduzindo exatamente `statusDoPedido`, incluindo a correção mínima da AD-013: item ativo não classificado, ou classificado sem atividade, não permite `COMPLETED`. Os demais critérios pendentes da AD-013 permanecem fora do filtro. `%` e `_` são escapados e tratados como literais. Página inexistente responde `200` com lista vazia e total correto. A interface navega entre páginas, mantém os filtros na URL e volta à primeira página ao alterar/limpar filtros ou após importar um pedido. Nenhuma alteração de banco, migração, índice ou workflow de CI nesta etapa.
+- **Decision**: A lista de pedidos passa a ser paginada **no servidor**, no MySQL via Prisma. `limite` (padrão 20, teto 100) e `offset` continuam sendo os parâmetros; a resposta acrescenta `paginacao` com `pagina`, `total` e `totalPaginas`. Filtros de número comercial (parcial), cliente, setor, status derivado e período, além da ordenação `createdAt desc, id asc`, são aplicados no banco antes de `skip`/`take`. Página e total são lidos na mesma transação (`findMany` + `count`). O status derivado é traduzido para relation filters (`every`/`some`/`NOT`) reproduzindo exatamente `statusDoPedido`, sem incorporar as regras pendentes da AD-013. `%` e `_` são escapados e tratados como literais. Página inexistente responde `200` com lista vazia e total correto. A interface navega entre páginas, mantém os filtros na URL e volta à primeira página ao alterar/limpar filtros ou após importar um pedido. Nenhuma alteração de banco, migração, índice ou workflow de CI nesta etapa.
 - **Reason**: O limite de 20 era aplicado em memória (`slice`) após carregar todos os pedidos, itens e atividades; Vendedor e Gerente não conseguiam chegar ao 21º pedido. Filtros e contagem no banco eliminam o carregamento integral e permitem navegação completa.
 - **Trade-off**: A tradução do status para SQL é um espelho de `statusDoPedido` e precisa ser mantida em sincronia se a AD-013 for alterada. Por usar offset, uma importação concorrente pode deslocar um item entre páginas; a ordenação determinística evita duplicados na mesma resposta e a interface volta à primeira página após importar. A collation `utf8mb4_unicode_ci` torna a busca também insensível a acentos (mudança documentada). A busca parcial com `%...%` não usa o índice de `legacyNumber`. Índice em `createdAt` não foi criado (D6); desempenho deve ser medido com `EXPLAIN` antes de propor migração.
 - **Scope**: consulta de pedidos (Vendedor e Gerente), API `GET /api/pedidos`, lista de pedidos, testes e documentação. Filtros AD-014/A2/A6, status global, permissões, saldos e conclusão preservados.
 - **Date**: 2026-10-22
 - **Status**: active (aprovada e implementada). Testes unitários, de rota, de componente e de integração com MySQL local aprovados; validação no navegador pendente. Sem commit, push ou deploy.
 
-## Handoff — proteção das ações de remessas (Vendedor)
+## Handoff — auditoria da solicitação de importação (AD-015)
 
-- **Feature**: proteção contra exclusão acidental e duplo envio nas ações de remessas
-- **Phase / Task**: implementação concluída e validada localmente; aguardando validação manual no navegador e revisão
+- **Feature**: rastreabilidade do usuário autenticado que solicita importação de pedido
+- **Phase / Task**: implementação concluída e validada localmente; aguardando validação transacional no MySQL de teste e revisão
 - **Completed**:
-  - Confirmar e excluir passaram a ter estado de processamento por remessa, com guarda síncrona por `useRef` para barrar cliques rápidos antes da próxima renderização.
-  - Ações conflitantes na mesma remessa ficam bloqueadas; remessas independentes continuam disponíveis.
-  - Exclusão pede confirmação acessível (`role="alertdialog"`, título/descrição, foco no “Cancelar”, fechamento por Escape) e identifica a remessa, a data prevista e a consequência da ação.
-  - Falha na API preserva a remessa na tela, mostra erro e reabilita a nova tentativa; sucesso atualiza a lista.
-  - Backend conferido: `update`/`delete` por id não criam duplicatas; a restrição única por item/remessa permanece. Nenhum contrato ou permissão foi alterado.
-  - D6/AD-016 permanece pendente: a remoção de remessa confirmada continua permitida e **não** foi criada auditoria. A interface apenas avisa que o registro da confirmação será removido.
+  - `POST /api/integracao/pedidos` obtém o usuário exclusivamente da sessão (`auth.usuario.userId`); `userId`/`actorId` enviados no corpo são ignorados.
+  - O caso de uso exige `requestedByUserId`; autoria vazia é rejeitada, sem criar job nem auditoria.
+  - Job e `AuditLog` são gravados na mesma transação (`criarComAuditoria`); o despacho só é agendado depois que a transação retorna.
+  - Reutilização dentro da janela grava `REUSED_JOB` com `newDispatch: false`; criação/novo despacho grava `NEW_ATTEMPT` com `newDispatch: true`.
+  - A auditoria `IMPORT_REQUESTED` registra usuário, job, número do pedido, chave de idempotência e momento, sem tokens, sessão ou payload. É append-only e não sobrescreve autoria anterior.
+  - A rota explícita `/reprocessar` e o retry automático não foram alterados; o PR #5 (aberto) mexe nesse fluxo e não foi incorporado.
 - **In-progress**: nenhum
-- **Next step**: executar o roteiro manual com Vendedor (cliques rápidos, cancelar, excluir, falha simulada e remessa confirmada) e obter a decisão D6 para remoção de confirmada e auditoria.
-- **Blockers**: D6/AD-016 pendente; validação no navegador/MySQL não executada por ausência de `.env`, credenciais de banco e acesso ao Docker neste ambiente.
-- **Files changed**: `src/shared/ui/pedido-detalhe.tsx`, `src/app/(app)/vendedor/pedidos/[orderId]/page.test.tsx`, `src/app/api/pedidos/remessas/[id]/route.test.ts`, `docs/requisitos.md`, `docs/banco-de-dados.md`, `docs/perfis-permissoes.md` e este arquivo.
-- **Commit**: `c156eaf` — `fix: protege ações de remessas contra exclusão acidental e duplo envio`.
-- **PR**: #10 (Draft), separado dos anteriores; sem merge.
-- **Branch**: fix/vendedor-protecao-acoes-remessas
+- **Next step**: executar teste transacional no MySQL de teste (criação conjunta e rollback real) e confirmar a granularidade de auditoria para repetições do mesmo usuário.
+- **Blockers**: sem `.env`/credenciais de MySQL neste ambiente; PRs #5 e #8 abertos tocam os mesmos arquivos e exigirão resolução de conflito; granularidade de solicitações repetidas pendente de decisão.
+- **Files changed**: `src/app/api/integracao/pedidos/route.ts`, `route.test.ts`, `src/modules/integracao/solicitar-importacao.ts`, `solicitar-importacao.test.ts`, `src/modules/integracao/adapters/prisma-integracao-repository.ts`, `prisma-integracao-repository.test.ts`, `docs/requisitos.md`, `docs/banco-de-dados.md`, `docs/perfis-permissoes.md`, `docs/integracao-top-gerente.md` e este arquivo.
+- **PR**: #11 (Draft), separado dos anteriores; sem merge.
+- **Branch**: fix/vendedor-auditoria-solicitacao-importacao
 
 ## Handoff AD-009 (prazos)
 

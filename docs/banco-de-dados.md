@@ -67,7 +67,7 @@ O banco do app é um **registro operacional** construído em camadas. O fluxo re
 ### 4.1 Importação (comercial → app)
 
 1. O usuário informa o número do pedido.
-2. O app cria um **job** em `jobs_integracao` (idempotente) e chama o conector. O usuário autenticado que solicitou a importação deve ser registrado em `logs_auditoria` (aprovado em 2026-10-22; sem nova coluna nem tabela; implementação pendente).
+2. O app cria um **job** em `jobs_integracao` (idempotente) e registra `IMPORT_REQUESTED` em `logs_auditoria` na mesma transação, com o usuário da sessão. Reutilização de job também é auditada (`REUSED_JOB`); a consolidação de repetições do mesmo usuário está pendente de decisão.
 3. O conector lê `topgerente.orcamento` + `orcamento_itens` (somente leitura) e devolve o payload.
 4. O app grava (upsert) **`pedidos`** e **`pedidos_itens`**; cada transição vira um **`eventos_job_integracao`**.
 5. Se a nova quantidade solicitada conflitar com o que já foi executado/entregue, registra **`logs_auditoria`** (divergência) — nunca apaga histórico.
@@ -97,7 +97,7 @@ O banco do app é um **registro operacional** construído em camadas. O fluxo re
 
 16. Indicadores e alertas são **consultas** sobre `atividades`, `execucoes`, `entregas` e prazos (sem tabela de “dashboard”).
 17. **`usuarios`**, **`usuarios_perfis`** e **`usuarios_setores`** controlam quem entra e em quais setores atua.
-18. **`logs_auditoria`** registra ações sensíveis. Hoje grava: exceções de entrega, mapeamentos e correções de setor, e divergências de importação. *Correção de 2026-10-22:* a versão anterior dizia que prazos também eram auditados; **prazos e remessas ainda não gravam auditoria** no código. A auditoria de prazos é documentada como pendente de implementação, e a de remessas aguarda decisão (D6).
+18. **`logs_auditoria`** registra ações sensíveis. Hoje grava: exceções de entrega, mapeamentos, correções de setor, divergências de importação e solicitações de importação (`IMPORT_REQUESTED`). *Correção de 2026-10-22:* a versão anterior dizia que prazos também eram auditados; **prazos e remessas ainda não gravam auditoria** no código. A auditoria de prazos é documentada como pendente de implementação, e a de remessas aguarda decisão (D6).
 
 ---
 
@@ -330,7 +330,7 @@ Nenhuma migração foi executada nem aplicada nesta etapa. Esta tabela registra 
 
 | Mudança | Situação | Observação |
 | --- | --- | --- |
-| Usuário solicitante da importação | **Aprovada**, sem alteração de schema | Registrar em `logs_auditoria`, reutilizando o mecanismo existente. |
+| Usuário solicitante da importação | **Aprovada**, sem alteração de schema | Implementado com `IMPORT_REQUESTED` em `logs_auditoria`, na mesma transação do job; `NEW_ATTEMPT`/`REUSED_JOB` distinguem a solicitação. |
 | Semântica do prazo (AD-009) | **Aprovada**, sem alteração de schema | Data civil `YYYY-MM-DD` persistida no fim do dia em `America/Sao_Paulo`. Nenhuma migração. |
 | Auditoria de alteração de prazo (item e atividade) | **Adiada (D7)**, não implementada | Fica para etapa própria de RFN006. Nenhuma auditoria existente foi removida. |
 | Remoção de prazo | **Adiada (D3)** | Registrar no backlog; não há contrato para limpar `deadlineAt`. |

@@ -24,7 +24,7 @@ Se quantidade entregue > disponível:
 
 ## Solicitação de importação
 
-Ação `solicitar_importacao` (matriz vigente em `src/modules/usuarios/permissoes.ts`): Gerente de Produção, Responsável Técnico, Responsável pelo Sistema e Vendedor. O usuário autenticado que solicitou a importação deve ser registrado (aprovado em 2026-10-22; implementação pendente).
+Ação `solicitar_importacao` (matriz vigente em `src/modules/usuarios/permissoes.ts`): Gerente de Produção, Responsável Técnico, Responsável pelo Sistema e Vendedor. O usuário autenticado que solicitou a importação é registrado em `logs_auditoria` (`IMPORT_REQUESTED`), na mesma transação do job, com o tipo de solicitação (`NEW_ATTEMPT`/`REUSED_JOB`). Nenhuma permissão foi ampliada.
 
 ## Prazos (AD-009)
 

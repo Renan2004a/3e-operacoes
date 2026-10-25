@@ -5,6 +5,10 @@ import type {
   IntegrationJobEventRecord,
   ListaJobsRepository,
 } from '../contratos'
+import type {
+  AuditoriaSolicitacaoImportacao,
+  SolicitacaoImportacaoRepository,
+} from '../solicitar-importacao'
 
 interface IntegrationJobRow {
   id: string
@@ -54,8 +58,42 @@ function toEvent(row: IntegrationJobEventRow): IntegrationJobEventRecord {
   }
 }
 
+function dadosDoJob(input: { legacyOrderNumber: string; idempotencyKey: string; now: Date }) {
+  return {
+    where: { idempotencyKey: input.idempotencyKey },
+    create: {
+      legacyOrderNumber: input.legacyOrderNumber,
+      idempotencyKey: input.idempotencyKey,
+      status: 'PENDING' as const,
+      createdAt: input.now,
+      updatedAt: input.now,
+    },
+    update: {},
+  }
+}
+
+function dadosDaAuditoria(input: AuditoriaSolicitacaoImportacao) {
+  return {
+    userId: input.requestedByUserId,
+    action: 'IMPORT_REQUESTED',
+    entityType: 'IntegrationJob',
+    entityId: input.jobId,
+    correlationId: input.idempotencyKey,
+    createdAt: input.now,
+    afterJson: {
+      jobId: input.jobId,
+      legacyOrderNumber: input.legacyOrderNumber,
+      idempotencyKey: input.idempotencyKey,
+      requestKind: input.requestKind,
+      newDispatch: input.newDispatch,
+    },
+  }
+}
+
 /** Implementação Prisma da porta `IntegracaoRepository`. */
-export const prismaIntegracaoRepository: IntegracaoRepository & ListaJobsRepository = {
+export const prismaIntegracaoRepository: IntegracaoRepository &
+  ListaJobsRepository &
+  SolicitacaoImportacaoRepository = {
   async findRecentByIdempotencyKey(idempotencyKey, since) {
     const row = await prisma.integrationJob.findFirst({
       where: { idempotencyKey, createdAt: { gte: since } },
@@ -102,18 +140,35 @@ export const prismaIntegracaoRepository: IntegracaoRepository & ListaJobsReposit
 
   async create({ legacyOrderNumber, idempotencyKey, now }) {
     // O upsert por `idempotencyKey` garante um único job mesmo em chamadas concorrentes.
-    const row = await prisma.integrationJob.upsert({
-      where: { idempotencyKey },
-      create: {
-        legacyOrderNumber,
-        idempotencyKey,
-        status: 'PENDING',
-        createdAt: now,
-        updatedAt: now,
-      },
-      update: {},
-    })
+    const row = await prisma.integrationJob.upsert(
+      dadosDoJob({ legacyOrderNumber, idempotencyKey, now }),
+    )
     return toJob(row)
+  },
+
+  async criarComAuditoria({ legacyOrderNumber, idempotencyKey, now, requestedByUserId }) {
+    return prisma.$transaction(async (tx) => {
+      // Se a auditoria falhar, o upsert do job é desfeito pelo rollback.
+      const row = await tx.integrationJob.upsert(
+        dadosDoJob({ legacyOrderNumber, idempotencyKey, now }),
+      )
+      await tx.auditLog.create({
+        data: dadosDaAuditoria({
+          jobId: row.id,
+          legacyOrderNumber,
+          idempotencyKey,
+          requestedByUserId,
+          now,
+          requestKind: 'NEW_ATTEMPT',
+          newDispatch: true,
+        }),
+      })
+      return toJob(row)
+    })
+  },
+
+  async registrarAuditoriaSolicitacao(input) {
+    await prisma.auditLog.create({ data: dadosDaAuditoria(input) })
   },
 
   async updateStatus({ jobId, status, now, orderId, errorCode, errorMessage, completedAt }) {

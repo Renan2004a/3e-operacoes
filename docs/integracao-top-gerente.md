@@ -7,7 +7,7 @@ Importar ou atualizar um pedido específico sem polling contínuo e sem expor o 
 ## Fluxo proposto
 
 1. Usuário informa o número do pedido na interface do Railway.
-2. `POST /api/integracao/pedidos` valida o número e cria `IntegrationJob` com chave idempotente.
+2. `POST /api/integracao/pedidos` valida o número, cria/reutiliza `IntegrationJob` com chave idempotente e grava `IMPORT_REQUESTED` em `logs_auditoria` na mesma transação, com o usuário autenticado.
 3. API responde `202 Accepted` com `jobId`.
 4. Worker/backend do Railway envia uma chamada HTTPS autenticada ao conector local pelo Cloudflare Tunnel/Access.
 5. Conector local consulta somente as tabelas necessárias no MySQL Top Gerente com usuário `SELECT` e SQL parametrizado.
