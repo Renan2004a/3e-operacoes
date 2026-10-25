@@ -15,6 +15,15 @@ Importar ou atualizar um pedido específico sem polling contínuo e sem expor o 
 7. Aplicativo valida o payload com Zod, executa upsert do pedido/itens comerciais e atualiza o job.
 8. Interface consulta o status do job e atualiza a tela quando concluído.
 
+## Acompanhamento na interface
+
+- A tela consulta o status do job a cada 1,5s enquanto ele não estiver concluído ou falho.
+- O acompanhamento automático tem limite técnico padrão de **60s** (`limiteAcompanhamentoMs` no componente), configurável para a interface. Não é prazo de negócio nem SLA.
+- Após o limite, o polling frequente é suspenso e a tela orienta o Vendedor a consultar o andamento antes de tentar importar novamente.
+- “Consultar andamento” consulta o **mesmo job**, sem criar novo despacho ou nova importação.
+- Falha ao consultar o status não é tratada como falha da importação; o último estado conhecido é preservado. `RUNNING` não vira `FAILED` por tempo decorrido na tela.
+- Cancelamento, expiração automática, reconciliação e novo despacho continuam fora do escopo desta interface.
+
 ## Por que sem polling
 
 A integração não varre o banco legado continuamente. Isso reduz carga imprevisível e evita consultas repetitivas sem necessidade. A leitura ocorre somente por requisição de importação/atualização de um pedido.

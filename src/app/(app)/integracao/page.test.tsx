@@ -67,7 +67,7 @@ describe('ImportarPedidoPage', () => {
         orderNumber: '70435',
       }),
     )
-    expect(await screen.findByText('Job job_1')).toBeInTheDocument()
+    expect(await screen.findByText('Pedido 70435 · Job job_1')).toBeInTheDocument()
   })
 
   it('atualiza o status até concluir (LAC-03)', async () => {
