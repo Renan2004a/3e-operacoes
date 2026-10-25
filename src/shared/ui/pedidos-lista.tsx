@@ -59,7 +59,9 @@ const FILTROS_VAZIOS: Filtros = { numero: '', cliente: '', setor: '', status: ''
 const ROTULO_STATUS: Record<StatusPedido, string> = {
   PENDING: 'Pendente',
   IN_PROGRESS: 'Em andamento',
-  COMPLETED: 'Concluído',
+  // Rótulo aprovado na AD-013. Não significa atendimento integral (AD-011) nem
+  // resolve o critério de Revenda com indisponibilidade (AD-012/T00.4).
+  COMPLETED: 'Produção concluída',
 }
 
 const VARIANTE_STATUS: Record<StatusPedido, 'neutral' | 'info' | 'success'> = {
@@ -286,7 +288,7 @@ export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProp
               <option value="">Todos</option>
               <option value="PENDING">Pendente</option>
               <option value="IN_PROGRESS">Em andamento</option>
-              <option value="COMPLETED">Concluído</option>
+              <option value="COMPLETED">Produção concluída</option>
             </select>
           )}
         </Field>
