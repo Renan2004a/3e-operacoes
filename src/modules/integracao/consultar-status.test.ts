@@ -13,6 +13,7 @@ const NOW = new Date('2026-10-06T12:00:00.000Z')
 function makeJob(id: string, status: JobStatus): IntegrationJob {
   return {
     id,
+    orderId: null,
     legacyOrderNumber: '70435',
     idempotencyKey: 'pedido:70435',
     status,
@@ -111,6 +112,7 @@ describe('consultarStatus', () => {
     const result = await consultarStatus('job_1', repo)
 
     expect(result.jobId).toBe('job_1')
+    expect(result.orderId).toBeNull()
     expect(result.status).toBe('RUNNING')
     expect(result.events.map((event) => event.type)).toEqual(['CREATED', 'DISPATCHED'])
   })

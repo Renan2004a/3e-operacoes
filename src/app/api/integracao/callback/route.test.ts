@@ -102,7 +102,7 @@ const mocks = vi.hoisted(() => {
           })
         }
       }
-      return { orderId: 'order_1' }
+      return { orderId: 'order_1', divergenciasUnidade: [] }
     },
     registrarDivergencia: async () => {},
   }

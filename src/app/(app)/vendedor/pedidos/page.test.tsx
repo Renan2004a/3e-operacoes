@@ -4,11 +4,11 @@ import type { AnchorHTMLAttributes, ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 
-const mocks = vi.hoisted(() => ({ apiGet: vi.fn(), push: vi.fn() }))
+const mocks = vi.hoisted(() => ({ apiGet: vi.fn(), apiPost: vi.fn(), push: vi.fn() }))
 
 vi.mock('@/shared/http/api-client', () => ({
   apiGet: mocks.apiGet,
-  apiPost: vi.fn(),
+  apiPost: mocks.apiPost,
   apiPatch: vi.fn(),
   ApiError: class ApiError extends Error {},
 }))
@@ -44,6 +44,7 @@ function configurarApi() {
 beforeEach(() => {
   window.history.replaceState({}, '', '/')
   mocks.apiGet.mockReset()
+  mocks.apiPost.mockReset()
   mocks.push.mockReset()
 })
 
@@ -76,6 +77,46 @@ describe('VendedorPedidosPage', () => {
 
     expect(mocks.push).toHaveBeenCalledWith(
       '/vendedor/pedidos/p1?retorno=%2Fvendedor%2Fpedidos%3Fcliente%3DAna%26pagina%3D2',
+    )
+  })
+
+  it('oferece link para o pedido importado mesmo fora do filtro da lista', async () => {
+    window.history.replaceState({}, '', '/vendedor/pedidos?cliente=Inexistente&pagina=2')
+    mocks.apiGet.mockImplementation((url: string) => {
+      if (url.startsWith('/api/pedidos')) return Promise.resolve({ pedidos: [] })
+      if (url === '/api/integracao/pedidos/job_1') {
+        return Promise.resolve({
+          jobId: 'job_1',
+          orderId: 'order_9',
+          status: 'SUCCEEDED',
+          events: [
+            {
+              type: 'SUCCEEDED',
+              detail: 'IMPORTED',
+              createdAt: '2026-10-23T10:00:10.000Z',
+            },
+          ],
+        })
+      }
+      return Promise.reject(new Error(`url inesperada: ${url}`))
+    })
+    mocks.apiPost.mockResolvedValue({
+      jobId: 'job_1',
+      orderId: null,
+      status: 'PENDING',
+      origem: 'NOVA',
+      solicitadoEm: '2026-10-23T10:00:00.000Z',
+    })
+    render(<VendedorPedidosPage />)
+
+    fireEvent.change(await screen.findByLabelText('Número do pedido'), {
+      target: { value: '70435' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Importar pedido' }))
+
+    expect(await screen.findByRole('link', { name: 'Abrir pedido' })).toHaveAttribute(
+      'href',
+      '/vendedor/pedidos/order_9',
     )
   })
 

@@ -1,13 +1,19 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { ApiError, apiGet, apiPost } from '@/shared/http/api-client'
+import type { OrigemSolicitacao } from '@/modules/integracao/resultado-solicitacao'
 import {
-  codigoFalhaAtual,
-  mensagemFalhaImportacao,
-  mensagemSucessoImportacao,
+  codigoDaFalha,
+  divergenciasUnidadeDosEventos,
+  mensagemDoResultado,
+  mensagemEmAndamento,
   sucessoFoiReimportacao,
-} from '@/modules/integracao/mensagens-importacao'
+  temEventoNovo,
+  type DivergenciaUnidadeEvento,
+  type EventoImportacao,
+} from '@/modules/integracao/transparencia-importacao'
 import { Alert } from './alert'
 import { Badge } from './badge'
 import { Button } from './button'
@@ -15,20 +21,23 @@ import { Card, CardContent, CardHeader, CardTitle } from './card'
 import { Field } from './field'
 import { Input } from './input'
 import { Spinner } from './spinner'
+import { cn, FOCO_VISIVEL } from './utils'
 
 type JobStatus = 'PENDING' | 'DISPATCHED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED'
 
-interface JobEvent {
-  type: string
-  detail: string | null
-}
-
 interface JobStatusResponse {
   jobId: string
+  orderId: string | null
   status: JobStatus
-  /** Código da falha da tentativa atual (não o histórico de tentativas antigas). */
-  errorCode?: string | null
-  events: JobEvent[]
+  events: EventoImportacao[]
+}
+
+interface IniciarImportacaoResponse {
+  jobId: string
+  orderId: string | null
+  status: JobStatus
+  origem: OrigemSolicitacao
+  solicitadoEm: string
 }
 
 const INTERVALO_POLL_MS = 1_500
@@ -61,6 +70,8 @@ function numeroValido(valor: string): boolean {
 export interface ImportarPedidoProps {
   /** Chamado quando a importação conclui com sucesso (ex.: recarregar a lista). */
   onConcluido?: (numero: string) => void
+  /** Rota do detalhe do pedido; habilita o link "Abrir pedido" no perfil. */
+  hrefPedido?: (orderId: string) => string
   titulo?: string
   descricao?: string
 }
@@ -70,14 +81,23 @@ export interface ImportarPedidoProps {
  * (LAC-01, LAC-02, LAC-03). Reutilizado pelo Integrar e pela tela do vendedor,
  * que puxa o pedido do Top Gerente antes de desmembrá-lo.
  */
-export function ImportarPedido({ onConcluido, titulo, descricao }: ImportarPedidoProps) {
+export function ImportarPedido({
+  onConcluido,
+  hrefPedido,
+  titulo,
+  descricao,
+}: ImportarPedidoProps) {
   const [numero, setNumero] = useState('')
   const [erroValidacao, setErroValidacao] = useState<string | null>(null)
   const [erroEnvio, setErroEnvio] = useState<string | null>(null)
   const [jobId, setJobId] = useState<string | null>(null)
+  const [orderId, setOrderId] = useState<string | null>(null)
   const [status, setStatus] = useState<JobStatus | null>(null)
+  const [origem, setOrigem] = useState<OrigemSolicitacao | null>(null)
+  const [solicitadoEm, setSolicitadoEm] = useState<string | null>(null)
   const [errorCode, setErrorCode] = useState<string | null>(null)
   const [reimportado, setReimportado] = useState(false)
+  const [divergenciasUnidade, setDivergenciasUnidade] = useState<DivergenciaUnidadeEvento[]>([])
   const [importando, setImportando] = useState(false)
 
   const final = status !== null && STATUS_FINAIS.includes(status)
@@ -91,11 +111,33 @@ export function ImportarPedido({ onConcluido, titulo, descricao }: ImportarPedid
       try {
         const dados = await apiGet<JobStatusResponse>(`/api/integracao/pedidos/${jobId}`)
         if (cancelado) return
-        setStatus(dados.status)
-        setErrorCode(codigoFalhaAtual(dados.status, dados.errorCode, dados.events))
-        setReimportado(sucessoFoiReimportacao(dados.status, dados.events))
-        if (dados.status === 'SUCCEEDED') onConcluido?.(numero)
-        if (!STATUS_FINAIS.includes(dados.status)) {
+
+        const eventos = dados.events ?? []
+        // Em uma consulta nova, um job antigo pode ainda exibir o resultado
+        // anterior até o despacho começar. Só aceita o estado final quando há
+        // evento novo da tentativa atual.
+        const aguardandoNovaConsulta =
+          origem === 'NOVA' &&
+          STATUS_FINAIS.includes(dados.status) &&
+          !temEventoNovo(eventos, dados.status, solicitadoEm)
+        const statusEfetivo = aguardandoNovaConsulta ? 'PENDING' : dados.status
+        const finalEfetivo = STATUS_FINAIS.includes(statusEfetivo)
+
+        const desdeTentativa = origem === 'NOVA' ? solicitadoEm : null
+        setStatus(statusEfetivo)
+        setOrderId(dados.orderId ?? null)
+        setReimportado(
+          finalEfetivo && sucessoFoiReimportacao(eventos, desdeTentativa),
+        )
+        setErrorCode(
+          statusEfetivo === 'FAILED' ? codigoDaFalha(eventos, desdeTentativa) : null,
+        )
+        setDivergenciasUnidade(
+          finalEfetivo ? divergenciasUnidadeDosEventos(eventos, desdeTentativa) : [],
+        )
+
+        if (statusEfetivo === 'SUCCEEDED') onConcluido?.(numero)
+        if (!finalEfetivo) {
           timer = setTimeout(consultar, INTERVALO_POLL_MS)
         }
       } catch (error) {
@@ -113,16 +155,23 @@ export function ImportarPedido({ onConcluido, titulo, descricao }: ImportarPedid
       cancelado = true
       if (timer) clearTimeout(timer)
     }
+    // Origem e instante mudam mesmo quando o jobId é reaproveitado; o efeito
+    // precisa reiniciar para não continuar com a classificação anterior.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jobId])
+  }, [jobId, origem, solicitadoEm])
 
-  async function executarImportacao() {
+  async function importar(evento: React.FormEvent<HTMLFormElement>) {
+    evento.preventDefault()
     setErroValidacao(null)
     setErroEnvio(null)
     setJobId(null)
+    setOrderId(null)
     setStatus(null)
+    setOrigem(null)
+    setSolicitadoEm(null)
     setErrorCode(null)
     setReimportado(false)
+    setDivergenciasUnidade([])
 
     if (!numeroValido(numero)) {
       setErroValidacao('Informe um número de pedido válido (somente dígitos).')
@@ -131,11 +180,14 @@ export function ImportarPedido({ onConcluido, titulo, descricao }: ImportarPedid
 
     setImportando(true)
     try {
-      const dados = await apiPost<{ jobId: string }>('/api/integracao/pedidos', {
+      const dados = await apiPost<IniciarImportacaoResponse>('/api/integracao/pedidos', {
         orderNumber: numero.trim(),
       })
       setJobId(dados.jobId)
-      setStatus('PENDING')
+      setOrderId(dados.orderId)
+      setStatus(dados.status)
+      setOrigem(dados.origem)
+      setSolicitadoEm(dados.solicitadoEm)
     } catch (error) {
       if (error instanceof ApiError && error.status === 400) {
         setErroEnvio('Número de pedido inválido. Confira e tente novamente.')
@@ -147,10 +199,17 @@ export function ImportarPedido({ onConcluido, titulo, descricao }: ImportarPedid
     }
   }
 
-  async function importar(evento: React.FormEvent<HTMLFormElement>) {
-    evento.preventDefault()
-    await executarImportacao()
-  }
+  const resultado =
+    final && origem
+      ? mensagemDoResultado({
+          origem,
+          status: status as 'SUCCEEDED' | 'FAILED',
+          reimportado,
+        })
+      : null
+  const andamento = !final && origem ? mensagemEmAndamento(origem) : null
+  const pedidoHref =
+    status === 'SUCCEEDED' && orderId && hrefPedido ? hrefPedido(orderId) : null
 
   return (
     <div className="grid gap-4">
@@ -168,10 +227,7 @@ export function ImportarPedido({ onConcluido, titulo, descricao }: ImportarPedid
 
             <Field
               label="Número do pedido"
-              hint={
-                descricao ??
-                'Informe o número do pedido no Top Gerente. Ele pode ser diferente do número exibido no 3E.'
-              }
+              hint={descricao ?? 'Somente dígitos, como aparece no Top Gerente.'}
               error={erroValidacao ?? undefined}
               required
             >
@@ -204,48 +260,53 @@ export function ImportarPedido({ onConcluido, titulo, descricao }: ImportarPedid
 
             {!final ? <Spinner label="Atualizando status…" /> : null}
 
-            {status === 'SUCCEEDED'
-              ? (() => {
-                  const sucesso = mensagemSucessoImportacao(reimportado)
-                  return (
-                    <Alert variant="success" title={sucesso.titulo}>
-                      <p>{sucesso.mensagem}</p>
-                    </Alert>
-                  )
-                })()
-              : null}
+            {andamento ? (
+              <Alert variant="info" title={andamento.titulo}>
+                {andamento.mensagem}
+              </Alert>
+            ) : null}
 
-            {status === 'FAILED'
-              ? (() => {
-                  const falha = mensagemFalhaImportacao(errorCode)
-                  return (
-                    <Alert
-                      variant="error"
-                      title={falha.titulo}
-                      action={
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          disabled={importando}
-                          onClick={() => void executarImportacao()}
-                        >
-                          {importando ? 'Tentando…' : 'Tentar novamente'}
-                        </Button>
-                      }
-                    >
-                      <p>{falha.mensagem}</p>
-                      {errorCode ? (
-                        <p className="mt-2 text-xs opacity-80">
-                          Código técnico: {errorCode}
-                          {jobId ? ` — Job: ${jobId}` : ''}. Informe este código ao responsável
-                          pelo sistema.
-                        </p>
-                      ) : null}
-                    </Alert>
-                  )
-                })()
-              : null}
+            {resultado && status === 'SUCCEEDED' ? (
+              <Alert variant="success" title={resultado.titulo}>
+                {resultado.mensagem}
+              </Alert>
+            ) : null}
+
+            {resultado && status === 'FAILED' ? (
+              <Alert variant="error" title={resultado.titulo}>
+                <p>{resultado.mensagem}</p>
+                {errorCode ? (
+                  <p className="mt-2 text-xs opacity-80">Código técnico: {errorCode}</p>
+                ) : null}
+              </Alert>
+            ) : null}
+
+            {divergenciasUnidade.length > 0 ? (
+              <Alert variant="warning" title="Unidade preservada">
+                <p>
+                  O Top Gerente enviou uma unidade diferente para item(ns) com histórico
+                  operacional. A unidade anterior foi mantida e nenhuma conversão foi feita.
+                </p>
+                <ul className="mt-2 grid gap-1">
+                  {divergenciasUnidade.map((divergencia) => (
+                    <li key={divergencia.legacyItemKey}>
+                      {divergencia.description ?? `Item ${divergencia.legacyItemKey}`}:{' '}
+                      <strong>{divergencia.unidadeAnterior}</strong> →{' '}
+                      <strong>{divergencia.unidadeNova}</strong>
+                    </li>
+                  ))}
+                </ul>
+              </Alert>
+            ) : null}
+
+            {pedidoHref ? (
+              <Link
+                href={pedidoHref}
+                className={cn('text-sm font-medium text-accent', FOCO_VISIVEL)}
+              >
+                Abrir pedido
+              </Link>
+            ) : null}
           </CardContent>
         </Card>
       ) : null}

@@ -15,6 +15,7 @@ export async function GET(request: Request, context: { params: Promise<{ jobId: 
     return Response.json(
       {
         jobId: result.jobId,
+        orderId: result.orderId,
         status: result.status,
         errorCode: result.errorCode,
         events: result.events,

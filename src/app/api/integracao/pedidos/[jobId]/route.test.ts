@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => {
   const jobs: Array<{
     id: string
+    orderId: string | null
     legacyOrderNumber: string
     idempotencyKey: string
     status: string
@@ -59,6 +60,7 @@ const NOW = new Date('2026-10-06T12:00:00.000Z')
 function makeJob(id: string, status: string) {
   return {
     id,
+    orderId: null as string | null,
     legacyOrderNumber: '70435',
     idempotencyKey: `pedido:70435:${id}`,
     status,
@@ -148,6 +150,27 @@ describe('GET /api/integracao/pedidos/[jobId]', () => {
     const response = await GET(request({ usuarioId: null }), context('job_1'))
 
     expect(response.status).toBe(401)
+  })
+
+  it('responde 403 quando o usuário não tem perfil autorizado', async () => {
+    mocks.perfis.user_view = []
+    const response = await GET(request(), context('job_1'))
+
+    expect(response.status).toBe(403)
+  })
+
+  it('devolve o pedido vinculado após sucesso', async () => {
+    const job = makeJob('job_1', 'SUCCEEDED')
+    job.orderId = 'order_1'
+    mocks.jobs.push(job)
+
+    const response = await GET(request(), context('job_1'))
+
+    expect(await response.json()).toMatchObject({
+      jobId: 'job_1',
+      orderId: 'order_1',
+      status: 'SUCCEEDED',
+    })
   })
 
   it('devolve a lista de eventos do job', async () => {

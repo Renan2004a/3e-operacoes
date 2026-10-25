@@ -53,6 +53,17 @@ Item operacional: **solicitado → executado conforme o setor → disponível �
 - O prazo é uma data civil interpretada em `America/Sao_Paulo` e vale até o **fim do dia**. O prazo de hoje não está atrasado; o de ontem está. O formato aceito é `YYYY-MM-DD`, sem horário.
 - Remoção de prazo, alerta comercial por prazo de entrega e auditoria de prazo não fazem parte desta etapa (ver `docs/backlog.md`).
 
+## Reimportação, unidade e histórico operacional
+
+- Reimportar não altera `createdAt`. O período da consulta continua sendo a data de criação/importação; o link do pedido é explícito e não depende dos filtros da lista.
+- Reutilizar um resultado recente **não** é uma nova consulta ao Top Gerente. A interface deve informar quando houve reutilização e não prometer dados atualizados.
+- Uma consulta nova pode resultar em importação de pedido novo ou atualização de pedido existente; os dois casos têm mensagens distintas.
+- A unidade do item é comparada pela normalização existente (`chaveUnidade`: remover espaços e ignorar maiúsculas). Diferença apenas de escrita, como `M` e `m`, não é mudança real de unidade.
+- Se a unidade real mudar e o item tiver execução, ocorrência, entrega, remessa programada ou atividade já iniciada, a unidade anterior é preservada e o item **não** é atualizado. Não há conversão automática de quantidades nem alteração do histórico.
+- A divergência de unidade é registrada em `AuditLog` (`UNIT_DIVERGENCE`), no evento do job (`UNIT_DIVERGENCE`) e apresentada ao Vendedor no resultado da importação.
+- Se não houver registros operacionais, a unidade e a quantidade solicitada podem ser atualizadas na mesma transação. Atividade apenas `PENDING`, sem lançamentos, não bloqueia a troca.
+- Pedido, itens e auditoria da divergência de unidade são gravados na mesma transação. Classificação automática e auditoria de divergência de quantidade ocorrem depois do upsert; se falharem, o job termina `FAILED` explicitamente, sem esconder a falha. Não deve haver persistência parcial silenciosa.
+
 ## Sincronização e atualização de quantidade solicitada
 
 - Quantidade solicitada importada do Top Gerente continua sendo dado comercial de origem.

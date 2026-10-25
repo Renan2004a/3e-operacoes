@@ -19,13 +19,18 @@ Importar ou atualizar um pedido específico sem polling contínuo e sem expor o 
 
 A integração não varre o banco legado continuamente. Isso reduz carga imprevisível e evita consultas repetitivas sem necessidade. A leitura ocorre somente por requisição de importação/atualização de um pedido.
 
-## Nova tentativa após falha
+## Transparência da reimportação
 
-- Uma solicitação depois de um job `FAILED` cria um novo job de tentativa (`<job falho>:retry`) e agenda novo despacho, inclusive dentro da janela de 60 s e para um job falho antigo. O job falho anterior é preservado para auditoria.
-- Enquanto a tentativa mais recente estiver ativa (`PENDING`, `DISPATCHED` ou `RUNNING`) e dentro da janela, novas solicitações reutilizam esse job e não disparam outro processamento. Fora da janela, um job `SUCCEEDED` é reimportado e um job ativo antigo pode ser recuperado.
-- A reserva do despacho é atômica e usa o carimbo da tentativa: apenas a execução que encontra o job no estado capturado o move para `DISPATCHED`; cliques repetidos não chamam o conector duas vezes para o mesmo job.
-- A interface mantém o número informado, oferece **“Tentar novamente”** após a falha e acompanha o novo `jobId`, sem reutilizar status ou eventos da tentativa anterior.
-- Os códigos técnicos continuam nos logs e podem ser exibidos para suporte; a mensagem principal é traduzida para o usuário.
+- A solicitação informa se houve **consulta nova**, reutilização de **tentativa em andamento** ou reutilização de **resultado anterior**. Resultado reutilizado não é apresentado como nova sincronização.
+- Em consulta nova, o resultado distingue importação de pedido novo (`SUCCEEDED`/`IMPORTED`) de atualização de pedido existente (`SUCCEEDED`/`REIMPORTED`).
+- O job devolve o `orderId` vinculado após sucesso; a interface oferece **“Abrir pedido”** sem alterar `createdAt` e sem depender dos filtros atuais da listagem.
+- O polling só aceita o estado final antigo como resultado da consulta atual quando existe evento novo posterior à solicitação, evitando exibir sucesso antigo antes do novo despacho.
+
+## Unidade e histórico operacional
+
+- A unidade é comparada pela normalização de escrita existente; mudança real com execução, ocorrência, entrega, remessa programada ou atividade iniciada é bloqueada.
+- O item mantém a unidade anterior e o histórico; a divergência (`UNIT_DIVERGENCE`) é registrada em auditoria, no evento do job e exibida ao Vendedor.
+- Sem registros operacionais, a unidade e a quantidade solicitada são atualizadas na mesma transação. Não há conversão automática entre unidades.
 
 ## Atualização de pedido existente
 

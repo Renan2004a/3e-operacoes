@@ -163,11 +163,10 @@ npm run dev            # http://localhost:3000
 | 7 | Combinar cliente + setor + status + período | Somente pedidos que atendem a todos os critérios; total do resumo coerente com a lista |
 | 8 | Com filtros aplicados, avançar para a página 2 | Filtros continuam preenchidos; requisição leva filtros + `limite`/`offset`; URL mantém os filtros e `pagina=2` |
 | 9 | Na página 2, alterar um filtro e clicar em “Filtrar” | Volta para a página 1; requisição sem `offset`; URL contém apenas os filtros (sem `pagina`) |
-| 10 | Abrir um pedido da página 2 e usar “← Voltar para os pedidos” | Retorna à página 2 com pesquisa, filtros e URL preservados; o detalhe transporta o contexto no parâmetro `retorno` |
+| 10 | Abrir um pedido da página 2 e usar “← Voltar para os pedidos” | Retorna à página 2 com os filtros preservados |
 | 11 | Alterar a URL manualmente para `?pagina=999` (com filtros) | “Página não encontrada” com botão “Ir para a primeira página”; total correto |
 | 12 | Conferir o total exibido | É o total de pedidos que atendem aos filtros, não o tamanho da página |
 | 13 | Repetir em largura de celular e com teclado | Sem rolagem horizontal da página; botões com alvo adequado e foco visível; leitor de tela anuncia a paginação |
-| 14 | Atualizar o detalhe (F5), abrir a URL do detalhe em nova aba, acessar sem `retorno` e tentar `retorno` externo/outra rota | O link “Voltar” restaura o contexto válido; sem contexto ou com destino inválido, volta à listagem padrão do perfil |
 
 Registrar como evidência: perfil usado, URL da lista, quantidade total exibida, página acessada, captura de tela e qualquer divergência. A A1 permanece **aprovada provisoriamente** até esse roteiro ser concluído.
 
@@ -202,17 +201,18 @@ Executar com o app local e banco do app migrado. Repetir no **Vendedor** e no **
 
 ---
 
-## 8. Validação manual — nova tentativa de importação após falha
+## 8. Validação manual — transparência da reimportação e unidade
 
-**Status:** roteiro pendente; não executado nesta alteração. Requer aplicação, conector local e uma condição de falha controlada em ambiente de teste.
+**Status:** roteiro pendente; não executado nesta alteração. Requer aplicação, conector local e ambiente de teste com dados controlados.
 
 | # | Passo | Resultado esperado |
 | --- | --- | --- |
-| 1 | Entrar como Vendedor e abrir a área de Vendas | Formulário de importação disponível |
-| 2 | Provocar uma falha de importação (por exemplo, conector indisponível ou número inexistente) | Mensagem compreensível, código técnico para suporte e número digitado preservado |
-| 3 | Clicar em **“Tentar novamente”** antes e depois de 60 s | Um novo job é criado; a tela passa a mostrar o novo `jobId`, sem o erro anterior |
-| 4 | Repetir o clique enquanto a tentativa está ativa | Nenhum processamento duplicado; a tentativa ativa é reutilizada |
-| 5 | Restaurar a condição e aguardar a conclusão | Acompanhamento até `SUCCEEDED`, com mensagem de sucesso sem erro antigo |
-| 6 | Conferir os jobs no banco/API | O job falho anterior permanece no histórico; o novo job tem chave `:retry` e eventos próprios |
+| 1 | Importar um pedido válido e conferir o link **“Abrir pedido”** | Abre o detalhe correto do pedido importado |
+| 2 | Repetir a importação dentro de 60 s, sem alterar o Top Gerente | Mensagem de **resultado anterior**, deixando claro que **não houve nova consulta** |
+| 3 | Reimportar efetivamente um pedido antigo e abrir pelo link, com filtros que o excluiriam | Detalhe abre corretamente; `createdAt` não muda |
+| 4 | Em ambiente de teste, alterar a unidade de origem de item com execução/entrega/remessa/atividade iniciada e reimportar | Unidade e histórico anteriores são preservados; divergência de unidade aparece no resultado |
+| 5 | Alterar a unidade de um item sem registros operacionais e reimportar | Unidade e quantidade são atualizadas, sem conversão automática |
+| 6 | Conferir os logs/eventos | `UNIT_DIVERGENCE` no `AuditLog` e no job; nenhum registro operacional apagado |
+| 7 | Conferir o pedido na listagem | Nenhuma duplicação de pedido e `createdAt` inalterado |
 
-**Evidência mínima:** perfil, número, `jobId` antigo e novo, mensagem exibida, status final e captura de tela.
+**Evidência mínima:** perfil, número do pedido, origem da solicitação (nova/em andamento/anterior), unidade anterior e nova, mensagem exibida, link aberto e captura de tela.

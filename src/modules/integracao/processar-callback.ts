@@ -98,10 +98,22 @@ export async function processarCallback(
     const atual = await deps.integracao.findById(job.id).catch(() => null)
     if (atual?.status === 'SUCCEEDED') return
 
+    // A divergência de unidade precisa estar visível antes do evento final;
+    // do contrário o polling pode encerrar no SUCCEEDED e não exibi-la.
+    if (result.divergenciasUnidade.length > 0) {
+      await deps.integracao.appendEvent({
+        jobId: job.id,
+        type: 'UNIT_DIVERGENCE',
+        detail: JSON.stringify(result.divergenciasUnidade),
+        now,
+      })
+    }
+
     await deps.integracao.updateStatus({
       jobId: job.id,
       status: 'SUCCEEDED',
       now,
+      orderId: result.orderId,
       errorCode: null,
       errorMessage: null,
       completedAt: now,
@@ -113,7 +125,7 @@ export async function processarCallback(
       now,
     })
 
-    if (result.divergente) {
+    if (result.divergencias.length > 0) {
       await deps.integracao.appendEvent({
         jobId: job.id,
         type: 'DIVERGENCE',
