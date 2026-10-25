@@ -4,6 +4,7 @@ import {
   buildIdempotencyKey,
   type IntegrationJob,
 } from './contratos'
+import { statusEstaAtivo } from './resultado-solicitacao'
 
 export interface SolicitarImportacaoInput {
   orderNumber: string
@@ -14,7 +15,10 @@ export interface SolicitarImportacaoInput {
 
 export interface SolicitarImportacaoResult {
   jobId: string
-  /** true quando um job idempotente dentro da janela foi reaproveitado (sem novo despacho). */
+  /**
+   * true quando um job dentro da janela ou uma tentativa ativa foi
+   * reaproveitado, sem novo despacho.
+   */
   reused: boolean
 }
 
@@ -79,9 +83,9 @@ function parseRequestedByUserId(value: string): string {
  *
  * Combina a leitura do job mais recente (incluindo `:retry`) com a auditoria
  * append-only da solicitação (AD-015). Cada solicitação bem-sucedida gera uma
- * linha em `logs_auditoria`: `REUSED_JOB` para reutilização dentro da janela e
- * `NEW_ATTEMPT` para criação/novo despacho. A autoria anterior nunca é
- * sobrescrita.
+ * linha em `logs_auditoria`: `REUSED_JOB` quando nada é despachado (dentro da
+ * janela ou tentativa ativa) e `NEW_ATTEMPT` quando há novo despacho. A autoria
+ * anterior nunca é sobrescrita.
  */
 export async function solicitarImportacao(
   input: SolicitarImportacaoInput,
@@ -106,13 +110,7 @@ export async function solicitarImportacao(
   }
 
   if (latest) {
-    return await reaproveitarOuRetentar(
-      latest,
-      orderNumber,
-      requestedByUserId,
-      input,
-      repo,
-    )
+    return await reaproveitarOuRetentar(latest, orderNumber, requestedByUserId, input, repo)
   }
 
   const job = await repo.criarComAuditoria({
@@ -143,17 +141,19 @@ async function reaproveitarOuRetentar(
     return { jobId: retry.id, reused: false }
   }
 
-  // Tentativa recente ativa: reaproveita e não dispara outra. Job final antigo
-  // (reimportação) ou ativo antigo (recuperação) sinaliza novo despacho.
+  // Tentativa recente ativa é reutilizada mesmo fora da janela: reiniciar o
+  // mesmo job em andamento criaria um segundo despacho para o conector. Job
+  // final antigo (reimportação) sinaliza uma nova tentativa.
   const dentroDaJanela = input.now.getTime() - job.createdAt.getTime() <= IDEMPOTENCY_WINDOW_MS
+  const reutilizado = dentroDaJanela || statusEstaAtivo(job.status)
   await repo.registrarAuditoriaSolicitacao({
     jobId: job.id,
     legacyOrderNumber: orderNumber,
     idempotencyKey: job.idempotencyKey,
     requestedByUserId,
     now: input.now,
-    requestKind: dentroDaJanela ? 'REUSED_JOB' : 'NEW_ATTEMPT',
-    newDispatch: !dentroDaJanela,
+    requestKind: reutilizado ? 'REUSED_JOB' : 'NEW_ATTEMPT',
+    newDispatch: !reutilizado,
   })
-  return { jobId: job.id, reused: dentroDaJanela }
+  return { jobId: job.id, reused: reutilizado }
 }
