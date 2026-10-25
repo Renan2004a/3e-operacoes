@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   apiPost: vi.fn(),
   apiPatch: vi.fn(),
   apiDelete: vi.fn(),
+  retorno: null as string | null,
 }))
 
 vi.mock('@/shared/http/api-client', () => ({
@@ -29,6 +30,8 @@ vi.mock('@/shared/http/api-client', () => ({
 
 vi.mock('next/navigation', () => ({
   useParams: () => ({ orderId: 'p1' }),
+  useSearchParams: () =>
+    new URLSearchParams(mocks.retorno === null ? {} : { retorno: mocks.retorno }),
 }))
 
 vi.mock('next/link', () => ({
@@ -105,6 +108,7 @@ beforeEach(() => {
   mocks.apiPost.mockReset()
   mocks.apiPatch.mockReset()
   mocks.apiDelete.mockReset()
+  mocks.retorno = null
 })
 
 afterEach(cleanup)
@@ -117,6 +121,82 @@ describe('PedidoVendedorPage', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Pedido 100' })).toBeInTheDocument()
     const voltar = screen.getByRole('link', { name: /voltar para os pedidos/i })
     expect(voltar).toHaveAttribute('href', '/vendedor/pedidos')
+  })
+
+  it('preserva pesquisa, filtros e página no link de voltar quando há contexto', async () => {
+    mocks.retorno =
+      '/vendedor/pedidos?numero=70435&cliente=Jo%C3%A3o%20%26%20Cia&setor=TELHAS&status=IN_PROGRESS&de=2026-10-01&ate=2026-10-31&pagina=2'
+    configurarApi()
+    render(<PedidoVendedorPage />)
+
+    const voltar = await screen.findByRole('link', { name: /voltar para os pedidos/i })
+    const destino = new URL(voltar.getAttribute('href') ?? '', 'http://interno.local')
+
+    expect(destino.pathname).toBe('/vendedor/pedidos')
+    expect(destino.searchParams.get('numero')).toBe('70435')
+    expect(destino.searchParams.get('cliente')).toBe('João & Cia')
+    expect(destino.searchParams.get('setor')).toBe('TELHAS')
+    expect(destino.searchParams.get('status')).toBe('IN_PROGRESS')
+    expect(destino.searchParams.get('de')).toBe('2026-10-01')
+    expect(destino.searchParams.get('ate')).toBe('2026-10-31')
+    expect(destino.searchParams.get('pagina')).toBe('2')
+  })
+
+  it('mantém o contexto de retorno após atualizar o detalhe e em nova aba', async () => {
+    mocks.retorno = '/vendedor/pedidos?cliente=Ana&pagina=2'
+    configurarApi()
+
+    const { unmount } = render(<PedidoVendedorPage />)
+    expect(await screen.findByRole('link', { name: /voltar para os pedidos/i })).toHaveAttribute(
+      'href',
+      '/vendedor/pedidos?cliente=Ana&pagina=2',
+    )
+
+    unmount()
+    render(<PedidoVendedorPage />)
+    expect(await screen.findByRole('link', { name: /voltar para os pedidos/i })).toHaveAttribute(
+      'href',
+      '/vendedor/pedidos?cliente=Ana&pagina=2',
+    )
+  })
+
+  it('mantém o contexto de retorno após salvar uma alteração no detalhe', async () => {
+    mocks.retorno = '/vendedor/pedidos?cliente=Ana&pagina=2'
+    configurarApi()
+    mocks.apiPatch.mockResolvedValue({
+      item: { id: 'item_1', deadlineAt: '2026-03-11T02:59:59.999Z' },
+    })
+    render(<PedidoVendedorPage />)
+
+    fireEvent.change(await screen.findByLabelText('Prazo do item 1'), {
+      target: { value: '2026-03-10' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar prazo do item 1' }))
+
+    expect(await screen.findByText('Prazo atualizado com sucesso.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /voltar para os pedidos/i })).toHaveAttribute(
+      'href',
+      '/vendedor/pedidos?cliente=Ana&pagina=2',
+    )
+  })
+
+  it('usa a listagem padrão quando o contexto é ausente, inválido ou externo', async () => {
+    configurarApi()
+
+    for (const retorno of [
+      null,
+      'https://evil.example',
+      '//evil.example',
+      '/gerente/pedidos?x=1',
+    ]) {
+      mocks.retorno = retorno
+      const { unmount } = render(<PedidoVendedorPage />)
+      expect(await screen.findByRole('link', { name: /voltar para os pedidos/i })).toHaveAttribute(
+        'href',
+        '/vendedor/pedidos',
+      )
+      unmount()
+    }
   })
 
   it('mostra quantidades, prazo e as ações de desmembramento e remessa na ordem esperada', async () => {

@@ -10,6 +10,7 @@ import { EmptyState } from './empty-state'
 import { Field } from './field'
 import { Input } from './input'
 import { Spinner } from './spinner'
+import { caminhoDaListagemAtual } from './retorno-lista'
 import { FOCO_VISIVEL } from './utils'
 
 export type StatusPedido = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED'
@@ -21,9 +22,14 @@ export interface PedidoListado {
   status: StatusPedido
 }
 
+export interface ContextoRetornoListagem {
+  /** Caminho e query da listagem no momento da abertura do pedido. */
+  retorno: string
+}
+
 export interface PedidosListaProps {
   /** Aciona o detalhe do pedido escolhido (rota no gerente e no vendedor). */
-  onSelecionar: (pedido: PedidoListado) => void
+  onSelecionar: (pedido: PedidoListado, contexto: ContextoRetornoListagem) => void
   /** Alterar este valor força recarregar a lista (ex.: após importar um pedido). */
   recarregarToken?: number
 }
@@ -216,6 +222,14 @@ export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProp
   }
 
   const temFiltro = Object.values(filtros).some((valor) => valor.trim() !== '')
+
+  function abrirPedido(pedido: PedidoListado) {
+    const retorno =
+      typeof window === 'undefined'
+        ? ''
+        : caminhoDaListagemAtual(window.location.pathname, window.location.search)
+    onSelecionar(pedido, { retorno })
+  }
 
   return (
     <section className="grid gap-4">
@@ -412,7 +426,7 @@ export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProp
                         <td data-label="Ações" className="px-4 py-3 md:text-right">
                           <Button
                             size="sm"
-                            onClick={() => onSelecionar(pedido)}
+                            onClick={() => abrirPedido(pedido)}
                             aria-label={`Abrir pedido ${pedido.numero}`}
                           >
                             Abrir

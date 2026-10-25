@@ -163,10 +163,11 @@ npm run dev            # http://localhost:3000
 | 7 | Combinar cliente + setor + status + período | Somente pedidos que atendem a todos os critérios; total do resumo coerente com a lista |
 | 8 | Com filtros aplicados, avançar para a página 2 | Filtros continuam preenchidos; requisição leva filtros + `limite`/`offset`; URL mantém os filtros e `pagina=2` |
 | 9 | Na página 2, alterar um filtro e clicar em “Filtrar” | Volta para a página 1; requisição sem `offset`; URL contém apenas os filtros (sem `pagina`) |
-| 10 | Abrir um pedido da página 2 e usar “← Voltar para os pedidos” | Retorna à página 2 com os filtros preservados |
+| 10 | Abrir um pedido da página 2 e usar “← Voltar para os pedidos” | Retorna à página 2 com pesquisa, filtros e URL preservados; o detalhe transporta o contexto no parâmetro `retorno` |
 | 11 | Alterar a URL manualmente para `?pagina=999` (com filtros) | “Página não encontrada” com botão “Ir para a primeira página”; total correto |
 | 12 | Conferir o total exibido | É o total de pedidos que atendem aos filtros, não o tamanho da página |
 | 13 | Repetir em largura de celular e com teclado | Sem rolagem horizontal da página; botões com alvo adequado e foco visível; leitor de tela anuncia a paginação |
+| 14 | Atualizar o detalhe (F5), abrir a URL do detalhe em nova aba, acessar sem `retorno` e tentar `retorno` externo/outra rota | O link “Voltar” restaura o contexto válido; sem contexto ou com destino inválido, volta à listagem padrão do perfil |
 
 Registrar como evidência: perfil usado, URL da lista, quantidade total exibida, página acessada, captura de tela e qualquer divergência. A A1 permanece **aprovada provisoriamente** até esse roteiro ser concluído.
 

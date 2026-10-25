@@ -36,12 +36,13 @@ const PEDIDO = { id: 'p1', numero: '100', cliente: 'Ana', status: 'PENDING' as c
 
 function configurarApi() {
   mocks.apiGet.mockImplementation((url: string) => {
-    if (url === '/api/pedidos') return Promise.resolve({ pedidos: [PEDIDO] })
+    if (url.startsWith('/api/pedidos')) return Promise.resolve({ pedidos: [PEDIDO] })
     return Promise.reject(new Error(`url inesperada: ${url}`))
   })
 }
 
 beforeEach(() => {
+  window.history.replaceState({}, '', '/')
   mocks.apiGet.mockReset()
   mocks.push.mockReset()
 })
@@ -66,13 +67,16 @@ describe('VendedorPedidosPage', () => {
     expect(screen.getByRole('button', { name: 'Importar pedido' })).toBeInTheDocument()
   })
 
-  it('ao abrir um pedido navega para a rota de detalhe (FEP-04)', async () => {
+  it('ao abrir um pedido navega para o detalhe com o contexto da listagem (FEP-04)', async () => {
+    window.history.replaceState({}, '', '/vendedor/pedidos?cliente=Ana&pagina=2')
     configurarApi()
     render(<VendedorPedidosPage />)
 
     fireEvent.click(await screen.findByRole('button', { name: 'Abrir pedido 100' }))
 
-    expect(mocks.push).toHaveBeenCalledWith('/vendedor/pedidos/p1')
+    expect(mocks.push).toHaveBeenCalledWith(
+      '/vendedor/pedidos/p1?retorno=%2Fvendedor%2Fpedidos%3Fcliente%3DAna%26pagina%3D2',
+    )
   })
 
   it('mostra a tabela com os filtros da consulta (PROT-06)', async () => {
