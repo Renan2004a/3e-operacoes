@@ -1,3 +1,4 @@
+import { mensagemFalhaImportacao } from './mensagens-importacao'
 import type { OrigemSolicitacao } from './resultado-solicitacao'
 
 export interface EventoImportacao {
@@ -118,25 +119,28 @@ export function mensagemDoResultado(input: {
   origem: OrigemSolicitacao
   status: 'SUCCEEDED' | 'FAILED'
   reimportado: boolean
+  /** Código técnico da falha atual; quando presente, a orientação é traduzida. */
+  errorCode?: string | null
 }): MensagemImportacao {
   if (input.status === 'FAILED') {
+    // A transparência da origem continua visível, mas o código técnico não é a
+    // única informação: o usuário recebe a orientação correspondente (PR #5).
+    const orientacao = mensagemFalhaImportacao(input.errorCode).mensagem
     if (input.origem === 'RESULTADO_ANTERIOR') {
       return {
         titulo: 'Tentativa anterior falhou',
-        mensagem:
-          'Nenhuma nova consulta ao Top Gerente foi feita; este é o resultado da tentativa recente.',
+        mensagem: `Nenhuma nova consulta ao Top Gerente foi feita; este é o resultado da tentativa recente. ${orientacao}`,
       }
     }
     if (input.origem === 'EM_ANDAMENTO') {
       return {
         titulo: 'Tentativa em andamento falhou',
-        mensagem:
-          'A tentativa que já estava em andamento terminou com falha. Nenhuma nova consulta foi iniciada por esta solicitação.',
+        mensagem: `A tentativa que já estava em andamento terminou com falha. Nenhuma nova consulta foi iniciada por esta solicitação. ${orientacao}`,
       }
     }
     return {
       titulo: 'Consulta ao Top Gerente falhou',
-      mensagem: 'A nova consulta não foi concluída.',
+      mensagem: `A nova consulta não foi concluída. ${orientacao}`,
     }
   }
 
