@@ -36,7 +36,13 @@ const conteudo = <p>Conteúdo da página</p>
 
 /** Rotas esperadas por perfil (FEP-10). Fonte: design.md. */
 const PERFIS: Array<{ perfil: RoleCode; itens: Array<{ nome: string; href: string }> }> = [
-  { perfil: 'OPERATOR', itens: [{ nome: 'Fila', href: '/operador/fila' }] },
+  {
+    perfil: 'OPERATOR',
+    itens: [
+      { nome: 'Pedidos', href: '/operador/fila' },
+      { nome: 'Ocorrências', href: '/operador/ocorrencias' },
+    ],
+  },
   {
     perfil: 'PRODUCTION_MANAGER',
     itens: [
@@ -69,13 +75,18 @@ describe('AppShell', () => {
   it('mostra a navegação do perfil OPERATOR (FE-04)', () => {
     render(<AppShell perfil="OPERATOR">{conteudo}</AppShell>)
 
-    expect(screen.getByRole('link', { name: 'Fila' })).toHaveAttribute('href', '/operador/fila')
+    expect(screen.getByRole('link', { name: 'Pedidos' })).toHaveAttribute('href', '/operador/fila')
+    expect(screen.getByRole('link', { name: 'Ocorrências' })).toHaveAttribute(
+      'href',
+      '/operador/ocorrencias',
+    )
   })
 
   it('não mostra telas de operador para outro perfil (FE-04)', () => {
     render(<AppShell perfil="SELLER">{conteudo}</AppShell>)
 
-    expect(screen.queryByRole('link', { name: 'Fila' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Pedidos' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Ocorrências' })).not.toBeInTheDocument()
   })
 
   it('renderiza o conteúdo da página no main (FE-04)', () => {
@@ -108,7 +119,7 @@ describe('AppShell', () => {
   it('expõe foco visível nos links de navegação (QF-04)', () => {
     render(<AppShell perfil="OPERATOR">{conteudo}</AppShell>)
 
-    expect(screen.getByRole('link', { name: 'Fila' })).toHaveClass('focus-visible:ring-2')
+    expect(screen.getByRole('link', { name: 'Pedidos' })).toHaveClass('focus-visible:ring-2')
   })
 
   it('expõe foco visível no botão do menu mobile (QF-04)', () => {
@@ -121,7 +132,7 @@ describe('AppShell', () => {
     navegacao.usePathname.mockReturnValue('/operador/fila')
     render(<AppShell perfil="OPERATOR">{conteudo}</AppShell>)
 
-    expect(screen.getByRole('link', { name: 'Fila' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('link', { name: 'Pedidos' })).toHaveAttribute('aria-current', 'page')
   })
 
   it('usa overflow-x-hidden no contêiner raiz para evitar rolagem horizontal (FE-06)', () => {
@@ -172,7 +183,7 @@ describe('AppShell', () => {
     render(<AppShell perfil="TECHNICAL_RESPONSIBLE">{conteudo}</AppShell>)
 
     expect(screen.getByRole('link', { name: 'Importar' })).toHaveAttribute('href', '/integracao')
-    expect(screen.queryByRole('link', { name: 'Fila' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Pedidos' })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Usuários' })).not.toBeInTheDocument()
   })
 
@@ -213,6 +224,6 @@ describe('AppShell responsivo (VIS-01, VIS-02, VIS-03)', () => {
   it('usa alvos de toque grandes nos links da lateral (VIS-01)', () => {
     render(<AppShell perfil="OPERATOR">{conteudo}</AppShell>)
 
-    expect(screen.getByRole('link', { name: 'Fila' })).toHaveClass('min-h-11')
+    expect(screen.getByRole('link', { name: 'Pedidos' })).toHaveClass('min-h-11')
   })
 })

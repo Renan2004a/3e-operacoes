@@ -3,6 +3,10 @@ import { prisma } from '@/shared/db/prisma'
 import type { OcorrenciaListada } from '../listar-ocorrencias'
 import type { MotivoOcorrencia, TipoOcorrencia } from '../motivos'
 import type {
+  OcorrenciaDetalhada,
+  OcorrenciasPainelRepository,
+} from '../painel-ocorrencias'
+import type {
   AtividadeParaOcorrencia,
   Ocorrencia,
   OcorrenciaRepository,
@@ -12,7 +16,9 @@ import type {
  * Porta única de ocorrências: as portas de motivos e registro mais a listagem.
  * `OcorrenciaRepository` já estende `MotivoRepository`.
  */
-export interface OcorrenciasRepository extends OcorrenciaRepository {
+export interface OcorrenciasRepository
+  extends OcorrenciaRepository,
+    OcorrenciasPainelRepository {
   /** Ocorrências da atividade, com motivo, quantidade, observação e data/hora. */
   listarOcorrencias(atividadeId: string): Promise<OcorrenciaListada[]>
 }
@@ -126,6 +132,54 @@ export const prismaOcorrenciasRepository: OcorrenciasRepository = {
       motivo: row.motivo ? toMotivo(row.motivo) : null,
       observacao: row.note,
       occurredAt: row.occurredAt,
+    }))
+  },
+
+  async listarOcorrenciasDetalhadas({ usuarioId, limite = 100 } = {}): Promise<
+    OcorrenciaDetalhada[]
+  > {
+    const rows = await prisma.occurrence.findMany({
+      where: usuarioId ? { userId: usuarioId } : undefined,
+      select: {
+        id: true,
+        type: true,
+        quantity: true,
+        note: true,
+        occurredAt: true,
+        motivo: { select: { descricao: true } },
+        user: { select: { name: true } },
+        activity: {
+          select: {
+            id: true,
+            status: true,
+            sector: { select: { name: true } },
+            orderItem: {
+              select: {
+                description: true,
+                productCode: true,
+                order: { select: { legacyNumber: true } },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { occurredAt: 'desc' },
+      take: limite,
+    })
+
+    return rows.map((row) => ({
+      id: row.id,
+      activityId: row.activity.id,
+      tipo: row.type as TipoOcorrencia,
+      quantidade: row.quantity,
+      observacao: row.note,
+      occurredAt: row.occurredAt,
+      motivo: row.motivo?.descricao ?? null,
+      pedido: row.activity.orderItem.order.legacyNumber,
+      item: row.activity.orderItem.description ?? row.activity.orderItem.productCode,
+      setor: row.activity.sector.name,
+      usuario: row.user.name,
+      activityStatus: row.activity.status,
     }))
   },
 }

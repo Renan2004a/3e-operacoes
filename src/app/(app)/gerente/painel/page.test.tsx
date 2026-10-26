@@ -49,16 +49,22 @@ const ALERTAS_VAZIO = {
   alertas: { atrasados: [], parados: [], naoEncaminhados: [] },
 }
 
-/** Responde por rota, já que o painel busca indicadores e alertas em paralelo. */
+const OCORRENCIAS_VAZIO = {
+  resumo: { total: 0, ultimos7Dias: 0, porTipo: [], recentes: [] },
+}
+
+/** Responde por rota, já que o painel busca indicadores, alertas e ocorrências em paralelo. */
 function mockRespostas(
   indicadoresPayload: unknown = indicadores(),
   alertasPayload: unknown = ALERTAS_VAZIO,
+  ocorrenciasPayload: unknown = OCORRENCIAS_VAZIO,
 ) {
-  mocks.apiGet.mockImplementation((path: string) =>
-    path === '/api/indicadores'
-      ? Promise.resolve(indicadoresPayload)
-      : Promise.resolve(alertasPayload),
-  )
+  mocks.apiGet.mockImplementation((path: string) => {
+    if (path === '/api/indicadores') return Promise.resolve(indicadoresPayload)
+    if (path === '/api/indicadores/alertas') return Promise.resolve(alertasPayload)
+    if (path === '/api/indicadores/ocorrencias') return Promise.resolve(ocorrenciasPayload)
+    return Promise.reject(new Error(`url inesperada: ${path}`))
+  })
 }
 
 beforeEach(() => {
@@ -141,6 +147,41 @@ describe('PainelPage', () => {
     expect(screen.getByText('Pedido 1001')).toBeInTheDocument()
   })
 
+  it('mostra as ocorrências recentes com pedido, responsável e data (OCO-07)', async () => {
+    mockRespostas(indicadores(), ALERTAS_VAZIO, {
+      resumo: {
+        total: 2,
+        ultimos7Dias: 1,
+        porTipo: [
+          { tipo: 'PERDA', total: 1 },
+          { tipo: 'REFUGO', total: 1 },
+        ],
+        recentes: [
+          {
+            id: 'o1',
+            tipo: 'PERDA',
+            quantidade: '2',
+            observacao: 'Peça trincada',
+            occurredAt: '2026-10-25T12:00:00.000Z',
+            motivo: 'Defeito de corte',
+            pedido: '82269',
+            item: 'Perfil UE',
+            setor: 'Corte e Dobra',
+            usuario: 'Operador',
+          },
+        ],
+      },
+    })
+    render(<PainelPage />)
+
+    expect(await screen.findByText('Ocorrências recentes')).toBeInTheDocument()
+    expect(screen.getByText('2 no total')).toBeInTheDocument()
+    expect(screen.getByText('1 nos últimos 7 dias')).toBeInTheDocument()
+    expect(screen.getByText('Pedido 82269 · Perfil UE')).toBeInTheDocument()
+    expect(screen.getByText(/Responsável: Operador/)).toBeInTheDocument()
+    expect(screen.getByText(/Defeito de corte/)).toBeInTheDocument()
+  })
+
   it('rotula o status com texto, sem depender apenas de cor (FEP-01)', async () => {
     mockRespostas()
     render(<PainelPage />)
@@ -162,9 +203,9 @@ describe('PainelPage', () => {
     let falhar = true
     mocks.apiGet.mockImplementation((path: string) => {
       if (falhar) return Promise.reject(new Error('falha'))
-      return path === '/api/indicadores'
-        ? Promise.resolve(indicadores())
-        : Promise.resolve(ALERTAS_VAZIO)
+      if (path === '/api/indicadores') return Promise.resolve(indicadores())
+      if (path === '/api/indicadores/alertas') return Promise.resolve(ALERTAS_VAZIO)
+      return Promise.resolve(OCORRENCIAS_VAZIO)
     })
     render(<PainelPage />)
 

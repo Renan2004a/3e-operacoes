@@ -11,7 +11,10 @@ export interface ItemNav {
  * perfil (FEP-11).
  */
 export const NAV_POR_PERFIL: Record<RoleCode, readonly ItemNav[]> = {
-  OPERATOR: [{ href: '/operador/fila', label: 'Fila' }],
+  OPERATOR: [
+    { href: '/operador/fila', label: 'Pedidos' },
+    { href: '/operador/ocorrencias', label: 'Ocorrências' },
+  ],
   PRODUCTION_MANAGER: [
     { href: '/gerente/painel', label: 'Painel' },
     { href: '/gerente/pedidos', label: 'Pedidos' },

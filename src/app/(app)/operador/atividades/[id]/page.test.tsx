@@ -154,11 +154,16 @@ describe('ExecutarAtividadePage', () => {
     expect(await screen.findByText('Pendente: 0 peca')).toBeInTheDocument()
   })
 
-  it('inclui o formulário de ocorrência da atividade (FE-11)', async () => {
+  it('inclui o link para registrar ocorrência da atividade (FE-11)', async () => {
     configurarApiGet([ordem()])
     render(<ExecutarAtividadePage />)
 
-    expect(await screen.findByLabelText('Tipo de ocorrência')).toBeInTheDocument()
+    const link = await screen.findByRole('link', { name: 'Registrar ocorrência' })
+    expect(link).toHaveAttribute('href', '/operador/ocorrencias?atividade=atv_1')
+    expect(screen.getByRole('link', { name: 'Ver minhas ocorrências' })).toHaveAttribute(
+      'href',
+      '/operador/ocorrencias',
+    )
   })
 
   it('usa o cabeçalho de página com o título da atividade (VIS-09)', async () => {

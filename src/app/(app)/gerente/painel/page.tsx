@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import type { ActivityStatus } from '@/modules/producao/tipos'
+import type { TipoOcorrencia } from '@/modules/ocorrencias/motivos'
 import { apiGet } from '@/shared/http/api-client'
 import { Alert } from '@/shared/ui/alert'
 import { Badge } from '@/shared/ui/badge'
@@ -70,6 +71,57 @@ interface Alertas {
   naoEncaminhados: Alerta[]
 }
 
+interface OcorrenciaDetalhada {
+  id: string
+  tipo: TipoOcorrencia
+  quantidade: string | number | null
+  observacao: string | null
+  occurredAt: string
+  motivo: string | null
+  pedido: string
+  item: string | null
+  setor: string | null
+  usuario: string | null
+}
+
+interface ResumoOcorrencias {
+  total: number
+  ultimos7Dias: number
+  porTipo: { tipo: TipoOcorrencia; total: number }[]
+  recentes: OcorrenciaDetalhada[]
+}
+
+const ROTULO_TIPO: Record<TipoOcorrencia, string> = {
+  PERDA: 'Perda',
+  REFUGO: 'Refugo',
+  INDISPONIBILIDADE: 'Indisponibilidade',
+  PAUSA: 'Pausa',
+  PARADA: 'Parada',
+  DEFEITO: 'Defeito',
+}
+
+const VARIANTE_TIPO: Record<
+  TipoOcorrencia,
+  'neutral' | 'info' | 'warning' | 'success' | 'danger'
+> = {
+  PERDA: 'danger',
+  REFUGO: 'warning',
+  INDISPONIBILIDADE: 'warning',
+  PAUSA: 'info',
+  PARADA: 'danger',
+  DEFEITO: 'warning',
+}
+
+function formatarDataHora(valor: string): string {
+  const data = new Date(valor)
+  if (Number.isNaN(data.getTime())) return valor
+  return new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(data)
+}
+
 type TomAlerta = 'danger' | 'warning' | 'info'
 
 function GrupoAlertas({
@@ -135,6 +187,7 @@ const VARIANTE_STATUS: Record<ActivityStatus, 'neutral' | 'info' | 'warning' | '
 export default function PainelPage() {
   const [dados, setDados] = useState<Indicadores | null>(null)
   const [alertas, setAlertas] = useState<Alertas | null>(null)
+  const [ocorrencias, setOcorrencias] = useState<ResumoOcorrencias | null>(null)
   const [erro, setErro] = useState(false)
   const [carregando, setCarregando] = useState(true)
 
@@ -143,10 +196,12 @@ export default function PainelPage() {
       Promise.all([
         apiGet<Indicadores>('/api/indicadores'),
         apiGet<{ alertas: Alertas }>('/api/indicadores/alertas'),
+        apiGet<{ resumo: ResumoOcorrencias }>('/api/indicadores/ocorrencias'),
       ])
-        .then(([resposta, respostaAlertas]) => {
+        .then(([resposta, respostaAlertas, respostaOcorrencias]) => {
           setDados(resposta)
           setAlertas(respostaAlertas.alertas)
+          setOcorrencias(respostaOcorrencias.resumo)
           setErro(false)
         })
         .catch(() => setErro(true))
@@ -246,6 +301,70 @@ export default function PainelPage() {
             tom="info"
             itens={alertas?.naoEncaminhados ?? []}
           />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <CardTitle>Ocorrências recentes</CardTitle>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="neutral">{ocorrencias?.total ?? 0} no total</Badge>
+              <Badge variant="warning">
+                {ocorrencias?.ultimos7Dias ?? 0} nos últimos 7 dias
+              </Badge>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          {!ocorrencias || ocorrencias.total === 0 ? (
+            <p className="text-sm text-muted">Nenhuma ocorrência registrada.</p>
+          ) : (
+            <>
+              <ul aria-label="Ocorrências por tipo" className="flex flex-wrap gap-2">
+                {ocorrencias.porTipo
+                  .filter((contagem) => contagem.total > 0)
+                  .map((contagem) => (
+                    <li key={contagem.tipo}>
+                      <Badge variant={VARIANTE_TIPO[contagem.tipo]}>
+                        {ROTULO_TIPO[contagem.tipo]}: {contagem.total}
+                      </Badge>
+                    </li>
+                  ))}
+              </ul>
+
+              <ul aria-label="Ocorrências recentes" className="grid gap-2">
+                {ocorrencias.recentes.map((ocorrencia) => (
+                  <li
+                    key={ocorrencia.id}
+                    className="rounded-lg border border-line p-2 text-sm"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <Badge variant={VARIANTE_TIPO[ocorrencia.tipo]}>
+                        {ROTULO_TIPO[ocorrencia.tipo]}
+                      </Badge>
+                      <span className="text-xs text-muted">
+                        {formatarDataHora(ocorrencia.occurredAt)}
+                      </span>
+                    </div>
+                    <p className="mt-1 font-medium text-ink">
+                      Pedido {ocorrencia.pedido} · {ocorrencia.item ?? 'Item'}
+                    </p>
+                    <p className="text-muted">
+                      Setor: {ocorrencia.setor ?? '—'} · Responsável:{' '}
+                      {ocorrencia.usuario ?? '—'}
+                    </p>
+                    {ocorrencia.motivo ? (
+                      <p className="text-muted">Motivo: {ocorrencia.motivo}</p>
+                    ) : null}
+                    {ocorrencia.observacao ? (
+                      <p className="text-ink">{ocorrencia.observacao}</p>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </CardContent>
       </Card>
 

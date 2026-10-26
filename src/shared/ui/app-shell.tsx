@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
+  AlertTriangle,
   Building2,
   LayoutDashboard,
   ListChecks,
@@ -25,6 +26,7 @@ const ICONE_POR_HREF: Record<string, LucideIcon> = {
   '/vendedor/pedidos': ShoppingCart,
   '/integracao': Upload,
   '/operador/fila': ListChecks,
+  '/operador/ocorrencias': AlertTriangle,
   '/expedicao/entregas': Truck,
   '/admin/usuarios': Users,
   '/admin/setores': Building2,

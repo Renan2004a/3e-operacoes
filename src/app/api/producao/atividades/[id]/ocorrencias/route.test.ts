@@ -66,6 +66,9 @@ holder.repo = {
   async usuarioPertenceAoSetor(usuarioId, sectorId) {
     return state.vinculos.has(`${usuarioId}:${sectorId}`)
   },
+  async listarOcorrenciasDetalhadas() {
+    return []
+  },
   async registrarOcorrencia(input) {
     state.seq += 1
     const ocorrencia: Ocorrencia = {

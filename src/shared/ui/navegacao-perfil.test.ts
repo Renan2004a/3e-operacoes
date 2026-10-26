@@ -3,6 +3,13 @@ import { describe, expect, it } from 'vitest'
 import { NAV_POR_PERFIL, rotaInicialDoPerfil } from './navegacao-perfil'
 
 describe('navegacao por perfil', () => {
+  it('mostra Pedidos e Ocorrências para o operador', () => {
+    expect(NAV_POR_PERFIL.OPERATOR).toEqual([
+      { href: '/operador/fila', label: 'Pedidos' },
+      { href: '/operador/ocorrencias', label: 'Ocorrências' },
+    ])
+  })
+
   it('inclui a fila de produção na navegação do gerente (QF-10)', () => {
     expect(NAV_POR_PERFIL.PRODUCTION_MANAGER).toContainEqual({
       href: '/operador/fila',

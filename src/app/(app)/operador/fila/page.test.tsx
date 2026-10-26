@@ -69,7 +69,7 @@ describe('FilaPage', () => {
     mocks.apiGet.mockResolvedValue({ atividades: [] })
     render(<FilaPage />)
 
-    expect(await screen.findByText('Sem atividades na fila')).toBeInTheDocument()
+    expect(await screen.findByText('Nenhum pedido para você agora')).toBeInTheDocument()
   })
 
   it('mostra erro acessível e permite tentar de novo (FE-14)', async () => {
@@ -97,7 +97,7 @@ describe('FilaPage', () => {
     mocks.apiGet.mockResolvedValue({ atividades: [atividade()] })
     render(<FilaPage />)
 
-    const link = await screen.findByRole('link', { name: 'Abrir' })
+    const link = await screen.findByRole('link', { name: /abrir atividade/i })
     expect(link).toHaveAttribute('href', '/operador/atividades/atv_1')
   })
 
@@ -105,7 +105,7 @@ describe('FilaPage', () => {
     mocks.apiGet.mockResolvedValue({ atividades: [atividade()] })
     render(<FilaPage />)
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Minha fila' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Meus pedidos' })).toBeInTheDocument()
   })
 
   it('mostra setor e prioridade no card da atividade (PROT-05)', async () => {

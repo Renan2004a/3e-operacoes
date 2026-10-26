@@ -12,7 +12,6 @@ import { EmptyState } from '@/shared/ui/empty-state'
 import { PageHead } from '@/shared/ui/page-head'
 import { Spinner } from '@/shared/ui/spinner'
 import { cn, FOCO_VISIVEL } from '@/shared/ui/utils'
-
 interface Atividade {
   id: string
   orderItemId: string
@@ -88,54 +87,60 @@ export default function FilaPage() {
     )
   }
 
-  if (!atividades || atividades.length === 0) {
-    return (
-      <EmptyState
-        title="Sem atividades na fila"
-        description="Não há atividades nos seus setores no momento."
-      />
-    )
-  }
+  const listaAtividades = atividades ?? []
 
   return (
     <section className="grid gap-4">
-      <PageHead title="Minha fila" description="Atividades dos seus setores, ordenadas para execução." />
+      <PageHead
+        title="Meus pedidos"
+        description="Atividades dos seus setores. Abra uma atividade para registrar a produção."
+      />
 
-      <ul aria-label="Atividades" className="grid gap-3">
-        {atividades.map((atividade) => (
-          <li key={atividade.id}>
-            <Card>
-              <CardContent className="grid gap-3 pt-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-                      Prioridade {atividade.priority} · {atividade.sectorName ?? 'Setor'}
-                    </p>
-                    <CardTitle className="mt-1 text-base">
-                      {atividade.itemDescription ?? atividade.productCode ?? 'Item sem descrição'}
-                    </CardTitle>
-                    <p className="mt-1 text-sm text-muted">Pedido {atividade.orderNumber ?? '—'}</p>
+      {listaAtividades.length === 0 ? (
+        <EmptyState
+          title="Nenhum pedido para você agora"
+          description="Quando houver atividades nos seus setores, elas aparecerão aqui."
+        />
+      ) : (
+        <ul aria-label="Minhas atividades" className="grid gap-3">
+          {listaAtividades.map((atividade) => (
+            <li key={atividade.id}>
+              <Card>
+                <CardContent className="grid gap-3 pt-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                        Prioridade {atividade.priority} · {atividade.sectorName ?? 'Setor'}
+                      </p>
+                      <CardTitle className="mt-1 text-base">
+                        {atividade.itemDescription ?? atividade.productCode ?? 'Item sem descrição'}
+                      </CardTitle>
+                      <p className="mt-1 text-sm text-muted">
+                        Pedido {atividade.orderNumber ?? '—'}
+                      </p>
+                    </div>
+                    <Badge variant={VARIANTE_STATUS[atividade.status]}>
+                      {ROTULO_STATUS[atividade.status]}
+                    </Badge>
                   </div>
-                  <Badge variant={VARIANTE_STATUS[atividade.status]}>
-                    {ROTULO_STATUS[atividade.status]}
-                  </Badge>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Link
-                    href={`/operador/atividades/${atividade.id}`}
-                    className={cn(
-                      'inline-flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 font-semibold text-white hover:bg-accent-dark',
-                      FOCO_VISIVEL,
-                    )}
-                  >
-                    Abrir
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          </li>
-        ))}
-      </ul>
+                  <div className="flex flex-wrap gap-2">
+                    <Link
+                      href={`/operador/atividades/${atividade.id}`}
+                      aria-label={`Abrir atividade do pedido ${atividade.orderNumber ?? ''}`}
+                      className={cn(
+                        'inline-flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 font-semibold text-white hover:bg-accent-dark',
+                        FOCO_VISIVEL,
+                      )}
+                    >
+                      Abrir atividade
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   )
 }

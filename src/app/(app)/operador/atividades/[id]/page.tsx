@@ -9,7 +9,6 @@ import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import { Field } from '@/shared/ui/field'
 import { Input } from '@/shared/ui/input'
-import { OcorrenciaForm } from '@/shared/ui/ocorrencia-form'
 import { PageHead } from '@/shared/ui/page-head'
 import { Progress } from '@/shared/ui/progress'
 import { Spinner } from '@/shared/ui/spinner'
@@ -132,7 +131,7 @@ export default function ExecutarAtividadePage() {
           href="/operador/fila"
           className={cn('text-sm font-medium text-accent', FOCO_VISIVEL)}
         >
-          ← Voltar para a fila
+          ← Voltar para meus pedidos
         </Link>
         <PageHead title="Executar atividade" />
         <Link
@@ -216,10 +215,30 @@ export default function ExecutarAtividadePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Registrar ocorrência</CardTitle>
+          <CardTitle>Ocorrência</CardTitle>
         </CardHeader>
-        <CardContent>
-          <OcorrenciaForm atividadeId={atividadeId} onRegistrada={() => void carregarOrdem(false)} />
+        <CardContent className="grid gap-3">
+          <p className="text-sm text-muted">
+            Teve uma perda, refugo ou outro problema nesta atividade? Registre na tela de
+            ocorrências para ficar disponível ao gerente.
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href={`/operador/ocorrencias?atividade=${atividadeId}`}
+              className={cn(
+                'inline-flex min-h-11 items-center justify-center rounded-lg bg-accent px-4 font-semibold text-white hover:bg-accent-dark',
+                FOCO_VISIVEL,
+              )}
+            >
+              Registrar ocorrência
+            </Link>
+            <Link
+              href="/operador/ocorrencias"
+              className={cn('text-sm font-medium text-accent', FOCO_VISIVEL)}
+            >
+              Ver minhas ocorrências
+            </Link>
+          </div>
         </CardContent>
       </Card>
     </section>
