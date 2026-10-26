@@ -148,3 +148,29 @@
 - **Leitor de tela**: não foi executado NVDA/VoiceOver; a verificação foi por semântica e rótulos.
 - **Contraste**: os tokens foram escolhidos para AA, mas não foi rodada ferramenta de contraste dedicada.
 - **Ajuda/documentação in-app**: parcial, conforme item 10.
+
+---
+
+## Avaliação específica do perfil Operador (2026-10-26)
+
+**Método**: inspeção de código, execução local em 390×844 e desktop, 1023 testes automatizados, Playwright (9/9) e leitura do MySQL. "Antes" = fila única com execução + ocorrência + ordem na mesma página; "depois" = telas separadas e ocorrências visíveis ao gerente.
+
+| # | Heurística | Gravidade antes | Depois | Evidência |
+| --- | --- | --- | --- | --- |
+| 1 | Visibilidade do estado | 3 | ✅ | Carregando/vazio/erro/sucesso; botão desabilitado no envio; lista recarregada após registrar |
+| 2 | Mundo real | 2 | ✅ | “Meus pedidos”, “Abrir atividade”, “Registrar ocorrência”; pedido/item/setor em linguagem de fábrica |
+| 3 | Controle e liberdade | 2 | ✅ | “← Voltar para meus pedidos”; link “Ver minhas ocorrências”; troca de atividade sem perder o formulário |
+| 4 | Consistência | 2 | ✅ | Mesmos `Alert`, `Badge`, `Card` e padrões de botão do restante do sistema |
+| 5 | Prevenção de erros | 3 | ✅ | Motivo obrigatório por tipo, quantidade validada na unidade, envio bloqueado durante a requisição |
+| 6 | Reconhecimento | 2 | ✅ | Atividade pré-selecionada ao vir da execução; opções mostram pedido + item + setor |
+| 7 | Flexibilidade | 2 | ✅ | Registrar pela atividade ou pela tela de ocorrências; menu com duas entradas |
+| 8 | Estética e minimalismo | 2 | ✅ | Execução, ocorrência e ordem separadas; cartões no celular; sem CUID |
+| 9 | Recuperação de erros | 3 | ✅ | Mensagem específica, dados preservados em falha, “Tentar de novo” na carga |
+| 10 | Ajuda e documentação | 2 | ⚠️ parcial | Dicas nos campos e texto de destino da ocorrência; ajuda contextual ampla ainda não existe |
+
+### Problemas residuais (não bloqueantes)
+
+- **Situação de análise/resolução da ocorrência**: não há campo nem regra; não foi criada uma situação fictícia.
+- **Notificação ativa ao gerente**: o painel mostra o resumo, mas não há push/e-mail em tempo real.
+- **Idempotência**: o duplo envio é mitigado pela interface (botão desabilitado), não por chave de idempotência no domínio.
+- **Teste com operadores reais**: não houve sessão de usabilidade; a avaliação é heurística.

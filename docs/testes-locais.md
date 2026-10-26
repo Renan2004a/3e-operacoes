@@ -216,3 +216,45 @@ Executar com o app local e banco do app migrado. Repetir no **Vendedor** e no **
 | 7 | Conferir o pedido na listagem | Nenhuma duplicação de pedido e `createdAt` inalterado |
 
 **Evidência mínima:** perfil, número do pedido, origem da solicitação (nova/em andamento/anterior), unidade anterior e nova, mensagem exibida, link aberto e captura de tela.
+
+---
+
+## 9. Perfil Operador — telas e ocorrências (2026-10-26)
+
+**Escopo:** separação das telas do operador (Meus pedidos / Ocorrências / execução), feedback de ações, persistência das ocorrências e visão do gerente.
+
+### Gates automatizados
+
+| Gate | Resultado |
+| --- | --- |
+| `npm run lint` | 0 erros (4 avisos) |
+| `npm run typecheck` | OK |
+| `npm run test` | **1023 aprovados** + 24 de integração ignorados |
+| `npm run build` | OK |
+| Playwright (`scripts/validar-operador.mjs`) | **9/9** |
+
+Novos testes: `painel-ocorrencias.test.ts`, `api/producao/ocorrencias/route.test.ts`, `api/indicadores/ocorrencias/route.test.ts`, `operador/ocorrencias/page.test.tsx`. Ajustados: `app-shell`, `fila`, `atividades/[id]`, `gerente/painel` e `navegacao-perfil`.
+
+### Verificação no banco (MySQL do app)
+
+- 13 ocorrências persistidas em `ocorrencias`, com vínculo íntegro `ocorrencias.activityId → atividades.orderItemId → pedidos_itens.orderId → pedidos`.
+- Cada linha traz tipo, quantidade, data/hora, pedido, item, setor, responsável (`usuarios`) e motivo (`motivos_ocorrencia`).
+
+### Roteiro manual (não destrutivo)
+
+| # | Passo | Resultado esperado |
+| --- | --- | --- |
+| 1 | Entrar como Operador | Abre “Meus pedidos”, com o menu Pedidos/Ocorrências |
+| 2 | Abrir uma atividade | Execução, saldo, progresso e link “Registrar ocorrência” |
+| 3 | Clicar em “Registrar ocorrência” | Tela de Ocorrências com a atividade pré-selecionada |
+| 4 | Trocar o tipo e conferir os motivos | Motivos carregados para o tipo; campo obrigatório sinalizado |
+| 5 | Enviar sem preencher | Erro claro, sem perder o que já foi preenchido |
+| 6 | Registrar uma ocorrência em ambiente de teste | Sucesso visível; item aparece em “Minhas ocorrências” |
+| 7 | Entrar como Gerente e abrir o painel | Card “Ocorrências recentes” com total, 7 dias, tipo, pedido, item, setor, responsável e data |
+| 8 | Repetir em 390 px (celular) | Sem rolagem horizontal; botões e campos utilizáveis |
+
+**Cuidado:** o banco do ambiente local é o mesmo do app hospedado. Não registrar ocorrências fictícias em produção; para testar a escrita, usar um pedido/atividade de teste e remover o registro com autorização.
+
+**Evidência:** capturas em `docs/video/validacao-operador/` e saída do script `scripts/validar-operador.mjs`.
+
+**Limitação registrada:** o modelo não possui situação de “análise/resolução” da ocorrência; o fluxo não foi inventado (ver `docs/diagnostico-operador.md` §8).

@@ -2,6 +2,7 @@
 
 - `panorama-do-projeto.md`: visão geral — o que é, metodologia, funcionalidades, estado e como seguir.
 - `diagnostico-docentes.md`: problemas relatados, causas, correções e plano de execução.
+- `diagnostico-operador.md`: análise do perfil Operador, telas, ocorrências e visão do gerente.
 - `banco-de-dados.md`: bancos local/hospedado, tabelas, relacionamentos, nomenclatura e DBeaver.
 - `mockups/`: mockups editáveis das telas propostas (HTML/CSS) e instruções.
 - `avaliacao-heuristicas.md`: avaliação das 10 heurísticas de Nielsen antes/depois.

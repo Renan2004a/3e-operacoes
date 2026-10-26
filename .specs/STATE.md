@@ -2,7 +2,7 @@
 
 ## Estado atual
 
-Projeto em bootstrap. A estrutura inicial, documentação, skills locais e subagentes foram preparados. Ainda não há implementação funcional da integração com o Top Gerente nem telas finais.
+Projeto em produção no Railway, com perfis de Vendedor, Gerente, Operador, Expedição e Administração. O perfil Operador foi revisado em 2026-10-26: telas separadas (Meus pedidos / Ocorrências / execução), feedback de ações e ocorrências visíveis no painel do Gerente (AD-021).
 
 ## Decisões vigentes
 
@@ -232,6 +232,34 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Scope**: consulta de pedidos (Vendedor e Gerente), API `GET /api/pedidos`, lista de pedidos, testes e documentação. Filtros AD-014/A2/A6, status global, permissões, saldos e conclusão preservados.
 - **Date**: 2026-10-22
 - **Status**: active (aprovada e implementada). Testes unitários, de rota, de componente e de integração com MySQL local aprovados; validação no navegador pendente. Sem commit, push ou deploy.
+
+### AD-021
+
+- **Decision**: O perfil Operador passa a ter **telas separadas**: (1) **Meus pedidos** (`/operador/fila`), com as atividades atribuídas e o botão “Abrir atividade”; (2) **Ocorrências** (`/operador/ocorrencias`), para registrar e consultar as próprias ocorrências; (3) **execução** (`/operador/atividades/[id]`), focada em produzir, com link para a ocorrência. A ocorrência continua vinculada à atividade (`ocorrencias.activityId → atividades.orderItemId → pedidos_itens.orderId → pedidos`), sem tabela ou campo novo. O Gerente de Produção passa a ver o resumo no painel via `GET /api/indicadores/ocorrencias` (total, últimos 7 dias, por tipo e recentes com pedido, item, setor, responsável, motivo e data/hora); o Operador vê as próprias via `GET /api/producao/ocorrencias`. Não foi criada uma página redundante de “pedido”: a atividade é a unidade operacional executada. O pool do banco do app passou a aceitar `DB_CONNECTION_LIMIT` (padrão 15) e `DB_ACQUIRE_TIMEOUT_MS` (padrão 30 s) para suportar as chamadas paralelas do painel em RDS lento.
+- **Reason**: O operador tinha uma única tela com execução, ocorrência e ordem, e o gerente não enxergava as ocorrências registradas no chão de fábrica. A separação reduz a sobrecarga e fecha o fluxo de informação sem alterar as regras de produção.
+- **Trade-off**: A situação de “análise/resolução” da ocorrência **não existe** no modelo/regras e não foi inventada; fica como lacuna de negócio. Não há chave de idempotência para ocorrência (o duplo envio é mitigado pela interface). O resumo do painel carrega até 200 ocorrências para contar; se o volume crescer, migrar a contagem para o banco. O pool maior consome mais conexões do RDS; ajustar por ambiente se o limite do banco for menor.
+- **Scope**: telas e navegação do Operador, ocorrências (registro/consulta), painel e API do Gerente, configuração do pool, testes e documentação. Permissões, saldos, status, prazos, entregas, remessas, importação e Top Gerente preservados. Sem migração de banco.
+- **Date**: 2026-10-26
+- **Status**: active (implementada e validada localmente: 1023 testes, Playwright 9/9, lint/typecheck/build OK, banco inspecionado).
+
+## Handoff — perfil Operador e ocorrências (AD-021)
+
+- **Feature**: separação das telas do Operador, feedback de ações e visibilidade das ocorrências pelo Gerente.
+- **Phase / Task**: implementação e validação local concluídas; commit/push/deploy e validação hospedada em andamento.
+- **Completed**:
+  - `/operador/fila` virou **Meus pedidos** (cards, status, botão “Abrir atividade”).
+  - `/operador/ocorrencias` (nova): registrar com atividade pré-selecionada e consultar as próprias ocorrências.
+  - `/operador/atividades/[id]`: execução + link para ocorrência; formulário saiu da tela de execução.
+  - Menu do Operador: **Pedidos** e **Ocorrências**; ícone próprio.
+  - Painel do Gerente: card **Ocorrências recentes** (total, 7 dias, por tipo, pedido/item/setor/responsável/motivo/data).
+  - APIs: `GET /api/producao/ocorrencias` (próprias, `registrar_ocorrencia`) e `GET /api/indicadores/ocorrencias` (todas, `consultar_pedidos`).
+  - Pool do banco configurável (`DB_CONNECTION_LIMIT`, `DB_ACQUIRE_TIMEOUT_MS`), eliminando o `pool timeout` observado no RDS.
+  - Testes: 1023 aprovados (+24 ignorados), Playwright 9/9, lint/typecheck/build OK.
+- **In-progress**: commit, push e deploy; validação hospedada com `scripts/validar-operador.mjs`.
+- **Next step**: validar `PLAYWRIGHT_BASE_URL=https://3e-operacoes-production.up.railway.app node scripts/validar-operador.mjs` e, se aprovado, gravar a demonstração do Operador.
+- **Blockers**: situação de análise/resolução de ocorrência depende de decisão de negócio; idempotência de ocorrência e notificação ativa ao gerente fora do escopo.
+- **Files changed**: `src/app/(app)/operador/{fila,ocorrencias,atividades/[id]}`, `src/app/(app)/gerente/painel/page.tsx`, `src/shared/ui/{navegacao-perfil,app-shell}`, `src/modules/ocorrencias/{painel-ocorrencias,adapters/prisma-ocorrencias-repository}`, `src/app/api/producao/ocorrencias`, `src/app/api/indicadores/ocorrencias`, `src/shared/db/prisma.ts`, `scripts/validar-operador.mjs`, testes e documentos (`docs/diagnostico-operador.md`, `docs/testes-locais.md`, `docs/avaliacao-heuristicas.md`, `docs/README.md`, este arquivo).
+- **Branch**: main
 
 ## Handoff — auditoria da solicitação de importação (AD-015)
 
