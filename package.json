@@ -12,6 +12,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "validar:operador": "node scripts/validar-operador.mjs",
+    "wireframes:png": "node scripts/capturar-wireframes.mjs",
+    "wireframes:bmpr": "python scripts/gerar-bmpr-wireframes.py",
     "video:demo": "node scripts/gravar-demo.mjs",
     "video:demo:completo": "node scripts/gravar-demo-completo.mjs",
     "video:demo:execucao": "set MODO=execucao&& node scripts/gravar-demo-completo.mjs",

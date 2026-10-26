@@ -48,6 +48,7 @@ Leia e aplique os arquivos abaixo conforme a tarefa. Este arquivo Ã© apenas um Ã
 - `docs/frontend.md`
 - `docs/referencias-visuais/README.md`
 - `docs/referencias-visuais/prototipo-visual.md`
+- `docs/wireframes/`
 - `design/inspiracoes/frontend-v4/`
 
 <!-- BEGIN:nextjs-agent-rules -->

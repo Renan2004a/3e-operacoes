@@ -1,0 +1,1287 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wireframes — 3E Operações</title>
+  <link rel="stylesheet" href="assets/wireframes.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">3E Operações <span>· wireframes de baixa fidelidade</span></div>
+    <div class="top-meta">v1 · 27/10/2026 · 16 rotas + estados + navegação</div>
+    <nav class="quick">
+      <a href="#inventario">Inventário</a>
+      <a href="#wf-19">Mapa</a>
+      <a href="#componentes">Componentes</a>
+      <a href="GUIA-BALSAMIQ.md">Guia Balsamiq</a>
+      <a href="INVENTARIO-TELAS.md">Inventário .md</a>
+    </nav>
+  </header>
+
+  <div class="layout">
+    <aside class="side">
+      <div class="side-group">Público</div>
+      <a href="#wf-01">WF-01 Login</a>
+      <a href="#wf-02">WF-02 Redirecionamento</a>
+      <div class="side-group">Vendedor</div>
+      <a href="#wf-03">WF-03 Vendas</a>
+      <a href="#wf-04">WF-04 Detalhe do pedido</a>
+      <div class="side-group">Gerente de Produção</div>
+      <a href="#wf-05">WF-05 Painel</a>
+      <a href="#wf-06">WF-06 Pedidos</a>
+      <a href="#wf-07">WF-07 Detalhe / correção</a>
+      <a href="#wf-12">WF-12 Importar pedido</a>
+      <div class="side-group">Operador</div>
+      <a href="#wf-08">WF-08 Meus pedidos</a>
+      <a href="#wf-09">WF-09 Executar atividade</a>
+      <a href="#wf-10">WF-10 Ocorrências</a>
+      <a href="#wf-16">WF-16 Ordem / impressão</a>
+      <div class="side-group">Expedição</div>
+      <a href="#wf-11">WF-11 Entregas</a>
+      <div class="side-group">Administração</div>
+      <a href="#wf-13">WF-13 Usuários</a>
+      <a href="#wf-14">WF-14 Setores</a>
+      <div class="side-group">Técnico</div>
+      <a href="#wf-15">WF-15 Integração</a>
+      <div class="side-group">Transversal</div>
+      <a href="#wf-17">WF-17 Estados</a>
+      <a href="#wf-18">WF-18 Responsivo</a>
+      <a href="#wf-19">WF-19 Mapa</a>
+      <a href="#componentes">Componentes</a>
+    </aside>
+
+    <main class="main">
+      <section id="inventario">
+        <div class="page-head">
+          <span class="eyebrow">3E Operações · documentação visual</span>
+          <h1>Wireframes de todas as telas</h1>
+          <p>Baixa fidelidade, sem dados reais. Cada tela tem moldura de navegador, perfil, estados e observações. Use os PNGs de <span class="mono">png/</span> como referência no Balsamiq Cloud e o <a href="GUIA-BALSAMIQ.md">guia</a> para reproduzir os controles.</p>
+        </div>
+
+        <div class="alert alert-info" style="margin-bottom:12px">
+          <span class="alert-title">Projeto Balsamiq: 20 boards editáveis</span>
+          <span class="alert-body">Abra <a href="https://balsamiq.cloud/ssandol/p4879yi" target="_blank" rel="noreferrer">balsamiq.cloud/ssandol/p4879yi</a> (projeto <strong>3E Operações — Wireframes</strong>). Este board HTML é a fonte local; o BMPR em <span class="mono">3e-operacoes-wireframes.bmpr</span> reimporta tudo. O guia controle a controle está em <a href="GUIA-BALSAMIQ.md">GUIA-BALSAMIQ.md</a>.</span>
+        </div>
+
+        <div class="table-wrap">
+          <table class="table inv-table" aria-label="Inventário de telas">
+            <thead>
+              <tr><th>Tela</th><th>Rota</th><th>Perfil</th><th>Layouts</th><th>Estados principais</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>WF-01 Login</strong></td><td class="mono">/login</td><td>Público</td><td>Desktop, mobile</td><td>Carregando, 401, erro de rede</td></tr>
+              <tr><td><strong>WF-02 Redirecionamento</strong></td><td class="mono">/</td><td>Público / autenticado</td><td>Compacto</td><td>Sem sessão, perfil sem tela</td></tr>
+              <tr><td><strong>WF-03 Vendas</strong></td><td class="mono">/vendedor/pedidos</td><td>Vendedor</td><td>Desktop, mobile</td><td>Lista vazia, erro, paginação, importação</td></tr>
+              <tr><td><strong>WF-04 Detalhe do pedido</strong></td><td class="mono">/vendedor/pedidos/[id]</td><td>Vendedor</td><td>Desktop, mobile</td><td>Sem itens, sem prazo, desmembrado, remessas</td></tr>
+              <tr><td><strong>WF-05 Painel</strong></td><td class="mono">/gerente/painel</td><td>Gerente</td><td>Desktop, mobile</td><td>Sem produção, sem alertas, sem ocorrências</td></tr>
+              <tr><td><strong>WF-06 Pedidos</strong></td><td class="mono">/gerente/pedidos</td><td>Gerente</td><td>Desktop</td><td>Filtros, vazio, erro, página inexistente</td></tr>
+              <tr><td><strong>WF-07 Detalhe / correção</strong></td><td class="mono">/gerente/pedidos/[id]</td><td>Gerente</td><td>Desktop</td><td>Correção bloqueada, justificativa, sucesso</td></tr>
+              <tr><td><strong>WF-08 Meus pedidos</strong></td><td class="mono">/operador/fila</td><td>Operador</td><td>Desktop, mobile</td><td>Vazio, erro, status</td></tr>
+              <tr><td><strong>WF-09 Executar atividade</strong></td><td class="mono">/operador/atividades/[id]</td><td>Operador</td><td>Desktop, mobile</td><td>Carregando, erro, sucesso, quantidade inválida</td></tr>
+              <tr><td><strong>WF-10 Ocorrências</strong></td><td class="mono">/operador/ocorrencias</td><td>Operador</td><td>Desktop, mobile</td><td>Sem atividades, sem ocorrências, erro, sucesso</td></tr>
+              <tr><td><strong>WF-11 Entregas</strong></td><td class="mono">/expedicao/entregas</td><td>Expedição</td><td>Desktop, mobile</td><td>Sem saldo, exceção, erro, sucesso</td></tr>
+              <tr><td><strong>WF-12 Importar pedido</strong></td><td class="mono">/integracao</td><td>Gerente</td><td>Desktop</td><td>Andamento, sucesso, falha, divergência</td></tr>
+              <tr><td><strong>WF-13 Usuários</strong></td><td class="mono">/admin/usuarios</td><td>Resp. Sistema</td><td>Desktop, mobile</td><td>Vazio, 409, confirmação, sem permissão</td></tr>
+              <tr><td><strong>WF-14 Setores</strong></td><td class="mono">/admin/setores</td><td>Resp. Sistema</td><td>Desktop</td><td>Sem setores, sem mapeamento, 409</td></tr>
+              <tr><td><strong>WF-15 Integração</strong></td><td class="mono">/tecnico/integracao</td><td>Resp. Técnico</td><td>Desktop</td><td>Sem jobs, evento vazio, erro</td></tr>
+              <tr><td><strong>WF-16 Ordem / impressão</strong></td><td class="mono">/producao/atividades/[id]/ordem</td><td>Operador</td><td>Desktop, mobile, A4</td><td>404, erro, impressão em 1 página</td></tr>
+              <tr><td><strong>WF-17 Estados globais</strong></td><td>—</td><td>Todos</td><td>Board</td><td>Sucesso, erro, aviso, vazio, confirmação, 401/403</td></tr>
+              <tr><td><strong>WF-18 Padrão responsivo</strong></td><td>—</td><td>Todos</td><td>Mobile</td><td>Tabela em cartões, filtros, menu</td></tr>
+              <tr><td><strong>WF-19 Mapa de navegação</strong></td><td>—</td><td>Todos</td><td>Diagrama</td><td>Rota inicial, voltar, permissões</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ================= WF-01 ================= -->
+      <section class="tela" id="wf-01" data-perfil="publico">
+        <div class="tela-head">
+          <div class="tela-title"><span class="code">WF-01</span><h2>Login</h2><span class="route">/login</span></div>
+          <div class="tela-badges"><span class="badge badge-neutral">Público</span><span class="badge badge-info">Desktop + mobile</span></div>
+        </div>
+        <p class="tela-desc">Entrada única. O sistema identifica o perfil e redireciona para a tela inicial (FEP-11).</p>
+        <div class="shots">
+          <figure class="shot">
+            <div class="browser" data-shot="WF-01-desktop">
+              <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">3e-operacoes-production.up.railway.app/login</span><span class="profile">Público</span></div>
+              <div class="viewport">
+                <div class="login">
+                  <div class="login-hero">
+                    <div>
+                      <span class="badge">3E Ferro e Aço</span>
+                      <p class="login-headline">Pedidos, produção e expedição em uma visão integrada.</p>
+                      <p class="login-sub">Interface para reduzir controles em papel, melhorar a rastreabilidade e apoiar o Planejamento e Controle da Produção.</p>
+                    </div>
+                    <p class="small" style="opacity:.7">3E Operações · acesso restrito</p>
+                  </div>
+                  <div class="login-side">
+                    <div class="card login-card">
+                      <div class="row"><span class="logo-3e">3E</span><div><strong>3E Operações</strong><div class="small muted">Acesso ao sistema</div></div></div>
+                      <h2 class="login-title">Entrar</h2>
+                      <p class="small muted">Use suas credenciais para acessar as funcionalidades do seu perfil.</p>
+                      <div class="field"><span class="label">E-mail <span class="req">*</span></span><div class="input placeholder">seu.email@3e.com.br</div></div>
+                      <div class="field"><span class="label">Senha <span class="req">*</span></span><div class="input placeholder">••••••••</div></div>
+                      <div class="btn btn-primary btn-block btn-lg">Entrar</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <figcaption>Desktop 1280 px — hero + caixa de acesso</figcaption>
+          </figure>
+          <figure class="shot">
+            <div class="phone" data-shot="WF-01-mobile">
+              <div class="notch"></div>
+              <div class="screen">
+                <div class="mobile-body" style="padding:16px">
+                  <div class="row"><span class="logo-3e">3E</span><div><strong>3E Operações</strong><div class="small muted">Acesso ao sistema</div></div></div>
+                  <h2 style="margin:10px 0 0;font-size:18px">Entrar</h2>
+                  <p class="small muted" style="margin:0">Use suas credenciais para acessar as funcionalidades do seu perfil.</p>
+                  <div class="field"><span class="label">E-mail <span class="req">*</span></span><div class="input placeholder">seu.email@3e.com.br</div></div>
+                  <div class="field"><span class="label">Senha <span class="req">*</span></span><div class="input placeholder">••••••••</div></div>
+                  <div class="btn btn-primary btn-block btn-lg">Entrar</div>
+                </div>
+              </div>
+            </div>
+            <figcaption>Mobile 390 px — só a caixa</figcaption>
+          </figure>
+        </div>
+        <div class="notes">
+          <div><h4>Estados</h4><ul><li>Carregando: botão “Entrando…” desabilitado</li><li>Erro 401: “E-mail ou senha inválidos…”</li><li>Erro de rede: “Não foi possível entrar agora…”</li></ul></div>
+          <div><h4>Navegação / regras</h4><ul><li>Sem sessão em rota interna → login</li><li>Com sessão em <span class="mono">/login</span> → rota inicial do perfil</li><li>Foco visível e rótulos associados</li></ul></div>
+        </div>
+      </section>
+
+      <!-- ================= WF-02 ================= -->
+      <section class="tela" id="wf-02" data-perfil="publico">
+        <div class="tela-head">
+          <div class="tela-title"><span class="code">WF-02</span><h2>Redirecionamento</h2><span class="route">/</span></div>
+          <div class="tela-badges"><span class="badge badge-neutral">Público</span><span class="badge badge-info">Compacto</span></div>
+        </div>
+        <p class="tela-desc">Rota raiz: decide entre login e a tela inicial do perfil. Perfil sem telas vê a mensagem neutra.</p>
+        <div class="shots">
+          <figure class="shot">
+            <div class="browser" data-shot="WF-02-desktop">
+              <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">3e-operacoes-production.up.railway.app/</span><span class="profile">Sistema</span></div>
+              <div class="viewport" style="display:grid;place-items:center;min-height:340px;padding:20px">
+                <div class="card" style="max-width:420px;text-align:center;display:grid;gap:5px">
+                  <span class="eyebrow">3E Ferro e Aço</span>
+                  <strong style="font-size:19px">3E Operações</strong>
+                  <span class="small muted">Seu perfil ainda não tem telas disponíveis. Fale com o responsável pelo sistema.</span>
+                </div>
+              </div>
+            </div>
+            <figcaption>Fallback — perfil sem tela inicial</figcaption>
+          </figure>
+        </div>
+        <div class="notes">
+          <div><h4>Decisão</h4><ul><li>Sem sessão → <span class="mono">/login</span></li><li>Com sessão → rota inicial do 1º perfil</li><li>Perfil sem rota → mensagem neutra</li></ul></div>
+          <div><h4>Observação</h4><p>Não é uma tela de trabalho; existe para não deixar o usuário em página vazia.</p></div>
+        </div>
+      </section>
+
+      <!-- ================= WF-03 ================= -->
+      <section class="tela" id="wf-03" data-perfil="vendedor">
+        <div class="tela-head">
+          <div class="tela-title"><span class="code">WF-03</span><h2>Vendas</h2><span class="route">/vendedor/pedidos</span></div>
+          <div class="tela-badges"><span class="badge badge-accent">Vendedor</span><span class="badge badge-info">Desktop + mobile</span></div>
+        </div>
+        <p class="tela-desc">Puxa o pedido do Top Gerente, orienta o desmembramento e lista os pedidos com filtros e paginação.</p>
+        <div class="shots">
+          <figure class="shot">
+            <div class="browser" data-shot="WF-03-desktop">
+              <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">…/vendedor/pedidos</span><span class="profile">Vendedor</span></div>
+              <div class="viewport">
+                <div class="app">
+                  <aside class="app-side">
+                    <div class="app-logo"><span class="mark">3E</span><div>3E Operações<small>Gestão integrada</small></div></div>
+                    <nav class="app-nav"><a class="active"><span class="ico">▤</span>Vendas</a></nav>
+                    <div class="app-user"><strong>Ana Vendedora</strong>Vendedor<span class="sair">Sair</span></div>
+                  </aside>
+                  <div class="app-main">
+                    <div class="topbar"><span class="crumb">Vendas</span><span>27/10/2026 08:12</span><span class="sair">Sair</span></div>
+                    <div class="page-head"><h1>Vendas</h1><p>Puxe o pedido do Top Gerente, desmembre os itens por setor e acompanhe o saldo de entrega.</p></div>
+                    <div class="grid-2-1">
+                      <div class="card">
+                        <div class="card-head"><span class="card-title">Puxar pedido do Top Gerente</span></div>
+                        <div class="stack">
+                          <div class="field"><span class="label">Número do pedido <span class="req">*</span></span><div class="input placeholder">Ex.: 70435</div><span class="hint">Somente dígitos, como aparece no Top Gerente.</span></div>
+                          <div class="btn btn-primary">Importar pedido</div>
+                        </div>
+                      </div>
+                      <div class="card">
+                        <div class="card-head"><span class="card-title">Como funciona</span></div>
+                        <ol class="list" style="padding-left:18px;list-style:decimal">
+                          <li>Informe o <strong>número do pedido</strong> e puxe os dados do Top Gerente.</li>
+                          <li>Abra o pedido e faça o <strong>desmembramento</strong>: associe cada item ao setor responsável.</li>
+                          <li>Defina o <strong>prazo</strong> e programe as <strong>remessas</strong>; acompanhe o saldo.</li>
+                        </ol>
+                      </div>
+                    </div>
+                    <div class="section-title">Pedidos</div>
+                    <div class="card" style="margin-bottom:10px">
+                      <div class="grid-form">
+                        <div class="field"><span class="label">Pesquisar por número</span><div class="input placeholder">Trecho do número</div></div>
+                        <div class="field"><span class="label">Cliente</span><div class="input placeholder">Trecho do nome</div></div>
+                        <div class="field"><span class="label">Setor</span><div class="select">Todos <span>▾</span></div></div>
+                        <div class="field"><span class="label">Status</span><div class="select">Todos <span>▾</span></div></div>
+                        <div class="field"><span class="label">De</span><div class="input placeholder">dd/mm/aaaa</div></div>
+                        <div class="field"><span class="label">Até</span><div class="input placeholder">dd/mm/aaaa</div></div>
+                      </div>
+                      <div class="row" style="margin-top:8px"><span class="btn btn-primary btn-sm">Filtrar</span><span class="btn btn-outline btn-sm">Limpar filtros</span></div>
+                    </div>
+                    <p class="small muted">128 pedido(s) encontrado(s) — página 1 de 7.</p>
+                    <div class="table-wrap">
+                      <table class="table" aria-label="Pedidos">
+                        <thead><tr><th>Pedido</th><th>Cliente</th><th>Status</th><th class="actions">Ações</th></tr></thead>
+                        <tbody>
+                          <tr><td><strong>Pedido 70435</strong></td><td>Metalúrgica Alfa</td><td><span class="badge badge-warning">Em andamento</span></td><td class="actions"><span class="btn btn-sm">Abrir</span></td></tr>
+                          <tr><td><strong>Pedido 82269</strong></td><td>Construtora Beta</td><td><span class="badge badge-neutral">Pendente</span></td><td class="actions"><span class="btn btn-sm">Abrir</span></td></tr>
+                          <tr><td><strong>Pedido 91004</strong></td><td>Revenda Gama</td><td><span class="badge badge-success">Produção concluída</span></td><td class="actions"><span class="btn btn-sm">Abrir</span></td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div class="row-between" style="margin-top:8px"><span class="btn btn-outline btn-sm">Anterior</span><span class="small muted">Página 1 de 7</span><span class="btn btn-outline btn-sm">Próxima</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <figcaption>Desktop — importação, filtros e tabela</figcaption>
+          </figure>
+          <figure class="shot">
+            <div class="phone" data-shot="WF-03-mobile">
+              <div class="notch"></div>
+              <div class="screen">
+                <div class="mobile-head"><span class="hamb">☰</span><span>Vendas</span><span class="sair">Sair</span></div>
+                <div class="mobile-body">
+                  <div class="page-head"><h1>Vendas</h1><p>Puxe o pedido e acompanhe o saldo.</p></div>
+                  <div class="card"><div class="card-title">Puxar pedido</div><div class="field"><span class="label">Número do pedido <span class="req">*</span></span><div class="input placeholder">Ex.: 70435</div></div><div class="btn btn-primary btn-block">Importar pedido</div></div>
+                  <div class="card"><div class="card-title">Filtros</div><div class="field"><span class="label">Número</span><div class="input placeholder">Trecho</div></div><div class="field"><span class="label">Cliente</span><div class="input placeholder">Trecho</div></div><div class="row"><span class="btn btn-primary btn-sm">Filtrar</span><span class="btn btn-outline btn-sm">Limpar</span></div></div>
+                  <div class="card"><div class="row-between"><strong>Pedido 70435</strong><span class="badge badge-warning">Em andamento</span></div><div class="small muted">Metalúrgica Alfa</div><div class="btn btn-primary btn-block btn-sm" style="margin-top:6px">Abrir pedido</div></div>
+                  <div class="card"><div class="row-between"><strong>Pedido 82269</strong><span class="badge badge-neutral">Pendente</span></div><div class="small muted">Construtora Beta</div><div class="btn btn-primary btn-block btn-sm" style="margin-top:6px">Abrir pedido</div></div>
+                </div>
+                <div class="mobile-tabbar"><span class="tab active">Vendas</span><span class="tab">Sair</span></div>
+              </div>
+            </div>
+            <figcaption>Mobile 390 px — filtros empilhados e cartões</figcaption>
+          </figure>
+        </div>
+        <div class="notes">
+          <div><h4>Estados</h4><ul><li>Vazio: “Sem pedidos” / “Página não encontrada”</li><li>Erro: alerta + “Tentar de novo”</li><li>Importação: andamento, sucesso, falha</li></ul></div>
+          <div><h4>Regras</h4><ul><li>Filtros na URL; voltar preserva</li><li>20 por página; total do filtro</li><li>Importação só do Top Gerente</li></ul></div>
+        </div>
+      </section>
+
+      <!-- ================= WF-04 ================= -->
+      <section class="tela" id="wf-04" data-perfil="vendedor">
+        <div class="tela-head">
+          <div class="tela-title"><span class="code">WF-04</span><h2>Detalhe do pedido — Vendedor</h2><span class="route">/vendedor/pedidos/[id]</span></div>
+          <div class="tela-badges"><span class="badge badge-accent">Vendedor</span><span class="badge badge-info">Desktop + mobile</span></div>
+        </div>
+        <p class="tela-desc">Ordem de leitura: identificação → progresso e quantidades → prazo → desmembramento → remessas → ações. O bloco de item se repete para cada item.</p>
+        <div class="shots">
+          <figure class="shot">
+            <div class="browser" data-shot="WF-04-desktop">
+              <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">…/vendedor/pedidos/cmuyq0ygh…?retorno=%2Fvendedor%2Fpedidos</span><span class="profile">Vendedor</span></div>
+              <div class="viewport">
+                <div class="app">
+                  <aside class="app-side">
+                    <div class="app-logo"><span class="mark">3E</span><div>3E Operações<small>Gestão integrada</small></div></div>
+                    <nav class="app-nav"><a class="active"><span class="ico">▤</span>Vendas</a></nav>
+                    <div class="app-user"><strong>Ana Vendedora</strong>Vendedor<span class="sair">Sair</span></div>
+                  </aside>
+                  <div class="app-main">
+                    <div class="topbar"><span class="crumb">Vendas / Pedido 70435</span><span>27/10/2026 08:15</span><span class="sair">Sair</span></div>
+                    <a class="small" href="#wf-03">← Voltar para os pedidos</a>
+                    <div class="row-between">
+                      <div class="page-head"><h1>Pedido 70435</h1><p>Metalúrgica Alfa</p></div>
+                      <span class="badge badge-info">Vendedor V-12</span>
+                    </div>
+                    <div class="grid-3" style="margin-bottom:10px">
+                      <div class="metric"><div class="metric-label">Itens</div><div class="metric-value">6</div><div class="metric-helper">No pedido.</div></div>
+                      <div class="metric warn"><div class="metric-label">Pendentes de desmembramento</div><div class="metric-value">1</div><div class="metric-helper">Itens sem setor definido.</div></div>
+                      <div class="metric"><div class="metric-label">Pendentes de produção</div><div class="metric-value">38 un</div><div class="metric-helper">A produzir, por unidade.</div></div>
+                    </div>
+                    <div class="card" style="margin-bottom:10px">
+                      <div class="card-head"><span class="card-title">Resumo do pedido</span></div>
+                      <div class="progress" style="margin-bottom:8px"><div class="progress-top"><span>Execução do pedido (un)</span><span>62%</span></div><div class="progress-track"><span style="width:62%"></span></div><div class="progress-helper">38 de 60 un executadas.</div></div>
+                      <ul class="list">
+                        <li class="list-item"><span class="grow"><strong>Corte e Dobra</strong><span class="sub">3 item(ns) · solicitado 20 un · pendente de produção 8 un</span></span></li>
+                        <li class="list-item"><span class="grow"><strong>Telhas</strong><span class="sub">2 item(ns) · solicitado 40 un · pendente de produção 20 un</span></span></li>
+                        <li class="list-item"><span class="grow"><strong>Não classificado</strong><span class="sub">1 item(ns) · solicitado 10 un · pendente 10 un</span></span></li>
+                      </ul>
+                    </div>
+
+                    <div class="card">
+                      <div class="card-head">
+                        <div><span class="card-title">Telha termoac. eps30 trap 40 980 0,43</span><div class="card-sub">Item 1 · Código TR-980 · un</div></div>
+                        <div class="row"><span class="badge">un</span><span class="badge badge-success">Desmembrado</span></div>
+                      </div>
+                      <div class="progress"><div class="progress-top"><span>Execução do item 1</span><span>50%</span></div><div class="progress-track"><span style="width:50%"></span></div><div class="progress-helper">10 de 20 un executadas.</div></div>
+                      <div class="grid-3" style="margin-top:8px;font-size:11px">
+                        <div><span class="muted">Solicitado</span><div><strong>20</strong></div></div>
+                        <div><span class="muted">Executado</span><div><strong>10</strong></div></div>
+                        <div><span class="muted">Disponível</span><div><strong>6</strong></div></div>
+                        <div><span class="muted">Entregue</span><div><strong>4</strong></div></div>
+                        <div><span class="muted">Pendente</span><div><strong>10</strong></div></div>
+                        <div><span class="muted">Unidade</span><div><strong>un</strong></div></div>
+                      </div>
+                      <p class="small muted" style="margin:8px 0 0">Setor: Telhas · Em andamento</p>
+                      <p class="small muted" style="margin:0">Prazo do setor: 30/10/2026</p>
+
+                      <div class="row" style="margin-top:8px;align-items:flex-end">
+                        <div class="field" style="flex:1 1 180px"><span class="label">Prazo do item 1</span><div class="input placeholder">dd/mm/aaaa</div></div>
+                        <span class="btn btn-sm">Salvar prazo</span>
+                      </div>
+                      <span class="badge badge-success" style="margin-top:6px">Prazo de entrega: 05/11/2026</span>
+
+                      <div style="border-top:1px dashed var(--line-soft);margin-top:10px;padding-top:8px">
+                        <div class="row-between"><strong class="small">Desmembramento</strong></div>
+                        <div class="alert alert-success" style="margin-top:6px"><span class="alert-title">Item desmembrado</span><span class="alert-body">Setor definido: Telhas. Continue com as remessas abaixo.</span></div>
+                      </div>
+
+                      <div style="border-top:1px dashed var(--line-soft);margin-top:10px;padding-top:8px">
+                        <div class="row-between"><strong class="small">Correção de setor</strong><span class="btn btn-outline btn-sm">Corrigir setor</span></div>
+                      </div>
+
+                      <div style="border-top:1px dashed var(--line-soft);margin-top:10px;padding-top:8px">
+                        <div class="row-between"><strong class="small">Entregas programadas (remessas)</strong><span class="btn btn-outline btn-sm">+ Adicionar remessa</span></div>
+                        <ul class="list" style="margin-top:6px">
+                          <li class="list-item"><span class="grow">1ª remessa · prevista para 30/10/2026</span><span class="badge badge-success">Confirmada em 29/10/2026</span></li>
+                          <li class="list-item"><span class="grow">2ª remessa · prevista para 05/11/2026</span><span class="row"><span class="btn btn-outline btn-sm">Confirmar</span><span class="btn btn-outline btn-sm">Remover</span></span></li>
+                        </ul>
+                        <div class="card" style="margin-top:8px;background:#f7f5ef;box-shadow:none">
+                          <div class="grid-3" style="align-items:end">
+                            <div class="field"><span class="label">Remessa (item 1)</span><div class="input placeholder">3</div></div>
+                            <div class="field"><span class="label">Data prevista (item 1)</span><div class="input placeholder">dd/mm/aaaa</div></div>
+                            <span class="btn btn-primary btn-sm">Programar remessa</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <figcaption>Desktop — item completo (repete para cada item)</figcaption>
+          </figure>
+          <figure class="shot">
+            <div class="phone" data-shot="WF-04-mobile">
+              <div class="notch"></div>
+              <div class="screen">
+                <div class="mobile-head"><span class="hamb">☰</span><span>Pedido 70435</span><span class="sair">Sair</span></div>
+                <div class="mobile-body">
+                  <a class="small" href="#wf-03">← Voltar</a>
+                  <div class="page-head"><h1>Pedido 70435</h1><p>Metalúrgica Alfa</p></div>
+                  <div class="grid-3"><div class="metric"><div class="metric-label">Itens</div><div class="metric-value">6</div></div><div class="metric warn"><div class="metric-label">Sem setor</div><div class="metric-value">1</div></div><div class="metric"><div class="metric-label">Pendente</div><div class="metric-value">38</div></div></div>
+                  <div class="card">
+                    <div class="row-between"><strong>Telha termoac. 980</strong><span class="badge badge-success">Desmembrado</span></div>
+                    <div class="small muted">Item 1 · 20 un</div>
+                    <div class="progress" style="margin-top:6px"><div class="progress-top"><span>Execução</span><span>50%</span></div><div class="progress-track"><span style="width:50%"></span></div></div>
+                    <div class="grid-2" style="margin-top:6px;font-size:11px"><div>Solicitado <strong>20</strong></div><div>Executado <strong>10</strong></div><div>Disponível <strong>6</strong></div><div>Entregue <strong>4</strong></div><div>Pendente <strong>10</strong></div><div>Unidade <strong>un</strong></div></div>
+                    <div class="field" style="margin-top:8px"><span class="label">Prazo do item</span><div class="input placeholder">dd/mm/aaaa</div></div>
+                    <div class="btn btn-primary btn-block btn-sm" style="margin-top:5px">Salvar prazo</div>
+                    <div class="row-between" style="margin-top:10px;border-top:1px dashed var(--line-soft);padding-top:8px"><strong class="small">Remessas</strong><span class="btn btn-outline btn-sm">+ Adicionar</span></div>
+                    <div class="list-item" style="margin-top:5px"><span class="grow">1ª · 30/10/2026</span><span class="badge badge-success">Confirmada</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <figcaption>Mobile — item em cartão, ações empilhadas</figcaption>
+          </figure>
+        </div>
+        <div class="notes">
+          <div><h4>Estados</h4><ul><li>Sem itens: alerta “Pedido sem itens”</li><li>Sem prazo: badge “Sem prazo”</li><li>Erro de ação: alerta no topo da lista</li><li>Correção bloqueada: alerta de bloqueio</li></ul></div>
+          <div><h4>Regras</h4><ul><li>Perda/refugo não reduzem a obrigação</li><li>Prazo em <span class="mono">America/Sao_Paulo</span></li><li>Remessa confirmada pode ser removida com confirmação</li></ul></div>
+        </div>
+      </section>
+
+      <!-- ================= WF-05 ================= -->
+      <section class="tela" id="wf-05" data-perfil="gerente">
+        <div class="tela-head">
+          <div class="tela-title"><span class="code">WF-05</span><h2>Painel do Gerente</h2><span class="route">/gerente/painel</span></div>
+          <div class="tela-badges"><span class="badge badge-accent">Gerente</span><span class="badge badge-info">Desktop + mobile</span></div>
+        </div>
+        <p class="tela-desc">Visão de produção, alertas e ocorrências registradas pelo Operador. Atualiza ao abrir e pelo botão de tentar de novo.</p>
+        <div class="shots">
+          <figure class="shot">
+            <div class="browser" data-shot="WF-05-desktop">
+              <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">…/gerente/painel</span><span class="profile">Gerente</span></div>
+              <div class="viewport">
+                <div class="app">
+                  <aside class="app-side">
+                    <div class="app-logo"><span class="mark">3E</span><div>3E Operações<small>Gestão integrada</small></div></div>
+                    <nav class="app-nav"><a class="active"><span class="ico">▦</span>Painel</a><a><span class="ico">▤</span>Pedidos</a><a><span class="ico">⇩</span>Importar</a><a><span class="ico">☑</span>Fila</a></nav>
+                    <div class="app-user"><strong>Marcos Gerente</strong>Gerente de Produção<span class="sair">Sair</span></div>
+                  </aside>
+                  <div class="app-main">
+                    <div class="topbar"><span class="crumb">Painel</span><span>27/10/2026 08:20</span><span class="sair">Sair</span></div>
+                    <div class="page-head"><h1>Painel</h1><p>Andamento da produção por setor e status.</p></div>
+                    <div class="grid-4" style="margin-bottom:10px">
+                      <div class="metric"><div class="metric-label">Pendências</div><div class="metric-value">12</div><div class="metric-helper">Atividades não concluídas.</div></div>
+                      <div class="metric info"><div class="metric-label">Em andamento</div><div class="metric-value">5</div><div class="metric-helper">Em execução.</div></div>
+                      <div class="metric ok"><div class="metric-label">Concluídas</div><div class="metric-value">27</div><div class="metric-helper">Finalizadas.</div></div>
+                      <div class="metric ok"><div class="metric-label">Cumprimento de prazo</div><div class="metric-value">75%</div><div class="metric-helper">3 de 4 no prazo.</div></div>
+                    </div>
+                    <div class="card" style="margin-bottom:10px">
+                      <div class="card-head"><span class="card-title">Alertas operacionais</span></div>
+                      <div class="grid-3">
+                        <div><span class="badge badge-danger">Atrasados</span><div class="list-item" style="margin-top:5px"><span class="grow">Pedido 1001<span class="sub">Corte e Dobra · 2 dias</span></span></div></div>
+                        <div><span class="badge badge-warning">Parados</span><div class="list-item" style="margin-top:5px"><span class="grow">Pedido 1002<span class="sub">Telhas · 5 dias</span></span></div></div>
+                        <div><span class="badge badge-info">Não encaminhados</span><div class="list-item" style="margin-top:5px"><span class="grow">Pedido 1003<span class="sub">Sem setor definido</span></span></div></div>
+                      </div>
+                    </div>
+                    <div class="card" style="margin-bottom:10px">
+                      <div class="card-head"><span class="card-title">Ocorrências recentes</span><span class="row"><span class="badge">13 no total</span><span class="badge badge-warning">4 nos últimos 7 dias</span></span></div>
+                      <div class="row" style="margin-bottom:6px"><span class="badge badge-danger">Perda: 6</span><span class="badge badge-warning">Refugo: 3</span><span class="badge badge-warning">Indisponibilidade: 2</span><span class="badge badge-info">Pausa: 1</span><span class="badge badge-danger">Parada: 1</span></div>
+                      <ul class="list">
+                        <li class="list-item"><span class="grow"><span class="badge badge-danger">Perda</span> <strong>Pedido 70435 · Telha termoac. 980</strong><span class="sub">Setor: Telhas · Responsável: João Operador · Motivo: Defeito de corte</span><span class="sub">26/10/2026 10:33</span></span></li>
+                        <li class="list-item"><span class="grow"><span class="badge badge-warning">Indisponibilidade</span> <strong>Pedido 70435 · Telha termoac. 980</strong><span class="sub">Setor: Telhas · Responsável: João Operador · Saldo insuficiente</span><span class="sub">26/10/2026 10:33</span></span></li>
+                      </ul>
+                    </div>
+                    <div class="grid-2">
+                      <div class="card"><div class="card-head"><span class="card-title">Produção por setor</span></div>
+                        <div class="progress" style="margin-bottom:6px"><div class="progress-top"><span>Corte e Dobra</span><span>12,5 M</span></div><div class="progress-track"><span style="width:70%"></span></div></div>
+                        <div class="progress"><div class="progress-top"><span>Telhas</span><span>40 un</span></div><div class="progress-track"><span class="ok" style="width:100%"></span></div></div>
+                      </div>
+                      <div class="card"><div class="card-head"><span class="card-title">Atividades por status</span></div>
+                        <ul class="list"><li class="list-item"><span>Pendente</span><strong>7</strong></li><li class="list-item"><span>Em execução</span><strong>5</strong></li><li class="list-item"><span>Concluída</span><strong>27</strong></li></ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <figcaption>Desktop — indicadores, alertas, ocorrências e produção</figcaption>
+          </figure>
+          <figure class="shot">
+            <div class="phone" data-shot="WF-05-mobile">
+              <div class="notch"></div>
+              <div class="screen">
+                <div class="mobile-head"><span class="hamb">☰</span><span>Painel</span><span class="sair">Sair</span></div>
+                <div class="mobile-body">
+                  <div class="page-head"><h1>Painel</h1><p>Produção e ocorrências.</p></div>
+                  <div class="grid-2"><div class="metric"><div class="metric-label">Pendências</div><div class="metric-value">12</div></div><div class="metric ok"><div class="metric-label">Concluídas</div><div class="metric-value">27</div></div></div>
+                  <div class="card"><div class="card-title">Ocorrências recentes</div><div class="row"><span class="badge">13 no total</span><span class="badge badge-warning">4 em 7 dias</span></div><div class="list-item" style="margin-top:6px"><span class="grow"><span class="badge badge-danger">Perda</span> Pedido 70435<span class="sub">Telhas · João Operador</span></span></div></div>
+                  <div class="card"><div class="card-title">Alertas</div><div class="list-item"><span class="grow">2 atrasados<span class="sub">Corte e Dobra</span></span></div><div class="list-item" style="margin-top:5px"><span class="grow">1 parado<span class="sub">Telhas</span></span></div></div>
+                </div>
+                <div class="mobile-tabbar"><span class="tab active">Painel</span><span class="tab">Pedidos</span></div>
+              </div>
+            </div>
+            <figcaption>Mobile — métricas e ocorrências em cartões</figcaption>
+          </figure>
+        </div>
+        <div class="notes">
+          <div><h4>Estados</h4><ul><li>Sem ocorrências: “Nenhuma ocorrência registrada.”</li><li>Sem produção: “Sem produção registrada.”</li><li>Erro: alerta + tentar de novo</li></ul></div>
+          <div><h4>Dados</h4><ul><li>Ocorrência: tipo, pedido, item, setor, responsável, motivo, data</li><li>Indicador: total e últimos 7 dias</li><li>Não há fluxo de “resolução” (lacuna documentada)</li></ul></div>
+        </div>
+      </section>
+
+      <!-- ================= WF-06 ================= -->
+      <section class="tela" id="wf-06" data-perfil="gerente">
+        <div class="tela-head">
+          <div class="tela-title"><span class="code">WF-06</span><h2>Pedidos do Gerente</h2><span class="route">/gerente/pedidos</span></div>
+          <div class="tela-badges"><span class="badge badge-accent">Gerente</span><span class="badge badge-info">Desktop</span></div>
+        </div>
+        <p class="tela-desc">Mesma consulta do Vendedor (filtros, paginação, status), sem os blocos de importação e instruções.</p>
+        <div class="shots">
+          <figure class="shot">
+            <div class="browser" data-shot="WF-06-desktop">
+              <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">…/gerente/pedidos</span><span class="profile">Gerente</span></div>
+              <div class="viewport">
+                <div class="app">
+                  <aside class="app-side">
+                    <div class="app-logo"><span class="mark">3E</span><div>3E Operações<small>Gestão integrada</small></div></div>
+                    <nav class="app-nav"><a><span class="ico">▦</span>Painel</a><a class="active"><span class="ico">▤</span>Pedidos</a><a><span class="ico">⇩</span>Importar</a><a><span class="ico">☑</span>Fila</a></nav>
+                    <div class="app-user"><strong>Marcos Gerente</strong>Gerente de Produção<span class="sair">Sair</span></div>
+                  </aside>
+                  <div class="app-main">
+                    <div class="topbar"><span class="crumb">Pedidos</span><span>27/10/2026 08:24</span><span class="sair">Sair</span></div>
+                    <div class="page-head"><h1>Pedidos</h1><p>Consulte e abra o detalhe dos pedidos.</p></div>
+                    <div class="card" style="margin-bottom:10px">
+                      <div class="grid-form">
+                        <div class="field"><span class="label">Pesquisar por número</span><div class="input placeholder">Trecho do número</div></div>
+                        <div class="field"><span class="label">Cliente</span><div class="input placeholder">Trecho do nome</div></div>
+                        <div class="field"><span class="label">Setor</span><div class="select">Todos <span>▾</span></div></div>
+                        <div class="field"><span class="label">Status</span><div class="select">Todos <span>▾</span></div></div>
+                        <div class="field"><span class="label">De</span><div class="input placeholder">dd/mm/aaaa</div></div>
+                        <div class="field"><span class="label">Até</span><div class="input placeholder">dd/mm/aaaa</div></div>
+                      </div>
+                      <div class="row" style="margin-top:8px"><span class="btn btn-primary btn-sm">Filtrar</span><span class="btn btn-outline btn-sm">Limpar filtros</span></div>
+                    </div>
+                    <p class="small muted">128 pedido(s) encontrado(s) — página 1 de 7.</p>
+                    <div class="table-wrap">
+                      <table class="table" aria-label="Pedidos">
+                        <thead><tr><th>Pedido</th><th>Cliente</th><th>Status</th><th class="actions">Ações</th></tr></thead>
+                        <tbody>
+                          <tr><td><strong>Pedido 70435</strong></td><td>Metalúrgica Alfa</td><td><span class="badge badge-warning">Em andamento</span></td><td class="actions"><span class="btn btn-sm">Abrir</span></td></tr>
+                          <tr><td><strong>Pedido 82269</strong></td><td>Construtora Beta</td><td><span class="badge badge-neutral">Pendente</span></td><td class="actions"><span class="btn btn-sm">Abrir</span></td></tr>
+                          <tr><td><strong>Pedido 91004</strong></td><td>Revenda Gama</td><td><span class="badge badge-success">Produção concluída</span></td><td class="actions"><span class="btn btn-sm">Abrir</span></td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div class="row-between" style="margin-top:8px"><span class="btn btn-outline btn-sm">Anterior</span><span class="small muted">Página 1 de 7</span><span class="btn btn-outline btn-sm">Próxima</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <figcaption>Desktop — consulta compartilhada</figcaption>
+          </figure>
+        </div>
+        <div class="notes">
+          <div><h4>Estados</h4><ul><li>Vazio: “Sem pedidos”</li><li>Página inexistente: “Página não encontrada” + ir para a 1ª</li><li>Erro: alerta + tentar de novo</li></ul></div>
+          <div><h4>Navegação</h4><p>Abrir leva a <span class="mono">/gerente/pedidos/[id]</span>; o shell mantém a aba Pedidos ativa.</p></div>
+        </div>
+      </section>
+
+      <!-- ================= WF-07 ================= -->
+      <section class="tela" id="wf-07" data-perfil="gerente">
+        <div class="tela-head">
+          <div class="tela-title"><span class="code">WF-07</span><h2>Detalhe com correção de setor</h2><span class="route">/gerente/pedidos/[id]</span></div>
+          <div class="tela-badges"><span class="badge badge-accent">Gerente</span><span class="badge badge-info">Desktop</span></div>
+        </div>
+        <p class="tela-desc">Reusa o detalhe do WF-04. A diferença é o bloco de <strong>correção de setor</strong>, disponível ao gerente e sujeito a justificativa.</p>
+        <div class="shots">
+          <figure class="shot">
+            <div class="browser" data-shot="WF-07-desktop">
+              <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">…/gerente/pedidos/cmuyq0ygh…</span><span class="profile">Gerente</span></div>
+              <div class="viewport">
+                <div class="app">
+                  <aside class="app-side">
+                    <div class="app-logo"><span class="mark">3E</span><div>3E Operações<small>Gestão integrada</small></div></div>
+                    <nav class="app-nav"><a><span class="ico">▦</span>Painel</a><a class="active"><span class="ico">▤</span>Pedidos</a><a><span class="ico">⇩</span>Importar</a><a><span class="ico">☑</span>Fila</a></nav>
+                    <div class="app-user"><strong>Marcos Gerente</strong>Gerente de Produção<span class="sair">Sair</span></div>
+                  </aside>
+                  <div class="app-main">
+                    <div class="topbar"><span class="crumb">Pedidos / Pedido 70435</span><span>27/10/2026 08:30</span><span class="sair">Sair</span></div>
+                    <a class="small" href="#wf-06">← Voltar para os pedidos</a>
+                    <div class="page-head"><h1>Pedido 70435</h1><p>Metalúrgica Alfa</p></div>
+                    <div class="grid-3" style="margin-bottom:10px">
+                      <div class="metric"><div class="metric-label">Itens</div><div class="metric-value">6</div></div>
+                      <div class="metric"><div class="metric-label">Pendentes de desmembramento</div><div class="metric-value">0</div></div>
+                      <div class="metric"><div class="metric-label">Pendentes de produção</div><div class="metric-value">38 un</div></div>
+                    </div>
+                    <div class="card">
+                      <div class="card-head"><div><span class="card-title">Perfil UE 100×50</span><div class="card-sub">Item 2 · Código PF-100 · un</div></div><span class="badge badge-success">Desmembrado</span></div>
+                      <div class="progress"><div class="progress-top"><span>Execução do item 2</span><span>40%</span></div><div class="progress-track"><span style="width:40%"></span></div></div>
+                      <div class="grid-3" style="margin-top:8px;font-size:11px"><div>Solicitado <strong>10</strong></div><div>Executado <strong>4</strong></div><div>Disponível <strong>3</strong></div><div>Entregue <strong>2</strong></div><div>Pendente <strong>6</strong></div><div>Unidade <strong>un</strong></div></div>
+                      <p class="small muted" style="margin:8px 0 0">Setor: Corte e Dobra · Em andamento</p>
+                      <p class="small muted" style="margin:0">Prazo do setor: 29/10/2026</p>
+                      <div class="row" style="margin-top:8px;align-items:flex-end"><div class="field" style="flex:1 1 180px"><span class="label">Prazo do item 2</span><div class="input placeholder">05/11/2026</div></div><span class="btn btn-sm">Salvar prazo</span></div>
+                      <div style="border-top:1px dashed var(--line-soft);margin-top:10px;padding-top:8px">
+                        <div class="row-between"><strong class="small">Correção de setor</strong><span class="btn btn-outline btn-sm">− Fechar</span></div>
+                        <div class="card" style="margin-top:6px;background:#f7f5ef;box-shadow:none">
+                          <div class="grid-2">
+                            <div class="field"><span class="label">Novo setor do item 2</span><div class="select">Telhas <span>▾</span></div></div>
+                            <div class="field"><span class="label">Motivo da correção (item 2) <span class="req">*</span></span><div class="textarea placeholder">Descreva o motivo (mín. 15 caracteres)</div><span class="hint">23 de 200 caracteres.</span></div>
+                          </div>
+                          <div class="row" style="margin-top:6px"><span class="btn btn-primary btn-sm">Confirmar correção</span><span class="btn btn-outline btn-sm">Cancelar</span></div>
+                        </div>
+                      </div>
+                      <div style="border-top:1px dashed var(--line-soft);margin-top:10px;padding-top:8px">
+                        <div class="row-between"><strong class="small">Entregas programadas (remessas)</strong><span class="btn btn-outline btn-sm">+ Adicionar remessa</span></div>
+                        <p class="small muted" style="margin:6px 0 0">Sem remessa programada.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <figcaption>Desktop — correção com justificativa</figcaption>
+          </figure>
+        </div>
+        <div class="notes">
+          <div><h4>Estados</h4><ul><li>Bloqueio: “Correção bloqueada” com motivo</li><li>Justificativa curta: erro no campo</li><li>Sucesso: “Tudo certo”</li></ul></div>
+          <div><h4>Regra</h4><p>Corrigir setor não apaga execuções, entregas ou remessas; o histórico é preservado.</p></div>
+        </div>
+      </section>
+
+      <!-- ================= WF-08 ================= -->
+      <section class="tela" id="wf-08" data-perfil="operador">
+        <div class="tela-head">
+          <div class="tela-title"><span class="code">WF-08</span><h2>Meus pedidos</h2><span class="route">/operador/fila</span></div>
+          <div class="tela-badges"><span class="badge badge-accent">Operador</span><span class="badge badge-info">Desktop + mobile</span></div>
+        </div>
+        <p class="tela-desc">Fila do turno: apenas atividades dos setores do operador, com prioridade, pedido, item e status. Um clique abre a execução.</p>
+        <div class="shots">
+          <figure class="shot">
+            <div class="browser" data-shot="WF-08-desktop">
+              <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">…/operador/fila</span><span class="profile">Operador</span></div>
+              <div class="viewport">
+                <div class="app">
+                  <aside class="app-side">
+                    <div class="app-logo"><span class="mark">3E</span><div>3E Operações<small>Gestão integrada</small></div></div>
+                    <nav class="app-nav"><a class="active"><span class="ico">☑</span>Pedidos</a><a><span class="ico">⚠</span>Ocorrências</a></nav>
+                    <div class="app-user"><strong>João Operador</strong>Operador · Telhas<span class="sair">Sair</span></div>
+                  </aside>
+                  <div class="app-main">
+                    <div class="topbar"><span class="crumb">Meus pedidos</span><span>27/10/2026 08:40</span><span class="sair">Sair</span></div>
+                    <div class="page-head"><h1>Meus pedidos</h1><p>Atividades dos seus setores. Abra uma atividade para registrar a produção.</p></div>
+                    <div class="stack">
+                      <div class="card">
+                        <div class="row-between">
+                          <div><div class="eyebrow">Prioridade 2 · Telhas</div><strong style="font-size:15px">Telha termoac. eps30 trap 40 980 0,43</strong><div class="small muted">Pedido 70435</div></div>
+                          <span class="badge badge-warning">Em andamento</span>
+                        </div>
+                        <div class="row" style="margin-top:6px"><span class="btn btn-primary btn-lg">Abrir atividade</span></div>
+                      </div>
+                      <div class="card">
+                        <div class="row-between">
+                          <div><div class="eyebrow">Prioridade 1 · Telhas</div><strong style="font-size:15px">Telha termoac. eps30 trap 40 980 0,50</strong><div class="small muted">Pedido 82269</div></div>
+                          <span class="badge badge-neutral">Pendente</span>
+                        </div>
+                        <div class="row" style="margin-top:6px"><span class="btn btn-primary btn-lg">Abrir atividade</span></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <figcaption>Desktop — cartões grandes, sem tabela</figcaption>
+          </figure>
+          <figure class="shot">
+            <div class="phone" data-shot="WF-08-mobile">
+              <div class="notch"></div>
+              <div class="screen">
+                <div class="mobile-head"><span class="hamb">☰</span><span>Meus pedidos</span><span class="sair">Sair</span></div>
+                <div class="mobile-body">
+                  <div class="page-head"><h1>Meus pedidos</h1><p>Toque para abrir a atividade.</p></div>
+                  <div class="card"><div class="row-between"><span class="badge badge-warning">Em andamento</span><span class="small muted">Prioridade 2</span></div><strong>Telha termoac. 980</strong><div class="small muted">Pedido 70435 · Telhas</div><div class="btn btn-primary btn-block btn-lg" style="margin-top:6px">Abrir atividade</div></div>
+                  <div class="card"><div class="row-between"><span class="badge badge-neutral">Pendente</span><span class="small muted">Prioridade 1</span></div><strong>Telha termoac. 0,50</strong><div class="small muted">Pedido 82269 · Telhas</div><div class="btn btn-primary btn-block btn-lg" style="margin-top:6px">Abrir atividade</div></div>
+                </div>
+                <div class="mobile-tabbar"><span class="tab active">Pedidos</span><span class="tab">Ocorrências</span></div>
+              </div>
+            </div>
+            <figcaption>Mobile — botão de ação com área grande</figcaption>
+          </figure>
+        </div>
+        <div class="notes">
+          <div><h4>Estados</h4><ul><li>Vazio: “Nenhum pedido para você agora”</li><li>Erro: alerta + “Tentar de novo”</li><li>Status: Pendente, Em andamento, Concluída</li></ul></div>
+          <div><h4>Regra</h4><p>Só aparecem atividades dos setores vinculados ao operador (RF003).</p></div>
+        </div>
+      </section>
+
+      <!-- ================= WF-09 ================= -->
+      <section class="tela" id="wf-09" data-perfil="operador">
+        <div class="tela-head">
+          <div class="tela-title"><span class="code">WF-09</span><h2>Executar atividade</h2><span class="route">/operador/atividades/[id]</span></div>
+          <div class="tela-badges"><span class="badge badge-accent">Operador</span><span class="badge badge-info">Desktop + mobile</span></div>
+        </div>
+        <p class="tela-desc">Foco em executar: identificar o item, ver o saldo, registrar a quantidade e sair para a ocorrência quando necessário.</p>
+        <div class="shots">
+          <figure class="shot">
+            <div class="browser" data-shot="WF-09-desktop">
+              <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">…/operador/atividades/cmuyq0ygh…</span><span class="profile">Operador</span></div>
+              <div class="viewport">
+                <div class="app">
+                  <aside class="app-side">
+                    <div class="app-logo"><span class="mark">3E</span><div>3E Operações<small>Gestão integrada</small></div></div>
+                    <nav class="app-nav"><a class="active"><span class="ico">☑</span>Pedidos</a><a><span class="ico">⚠</span>Ocorrências</a></nav>
+                    <div class="app-user"><strong>João Operador</strong>Operador · Telhas<span class="sair">Sair</span></div>
+                  </aside>
+                  <div class="app-main">
+                    <div class="topbar"><span class="crumb">Meus pedidos / Executar atividade</span><span>27/10/2026 08:42</span><span class="sair">Sair</span></div>
+                    <a class="small" href="#wf-08">← Voltar para meus pedidos</a>
+                    <div class="page-head"><h1>Executar atividade</h1></div>
+                    <a class="small" href="#wf-16">Ver ordem de produção</a>
+                    <div class="card" style="margin-top:8px">
+                      <div class="card-head"><div><span class="card-title">Telha termoac. eps30 trap 40 980 0,43</span><div class="card-sub">Pedido 70435 · Setor Telhas</div></div></div>
+                      <div class="progress"><div class="progress-top"><span>Progresso da atividade</span><span>50%</span></div><div class="progress-track"><span style="width:50%"></span></div><div class="progress-helper">10 de 20 un executadas.</div></div>
+                      <ul class="list" style="margin-top:8px"><li class="list-item"><span>Solicitado</span><strong>20 un</strong></li><li class="list-item"><span>Executado</span><strong>10 un</strong></li><li class="list-item"><span>Pendente</span><strong>10 un</strong></li></ul>
+                    </div>
+                    <div class="card" style="margin-top:10px">
+                      <div class="card-head"><span class="card-title">Registrar execução</span></div>
+                      <div class="field"><span class="label">Quantidade produzida <span class="req">*</span></span><div class="input placeholder">Ex.: 2</div><span class="hint">Na unidade da atividade (un).</span></div>
+                      <div class="btn btn-primary" style="margin-top:8px">Registrar execução</div>
+                    </div>
+                    <div class="card" style="margin-top:10px">
+                      <div class="card-head"><span class="card-title">Ocorrência</span></div>
+                      <p class="small muted" style="margin:0 0 6px">Teve uma perda, refugo ou outro problema nesta atividade? Registre na tela de ocorrências para ficar disponível ao gerente.</p>
+                      <div class="row"><span class="btn btn-primary">Registrar ocorrência</span><a class="small" href="#wf-10">Ver minhas ocorrências</a></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <figcaption>Desktop — execução + atalho de ocorrência</figcaption>
+          </figure>
+          <figure class="shot">
+            <div class="phone" data-shot="WF-09-mobile">
+              <div class="notch"></div>
+              <div class="screen">
+                <div class="mobile-head"><span class="hamb">☰</span><span>Executar</span><span class="sair">Sair</span></div>
+                <div class="mobile-body">
+                  <a class="small" href="#wf-08">← Voltar</a>
+                  <div class="page-head"><h1>Executar atividade</h1></div>
+                  <div class="card"><strong>Telha termoac. 980</strong><div class="small muted">Pedido 70435 · Telhas</div><div class="progress" style="margin-top:6px"><div class="progress-top"><span>Progresso</span><span>50%</span></div><div class="progress-track"><span style="width:50%"></span></div></div><div class="small muted" style="margin-top:4px">10 de 20 un · pendente 10 un</div></div>
+                  <div class="card"><div class="card-title">Registrar execução</div><div class="field"><span class="label">Quantidade produzida <span class="req">*</span></span><div class="input placeholder">Ex.: 2</div></div><div class="btn btn-primary btn-block btn-lg" style="margin-top:6px">Registrar execução</div></div>
+                  <div class="btn btn-outline btn-block">Registrar ocorrência</div>
+                </div>
+              </div>
+            </div>
+            <figcaption>Mobile — uma coluna, botão grande</figcaption>
+          </figure>
+        </div>
+        <div class="notes">
+          <div><h4>Estados</h4><ul><li>Carregando: spinner</li><li>Erro: alerta + tentar de novo</li><li>Sucesso: “Execução registrada” + saldo atualizado</li><li>Inválido: erro no campo, sem perder o valor</li></ul></div>
+          <div><h4>Regra</h4><p>A quantidade é validada na unidade da atividade; o botão bloqueia durante o envio.</p></div>
+        </div>
+      </section>
+
+      <!-- ================= WF-10 ================= -->
+      <section class="tela" id="wf-10" data-perfil="operador">
+        <div class="tela-head">
+          <div class="tela-title"><span class="code">WF-10</span><h2>Ocorrências</h2><span class="route">/operador/ocorrencias</span></div>
+          <div class="tela-badges"><span class="badge badge-accent">Operador</span><span class="badge badge-info">Desktop + mobile</span></div>
+        </div>
+        <p class="tela-desc">Registrar para uma das suas atividades e consultar o histórico. A atividade pode chegar pré-selecionada pela execução.</p>
+        <div class="shots">
+          <figure class="shot">
+            <div class="browser" data-shot="WF-10-desktop">
+              <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">…/operador/ocorrencias?atividade=cmuyq0ygh…</span><span class="profile">Operador</span></div>
+              <div class="viewport">
+                <div class="app">
+                  <aside class="app-side">
+                    <div class="app-logo"><span class="mark">3E</span><div>3E Operações<small>Gestão integrada</small></div></div>
+                    <nav class="app-nav"><a><span class="ico">☑</span>Pedidos</a><a class="active"><span class="ico">⚠</span>Ocorrências</a></nav>
+                    <div class="app-user"><strong>João Operador</strong>Operador · Telhas<span class="sair">Sair</span></div>
+                  </aside>
+                  <div class="app-main">
+                    <div class="topbar"><span class="crumb">Ocorrências</span><span>27/10/2026 08:45</span><span class="sair">Sair</span></div>
+                    <a class="small" href="#wf-08">← Voltar para meus pedidos</a>
+                    <div class="page-head"><h1>Ocorrências</h1><p>Registre problemas da produção e consulte o que já foi registrado.</p></div>
+                    <div class="card">
+                      <div class="card-head"><span class="card-title">Registrar ocorrência</span></div>
+                      <div class="field"><span class="label">Atividade <span class="req">*</span></span><div class="select">Pedido 70435 · Telha termoac. 980 · Telhas <span>▾</span></div><span class="hint">Escolha o pedido/item em que o problema aconteceu.</span></div>
+                      <div class="grid-2" style="margin-top:8px">
+                        <div class="field"><span class="label">Tipo de ocorrência <span class="req">*</span></span><div class="select">Perda <span>▾</span></div></div>
+                        <div class="field"><span class="label">Motivo <span class="req">*</span></span><div class="select">Defeito de corte <span>▾</span></div></div>
+                        <div class="field"><span class="label">Quantidade</span><div class="input placeholder">Ex.: 2</div></div>
+                        <div class="field"><span class="label">Observação</span><div class="input placeholder">Opcional</div></div>
+                      </div>
+                      <div class="btn btn-primary" style="margin-top:8px">Registrar ocorrência</div>
+                    </div>
+                    <div class="card" style="margin-top:10px">
+                      <div class="card-head"><span class="card-title">Minhas ocorrências</span><span class="badge">13 registrada(s)</span></div>
+                      <ul class="list">
+                        <li class="list-item"><span class="grow"><span class="badge badge-danger">Perda</span> <strong>Pedido 70435 · Telha termoac. 980</strong><span class="sub">Setor: Telhas · Defeito de corte · Quantidade: 1 · 21/10/2026 23:55</span></span></li>
+                        <li class="list-item"><span class="grow"><span class="badge badge-warning">Indisponibilidade</span> <strong>Pedido 70435 · Telha termoac. 980</strong><span class="sub">Setor: Telhas · Saldo insuficiente · Quantidade: 12 · 26/10/2026 10:33</span></span></li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <figcaption>Desktop — formulário + histórico</figcaption>
+          </figure>
+          <figure class="shot">
+            <div class="phone" data-shot="WF-10-mobile">
+              <div class="notch"></div>
+              <div class="screen">
+                <div class="mobile-head"><span class="hamb">☰</span><span>Ocorrências</span><span class="sair">Sair</span></div>
+                <div class="mobile-body">
+                  <a class="small" href="#wf-08">← Voltar</a>
+                  <div class="page-head"><h1>Ocorrências</h1><p>Registre e consulte.</p></div>
+                  <div class="card"><div class="card-title">Registrar</div><div class="field"><span class="label">Atividade <span class="req">*</span></span><div class="select">Pedido 70435 · Telha… <span>▾</span></div></div><div class="field"><span class="label">Tipo <span class="req">*</span></span><div class="select">Perda <span>▾</span></div></div><div class="field"><span class="label">Motivo <span class="req">*</span></span><div class="select">Defeito de corte <span>▾</span></div></div><div class="field"><span class="label">Quantidade</span><div class="input placeholder">Ex.: 2</div></div><div class="btn btn-primary btn-block btn-lg" style="margin-top:6px">Registrar ocorrência</div></div>
+                  <div class="card"><div class="card-title">Minhas ocorrências</div><div class="list-item"><span class="grow"><span class="badge badge-danger">Perda</span> Pedido 70435<span class="sub">21/10 · Defeito de corte</span></span></div></div>
+                </div>
+                <div class="mobile-tabbar"><span class="tab">Pedidos</span><span class="tab active">Ocorrências</span></div>
+              </div>
+            </div>
+            <figcaption>Mobile — formulário curto e histórico</figcaption>
+          </figure>
+        </div>
+        <div class="notes">
+          <div><h4>Estados</h4><ul><li>Sem atividades: aviso + voltar</li><li>Sem ocorrências: “Nenhuma ocorrência registrada”</li><li>Erro: mensagem específica, campos preservados</li><li>Sucesso: “Ocorrência registrada” + lista atualizada</li></ul></div>
+          <div><h4>Destino</h4><p>Grava em <span class="mono">ocorrencias</span> vinculada à atividade; o gerente vê no painel (WF-05).</p></div>
+        </div>
+      </section>
+
+      <!-- ================= WF-11 ================= -->
+      <section class="tela" id="wf-11" data-perfil="expedicao">
+        <div class="tela-head">
+          <div class="tela-title"><span class="code">WF-11</span><h2>Entregas</h2><span class="route">/expedicao/entregas</span></div>
+          <div class="tela-badges"><span class="badge badge-accent">Expedição</span><span class="badge badge-info">Desktop + mobile</span></div>
+        </div>
+        <p class="tela-desc">Seleciona o pedido, mostra itens e saldos e registra a entrega. Acima do disponível exige autorização de gerente.</p>
+        <div class="shots">
+          <figure class="shot">
+            <div class="browser" data-shot="WF-11-desktop">
+              <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">…/expedicao/entregas</span><span class="profile">Expedição</span></div>
+              <div class="viewport">
+                <div class="app">
+                  <aside class="app-side">
+                    <div class="app-logo"><span class="mark">3E</span><div>3E Operações<small>Gestão integrada</small></div></div>
+                    <nav class="app-nav"><a class="active"><span class="ico">🚚</span>Entregas</a></nav>
+                    <div class="app-user"><strong>Rita Expedição</strong>Expedição<span class="sair">Sair</span></div>
+                  </aside>
+                  <div class="app-main">
+                    <div class="topbar"><span class="crumb">Entregas</span><span>27/10/2026 09:00</span><span class="sair">Sair</span></div>
+                    <div class="page-head"><h1>Entregas</h1><p>Itens disponíveis e registro de entrega.</p></div>
+                    <div class="field" style="max-width:420px"><span class="label">Pedido</span><div class="select">Pedido 70435 <span>▾</span></div></div>
+                    <div class="grid-3" style="margin:10px 0">
+                      <div class="metric"><div class="metric-label">Itens</div><div class="metric-value">6</div><div class="metric-helper">No pedido.</div></div>
+                      <div class="metric ok"><div class="metric-label">Disponíveis</div><div class="metric-value">28 un</div><div class="metric-helper">Para entrega.</div></div>
+                      <div class="metric"><div class="metric-label">Pendentes</div><div class="metric-value">38 un</div><div class="metric-helper">A produzir.</div></div>
+                    </div>
+                    <div class="card">
+                      <div class="card-head"><div><span class="card-title">Item 1</span><div class="card-sub">Disponível: 6 un</div></div><span class="badge badge-success">Disponível</span></div>
+                      <p class="small muted" style="margin:0 0 6px">Solicitado: 20 · Executado: 10 · Entregue: 4 · Pendente: 10</p>
+                      <div class="row" style="align-items:flex-end"><div class="field" style="flex:1 1 180px"><span class="label">Quantidade do item 1 <span class="req">*</span></span><div class="input placeholder">Ex.: 2</div></div><span class="btn btn-primary">Registrar entrega</span></div>
+                      <div class="alert alert-warning" style="margin-top:8px"><span class="alert-title">Quantidade acima do disponível: exige autorização de gerente.</span><span class="alert-body">Marque “Autorizar acima do disponível”, informe o motivo e registre.</span><div class="check" style="margin-top:4px"><span class="box"></span>Autorizar acima do disponível</div><div class="field" style="margin-top:4px"><span class="label">Motivo da exceção do item 1 <span class="req">*</span></span><div class="input placeholder">Motivo</div></div></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <figcaption>Desktop — saldo e exceção com autorização</figcaption>
+          </figure>
+          <figure class="shot">
+            <div class="phone" data-shot="WF-11-mobile">
+              <div class="notch"></div>
+              <div class="screen">
+                <div class="mobile-head"><span class="hamb">☰</span><span>Entregas</span><span class="sair">Sair</span></div>
+                <div class="mobile-body">
+                  <div class="page-head"><h1>Entregas</h1><p>Registre a saída do item.</p></div>
+                  <div class="field"><span class="label">Pedido</span><div class="select">Pedido 70435 <span>▾</span></div></div>
+                  <div class="grid-2"><div class="metric ok"><div class="metric-label">Disponíveis</div><div class="metric-value">28</div></div><div class="metric"><div class="metric-label">Pendentes</div><div class="metric-value">38</div></div></div>
+                  <div class="card"><div class="row-between"><strong>Item 1</strong><span class="badge badge-success">Disponível</span></div><div class="small muted">Disp. 6 · Pend. 10</div><div class="field" style="margin-top:6px"><span class="label">Quantidade <span class="req">*</span></span><div class="input placeholder">Ex.: 2</div></div><div class="btn btn-primary btn-block btn-lg" style="margin-top:6px">Registrar entrega</div></div>
+                </div>
+                <div class="mobile-tabbar"><span class="tab active">Entregas</span><span class="tab">Sair</span></div>
+              </div>
+            </div>
+            <figcaption>Mobile — pedido e item em cartões</figcaption>
+          </figure>
+        </div>
+        <div class="notes">
+          <div><h4>Estados</h4><ul><li>Sem saldo: badge “Sem saldo”</li><li>Exceção: aviso amarelo + motivo</li><li>Sucesso: “Entrega registrada” + saldo atualizado</li><li>403: “Apenas o gerente pode autorizar…”</li></ul></div>
+          <div><h4>Regra</h4><p>Entrega acima do disponível só com autorização de gerente e motivo; o saldo é recarregado após registrar.</p></div>
+        </div>
+      </section>
+
+      <!-- ================= WF-12 ================= -->
+      <section class="tela" id="wf-12" data-perfil="gerente">
+        <div class="tela-head">
+          <div class="tela-title"><span class="code">WF-12</span><h2>Importar pedido</h2><span class="route">/integracao</span></div>
+          <div class="tela-badges"><span class="badge badge-accent">Gerente</span><span class="badge badge-info">Desktop</span></div>
+        </div>
+        <p class="tela-desc">Importação por número com transparência: status do job, resultado anterior, divergência de unidade e link para o pedido.</p>
+        <div class="shots">
+          <figure class="shot">
+            <div class="browser" data-shot="WF-12-desktop">
+              <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">…/integracao</span><span class="profile">Gerente</span></div>
+              <div class="viewport">
+                <div class="app">
+                  <aside class="app-side">
+                    <div class="app-logo"><span class="mark">3E</span><div>3E Operações<small>Gestão integrada</small></div></div>
+                    <nav class="app-nav"><a><span class="ico">▦</span>Painel</a><a><span class="ico">▤</span>Pedidos</a><a class="active"><span class="ico">⇩</span>Importar</a><a><span class="ico">☑</span>Fila</a></nav>
+                    <div class="app-user"><strong>Marcos Gerente</strong>Gerente de Produção<span class="sair">Sair</span></div>
+                  </aside>
+                  <div class="app-main">
+                    <div class="topbar"><span class="crumb">Importar pedido</span><span>27/10/2026 09:10</span><span class="sair">Sair</span></div>
+                    <div class="page-head"><h1>Importar pedido</h1><p>Informe o número do pedido para importar do Top Gerente.</p></div>
+                    <div class="grid-2-1">
+                      <div class="card">
+                        <div class="card-head"><span class="card-title">Puxar pedido do Top Gerente</span></div>
+                        <div class="field"><span class="label">Número do pedido <span class="req">*</span></span><div class="input placeholder">Ex.: 70435</div><span class="hint">Somente dígitos, como aparece no Top Gerente.</span></div>
+                        <div class="btn btn-primary" style="margin-top:8px">Importar pedido</div>
+                      </div>
+                      <div class="card">
+                        <div class="card-head"><span class="card-title">Status da importação</span><span class="badge badge-info">Processando</span></div>
+                        <p class="small mono muted" style="margin:0 0 6px">Job cmuyq0ygh00024skr623teegx</p>
+                        <div class="row"><span class="spinner"></span><span class="small muted">Atualizando status…</span></div>
+                        <div class="alert alert-info" style="margin-top:8px"><span class="alert-title">Consultando o Top Gerente</span><span class="alert-body">A importação pode levar alguns segundos. Não feche esta tela.</span></div>
+                        <div class="alert alert-warning" style="margin-top:8px"><span class="alert-title">Unidade preservada</span><span class="alert-body">O Top Gerente enviou uma unidade diferente para itens com histórico. A unidade anterior foi mantida e nenhuma conversão foi feita.</span></div>
+                        <a class="small" href="#wf-04" style="display:inline-block;margin-top:8px">Abrir pedido</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <figcaption>Desktop — formulação + transparência do job</figcaption>
+          </figure>
+        </div>
+        <div class="notes">
+          <div><h4>Estados</h4><ul><li>Andamento: spinner + mensagem</li><li>Sucesso: alerta verde + “Abrir pedido”</li><li>Falha: alerta vermelho + código técnico</li><li>Reuso: resultado anterior sem nova consulta</li></ul></div>
+          <div><h4>Regra</h4><p>Somente leitura no Top Gerente; a importação é idempotente e registra auditoria do solicitante.</p></div>
+        </div>
+      </section>
+
+      <!-- ================= WF-13 ================= -->
+      <section class="tela" id="wf-13" data-perfil="admin">
+        <div class="tela-head">
+          <div class="tela-title"><span class="code">WF-13</span><h2>Usuários</h2><span class="route">/admin/usuarios</span></div>
+          <div class="tela-badges"><span class="badge badge-accent">Resp. Sistema</span><span class="badge badge-info">Desktop + mobile</span></div>
+        </div>
+        <p class="tela-desc">Cadastro com perfis e setores, lista com status e ativação/inativação com confirmação em linha.</p>
+        <div class="shots">
+          <figure class="shot">
+            <div class="browser" data-shot="WF-13-desktop">
+              <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">…/admin/usuarios</span><span class="profile">Admin</span></div>
+              <div class="viewport">
+                <div class="app">
+                  <aside class="app-side">
+                    <div class="app-logo"><span class="mark">3E</span><div>3E Operações<small>Gestão integrada</small></div></div>
+                    <nav class="app-nav"><a class="active"><span class="ico">👥</span>Usuários</a><a><span class="ico">🏭</span>Setores</a></nav>
+                    <div class="app-user"><strong>Admin 3E</strong>Responsável pelo Sistema<span class="sair">Sair</span></div>
+                  </aside>
+                  <div class="app-main">
+                    <div class="topbar"><span class="crumb">Usuários</span><span>27/10/2026 09:20</span><span class="sair">Sair</span></div>
+                    <div class="page-head"><h1>Usuários</h1><p>Cadastre usuários, associe perfis e setores e controle o acesso.</p></div>
+                    <div class="card" style="margin-bottom:10px">
+                      <div class="card-head"><span class="card-title">Novo usuário</span></div>
+                      <div class="grid-3">
+                        <div class="field"><span class="label">Nome <span class="req">*</span></span><div class="input placeholder">Nome completo</div></div>
+                        <div class="field"><span class="label">E-mail <span class="req">*</span></span><div class="input placeholder">nome@3e.com.br</div></div>
+                        <div class="field"><span class="label">Senha <span class="req">*</span></span><div class="input placeholder">••••••••</div></div>
+                      </div>
+                      <fieldset style="margin-top:8px"><legend>Perfis</legend><div class="grid-3" style="margin-top:4px"><span class="check"><span class="box on">✓</span>Operador</span><span class="check"><span class="box"></span>Gerente de Produção</span><span class="check"><span class="box"></span>Vendedor</span><span class="check"><span class="box"></span>Expedição</span><span class="check"><span class="box"></span>Responsável pelo Sistema</span><span class="check"><span class="box"></span>Responsável Técnico</span></div></fieldset>
+                      <fieldset style="margin-top:8px"><legend>Setores</legend><div class="grid-3" style="margin-top:4px"><span class="check"><span class="box on">✓</span>Telhas</span><span class="check"><span class="box"></span>Corte e Dobra</span><span class="check"><span class="box"></span>Revenda</span></div></fieldset>
+                      <div class="btn btn-primary" style="margin-top:8px">Criar usuário</div>
+                    </div>
+                    <div class="card">
+                      <div class="card-head"><span class="card-title">Usuários cadastrados</span></div>
+                      <div class="table-wrap">
+                        <table class="table" aria-label="Usuários">
+                          <thead><tr><th>Usuário</th><th>Perfil</th><th>Setor</th><th>Status</th></tr></thead>
+                          <tbody>
+                            <tr><td><strong>João Operador</strong><br><span class="small muted">operador@3e.local</span></td><td><span class="badge badge-info">Operador</span></td><td class="small">Setores: Telhas</td><td><div class="row"><span class="badge badge-success">Ativo</span><span class="btn btn-outline btn-sm">Inativar</span></div></td></tr>
+                            <tr><td><strong>Marcos Gerente</strong><br><span class="small muted">gerente@3e.local</span></td><td><span class="badge badge-info">Gerente</span></td><td class="small">Setores: Corte e Dobra, Telhas</td><td><div class="row"><span class="badge badge-success">Ativo</span><span class="btn btn-outline btn-sm">Inativar</span></div></td></tr>
+                            <tr><td><strong>Ana Vendedora</strong><br><span class="small muted">vendedor@3e.local</span></td><td><span class="badge badge-info">Vendedor</span></td><td class="small">Setores: —</td><td><div class="row"><span class="badge badge-success">Ativo</span><span class="btn btn-outline btn-sm">Inativar</span></div></td></tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <figcaption>Desktop — formulário + tabela</figcaption>
+          </figure>
+          <figure class="shot">
+            <div class="phone" data-shot="WF-13-mobile">
+              <div class="notch"></div>
+              <div class="screen">
+                <div class="mobile-head"><span class="hamb">☰</span><span>Usuários</span><span class="sair">Sair</span></div>
+                <div class="mobile-body">
+                  <div class="page-head"><h1>Usuários</h1><p>Cadastro e acesso.</p></div>
+                  <div class="card"><div class="card-title">Novo usuário</div><div class="field"><span class="label">Nome <span class="req">*</span></span><div class="input placeholder">Nome</div></div><div class="field"><span class="label">E-mail <span class="req">*</span></span><div class="input placeholder">nome@3e.com.br</div></div><div class="field"><span class="label">Senha <span class="req">*</span></span><div class="input placeholder">••••••••</div></div><div class="btn btn-primary btn-block" style="margin-top:6px">Criar usuário</div></div>
+                  <div class="card"><div class="card-title">Cadastrados</div><div class="list-item"><span class="grow"><strong>João Operador</strong><span class="sub">Operador · Telhas</span></span><span class="badge badge-success">Ativo</span></div><div class="list-item" style="margin-top:5px"><span class="grow"><strong>Marcos Gerente</strong><span class="sub">Gerente · 2 setores</span></span><span class="badge badge-success">Ativo</span></div></div>
+                </div>
+              </div>
+            </div>
+            <figcaption>Mobile — tabela vira cartões</figcaption>
+          </figure>
+        </div>
+        <div class="notes">
+          <div><h4>Estados</h4><ul><li>409: e-mail já cadastrado</li><li>Confirmação em linha: “Confirmar inativação?” + Confirmar/Cancelar</li><li>403: sem permissão</li><li>Vazio: “Nenhum usuário cadastrado.”</li></ul></div>
+          <div><h4>Regra</h4><p>Inativar impede o login; a reativação é uma nova ação. Perfis e setores são checados no servidor.</p></div>
+        </div>
+      </section>
+
+      <!-- ================= WF-14 ================= -->
+      <section class="tela" id="wf-14" data-perfil="admin">
+        <div class="tela-head">
+          <div class="tela-title"><span class="code">WF-14</span><h2>Setores e mapeamentos</h2><span class="route">/admin/setores</span></div>
+          <div class="tela-badges"><span class="badge badge-accent">Resp. Sistema</span><span class="badge badge-info">Desktop</span></div>
+        </div>
+        <p class="tela-desc">Cria setores e associa a categoria do legado ao setor operacional. O mapeamento é consultado antes de salvar.</p>
+        <div class="shots">
+          <figure class="shot">
+            <div class="browser" data-shot="WF-14-desktop">
+              <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">…/admin/setores</span><span class="profile">Admin</span></div>
+              <div class="viewport">
+                <div class="app">
+                  <aside class="app-side">
+                    <div class="app-logo"><span class="mark">3E</span><div>3E Operações<small>Gestão integrada</small></div></div>
+                    <nav class="app-nav"><a><span class="ico">👥</span>Usuários</a><a class="active"><span class="ico">🏭</span>Setores</a></nav>
+                    <div class="app-user"><strong>Admin 3E</strong>Responsável pelo Sistema<span class="sair">Sair</span></div>
+                  </aside>
+                  <div class="app-main">
+                    <div class="topbar"><span class="crumb">Setores e mapeamentos</span><span>27/10/2026 09:30</span><span class="sair">Sair</span></div>
+                    <div class="page-head"><h1>Setores e mapeamentos</h1><p>Mantenha setores e o mapeamento de categoria para setor.</p></div>
+                    <div class="grid-2">
+                      <div class="card"><div class="card-head"><span class="card-title">Novo setor</span></div><div class="grid-2"><div class="field"><span class="label">Código <span class="req">*</span></span><div class="input placeholder">Ex.: PINTURA</div></div><div class="field"><span class="label">Nome do setor <span class="req">*</span></span><div class="input placeholder">Ex.: Pintura</div></div></div><div class="btn btn-primary" style="margin-top:8px">Criar setor</div></div>
+                      <div class="card"><div class="card-head"><span class="card-title">Mapeamento de categoria</span></div><div class="row" style="align-items:flex-end"><div class="field" style="flex:1 1 200px"><span class="label">Categoria <span class="req">*</span></span><div class="input placeholder">Ex.: TELHA_TERMOACUSTICA</div></div><span class="btn btn-secondary btn-sm">Buscar mapeamento</span></div><p class="small" style="margin:8px 0 4px">Mapeado para <strong>Telhas</strong>.</p><div class="field"><span class="label">Setor <span class="req">*</span></span><div class="select">Telhas <span>▾</span></div></div><div class="btn btn-primary" style="margin-top:8px">Salvar mapeamento</div></div>
+                    </div>
+                    <div class="card" style="margin-top:10px"><div class="card-head"><span class="card-title">Setores cadastrados</span></div><ul class="list"><li class="list-item"><span class="mono">CORTE_DOBRA</span><span>Corte e Dobra</span></li><li class="list-item"><span class="mono">TELHAS</span><span>Telhas</span></li><li class="list-item"><span class="mono">REVENDA</span><span>Revenda</span></li></ul></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <figcaption>Desktop — criação e mapeamento</figcaption>
+          </figure>
+        </div>
+        <div class="notes">
+          <div><h4>Estados</h4><ul><li>409: setor/código já existe</li><li>404: “Sem mapeamento para esta categoria.”</li><li>Sucesso: “Setor criado.” / “Mapeamento salvo.”</li><li>Erro: alerta + tentar de novo</li></ul></div>
+          <div><h4>Regra</h4><p>Categoria só pode ter um mapeamento ativo; o cadastro é usado na importação e no desmembramento.</p></div>
+        </div>
+      </section>
+
+      <!-- ================= WF-15 ================= -->
+      <section class="tela" id="wf-15" data-perfil="tecnico">
+        <div class="tela-head">
+          <div class="tela-title"><span class="code">WF-15</span><h2>Integração (técnico)</h2><span class="route">/tecnico/integracao</span></div>
+          <div class="tela-badges"><span class="badge badge-accent">Resp. Técnico</span><span class="badge badge-info">Desktop</span></div>
+        </div>
+        <p class="tela-desc">Monitora jobs de importação e seus eventos, com status e erros. Somente leitura.</p>
+        <div class="shots">
+          <figure class="shot">
+            <div class="browser" data-shot="WF-15-desktop">
+              <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">…/tecnico/integracao</span><span class="profile">Técnico</span></div>
+              <div class="viewport">
+                <div class="app">
+                  <aside class="app-side">
+                    <div class="app-logo"><span class="mark">3E</span><div>3E Operações<small>Gestão integrada</small></div></div>
+                    <nav class="app-nav"><a class="active"><span class="ico">🔌</span>Integração</a></nav>
+                    <div class="app-user"><strong>Rui Técnico</strong>Responsável Técnico<span class="sair">Sair</span></div>
+                  </aside>
+                  <div class="app-main">
+                    <div class="topbar"><span class="crumb">Integração</span><span>27/10/2026 09:40</span><span class="sair">Sair</span></div>
+                    <div class="page-head"><h1>Integração</h1><p>Jobs de integração com o Top Gerente e seus eventos.</p></div>
+                    <div class="card" style="margin-bottom:10px">
+                      <div class="card-head"><span class="card-title">Jobs</span></div>
+                      <ul class="list">
+                        <li class="list-item" style="border-color:var(--accent);background:var(--accent-bg)"><span class="grow"><strong>Pedido 70435</strong><span class="sub mono">Job cmuyq0ygh00024skr623teegx</span></span><span class="badge badge-success">Concluído</span></li>
+                        <li class="list-item"><span class="grow"><strong>Pedido 82269</strong><span class="sub mono">Job cmuyq0ygi00034skr623teegx</span><span class="sub" style="color:var(--danger)">Erro: CONNECTOR_TIMEOUT — sem resposta do conector</span></span><span class="badge badge-danger">Falhou</span></li>
+                      </ul>
+                    </div>
+                    <div class="card"><div class="card-head"><span class="card-title">Eventos do job</span></div><ol class="list"><li class="list-item"><span>IMPORT_REQUESTED <span class="muted">— solicitado por Marcos Gerente</span></span></li><li class="list-item"><span>DISPATCHED <span class="muted">— enviado ao conector</span></span></li><li class="list-item"><span>SUCCEEDED <span class="muted">— pedido criado/atualizado</span></span></li></ol></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <figcaption>Desktop — lista de jobs + eventos</figcaption>
+          </figure>
+        </div>
+        <div class="notes">
+          <div><h4>Estados</h4><ul><li>Sem jobs: “Sem jobs de integração”</li><li>Evento vazio: “Este job não possui eventos.”</li><li>Erro: alerta + tentar de novo</li></ul></div>
+          <div><h4>Regra</h4><p>Não há ações de escrita nesta tela; o retry é feito na importação (WF-12).</p></div>
+        </div>
+      </section>
+
+      <!-- ================= WF-16 ================= -->
+      <section class="tela" id="wf-16" data-perfil="operador">
+        <div class="tela-head">
+          <div class="tela-title"><span class="code">WF-16</span><h2>Ordem de produção / impressão</h2><span class="route">/producao/atividades/[id]/ordem</span></div>
+          <div class="tela-badges"><span class="badge badge-accent">Operador</span><span class="badge badge-info">Desktop + mobile + A4</span></div>
+        </div>
+        <p class="tela-desc">Documento operacional: pedido, item, setor e quantidades. A impressão remove o menu e cabe em 1 página A4.</p>
+        <div class="shots">
+          <figure class="shot">
+            <div class="browser" data-shot="WF-16-desktop">
+              <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">…/producao/atividades/cmuyq0ygh…/ordem</span><span class="profile">Operador</span></div>
+              <div class="viewport" style="padding:12px">
+                <div class="row"><a class="small" href="#wf-09">← Voltar para a fila</a></div>
+                <div class="row-between" style="margin:6px 0 10px"><div class="page-head"><h1>Ordem de produção</h1><p>Pedido 70435</p></div><span class="btn btn-primary">Imprimir</span></div>
+                <div class="card" style="max-width:560px;margin:0 auto;background:#fff">
+                  <div class="small muted" style="display:none">3E Operações — Ordem de produção</div>
+                  <div class="card-head"><div><span class="card-title">Telha termoac. eps30 trap 40 980 0,43</span><div class="card-sub">Pedido 70435 · Setor Telhas</div></div></div>
+                  <div class="grid-2" style="font-size:12px">
+                    <div><span class="muted">Pedido</span><div><strong>70435</strong></div></div>
+                    <div><span class="muted">Item</span><div><strong>Telha termoac. 980</strong></div></div>
+                    <div><span class="muted">Setor</span><div><strong>Telhas</strong></div></div>
+                    <div><span class="muted">Unidade</span><div><strong>un</strong></div></div>
+                    <div><span class="muted">Solicitado</span><div><strong>20 un</strong></div></div>
+                    <div><span class="muted">Executado</span><div><strong>10 un</strong></div></div>
+                    <div><span class="muted">Pendente</span><div><strong>10 un</strong></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <figcaption>Desktop — com menu e botão Imprimir</figcaption>
+          </figure>
+          <figure class="shot">
+            <div class="phone" data-shot="WF-16-mobile">
+              <div class="notch"></div>
+              <div class="screen">
+                <div class="mobile-head"><span class="hamb">☰</span><span>Ordem</span><span class="sair">Sair</span></div>
+                <div class="mobile-body">
+                  <a class="small" href="#wf-09">← Voltar</a>
+                  <div class="page-head"><h1>Ordem de produção</h1><p>Pedido 70435</p></div>
+                  <div class="card"><strong>Telha termoac. 980</strong><div class="small muted">Pedido 70435 · Telhas</div><div class="grid-2" style="margin-top:6px;font-size:11px"><div>Solicitado <strong>20</strong></div><div>Executado <strong>10</strong></div><div>Pendente <strong>10</strong></div><div>Unidade <strong>un</strong></div></div></div>
+                  <div class="btn btn-primary btn-block btn-lg">Imprimir</div>
+                </div>
+              </div>
+            </div>
+            <figcaption>Mobile — mesma informação, 1 coluna</figcaption>
+          </figure>
+        </div>
+        <div class="notes">
+          <div><h4>Impressão</h4><ul><li>Menu e ações ocultos</li><li>Sem <span class="mono">min-height</span> do shell</li><li>PDF em 1 página A4 (validado)</li></ul></div>
+          <div><h4>Estados</h4><ul><li>404: “Atividade não encontrada”</li><li>Erro: alerta + tentar de novo</li><li>Sem unidade: exibe o valor sem sufixo</li></ul></div>
+        </div>
+      </section>
+
+      <!-- ================= WF-17 ================= -->
+      <section class="tela" id="wf-17" data-perfil="todos">
+        <div class="tela-head">
+          <div class="tela-title"><span class="code">WF-17</span><h2>Estados globais</h2><span class="route">componentes transversais</span></div>
+          <div class="tela-badges"><span class="badge badge-neutral">Todos</span><span class="badge badge-info">Board</span></div>
+        </div>
+        <p class="tela-desc">Padrões de feedback usados em todas as telas: carregando, vazio, sucesso, erro, aviso, confirmação e acesso negado.</p>
+        <div class="shots">
+          <figure class="shot" style="width:100%">
+            <div class="browser" data-shot="WF-17-estados">
+              <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">estados/componentes</span><span class="profile">Todos</span></div>
+              <div class="viewport" style="padding:12px">
+                <div class="estado-grid">
+                  <div class="estado"><h4>Carregando</h4><div class="row"><span class="spinner"></span><span class="small muted">Carregando…</span></div></div>
+                  <div class="estado"><h4>Vazio</h4><div class="empty"><span class="ico">▤</span><strong>Sem pedidos</strong><span>Nenhum pedido encontrado com os filtros atuais.</span></div></div>
+                  <div class="estado"><h4>Sucesso</h4><div class="alert alert-success"><span class="alert-title">Tudo certo</span><span class="alert-body">Ocorrência registrada. O saldo foi atualizado.</span></div></div>
+                  <div class="estado"><h4>Erro</h4><div class="alert alert-error"><span class="alert-title">Não foi possível concluir</span><span class="alert-body">Verifique sua conexão e tente novamente.</span><div class="row" style="margin-top:4px"><span class="btn btn-sm">Tentar de novo</span></div></div></div>
+                  <div class="estado"><h4>Aviso</h4><div class="alert alert-warning"><span class="alert-title">Unidade preservada</span><span class="alert-body">A unidade anterior foi mantida; nenhuma conversão foi feita.</span></div></div>
+                  <div class="estado"><h4>Informação</h4><div class="alert alert-info"><span class="alert-title">Consulta em andamento</span><span class="alert-body">A importação pode levar alguns segundos.</span></div></div>
+                  <div class="estado"><h4>Confirmação</h4><div class="dialog"><h4>Excluir 2ª remessa?</h4><p>A remessa será removida. Entregas e saldos não serão alterados.</p><div class="row"><span class="btn btn-outline btn-sm">Cancelar</span><span class="btn btn-danger btn-sm">Excluir remessa</span></div></div></div>
+                  <div class="estado"><h4>Acesso negado</h4><div class="alert alert-error"><span class="alert-title">401 / 403</span><span class="alert-body">Sessão expirada volta ao login; sem permissão mostra a mensagem do perfil.</span></div></div>
+                  <div class="estado"><h4>Não encontrado</h4><div class="alert alert-error"><span class="alert-title">404</span><span class="alert-body">“Atividade não encontrada” ou “Página não encontrada”.</span></div></div>
+                  <div class="estado"><h4>Botão em envio</h4><div class="row"><span class="btn btn-primary" aria-disabled="true" style="opacity:.55">Registrando…</span><span class="small muted">Duplo envio bloqueado</span></div></div>
+                </div>
+              </div>
+            </div>
+            <figcaption>Estados — reutilizar em todas as telas</figcaption>
+          </figure>
+        </div>
+        <div class="notes">
+          <div><h4>Boas práticas</h4><ul><li><span class="mono">role="status"</span> para sucesso/carregando</li><li><span class="mono">role="alert"</span> para erro</li><li>Nunca depender só da cor</li></ul></div>
+          <div><h4>Mensagens</h4><p>Português direto, sem stack trace; erros técnicos só no detalhe (ex.: código do job).</p></div>
+        </div>
+      </section>
+
+      <!-- ================= WF-18 ================= -->
+      <section class="tela" id="wf-18" data-perfil="todos">
+        <div class="tela-head">
+          <div class="tela-title"><span class="code">WF-18</span><h2>Padrão responsivo</h2><span class="route">390 px · 768 px · desktop</span></div>
+          <div class="tela-badges"><span class="badge badge-neutral">Todos</span><span class="badge badge-info">Mobile</span></div>
+        </div>
+        <p class="tela-desc">Regras aplicadas a todas as telas: menu vira gaveta, tabelas viram cartões, filtros empilham e ações ficam com alvo ≥ 44 px.</p>
+        <div class="shots">
+          <figure class="shot">
+            <div class="phone" data-shot="WF-18-filtros">
+              <div class="notch"></div>
+              <div class="screen">
+                <div class="mobile-head"><span class="hamb">☰</span><span>Filtros</span><span class="sair">Sair</span></div>
+                <div class="mobile-body">
+                  <div class="field"><span class="label">Pesquisar por número</span><div class="input placeholder">Trecho do número</div></div>
+                  <div class="field"><span class="label">Cliente</span><div class="input placeholder">Trecho do nome</div></div>
+                  <div class="field"><span class="label">Setor</span><div class="select">Todos <span>▾</span></div></div>
+                  <div class="field"><span class="label">Status</span><div class="select">Todos <span>▾</span></div></div>
+                  <div class="grid-2"><div class="field"><span class="label">De</span><div class="input placeholder">dd/mm/aaaa</div></div><div class="field"><span class="label">Até</span><div class="input placeholder">dd/mm/aaaa</div></div></div>
+                  <div class="row"><span class="btn btn-primary btn-block">Filtrar</span></div>
+                  <span class="btn btn-outline btn-block">Limpar filtros</span>
+                </div>
+              </div>
+            </div>
+            <figcaption>Filtros empilhados</figcaption>
+          </figure>
+          <figure class="shot">
+            <div class="phone" data-shot="WF-18-cards">
+              <div class="notch"></div>
+              <div class="screen">
+                <div class="mobile-head"><span class="hamb">☰</span><span>Pedidos</span><span class="sair">Sair</span></div>
+                <div class="mobile-body">
+                  <div class="empty" style="padding:10px"><span class="ico">▤</span><strong>Sem pedidos</strong><span>Nenhum resultado com os filtros.</span></div>
+                  <div class="card"><div class="row-between"><strong>Pedido 70435</strong><span class="badge badge-warning">Em andamento</span></div><div class="small muted">Metalúrgica Alfa</div><div class="btn btn-primary btn-block btn-lg" style="margin-top:6px">Abrir pedido</div></div>
+                  <div class="card"><div class="row-between"><strong>Pedido 82269</strong><span class="badge badge-neutral">Pendente</span></div><div class="small muted">Construtora Beta</div><div class="btn btn-primary btn-block btn-lg" style="margin-top:6px">Abrir pedido</div></div>
+                </div>
+              </div>
+            </div>
+            <figcaption>Tabela → cartões</figcaption>
+          </figure>
+          <figure class="shot">
+            <div class="phone" data-shot="WF-18-menu">
+              <div class="notch"></div>
+              <div class="screen">
+                <div class="mobile-head"><span class="hamb">✕</span><span>Menu</span><span class="sair">Sair</span></div>
+                <div class="mobile-body">
+                  <div class="app-side" style="display:flex;border:0;padding:0;background:transparent">
+                    <div class="app-logo"><span class="mark">3E</span><div>3E Operações<small>Gestão integrada</small></div></div>
+                    <nav class="app-nav"><a class="active"><span class="ico">▦</span>Painel</a><a><span class="ico">▤</span>Pedidos</a><a><span class="ico">⇩</span>Importar</a><a><span class="ico">☑</span>Fila</a></nav>
+                    <div class="app-user"><strong>Marcos Gerente</strong>Gerente de Produção</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <figcaption>Menu em gaveta</figcaption>
+          </figure>
+        </div>
+        <div class="notes">
+          <div><h4>Breakpoints</h4><ul><li>≥ 1024: sidebar fixa</li><li>720–1023: sidebar compacta</li><li>&lt; 720: gaveta, 1 coluna</li></ul></div>
+          <div><h4>Regras</h4><ul><li>Sem rolagem horizontal da página</li><li>Tabelas com <span class="mono">data-label</span></li><li>Alvos ≥ 44 px; foco visível</li></ul></div>
+        </div>
+      </section>
+
+      <!-- ================= WF-19 ================= -->
+      <section class="tela" id="wf-19" data-perfil="todos">
+        <div class="tela-head">
+          <div class="tela-title"><span class="code">WF-19</span><h2>Mapa de navegação por perfil</h2><span class="route">rotas iniciais e retornos</span></div>
+          <div class="tela-badges"><span class="badge badge-neutral">Todos</span><span class="badge badge-info">Diagrama</span></div>
+        </div>
+        <p class="tela-desc">Fonte: <span class="mono">NAV_POR_PERFIL</span> + permissões. A primeira rota é a tela inicial após o login.</p>
+        <div class="shots">
+          <figure class="shot" style="width:100%">
+            <div class="browser" data-shot="WF-19-mapa">
+              <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">mapa de navegação</span><span class="profile">Todos</span></div>
+              <div class="viewport" style="padding:12px">
+                <div class="mapa">
+                  <div class="mapa-perfil"><h4>Público</h4><div class="mapa-rotas"><span class="mapa-no inicial">/login</span><span class="mapa-seta">→</span><span class="mapa-no">/ (decide perfil)</span></div></div>
+                  <div class="mapa-perfil"><h4>Vendedor</h4><div class="mapa-rotas"><span class="mapa-no inicial">/vendedor/pedidos</span><span class="mapa-seta">↔</span><span class="mapa-no">/vendedor/pedidos/[id]</span></div><p class="small muted" style="margin:0">Abrir pedido → detalhe; “Voltar” retorna à lista com filtros/página.</p></div>
+                  <div class="mapa-perfil"><h4>Gerente de Produção</h4><div class="mapa-rotas"><span class="mapa-no inicial">/gerente/painel</span><span class="mapa-seta">↔</span><span class="mapa-no">/gerente/pedidos</span><span class="mapa-seta">↔</span><span class="mapa-no">/gerente/pedidos/[id]</span><span class="mapa-seta">·</span><span class="mapa-no">/integracao</span><span class="mapa-seta">·</span><span class="mapa-no">/operador/fila</span></div><p class="small muted" style="margin:0">A fila é compartilhada porque o gerente também registra execução (QF-10).</p></div>
+                  <div class="mapa-perfil"><h4>Operador</h4><div class="mapa-rotas"><span class="mapa-no inicial">/operador/fila</span><span class="mapa-seta">↔</span><span class="mapa-no">/operador/atividades/[id]</span><span class="mapa-seta">→</span><span class="mapa-no">/operador/ocorrencias</span><span class="mapa-seta">→</span><span class="mapa-no">/producao/atividades/[id]/ordem</span></div><p class="small muted" style="margin:0">Ocorrência abre com a atividade pré-selecionada; a ordem é o documento de impressão.</p></div>
+                  <div class="mapa-perfil"><h4>Expedição</h4><div class="mapa-rotas"><span class="mapa-no inicial">/expedicao/entregas</span></div><p class="small muted" style="margin:0">Seleciona o pedido na própria tela; não há rota de detalhe separada.</p></div>
+                  <div class="mapa-perfil"><h4>Responsável pelo Sistema</h4><div class="mapa-rotas"><span class="mapa-no inicial">/admin/usuarios</span><span class="mapa-seta">↔</span><span class="mapa-no">/admin/setores</span></div></div>
+                  <div class="mapa-perfil"><h4>Responsável Técnico</h4><div class="mapa-rotas"><span class="mapa-no inicial">/tecnico/integracao</span></div></div>
+                </div>
+              </div>
+            </div>
+            <figcaption>Mapa — rotas iniciais e relações</figcaption>
+          </figure>
+        </div>
+        <div class="notes">
+          <div><h4>Regra</h4><p>O servidor autoriza por ação; o menu é conveniência. Rota sem sessão → login; sem permissão → 401/403.</p></div>
+          <div><h4>Voltar</h4><p>Listas preservam filtros e página na URL; o detalhe usa esse retorno para voltar ao ponto certo.</p></div>
+        </div>
+      </section>
+
+      <!-- ================= COMPONENTES ================= -->
+      <section class="tela" id="componentes" data-perfil="todos">
+        <div class="tela-head">
+          <div class="tela-title"><span class="code">KIT</span><h2>Componentes e medidas</h2><span class="route">para montar no Balsamiq</span></div>
+          <div class="tela-badges"><span class="badge badge-neutral">Todos</span><span class="badge badge-info">Style guide</span></div>
+        </div>
+        <p class="tela-desc">Referência rápida de controles, rótulos e estados para manter consistência entre as telas.</p>
+        <div class="shots">
+          <figure class="shot" style="width:100%">
+            <div class="browser" data-shot="WF-20-componentes">
+              <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">componentes</span><span class="profile">Todos</span></div>
+              <div class="viewport" style="padding:12px">
+                <div class="grid-2">
+                  <div class="card"><div class="card-head"><span class="card-title">Botões</span></div><div class="row"><span class="btn btn-primary">Ação principal</span><span class="btn">Secundária</span><span class="btn btn-outline">Contorno</span><span class="btn btn-danger">Destrutiva</span></div><div class="row" style="margin-top:6px"><span class="btn btn-primary btn-lg">Ação grande (44 px)</span><span class="btn btn-sm">Pequena</span><span class="btn" style="opacity:.55">Desabilitada</span></div><p class="small muted" style="margin:6px 0 0">Rótulo começa com verbo; uma ação principal por bloco.</p></div>
+                  <div class="card"><div class="card-head"><span class="card-title">Campos</span></div><div class="field"><span class="label">Rótulo <span class="req">*</span></span><div class="input">Valor</div><span class="hint">Dica curta</span></div><div class="field" style="margin-top:6px"><span class="label">Busca</span><div class="input placeholder">Placeholder</div></div><div class="field" style="margin-top:6px"><span class="label">Seleção</span><div class="select">Opção <span>▾</span></div></div><div class="field" style="margin-top:6px"><span class="label">Erro</span><div class="input invalid">Valor inválido</div><span class="hint" style="color:var(--danger)">Mensagem do erro</span></div></div>
+                  <div class="card"><div class="card-head"><span class="card-title">Status</span></div><div class="row"><span class="badge badge-neutral">Pendente</span><span class="badge badge-warning">Em andamento</span><span class="badge badge-success">Concluída</span><span class="badge badge-danger">Atrasado</span><span class="badge badge-info">Confirmada</span></div><div class="row" style="margin-top:6px"><span class="badge badge-accent">Desmembrado</span><span class="badge">un</span><span class="badge badge-warning">Pendente de desmembramento</span></div></div>
+                  <div class="card"><div class="card-head"><span class="card-title">Progresso e métricas</span></div><div class="progress"><div class="progress-top"><span>Execução</span><span>62%</span></div><div class="progress-track"><span style="width:62%"></span></div><div class="progress-helper">38 de 60 un executadas.</div></div><div class="grid-2" style="margin-top:6px"><div class="metric"><div class="metric-label">Pendências</div><div class="metric-value">12</div></div><div class="metric ok"><div class="metric-label">Concluídas</div><div class="metric-value">27</div></div></div></div>
+                  <div class="card"><div class="card-head"><span class="card-title">Alertas</span></div><div class="stack"><div class="alert alert-success"><span class="alert-title">Sucesso</span></div><div class="alert alert-error"><span class="alert-title">Erro</span></div><div class="alert alert-warning"><span class="alert-title">Aviso</span></div><div class="alert alert-info"><span class="alert-title">Info</span></div></div></div>
+                  <div class="card"><div class="card-head"><span class="card-title">Tabela / lista</span></div><div class="table-wrap"><table class="table"><thead><tr><th>Pedido</th><th>Status</th><th class="actions">Ação</th></tr></thead><tbody><tr><td>70435</td><td><span class="badge badge-warning">Em andamento</span></td><td class="actions"><span class="btn btn-sm">Abrir</span></td></tr></tbody></table></div><p class="small muted" style="margin:6px 0 0">No celular, a tabela vira cartões com <span class="mono">data-label</span>.</p></div>
+                </div>
+              </div>
+            </div>
+            <figcaption>Kit — controles e estados</figcaption>
+          </figure>
+        </div>
+        <div class="notes">
+          <div><h4>Medidas</h4><ul><li>Sidebar 188 px (desktop)</li><li>Conteúdo até 1040 px</li><li>Botão ≥ 32 px; principal ≥ 40–44 px</li><li>Raio 6–12 px; borda 2 px</li></ul></div>
+          <div><h4>Tipografia</h4><ul><li>H1 22 px · H2 21 px · título de card 14 px</li><li>Texto 12–14 px; apoio 10–11 px</li><li>Fonte “mão” só no wireframe</li></ul></div>
+        </div>
+      </section>
+
+      <footer class="small muted" style="border-top:2px dashed var(--line-soft);padding-top:10px">
+        Wireframes de baixa fidelidade — 3E Operações · 27/10/2026 · fonte editável em <span class="mono">docs/wireframes/index.html</span> · PNGs em <span class="mono">docs/wireframes/png/</span> · guia em <a href="GUIA-BALSAMIQ.md">GUIA-BALSAMIQ.md</a>.
+      </footer>
+
+
+    </main>
+  </div>
+</body>
+</html>
