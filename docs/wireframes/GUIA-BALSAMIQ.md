@@ -9,7 +9,16 @@
 
 ## 1. Acesso
 
-1. Abra o link acima e entre com a conta do espaço `ssandol`.
+### Link público (para os amigos/revisores)
+**https://balsamiq.cloud/ssandol/p4879yi**
+
+- Qualquer pessoa com o link pode **ver e comentar** o projeto, **sem conta Balsamiq**.
+- O acesso é somente leitura + comentários; não permite editar os boards.
+- Para ativar/desativar: **Project → Share / Export → Get a review link** e o toggle **“Anyone with the link can view and comment…”**.
+- O link foi validado em uma sessão limpa (sem login): abre o projeto, lista os 20 boards e exibe “Add a comment”/“Comments”.
+
+### Acesso como editor
+1. Abra o link do projeto e entre com a conta do espaço `ssandol`.
 2. Na primeira navegação o Balsamiq pode exibir **“Oops! Browser not supported”**. Clique em **“I understand things might not work, let me continue”**. O editor funciona; o aviso é do navegador de automação.
 3. A lista **Boards** fica à esquerda. Clique em um board para abrir.
 4. O link do projeto (`/p4879yi`) abre o último board visitado; o link direto de um board tem a forma `https://balsamiq.cloud/ssandol/p4879yi/rXXXX`.
@@ -158,6 +167,7 @@ Saída: `docs/wireframes/3e-operacoes-wireframes.bmpr` (SQLite, ~360 KB, 20 boar
 - Nenhuma senha, token ou cookie do Balsamiq é gravado neste repositório.
 - A sessão fica no navegador usado para a importação; encerre a sessão se o ambiente for compartilhado.
 - O BMPR contém apenas wireframes (sem dados reais de pedidos, clientes ou usuários).
+- O **link público** permite visualização e comentários a qualquer pessoa que o tenha. Compartilhe só com o grupo pretendido e desative o toggle quando não precisar mais.
 
 ---
 

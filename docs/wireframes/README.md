@@ -2,6 +2,7 @@
 
 **Data**: 27/10/2026
 **Projeto Balsamiq**: https://balsamiq.cloud/ssandol/p4879yi
+**Link público (revisão)**: https://balsamiq.cloud/ssandol/p4879yi — qualquer pessoa com o link pode **ver e comentar**, sem conta Balsamiq. Para ativar/desativar: **Project → Share / Export → Get a review link** e o toggle “Anyone with the link…”.
 **Board inicial**: WF-01 · Login
 **Boards**: 20 · **Controles**: 1.056 · **Molduras PNG**: 32 · **PDF**: 1
 
@@ -112,6 +113,7 @@ Divergências entre wireframe e app devem ser resolvidas a favor do app e regist
 - **1.056 controles** no BMPR; integridade SQLite `ok`.
 - Spot-check de renderização: WF-04, WF-05, WF-08, WF-10 e WF-20 (texto e layout).
 - Export real do Balsamiq: `balsamiq/WF-05-painel.png` e `balsamiq/WF-10-ocorrencias.png` (com marca do trial).
+- **Link público** validado em sessão limpa (sem login): abre o projeto, lista os 20 boards e permite comentar (`balsamiq/review-public.png`).
 - O projeto original `p2tarmq` (“Your First Project”) permanece intacto, com o board convertido pela IA.
 
 > **Segurança**: nenhuma credencial do Balsamiq é armazenada neste repositório. A sessão de login fica no navegador usado para a importação.
