@@ -113,3 +113,28 @@ Os 9 PRs abertos do Marcelo foram revisados, integrados com resolução de confl
 - **Auditoria (#11)** combinada com a leitura do job mais recente/retry (#8): `criarComAuditoria` + `registrarAuditoriaSolicitacao` convivem com `findLatestByOrderNumberSince`.
 
 > Os PRs foram integrados por merge local (a `main` contém todas as mudanças); os PRs no GitHub foram fechados com a referência do commit, já que os branches conflitavam entre si.
+
+---
+
+## 8. Atualização 2026-10-26 — perfil Operador e ocorrências (AD-021)
+
+Deploy do commit `4be4bc2` (feature + pool + documentação) e validação do fluxo do Operador e da visão do Gerente.
+
+| Item | Local | Hospedado |
+| --- | --- | --- |
+| `/operador/fila` (“Meus pedidos”) | ✅ | ✅ |
+| `/operador/ocorrencias` (registrar/consultar) | ✅ | ✅ |
+| Atividade → ocorrência pré-selecionada | ✅ | ✅ |
+| Painel do Gerente com “Ocorrências recentes” | ✅ | ✅ |
+| Sem rolagem horizontal em 390 px (operador/gerente) | **9/9** | **9/9** |
+| Regressão responsiva/impressão (5 telas + impressão) | **11/11** | **11/11** |
+| `/api/health` / `/login` | — | **200 / 200** |
+| Testes automatizados | **1023** verdes + 24 ignorados | mesmos artefatos do commit |
+| Lint / typecheck / build | 0 erros / OK / OK | — |
+| Pool do banco (RDS) | sem `pool timeout` | sem `pool timeout` observado |
+
+- **Script**: `scripts/validar-operador.mjs` (não grava dados; apenas navega e verifica).
+- **Evidências**: `docs/video/validacao-operador/` (operador e gerente em 390 px).
+- **Banco**: 13 ocorrências persistidas, com vínculo ao pedido/item/setor/responsável/motivo.
+- **Configuração nova (opcional)**: `DB_CONNECTION_LIMIT` (padrão 15) e `DB_ACQUIRE_TIMEOUT_MS` (padrão 30000). Se o Railway tiver limite menor de conexões, ajustar no serviço.
+- **Ressalva**: o deploy usou o mesmo token de projeto de 2026-10-25; **rotacionar/revogar** após a entrega. O banco do app continua compartilhado com o ambiente de desenvolvimento (go-live real exige banco separado).
