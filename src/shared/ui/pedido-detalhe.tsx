@@ -641,7 +641,7 @@ export function PedidoDetalhe({
           description={pedido.cliente ?? 'Sem cliente'}
           actions={
             pedido.sellerLegacyCode ? (
-              <Badge variant="info">Vendedor {pedido.sellerLegacyCode}</Badge>
+              <Badge variant="info">Vendedor (cód. {pedido.sellerLegacyCode})</Badge>
             ) : null
           }
         />
@@ -822,7 +822,7 @@ export function PedidoDetalhe({
 
                 {item.activityStatus || item.activityDeadlineAt ? (
                   <p className="text-sm text-muted">
-                    Prazo do setor:{' '}
+                    Prazo operacional (setor):{' '}
                     {item.activityDeadlineAt
                       ? formatarDiaCivil(item.activityDeadlineAt)
                       : 'sem prazo'}
@@ -839,7 +839,7 @@ export function PedidoDetalhe({
                     }}
                     noValidate
                   >
-                    <Field label={`Prazo do ${labelItem}`}>
+                    <Field label={`Prazo de entrega (${labelItem})`}>
                       {(props) => (
                         <Input
                           {...props}
@@ -857,7 +857,7 @@ export function PedidoDetalhe({
                     <Button
                       type="submit"
                       disabled={salvando === item.itemId}
-                      aria-label={`Salvar prazo do ${labelItem}`}
+                      aria-label={`Salvar prazo de entrega (${labelItem})`}
                     >
                       {salvando === item.itemId ? 'Salvando…' : 'Salvar prazo'}
                     </Button>
