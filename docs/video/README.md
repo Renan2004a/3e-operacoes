@@ -21,7 +21,7 @@
 - **Login** nos cinco perfis (Vendedor, Gerente, Operador, Expedição, Administrador).
 - **Leitura** de todas as telas, filtros, expansão/recolhimento de itens, painel e atualização, jobs de integração, impressão.
 - **Remessa**: criação com número automático e remoção com confirmação (sem resíduo).
-- **Prazo**: alteração e restauração no pedido 82249, com duas linhas em `logs_auditoria` (auditoria preservada).
+- **Prazo**: alteração e restauração no pedido 82249. O vídeo mostra as duas primeiras linhas de `logs_auditoria`; gravações repetidas deixaram **quatro** linhas de `DEADLINE_CHANGED` no mesmo item (auditoria preservada), com o valor atual em 06/12/2026.
 - **Consultas reais** no banco do app para o capítulo de banco (somente leitura).
 
 ## O que foi mostrado como formulário, sem enviar
