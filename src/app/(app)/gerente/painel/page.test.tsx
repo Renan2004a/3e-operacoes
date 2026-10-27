@@ -97,7 +97,7 @@ describe('PainelPage', () => {
     mockRespostas()
     render(<PainelPage />)
 
-    expect(await screen.findByText('setor-corte: 12.5 M')).toBeInTheDocument()
+    expect(await screen.findByText('12.5 M')).toBeInTheDocument()
     expect(screen.getByText('75%')).toBeInTheDocument()
     expect(screen.getByText('3 de 4 no prazo.')).toBeInTheDocument()
   })
@@ -115,8 +115,8 @@ describe('PainelPage', () => {
     })
     render(<PainelPage />)
 
-    expect(await screen.findByText('setor-corte: 30 UN')).toBeInTheDocument()
-    expect(screen.getByText('setor-corte: 15 M')).toBeInTheDocument()
+    expect(await screen.findByText('30 UN')).toBeInTheDocument()
+    expect(screen.getByText('15 M')).toBeInTheDocument()
     expect(screen.queryByText(/45/)).not.toBeInTheDocument()
     // Sem denominador não há percentual: "0%" seria lido como desempenho ruim (P04).
     expect(screen.getByText('—')).toBeInTheDocument()
@@ -235,5 +235,25 @@ describe('PainelPage', () => {
     expect(
       screen.getByRole('progressbar', { name: 'Produção do setor setor-corte' }),
     ).toBeInTheDocument()
+  })
+
+  it('mantém o resto do painel quando apenas as ocorrências falham (P08)', async () => {
+    mocks.apiGet.mockImplementation((path: string) => {
+      if (path === '/api/indicadores') return Promise.resolve(indicadores())
+      if (path === '/api/indicadores/alertas') return Promise.resolve(ALERTAS_VAZIO)
+      return Promise.reject(new Error('falha'))
+    })
+    render(<PainelPage />)
+
+    expect(await screen.findByText('Pendências')).toBeInTheDocument()
+    expect(await screen.findByText('Não foi possível carregar as ocorrências')).toBeInTheDocument()
+  })
+
+  it('mostra o horário da última atualização e permite atualizar (P08)', async () => {
+    mockRespostas()
+    render(<PainelPage />)
+
+    expect(await screen.findByText(/Atualizado às/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Atualizar' })).toBeInTheDocument()
   })
 })

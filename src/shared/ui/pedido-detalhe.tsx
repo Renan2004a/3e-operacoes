@@ -954,9 +954,10 @@ export function PedidoDetalhe({
                     </div>
 
                     {item.bloqueioCorrecaoSetor ? (
-                      <Alert variant="warning" title="Correção bloqueada">
+                      <p className="text-sm text-muted">
+                        <span className="font-medium text-ink">Correção bloqueada</span> —{' '}
                         {item.bloqueioCorrecaoSetor} O setor deste item não pode ser alterado.
-                      </Alert>
+                      </p>
                     ) : null}
 
                     {!item.bloqueioCorrecaoSetor && correcaoAberta[item.itemId] ? (

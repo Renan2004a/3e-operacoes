@@ -122,6 +122,14 @@ function formatarDataHora(valor: string): string {
   }).format(data)
 }
 
+/** Horário da última atualização, no fuso do projeto (AD-009). */
+function formatarHora(data: Date): string {
+  return new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    timeStyle: 'short',
+  }).format(data)
+}
+
 type TomAlerta = 'danger' | 'warning' | 'info'
 
 function GrupoAlertas({
@@ -188,24 +196,44 @@ export default function PainelPage() {
   const [dados, setDados] = useState<Indicadores | null>(null)
   const [alertas, setAlertas] = useState<Alertas | null>(null)
   const [ocorrencias, setOcorrencias] = useState<ResumoOcorrencias | null>(null)
-  const [erro, setErro] = useState(false)
+  const [erroIndicadores, setErroIndicadores] = useState(false)
+  const [erroAlertas, setErroAlertas] = useState(false)
+  const [erroOcorrencias, setErroOcorrencias] = useState(false)
   const [carregando, setCarregando] = useState(true)
+  const [atualizando, setAtualizando] = useState(false)
+  const [atualizadoEm, setAtualizadoEm] = useState<Date | null>(null)
 
   const buscar = useCallback(
     () =>
-      Promise.all([
+      // Cada bloco carrega de forma independente: a falha de um não derruba os
+      // demais (P08 da avaliação do Gerente).
+      Promise.allSettled([
         apiGet<Indicadores>('/api/indicadores'),
         apiGet<{ alertas: Alertas }>('/api/indicadores/alertas'),
         apiGet<{ resumo: ResumoOcorrencias }>('/api/indicadores/ocorrencias'),
-      ])
-        .then(([resposta, respostaAlertas, respostaOcorrencias]) => {
-          setDados(resposta)
-          setAlertas(respostaAlertas.alertas)
-          setOcorrencias(respostaOcorrencias.resumo)
-          setErro(false)
-        })
-        .catch(() => setErro(true))
-        .finally(() => setCarregando(false)),
+      ]).then(([resposta, respostaAlertas, respostaOcorrencias]) => {
+        if (resposta.status === 'fulfilled') {
+          setDados(resposta.value)
+          setErroIndicadores(false)
+        } else {
+          setErroIndicadores(true)
+        }
+        if (respostaAlertas.status === 'fulfilled') {
+          setAlertas(respostaAlertas.value.alertas)
+          setErroAlertas(false)
+        } else {
+          setErroAlertas(true)
+        }
+        if (respostaOcorrencias.status === 'fulfilled') {
+          setOcorrencias(respostaOcorrencias.value.resumo)
+          setErroOcorrencias(false)
+        } else {
+          setErroOcorrencias(true)
+        }
+
+        setAtualizadoEm(new Date())
+        setCarregando(false)
+      }),
     [],
   )
 
@@ -218,6 +246,12 @@ export default function PainelPage() {
     void buscar()
   }
 
+  async function atualizar() {
+    setAtualizando(true)
+    await buscar()
+    setAtualizando(false)
+  }
+
   if (carregando) {
     return (
       <div className="p-2">
@@ -226,7 +260,7 @@ export default function PainelPage() {
     )
   }
 
-  if (erro || !dados) {
+  if (!dados) {
     return (
       <Alert
         variant="error"
@@ -261,7 +295,30 @@ export default function PainelPage() {
 
   return (
     <section className="grid gap-4">
-      <PageHead title="Painel" description="Andamento da produção por setor e status." />
+      <PageHead
+        title="Painel"
+        description="Andamento da produção por setor e status."
+        actions={
+          <div className="flex flex-wrap items-center gap-3">
+            {atualizadoEm ? (
+              <span className="text-sm text-muted">Atualizado às {formatarHora(atualizadoEm)}</span>
+            ) : null}
+            <Button variant="outline" onClick={() => void atualizar()} disabled={atualizando}>
+              {atualizando ? 'Atualizando…' : 'Atualizar'}
+            </Button>
+          </div>
+        }
+      />
+
+      {erroIndicadores ? (
+        <Alert
+          variant="warning"
+          title="Não foi possível atualizar os indicadores"
+          action={<Button onClick={() => void atualizar()}>Tentar de novo</Button>}
+        >
+          Os números abaixo são da última atualização.
+        </Alert>
+      ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Metric
@@ -300,14 +357,26 @@ export default function PainelPage() {
         <CardHeader>
           <CardTitle>Alertas operacionais</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 lg:grid-cols-3">
-          <GrupoAlertas titulo="Atrasados" tom="danger" itens={alertas?.atrasados ?? []} />
-          <GrupoAlertas titulo="Parados" tom="warning" itens={alertas?.parados ?? []} />
-          <GrupoAlertas
-            titulo="Não encaminhados"
-            tom="info"
-            itens={alertas?.naoEncaminhados ?? []}
-          />
+        <CardContent>
+          {erroAlertas ? (
+            <Alert
+              variant="error"
+              title="Não foi possível carregar os alertas"
+              action={<Button onClick={() => void atualizar()}>Tentar de novo</Button>}
+            >
+              Verifique sua conexão e tente novamente.
+            </Alert>
+          ) : (
+            <div className="grid gap-4 lg:grid-cols-3">
+              <GrupoAlertas titulo="Atrasados" tom="danger" itens={alertas?.atrasados ?? []} />
+              <GrupoAlertas titulo="Parados" tom="warning" itens={alertas?.parados ?? []} />
+              <GrupoAlertas
+                titulo="Não encaminhados"
+                tom="info"
+                itens={alertas?.naoEncaminhados ?? []}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -324,7 +393,15 @@ export default function PainelPage() {
           </div>
         </CardHeader>
         <CardContent className="grid gap-4">
-          {!ocorrencias || ocorrencias.total === 0 ? (
+          {erroOcorrencias ? (
+            <Alert
+              variant="error"
+              title="Não foi possível carregar as ocorrências"
+              action={<Button onClick={() => void atualizar()}>Tentar de novo</Button>}
+            >
+              Verifique sua conexão e tente novamente.
+            </Alert>
+          ) : !ocorrencias || ocorrencias.total === 0 ? (
             <p className="text-sm text-muted">Nenhuma ocorrência registrada.</p>
           ) : (
             <>
@@ -399,11 +476,7 @@ export default function PainelPage() {
                         label={`Produção do setor ${nome}`}
                         value={percentual}
                         tone={percentual >= 100 ? 'success' : 'accent'}
-                        helper={`${quantidade} produzidas no período.`}
                       />
-                      <span className="text-xs text-muted">
-                        {nome}: {quantidade}
-                      </span>
                     </li>
                   )
                 })}

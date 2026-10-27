@@ -425,10 +425,7 @@ export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProp
                         key={pedido.id}
                         className="border-b border-line last:border-b-0 hover:bg-surface-2"
                       >
-                        <td
-                          data-label="Pedido"
-                          className="whitespace-nowrap px-4 py-3 font-semibold text-ink"
-                        >
+                        <td className="whitespace-nowrap px-4 py-3 font-semibold text-ink">
                           Pedido {pedido.numero}
                         </td>
                         <td data-label="Cliente" className="px-4 py-3 text-muted">
