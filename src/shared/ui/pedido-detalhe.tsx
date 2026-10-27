@@ -19,10 +19,11 @@ import { Badge } from './badge'
 import { Button } from './button'
 import { Card, CardContent, CardHeader, CardTitle } from './card'
 import { Field } from './field'
+import { HistoricoPrazos } from './historico-prazos'
 import { Input } from './input'
 import { Metric } from './metric'
 import { PageHead } from './page-head'
-import { Progress, type ProgressTone } from './progress'
+import { Progress, formatarPercentual, type ProgressTone } from './progress'
 import { resolverRetornoListagem } from './retorno-lista'
 import { Spinner } from './spinner'
 import {
@@ -144,7 +145,7 @@ function percentualExecutado(valores: Pick<ItemSaldo, 'solicitado' | 'executado'
   const solicitado = numero(valores.solicitado)
   const executado = numero(valores.executado)
   if (!Number.isFinite(solicitado) || solicitado <= 0) return 0
-  return Math.min(100, Math.max(0, Math.round((executado / solicitado) * 100)))
+  return Math.min(100, Math.max(0, Math.round((executado / solicitado) * 1000) / 10))
 }
 
 /** Cor do progresso conforme o estado real da atividade (nunca só por cor). */
@@ -202,7 +203,6 @@ export function PedidoDetalhe({
   const [classificados, setClassificados] = useState<Record<string, boolean>>({})
 
   const [remessaAberta, setRemessaAberta] = useState<Record<string, boolean>>({})
-  const [remessaNumero, setRemessaNumero] = useState<Record<string, string>>({})
   const [remessaData, setRemessaData] = useState<Record<string, string>>({})
   const [remessaSalvando, setRemessaSalvando] = useState<string | null>(null)
   const [remessaProcessando, setRemessaProcessando] = useState<
@@ -406,14 +406,9 @@ export function PedidoDetalhe({
   }
 
   async function programarRemessa(itemId: string) {
-    const numeroRemessa = Number(remessaNumero[itemId] ?? '')
     const data = remessaData[itemId] ?? ''
     limparFeedback()
 
-    if (!Number.isInteger(numeroRemessa) || numeroRemessa <= 0) {
-      setErroAcao('Informe o número da remessa (1, 2, 3…).')
-      return
-    }
     if (data.trim() === '') {
       setErroAcao('Informe a data prevista da remessa.')
       return
@@ -423,12 +418,11 @@ export function PedidoDetalhe({
     try {
       const resposta = await apiPost<{ remessa: Remessa }>(
         `/api/pedidos/itens/${itemId}/remessas`,
-        { remessa: numeroRemessa, scheduledAt: data },
+        { scheduledAt: data },
       )
       atualizarRemessas(itemId, (remessas) =>
         [...remessas, resposta.remessa].sort((a, b) => a.remessa - b.remessa),
       )
-      setRemessaNumero((atual) => ({ ...atual, [itemId]: '' }))
       setRemessaData((atual) => ({ ...atual, [itemId]: '' }))
       setRemessaAberta((atual) => ({ ...atual, [itemId]: false }))
       setSucesso('Remessa criada com sucesso.')
@@ -436,7 +430,7 @@ export function PedidoDetalhe({
       if (error instanceof ApiError && error.status === 409) {
         setErroAcao('Essa remessa já está programada para o item.')
       } else if (error instanceof ApiError && error.status === 400) {
-        setErroAcao('Número ou data da remessa inválidos.')
+        setErroAcao('Data da remessa inválida.')
       } else {
         setErroAcao('Não foi possível programar a remessa. Tente novamente.')
       }
@@ -614,6 +608,7 @@ export function PedidoDetalhe({
   // servidor é a autoridade. A ação só desaparece quando sabemos que o perfil
   // não pode definir prazo (D9).
   const semPermissaoParaPrazo = perfis.length > 0 && !pode(perfis, 'definir_prazo')
+  const podeGerenciarRemessas = pode(perfis, 'programar_remessa')
   const destinoVoltar = resolverRetornoListagem(retorno, basePath)
 
   // O primeiro item abre por padrão; os demais ficam recolhidos para encurtar a
@@ -621,6 +616,8 @@ export function PedidoDetalhe({
   const itensDoPedido = pedido.itens
   const itemEstaAberto = (itemId: string, indice: number) =>
     itensAbertos[itemId] ?? indice === 0
+  const proximaRemessa = (item: ItemSaldo) =>
+    (item.remessas ?? []).reduce((maior, remessa) => Math.max(maior, remessa.remessa), 0) + 1
   const todosItensAbertos = itensDoPedido.every((item, indice) =>
     itemEstaAberto(item.itemId, indice),
   )
@@ -803,7 +800,7 @@ export function PedidoDetalhe({
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   {!aberto ? (
-                    <Badge variant={percentual >= 100 ? 'success' : 'neutral'}>{percentual}%</Badge>
+                    <Badge variant={percentual >= 100 ? 'success' : 'neutral'}>{formatarPercentual(percentual)}%</Badge>
                   ) : null}
                   {item.unit ? <Badge variant="neutral">{item.unit}</Badge> : null}
                   {desmembrado ? (
@@ -920,6 +917,8 @@ export function PedidoDetalhe({
                 ) : (
                   <Badge variant="neutral">Sem prazo</Badge>
                 )}
+
+                <HistoricoPrazos itemId={item.itemId} />
 
                 {permitirClassificacao ? (
                   <div className="grid gap-3 border-t border-line pt-4">
@@ -1091,22 +1090,24 @@ export function PedidoDetalhe({
                       <p className="text-sm font-semibold text-ink">
                         Entregas programadas (remessas)
                       </p>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        aria-label={`Adicionar remessa do ${labelItem}`}
-                        aria-expanded={remessaAberta[item.itemId] === true}
-                        onClick={() => {
-                          limparFeedback()
-                          setRemessaAberta((atual) => ({
-                            ...atual,
-                            [item.itemId]: !atual[item.itemId],
-                          }))
-                        }}
-                      >
-                        {remessaAberta[item.itemId] ? '− Fechar' : '+ Adicionar remessa'}
-                      </Button>
+                      {podeGerenciarRemessas ? (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          aria-label={`Adicionar remessa do ${labelItem}`}
+                          aria-expanded={remessaAberta[item.itemId] === true}
+                          onClick={() => {
+                            limparFeedback()
+                            setRemessaAberta((atual) => ({
+                              ...atual,
+                              [item.itemId]: !atual[item.itemId],
+                            }))
+                          }}
+                        >
+                          {remessaAberta[item.itemId] ? '− Fechar' : '+ Adicionar remessa'}
+                        </Button>
+                      ) : null}
                     </div>
 
                     {item.remessas && item.remessas.length > 0 ? (
@@ -1125,7 +1126,10 @@ export function PedidoDetalhe({
                                 {remessa.remessa}ª remessa · prevista para{' '}
                                 {formatarDataRemessa(remessa.scheduledAt)}
                               </span>
-                              <div className="flex flex-wrap items-center gap-2">
+                              <div
+                                className="flex flex-wrap items-center gap-2"
+                                hidden={!podeGerenciarRemessas}
+                              >
                                 {remessa.confirmedAt ? (
                                   <Badge variant="success">
                                     Confirmada em {formatarDataRemessa(remessa.confirmedAt)}
@@ -1213,35 +1217,28 @@ export function PedidoDetalhe({
                         })}
                       </ul>
                     ) : (
-                      <p className="text-sm text-muted">Sem remessa programada.</p>
+                      <p className="text-sm text-muted">
+                        {podeGerenciarRemessas
+                          ? 'Sem remessa programada.'
+                          : 'Sem remessa programada. A expedição gerencia as remessas.'}
+                      </p>
                     )}
 
-                    {remessaAberta[item.itemId] ? (
+                    {podeGerenciarRemessas && remessaAberta[item.itemId] ? (
                       <form
-                        className="grid gap-3 rounded-lg border border-line bg-surface-2 p-3 sm:grid-cols-[8rem_1fr_auto] sm:items-end"
+                        className="grid gap-3 rounded-lg border border-line bg-surface-2 p-3 sm:grid-cols-[10rem_1fr_auto] sm:items-end"
                         onSubmit={(evento) => {
                           evento.preventDefault()
                           void programarRemessa(item.itemId)
                         }}
                         noValidate
                       >
-                        <Field label={`Remessa (${labelItem})`}>
-                          {(props) => (
-                            <Input
-                              {...props}
-                              type="number"
-                              min={1}
-                              inputMode="numeric"
-                              value={remessaNumero[item.itemId] ?? ''}
-                              onChange={(evento) =>
-                                setRemessaNumero((atual) => ({
-                                  ...atual,
-                                  [item.itemId]: evento.target.value,
-                                }))
-                              }
-                            />
-                          )}
-                        </Field>
+                        <div className="grid gap-1.5">
+                          <span className="text-sm font-semibold text-ink">Remessa</span>
+                          <span className="text-sm text-muted">
+                            {proximaRemessa(item)}ª remessa (automática)
+                          </span>
+                        </div>
                         <Field label={`Data prevista (${labelItem})`}>
                           {(props) => (
                             <Input

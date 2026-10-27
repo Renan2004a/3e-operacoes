@@ -9,9 +9,17 @@ export interface PrazoDefinido {
 /** Porta de persistência do prazo de item e de atividade (PRAZO-01, PRAZO-02). */
 export interface PrazoRepository {
   /** Grava `OrderItem.deadlineAt`; null quando o item não existe (PRAZO-12). */
-  definirPrazoItem(input: { itemId: string; prazo: Date }): Promise<PrazoDefinido | null>
+  definirPrazoItem(input: {
+    itemId: string
+    prazo: Date
+    userId?: string | null
+  }): Promise<PrazoDefinido | null>
   /** Grava `Activity.deadlineAt`; null quando a atividade não existe (PRAZO-11). */
-  definirPrazoAtividade(input: { atividadeId: string; prazo: Date }): Promise<PrazoDefinido | null>
+  definirPrazoAtividade(input: {
+    atividadeId: string
+    prazo: Date
+    userId?: string | null
+  }): Promise<PrazoDefinido | null>
 }
 
 /** Data de prazo ausente ou não interpretável (HTTP 400, PRAZO-04). */
@@ -61,11 +69,15 @@ export function validarPrazo(valor: unknown): Date {
 
 /** Define o prazo do item, validando a data e a existência (PRAZO-01, PRAZO-04, PRAZO-12). */
 export async function definirPrazoItem(
-  input: { itemId: string; prazo: unknown },
+  input: { itemId: string; prazo: unknown; userId?: string | null },
   repo: PrazoRepository,
 ): Promise<PrazoDefinido> {
   const prazo = validarPrazo(input.prazo)
-  const item = await repo.definirPrazoItem({ itemId: input.itemId, prazo })
+  const item = await repo.definirPrazoItem({
+    itemId: input.itemId,
+    prazo,
+    userId: input.userId ?? null,
+  })
   if (!item) throw new ItemNaoEncontradoError(input.itemId)
   return item
 }
@@ -75,11 +87,15 @@ export async function definirPrazoItem(
  * (PRAZO-02, PRAZO-04, PRAZO-11).
  */
 export async function definirPrazoAtividade(
-  input: { atividadeId: string; prazo: unknown },
+  input: { atividadeId: string; prazo: unknown; userId?: string | null },
   repo: PrazoRepository,
 ): Promise<PrazoDefinido> {
   const prazo = validarPrazo(input.prazo)
-  const atividade = await repo.definirPrazoAtividade({ atividadeId: input.atividadeId, prazo })
+  const atividade = await repo.definirPrazoAtividade({
+    atividadeId: input.atividadeId,
+    prazo,
+    userId: input.userId ?? null,
+  })
   if (!atividade) throw new AtividadeNaoEncontradaError(input.atividadeId)
   return atividade
 }

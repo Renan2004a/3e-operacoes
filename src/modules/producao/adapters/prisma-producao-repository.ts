@@ -164,6 +164,7 @@ export const prismaProducaoRepository: ProducaoRepository = {
       unidade: row.orderItem.unit,
       solicitado: row.orderItem.requestedQuantity,
       executado: somarExecucoes(row.executions.map((execution) => execution.quantity)),
+      previsao: row.orderItem.deadlineAt,
     }
   },
 }

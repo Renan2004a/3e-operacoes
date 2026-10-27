@@ -227,6 +227,9 @@ function createClassificacaoPort(
       const found = mappings.find((candidate) => candidate.legacyCategory === legacyCategory)
       return found ? { ...found } : null
     },
+    async listAll() {
+      return mappings.map((mapping) => ({ ...mapping }))
+    },
     async findById(id) {
       const found = mappings.find((candidate) => candidate.id === id)
       return found ? { ...found } : null

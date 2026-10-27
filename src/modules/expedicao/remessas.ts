@@ -59,26 +59,31 @@ export function interpretarDataPrevista(valor: string): Date {
 }
 
 /**
- * Programa uma remessa (entrega prevista) de um item: número da remessa (1ª, 2ª…)
- * e data. Rejeita número repetido para o mesmo item.
+ * Programa uma remessa (entrega prevista) de um item. O número é automático
+ * (1ª, 2ª…), salvo quando informado explicitamente para compatibilidade.
+ * Rejeita número repetido para o mesmo item.
  */
 export async function programarRemessa(
-  input: { orderItemId: string; remessa: number; scheduledAt: Date; note?: string | null },
+  input: { orderItemId: string; remessa?: number; scheduledAt: Date; note?: string | null },
   repo: RemessaRepository,
 ): Promise<Remessa> {
-  if (!Number.isInteger(input.remessa) || input.remessa <= 0) {
+  const existentes = await repo.listarPorItem(input.orderItemId)
+  const proxima = existentes.reduce((maior, remessa) => Math.max(maior, remessa.remessa), 0) + 1
+  const numero = input.remessa ?? proxima
+
+  if (!Number.isInteger(numero) || numero <= 0) {
     throw new RemessaInvalidaError('O número da remessa deve ser um inteiro positivo')
   }
   if (Number.isNaN(input.scheduledAt.getTime())) {
     throw new RemessaInvalidaError('Data prevista inválida')
   }
 
-  const existente = await repo.buscarPorNumero(input.orderItemId, input.remessa)
-  if (existente) throw new RemessaDuplicadaError(input.remessa)
+  const existente = await repo.buscarPorNumero(input.orderItemId, numero)
+  if (existente) throw new RemessaDuplicadaError(numero)
 
   return repo.criar({
     orderItemId: input.orderItemId,
-    remessa: input.remessa,
+    remessa: numero,
     scheduledAt: input.scheduledAt,
     note: input.note ?? null,
   })

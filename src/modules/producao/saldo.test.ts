@@ -48,7 +48,7 @@ describe('calcularSaldo', () => {
       executado: new Prisma.Decimal('8'),
     })
 
-    expect(formatarQuantidade('M', saldo.pendente)).toBe('2.00')
+    expect(formatarQuantidade('M', saldo.pendente)).toBe('2,00')
   })
 
   it('formata o pendente de peça como inteiro', () => {

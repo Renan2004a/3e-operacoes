@@ -130,14 +130,19 @@ describe('SetoresPage', () => {
   })
 
   it('mostra erro acessível e permite tentar de novo quando a API falha (FEP-13)', async () => {
-    mocks.apiGet
-      .mockRejectedValueOnce(new Error('falha'))
-      .mockResolvedValueOnce({ sectors: [CORTE] })
+    mocks.apiGet.mockImplementation((url: string) => {
+      if (url === '/api/setores') return Promise.reject(new Error('falha'))
+      return Promise.resolve({ mappings: [] })
+    })
     render(<SetoresPage />)
 
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent(/não foi possível carregar os setores/i)
 
+    mocks.apiGet.mockImplementation((url: string) => {
+      if (url === '/api/setores') return Promise.resolve({ sectors: [CORTE] })
+      return Promise.resolve({ mappings: [] })
+    })
     fireEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }))
 
     expect(await screen.findByRole('heading', { name: 'Setores e mapeamentos' })).toBeInTheDocument()

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ApiError, apiGet, apiPatch, apiPost } from '@/shared/http/api-client'
 import { Alert } from '@/shared/ui/alert'
+import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import { Field } from '@/shared/ui/field'
@@ -30,6 +31,7 @@ const CLASSE_SELECT =
 /** Administração de setores e mapeamentos categoria → setor (FEP-09). */
 export default function SetoresPage() {
   const [setores, setSetores] = useState<Setor[]>([])
+  const [mapeamentos, setMapeamentos] = useState<Mapeamento[]>([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState(false)
 
@@ -49,12 +51,23 @@ export default function SetoresPage() {
 
   const carregarSetores = useCallback(
     () =>
-      apiGet<{ sectors: Setor[] }>('/api/setores')
-        .then((dados) => {
-          setSetores(dados.sectors)
-          setErro(false)
+      Promise.allSettled([
+        apiGet<{ sectors: Setor[] }>('/api/setores'),
+        apiGet<{ mappings: Mapeamento[] }>('/api/mapeamentos'),
+      ])
+        .then(([respostaSetores, respostaMapeamentos]) => {
+          if (respostaSetores.status === 'fulfilled') {
+            setSetores(respostaSetores.value.sectors)
+            setErro(false)
+          } else {
+            setErro(true)
+          }
+          // A lista de mapeamentos é secundária: se falhar, a tela de setores
+          // continua utilizável.
+          if (respostaMapeamentos.status === 'fulfilled') {
+            setMapeamentos(respostaMapeamentos.value.mappings)
+          }
         })
-        .catch(() => setErro(true))
         .finally(() => setCarregando(false)),
     [],
   )
@@ -139,6 +152,7 @@ export default function SetoresPage() {
       }
       setSucessoMapeamento('Mapeamento salvo.')
       await buscarMapeamento()
+      await carregarSetores()
     } catch (error) {
       if (error instanceof ApiError && error.status === 409) {
         setErroMapeamento('Esta categoria já possui um mapeamento ativo.')
@@ -183,8 +197,15 @@ export default function SetoresPage() {
     <section className="grid gap-4">
       <PageHead
         title="Setores e mapeamentos"
-        description="Mantenha setores e o mapeamento de categoria para setor."
+        description="Mantenha os setores e o mapa categoria → setor usado na importação e no desmembramento."
       />
+
+      <Alert variant="info" title="Como funciona o mapeamento de categoria">
+        A categoria vem do Top Gerente (ex.: <strong>TELHA_TERMOACUSTICA</strong>). Ao importar um
+        pedido, o 3E usa este mapa para sugerir o setor de cada item. Uma categoria tem um
+        mapeamento ativo por vez; salvar de novo atualiza o setor. Se a categoria não aparecer,
+        digite o nome exato usado no Top Gerente e clique em <strong>Buscar mapeamento</strong>.
+      </Alert>
 
       <Card>
         <CardHeader>
@@ -301,6 +322,49 @@ export default function SetoresPage() {
               </div>
             ) : null}
           </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Mapeamentos cadastrados</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {mapeamentos.length === 0 ? (
+            <p className="text-sm text-muted">Nenhum mapeamento cadastrado.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table
+                aria-label="Mapeamentos de categoria"
+                className="tabela-responsiva w-full border-collapse text-left text-sm"
+              >
+                <thead>
+                  <tr className="border-b border-line text-xs uppercase tracking-wide text-muted">
+                    <th scope="col" className="px-3 py-3 font-semibold">Categoria</th>
+                    <th scope="col" className="px-3 py-3 font-semibold">Setor</th>
+                    <th scope="col" className="px-3 py-3 font-semibold">Situação</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mapeamentos.map((mapeamento) => (
+                    <tr key={mapeamento.id} className="border-b border-line last:border-b-0">
+                      <td data-label="Categoria" className="px-3 py-3 font-medium text-ink">
+                        {mapeamento.legacyCategory}
+                      </td>
+                      <td data-label="Setor" className="px-3 py-3 text-muted">
+                        {nomeDoSetor(mapeamento.sectorId)}
+                      </td>
+                      <td data-label="Situação" className="px-3 py-3">
+                        <Badge variant={mapeamento.status === 'ACTIVE' ? 'success' : 'neutral'}>
+                          {mapeamento.status === 'ACTIVE' ? 'Ativo' : 'Inativo'}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
 

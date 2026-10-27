@@ -12,6 +12,7 @@ import { Field } from './field'
 import { Input } from './input'
 import { Spinner } from './spinner'
 import { caminhoDaListagemAtual } from './retorno-lista'
+import { formatarDiaCivil } from '@/shared/time/dia-civil'
 import { FOCO_VISIVEL } from './utils'
 
 export type StatusPedido = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED'
@@ -21,6 +22,8 @@ export interface PedidoListado {
   numero: string
   cliente: string | null
   status: StatusPedido
+  /** Previsão de entrega (maior prazo entre os itens), em ISO. */
+  previsao?: string | null
 }
 
 export interface ContextoRetornoListagem {
@@ -415,6 +418,9 @@ export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProp
                         Cliente
                       </th>
                       <th scope="col" className="px-4 py-3 font-semibold">
+                        Previsão
+                      </th>
+                      <th scope="col" className="px-4 py-3 font-semibold">
                         Status
                       </th>
                       <th scope="col" className="px-4 py-3 text-right font-semibold">
@@ -433,6 +439,9 @@ export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProp
                         </td>
                         <td data-label="Cliente" className="px-4 py-3 text-muted">
                           {pedido.cliente ?? 'Sem cliente'}
+                        </td>
+                        <td data-label="Previsão" className="whitespace-nowrap px-4 py-3 text-muted">
+                          {pedido.previsao ? formatarDiaCivil(pedido.previsao) : 'Sem previsão'}
                         </td>
                         <td data-label="Status" className="px-4 py-3">
                           <Badge variant={VARIANTE_STATUS[pedido.status]}>

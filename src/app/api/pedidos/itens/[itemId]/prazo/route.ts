@@ -32,7 +32,10 @@ export async function PATCH(request: Request, context: { params: Promise<{ itemI
   }
 
   try {
-    const item = await definirPrazoItem({ itemId, prazo }, prismaPrazosRepository)
+    const item = await definirPrazoItem(
+      { itemId, prazo, userId: auth.usuario.userId },
+      prismaPrazosRepository,
+    )
     return Response.json({ item }, { status: 200 })
   } catch (error) {
     if (error instanceof ItemNaoEncontradoError) {

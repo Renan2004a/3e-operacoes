@@ -34,6 +34,7 @@ export const prismaIndicadoresRepository: IndicadoresRepository = {
           items: {
             select: {
               classificationStatus: true,
+              deadlineAt: true,
               activities: { select: { status: true, sector: { select: { code: true } } } },
             },
           },
@@ -53,6 +54,7 @@ export const prismaIndicadoresRepository: IndicadoresRepository = {
         criadoEm: row.createdAt,
         itens: row.items.map((item) => ({
           classificationStatus: item.classificationStatus,
+          deadlineAt: item.deadlineAt,
           atividades: item.activities.map((atividade) => ({
             sectorCode: atividade.sector.code,
             status: atividade.status,

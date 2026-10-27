@@ -89,6 +89,9 @@ function createDeps(
       const found = mappingStore.find((candidate) => candidate.legacyCategory === legacyCategory)
       return found ? { ...found } : null
     },
+    async listAll() {
+      return mappingStore.map((mapping) => ({ ...mapping }))
+    },
     async findById(id) {
       const found = mappingStore.find((candidate) => candidate.id === id)
       return found ? { ...found } : null

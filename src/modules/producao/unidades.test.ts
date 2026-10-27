@@ -49,6 +49,6 @@ describe('formatarQuantidade', () => {
   })
 
   it('formata metro com duas casas decimais', () => {
-    expect(formatarQuantidade('M', '2')).toBe('2.00')
+    expect(formatarQuantidade('M', '2')).toBe('2,00')
   })
 })

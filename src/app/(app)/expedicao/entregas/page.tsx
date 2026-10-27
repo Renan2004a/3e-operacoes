@@ -11,10 +11,14 @@ import { Input } from '@/shared/ui/input'
 import { Metric } from '@/shared/ui/metric'
 import { PageHead } from '@/shared/ui/page-head'
 import { Spinner } from '@/shared/ui/spinner'
-import { valorPorUnidade, type TotalUnidadeView } from '@/shared/ui/totais-unidade'
+import { formatarDiaCivil } from '@/shared/time/dia-civil'
+import { formatarQuantidadeParaExibicao, valorPorUnidade, type TotalUnidadeView } from '@/shared/ui/totais-unidade'
 
 interface ItemSaldo {
   itemId: string
+  unit: string
+  /** Previsão de entrega do item (ISO), quando o gerente definiu. */
+  deadlineAt?: string | null
   solicitado: string | number
   executado: string | number
   disponivel: string | number
@@ -304,7 +308,13 @@ export default function EntregasPage() {
               <CardHeader>
                 <div>
                   <CardTitle className="text-base">Item {indice + 1}</CardTitle>
-                  <p className="mt-1 text-sm text-ink">Disponível: {item.disponivel}</p>
+                  <p className="mt-1 text-sm text-ink">
+                    Disponível: {formatarQuantidadeParaExibicao(item.unit ?? null, item.disponivel)}
+                  </p>
+                  <p className="text-sm text-muted">
+                    Previsão de entrega:{' '}
+                    {item.deadlineAt ? formatarDiaCivil(item.deadlineAt) : 'Sem previsão'}
+                  </p>
                 </div>
                 <Badge variant={numero(item.disponivel) > 0 ? 'success' : 'neutral'}>
                   {numero(item.disponivel) > 0 ? 'Disponível' : 'Sem saldo'}
@@ -312,8 +322,10 @@ export default function EntregasPage() {
               </CardHeader>
               <CardContent className="grid gap-4">
                 <p className="text-sm text-muted">
-                  Solicitado: {item.solicitado} · Executado: {item.executado} · Entregue:{' '}
-                  {item.entregue} · Pendente: {item.pendente}
+                  Solicitado: {formatarQuantidadeParaExibicao(item.unit ?? null, item.solicitado)} · Executado:{' '}
+                  {formatarQuantidadeParaExibicao(item.unit ?? null, item.executado)} · Entregue:{' '}
+                  {formatarQuantidadeParaExibicao(item.unit ?? null, item.entregue)} · Pendente:{' '}
+                  {formatarQuantidadeParaExibicao(item.unit ?? null, item.pendente)}
                 </p>
                 <EntregaForm
                   item={item}

@@ -229,7 +229,7 @@ describe('EntregasPage', () => {
     await selecionarPedido()
 
     const disponiveis = (await screen.findByText('Disponíveis')).closest('div.rounded-card')
-    expect(disponiveis).toHaveTextContent('5 un · 4 m')
-    expect(screen.getByText('Pendentes').closest('div.rounded-card')).toHaveTextContent('2 un · 0 m')
+    expect(disponiveis).toHaveTextContent('5 un · 4,00 m')
+    expect(screen.getByText('Pendentes').closest('div.rounded-card')).toHaveTextContent('2 un · 0,00 m')
   })
 })

@@ -210,7 +210,7 @@ describe('PedidoGerentePage', () => {
     configurarApi(misto)
     render(<PedidoGerentePage />)
 
-    expect(await screen.findByText('2 peca · 5 m')).toBeInTheDocument()
+    expect(await screen.findByText('2 peca · 5,00 m')).toBeInTheDocument()
     expect(
       screen.getByRole('progressbar', { name: 'Execução do pedido (peca)' }),
     ).toBeInTheDocument()

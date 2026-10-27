@@ -97,7 +97,7 @@ describe('PainelPage', () => {
     mockRespostas()
     render(<PainelPage />)
 
-    expect(await screen.findByText('12.5 M')).toBeInTheDocument()
+    expect(await screen.findByText('12,50 M')).toBeInTheDocument()
     expect(screen.getByText('75%')).toBeInTheDocument()
     expect(screen.getByText('3 de 4 no prazo.')).toBeInTheDocument()
   })
@@ -116,7 +116,7 @@ describe('PainelPage', () => {
     render(<PainelPage />)
 
     expect(await screen.findByText('30 UN')).toBeInTheDocument()
-    expect(screen.getByText('15 M')).toBeInTheDocument()
+    expect(screen.getByText('15,00 M')).toBeInTheDocument()
     expect(screen.queryByText(/45/)).not.toBeInTheDocument()
     // Sem denominador não há percentual: "0%" seria lido como desempenho ruim (P04).
     expect(screen.getByText('—')).toBeInTheDocument()

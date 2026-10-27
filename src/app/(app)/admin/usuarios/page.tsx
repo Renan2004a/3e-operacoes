@@ -179,6 +179,12 @@ export default function UsuariosPage() {
     <section className="grid gap-4">
       <PageHead title="Usuários" description="Cadastre usuários, associe perfis e setores e controle o acesso." />
 
+      <Alert variant="info" title="Inativação em vez de exclusão">
+        Usuários não são excluídos para preservar o histórico de pedidos, execuções, ocorrências e
+        auditoria. Use <strong>Inativar</strong> para bloquear o acesso imediatamente; a reativação
+        é uma nova ação.
+      </Alert>
+
       <div aria-live="polite" className="grid gap-2">
         {sucesso ? (
           <Alert variant="success" title="Tudo certo">

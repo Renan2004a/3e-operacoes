@@ -32,6 +32,8 @@ export interface AtividadeDoPedido {
 export interface ItemDoPedidoConsultado {
   classificationStatus: StatusClassificacaoItem
   atividades: AtividadeDoPedido[]
+  /** Prazo de entrega do item, usado para a previsão do pedido (AD-009). */
+  deadlineAt?: Date | null
 }
 
 /** Pedido como o repositório entrega para consulta: cabeçalho e itens. */
@@ -64,6 +66,8 @@ export interface PedidoListado {
   numero: string
   cliente: string | null
   status: StatusPedido
+  /** Maior prazo de entrega entre os itens; null quando nenhum item tem prazo. */
+  previsao: Date | null
 }
 
 /**
@@ -276,6 +280,12 @@ export async function listarPedidos(
       numero: pedido.numero,
       cliente: pedido.cliente,
       status: statusDoPedido(pedido.itens),
+      // Previsão do pedido: o prazo mais distante entre os itens, pois o
+      // pedido só está completo quando o último item também é entregue.
+      previsao: pedido.itens.reduce<Date | null>((maior, item) => {
+        if (!item.deadlineAt) return maior
+        return !maior || item.deadlineAt > maior ? item.deadlineAt : maior
+      }, null),
     })),
     paginacao: {
       limite,

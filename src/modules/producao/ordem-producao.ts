@@ -13,6 +13,8 @@ export interface DadosOrdemProducao {
   unidade: string
   solicitado: Quantidade
   executado: Quantidade
+  /** Previsão de entrega do item (prazo do pedido), quando definida. */
+  previsao: Date | null
 }
 
 export interface OrdemProducao extends DadosOrdemProducao {

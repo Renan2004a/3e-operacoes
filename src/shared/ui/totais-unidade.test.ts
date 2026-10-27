@@ -30,7 +30,7 @@ describe('valorPorUnidade', () => {
       total({ unidade: 'metro', pendente: '15' }),
     ]
 
-    expect(valorPorUnidade(totais, 'pendente')).toBe('30 peca · 15 metro')
+    expect(valorPorUnidade(totais, 'pendente')).toBe('30 peca · 15,00 metro')
   })
 
   it('mostra zero quando o pedido não tem itens', () => {
@@ -44,7 +44,7 @@ describe('valorPorUnidade', () => {
   })
 
   it('preserva a precisão decimal recebida da API (RN04)', () => {
-    expect(valorPorUnidade([total({ unidade: 'M', pendente: '2.75' })], 'pendente')).toBe('2.75 M')
+    expect(valorPorUnidade([total({ unidade: 'M', pendente: '2.75' })], 'pendente')).toBe('2,75 M')
   })
 })
 
@@ -62,12 +62,12 @@ describe('formatarQuantidadeParaExibicao', () => {
   })
 
   it('padroniza metro com duas casas (RN020, RN022)', () => {
-    expect(formatarQuantidadeParaExibicao('M', '10.5')).toBe('10.50')
-    expect(formatarQuantidadeParaExibicao('MT', '20.2999')).toBe('20.30')
+    expect(formatarQuantidadeParaExibicao('M', '10.5')).toBe('10,50')
+    expect(formatarQuantidadeParaExibicao('MT', '20.2999')).toBe('20,30')
   })
 
   it('formata zero sem confundir com ausência de valor', () => {
-    expect(formatarQuantidadeParaExibicao('M', '0')).toBe('0.00')
+    expect(formatarQuantidadeParaExibicao('M', '0')).toBe('0,00')
     expect(formatarQuantidadeParaExibicao('UN', 0)).toBe('0')
     expect(formatarQuantidadeParaExibicao('UN', '')).toBe('')
   })

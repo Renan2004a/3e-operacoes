@@ -31,7 +31,12 @@ export function rotuloDaUnidade(unidade: string | null): string {
  */
 export function valorPorUnidade(totais: readonly TotalUnidadeView[], campo: CampoTotal): string {
   if (totais.length === 0) return '0'
-  return totais.map((total) => `${total[campo]} ${rotuloDaUnidade(total.unidade)}`).join(' · ')
+  return totais
+    .map(
+      (total) =>
+        `${formatarQuantidadeParaExibicao(total.unidade, total[campo])} ${rotuloDaUnidade(total.unidade)}`,
+    )
+    .join(' · ')
 }
 
 /**

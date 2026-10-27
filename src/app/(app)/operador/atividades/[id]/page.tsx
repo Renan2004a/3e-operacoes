@@ -11,6 +11,8 @@ import { Field } from '@/shared/ui/field'
 import { Input } from '@/shared/ui/input'
 import { PageHead } from '@/shared/ui/page-head'
 import { Progress } from '@/shared/ui/progress'
+import { formatarQuantidadeParaExibicao } from '@/shared/ui/totais-unidade'
+import { formatarDiaCivil } from '@/shared/time/dia-civil'
 import { Spinner } from '@/shared/ui/spinner'
 import { cn, FOCO_VISIVEL } from '@/shared/ui/utils'
 
@@ -23,6 +25,8 @@ interface Ordem {
   solicitado: string | number
   executado: string | number
   pendente: string | number
+  /** Previsão de entrega do item (ISO), quando o gerente definiu. */
+  previsao: string | null
 }
 
 /** Percentual executado do item, limitado a 100 (PROT-05). */
@@ -30,7 +34,7 @@ function percentualExecutado(ordem: Ordem): number {
   const solicitado = Number(ordem.solicitado)
   const executado = Number(ordem.executado)
   if (!Number.isFinite(solicitado) || solicitado <= 0) return 0
-  return Math.min(100, Math.round((executado / solicitado) * 100))
+  return Math.min(100, Math.round((executado / solicitado) * 1000) / 10)
 }
 
 export default function ExecutarAtividadePage() {
@@ -149,6 +153,10 @@ export default function ExecutarAtividadePage() {
             <p className="mt-1 text-sm text-muted">
               Pedido {ordem.pedido} · Setor {ordem.setor}
             </p>
+            <p className="mt-1 text-sm text-muted">
+              Previsão de entrega:{' '}
+              {ordem.previsao ? formatarDiaCivil(ordem.previsao) : 'sem previsão'}
+            </p>
           </div>
         </CardHeader>
         <CardContent className="grid gap-3">
@@ -157,18 +165,18 @@ export default function ExecutarAtividadePage() {
               label="Progresso da atividade"
               value={percentualExecutado(ordem)}
               tone={percentualExecutado(ordem) >= 100 ? 'success' : 'accent'}
-              helper={`${ordem.executado} de ${ordem.solicitado} ${ordem.unidade} executadas.`}
+              helper={`${formatarQuantidadeParaExibicao(ordem.unidade, ordem.executado)} de ${formatarQuantidadeParaExibicao(ordem.unidade, ordem.solicitado)} ${ordem.unidade} executadas.`}
             />
           </div>
           <ul aria-label="Valores da atividade" className="grid gap-1 text-sm text-muted">
             <li>
-              Solicitado: {ordem.solicitado} {ordem.unidade}
+              Solicitado: {formatarQuantidadeParaExibicao(ordem.unidade, ordem.solicitado)} {ordem.unidade}
             </li>
             <li>
-              Executado: {ordem.executado} {ordem.unidade}
+              Executado: {formatarQuantidadeParaExibicao(ordem.unidade, ordem.executado)} {ordem.unidade}
             </li>
             <li className="font-semibold text-ink">
-              Pendente: {ordem.pendente} {ordem.unidade}
+              Pendente: {formatarQuantidadeParaExibicao(ordem.unidade, ordem.pendente)} {ordem.unidade}
             </li>
           </ul>
         </CardContent>

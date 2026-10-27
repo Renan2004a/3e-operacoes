@@ -40,7 +40,7 @@ const MATRIZ: Record<Acao, readonly RoleCode[]> = {
   gerenciar_setores: ['SYSTEM_RESPONSIBLE'],
   monitorar_integracao: ['TECHNICAL_RESPONSIBLE', 'SYSTEM_RESPONSIBLE'],
   definir_prazo: ['PRODUCTION_MANAGER', 'SELLER'],
-  programar_remessa: ['PRODUCTION_MANAGER', 'SELLER'],
+  programar_remessa: ['PRODUCTION_MANAGER', 'SHIPPING'],
   corrigir_setor: ['PRODUCTION_MANAGER', 'SYSTEM_RESPONSIBLE', 'SELLER'],
   corrigir_setor_justificado: ['PRODUCTION_MANAGER', 'SYSTEM_RESPONSIBLE'],
 }

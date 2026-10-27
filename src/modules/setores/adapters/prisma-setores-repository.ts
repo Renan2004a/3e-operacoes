@@ -86,6 +86,13 @@ export const prismaMapeamentoRepository: MapeamentoRepository = {
     return row ? toMapping(row) : null
   },
 
+  async listAll() {
+    const rows = await prisma.categorySectorMapping.findMany({
+      orderBy: { legacyCategory: 'asc' },
+    })
+    return rows.map(toMapping)
+  },
+
   async create({ legacyCategory, sectorId }) {
     const row = await prisma.categorySectorMapping.create({
       data: { legacyCategory, sectorId, status: 'ACTIVE' },
