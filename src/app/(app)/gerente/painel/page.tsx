@@ -156,7 +156,11 @@ function GrupoAlertas({
               key={`${alerta.tipo}-${alerta.itemId}`}
               className="rounded-lg border border-line p-2 text-sm"
             >
-              <Link href={`/gerente/pedidos/${alerta.orderId}`} className="font-medium text-accent">
+              <Link
+                href={`/gerente/pedidos/${alerta.orderId}`}
+                className="font-medium text-accent"
+                aria-label={`Abrir pedido ${alerta.orderNumber}, ${alerta.itemDescription ?? 'item'}, setor ${alerta.sectorName ?? 'sem setor'}`}
+              >
                 Pedido {alerta.orderNumber}
               </Link>
               <p className="text-ink">
