@@ -575,6 +575,13 @@ describe('quantidades e vocabulário por setor no detalhe do Vendedor', () => {
 
     expect(await screen.findByText('Pendentes de produção e separação')).toBeInTheDocument()
     expect(screen.getByRole('progressbar', { name: 'Separação do item 1' })).toBeInTheDocument()
+    const expandirItem2 = screen.getByRole('button', { name: /Expandir item 2/ })
+    expect(expandirItem2).toHaveAttribute('aria-expanded', 'false')
+    fireEvent.click(expandirItem2)
+    expect(screen.getByRole('button', { name: /Recolher item 2/ })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    )
     expect(screen.getByRole('progressbar', { name: 'Execução do item 2' })).toBeInTheDocument()
     expect(
       screen.getByRole('progressbar', { name: 'Separação do pedido (UN)' }),
