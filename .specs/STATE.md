@@ -251,6 +251,24 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Date**: 2026-10-27
 - **Status**: active (integrada e validada localmente: **1037 testes**, lint 0 erros, typecheck/build OK; Playwright **15/15** novos + **11/11** responsivo/impressão + **9/9** Operador; deploy e validação hospedada concluídos em 2026-10-27).
 
+### AD-023
+
+- **Decision**: Correções de interface pedidas pelo professor/Saul aplicadas imediatamente: (a) quantidades sempre no **padrão brasileiro** (vírgula; metro com 2 casas, peça inteira) e percentuais com **1 casa decimal** (ex.: 62,5%); (b) **previsão de entrega** visível na lista do Vendedor/Gerente, no detalhe, na atividade do Operador, na Expedição e na impressão; (c) **histórico de prazos** por item, usando `logs_auditoria` (`DEADLINE_CHANGED`, antes/depois, usuário e data), sem nova tabela; (d) **remessa com número automático** (o usuário informa só a data) e **Vendedor sem ações de remessa** — apenas leitura das datas; `programar_remessa` passa a Gerente/Expedição; (e) tela de Setores explica o mapeamento categoria→setor e lista os mapeamentos; (f) tela de Usuários explica que a inativação preserva o histórico.
+- **Reason**: O professor considerou as correções de UI urgentes para apresentar ao cliente; Saul não entendia o mapeamento e a inativação de usuários; o Vendedor não deveria executar tarefas da Expedição.
+- **Trade-off**: O histórico usa a auditoria genérica (não uma tabela específica de prazos); a consulta é sob demanda. O Vendedor deixa de confirmar/remover remessas (API 403); a Expedição ainda não tem uma tela dedicada de remessas — a gestão continua no detalhe pelo Gerente até a migração do banco. A previsão da lista usa o **maior** prazo entre os itens (pedido completo), não o próximo prazo.
+- **Scope**: lista/detalhe do Vendedor e Gerente, atividade/ordem do Operador, Entregas, Administração (setores/usuários), imports de formatação, prazos, remessas, testes e documentação. Sem migração de banco.
+- **Date**: 2026-10-27
+- **Status**: active (implementada; 1034 testes, lint 0 erros, typecheck/build OK; validação de navegador e deploy em andamento).
+
+### AD-024
+
+- **Decision**: A reestruturação do banco apontada pelo professor **não** foi executada nesta rodada. O diagnóstico e o plano estão em `docs/revisao-banco-professor.md`: padronizar nomes físicos em **português**, trocar CUID por **BIGINT**, criar `perfis` + `usuarios_perfis`, substituir `remessas_programadas` por previsões/entregas, remodelar `execucoes` como `apontamentos` e renomear `managerOverride`/`regra_produto_setor`, além de detalhar as regras de negócio.
+- **Reason**: A mudança altera PKs/FKs, URLs, DTOs, repositórios, dados e testes; o professor sugeriu desenhar o banco manualmente e gerar o SQL antes de mexer no código. Fazer isso junto com correções de UI colocaria a demonstração em risco.
+- **Trade-off**: O banco continua com nomes mistos e IDs string até a migração aprovada; a dívida está documentada. O histórico de prazos já foi resolvido sem schema novo.
+- **Scope**: banco, Prisma, ETL, contratos e documentação. Fora do escopo desta rodada.
+- **Date**: 2026-10-27
+- **Status**: proposed (aguardando decisão/migração dedicada).
+
 ## Handoff — integração dos PRs #14 e #15 (2026-10-27)
 
 - **Feature**: correções do Gerente (PR #15) e do Vendedor/importação (PR #14).

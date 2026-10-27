@@ -295,3 +295,32 @@ Novos testes: `painel-ocorrencias.test.ts`, `api/producao/ocorrencias/route.test
 - Os testes de integração MySQL continuam **gated** (`RUN_INTEGRATION_TESTS=1` + banco de teste); não foram executados nesta rodada.
 - Conflitos do merge #14: apenas `.specs/STATE.md`, `docs/testes-locais.md` e `docs/validacao-hospedada.md`, resolvidos mantendo as duas contribuições.
 - O PR #15 entrou sem conflitos.
+
+---
+
+## 11. Correções de UI do professor/Saul (2026-10-27)
+
+**Escopo:** padrão brasileiro de unidades, percentuais com decimais, previsão de entrega em todos os perfis, histórico de prazos, remessa automática, restrição do Vendedor e clareza das telas administrativas.
+
+| Gate | Resultado |
+| --- | --- |
+| `npm run test` | **1034 aprovados** + 24 de integração ignorados |
+| `npm run lint` | 0 erros (7 avisos) |
+| `npm run typecheck` | OK |
+| `npm run build` | OK |
+| Playwright — correções de UI (`scripts/validar-correcoes-ui.mjs`) | **15/15** |
+
+### O que foi verificado no navegador
+
+- Vendedor: coluna **Previsão**; quantidades com vírgula; **histórico de prazos**; sem botões de remessa (somente leitura).
+- Gerente: painel com **Atualizar**; previsão; histórico; remessa com número **automático** (sem campo de número).
+- Admin: explicação do mapeamento + **Mapeamentos cadastrados**; explicação da inativação de usuários.
+- Operador: **Previsão de entrega** na atividade e na ordem de produção.
+- Sem erros de console/hidratação.
+
+### Observações
+
+- A previsão da lista usa o **maior** prazo entre os itens (pedido completo).
+- O histórico usa `logs_auditoria` com a ação `DEADLINE_CHANGED`; não há tabela nova.
+- A reestruturação do banco (IDs inteiros, `perfis`, remoção de `remessas_programadas`, `apontamentos`) está planejada em `docs/revisao-banco-professor.md` e **não** foi executada.
+- A Expedição ainda não tem tela própria de remessas; a gestão permanece no detalhe do Gerente até a migração.

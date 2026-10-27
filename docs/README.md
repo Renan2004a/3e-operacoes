@@ -6,6 +6,7 @@
 - `banco-de-dados.md`: bancos local/hospedado, tabelas, relacionamentos, nomenclatura e DBeaver.
 - `mockups/`: mockups editáveis das telas propostas (HTML/CSS) e instruções.
 - `wireframes/`: wireframes de baixa fidelidade de todas as telas, projeto Balsamiq e importação BMPR.
+- `revisao-banco-professor.md`: diagnóstico e plano de migração do banco (nomes, IDs, perfis, remessas, apontamentos).
 - `avaliacao-heuristicas.md`: avaliação das 10 heurísticas de Nielsen antes/depois.
 - `testes-locais.md`: gates, Playwright, testes manuais e verificação no banco.
 - `validacao-hospedada.md`: checklist e resultados do ambiente hospedado.
