@@ -2,7 +2,7 @@
 import '@testing-library/jest-dom/vitest'
 import type { AnchorHTMLAttributes, ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 const mocks = vi.hoisted(() => ({ apiGet: vi.fn(), apiPost: vi.fn() }))
 
@@ -242,5 +242,197 @@ describe('ImportarPedido — transparência', () => {
 
     expect(await screen.findByText('Tentativa anterior falhou')).toBeInTheDocument()
     expect(await screen.findByText('Código técnico: ORDER_NOT_FOUND')).toBeInTheDocument()
+  })
+
+  it('orienta sobre pedido inexistente em vez de mostrar apenas o código técnico (#5)', async () => {
+    mocks.apiPost.mockResolvedValue(inicio())
+    mocks.apiGet.mockResolvedValue(
+      status({ orderId: null, status: 'FAILED', events: [evento('FAILED', 'ORDER_NOT_FOUND')] }),
+    )
+    renderizar()
+
+    importar()
+
+    expect(await screen.findByText('Consulta ao Top Gerente falhou')).toBeInTheDocument()
+    expect(screen.getByText(/Pedido não encontrado no Top Gerente/)).toBeInTheDocument()
+    expect(screen.getByText(/pode ser diferente do número no 3E/)).toBeInTheDocument()
+    expect(screen.getByText('Código técnico: ORDER_NOT_FOUND')).toBeInTheDocument()
+  })
+
+  it('prioriza o errorCode atual do job sobre o detalhe do evento (#5)', async () => {
+    mocks.apiPost.mockResolvedValue(inicio())
+    mocks.apiGet.mockResolvedValue(
+      status({
+        orderId: null,
+        status: 'FAILED',
+        errorCode: 'CONNECTOR_TIMEOUT',
+        events: [evento('FAILED', 'ORDER_NOT_FOUND')],
+      }),
+    )
+    renderizar()
+
+    importar()
+
+    expect(await screen.findByText('Consulta ao Top Gerente falhou')).toBeInTheDocument()
+    expect(screen.getByText(/não respondeu dentro do tempo esperado/)).toBeInTheDocument()
+    expect(screen.getByText('Código técnico: CONNECTOR_TIMEOUT')).toBeInTheDocument()
+  })
+
+  it('explica falha de tempo do conector sem substituir a transparência da consulta', async () => {
+    mocks.apiPost.mockResolvedValue(inicio())
+    mocks.apiGet.mockResolvedValue(
+      status({
+        orderId: null,
+        status: 'FAILED',
+        events: [evento('FAILED', 'CONNECTOR_TIMEOUT')],
+      }),
+    )
+    renderizar()
+
+    importar()
+
+    expect(await screen.findByText('Consulta ao Top Gerente falhou')).toBeInTheDocument()
+    expect(screen.getByText(/não respondeu dentro do tempo esperado/)).toBeInTheDocument()
+    expect(screen.getByText('Código técnico: CONNECTOR_TIMEOUT')).toBeInTheDocument()
+  })
+})
+
+describe('ImportarPedido — espera prolongada (#13)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    mocks.apiPost.mockReset()
+    mocks.apiGet.mockReset()
+    mocks.apiPost.mockResolvedValue(inicio())
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.useRealTimers()
+  })
+
+  async function assentar() {
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0)
+    })
+  }
+
+  async function avancar(ms: number) {
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(ms)
+    })
+  }
+
+  async function iniciar(numero = '70435') {
+    fireEvent.change(screen.getByLabelText('Número do pedido'), { target: { value: numero } })
+    fireEvent.click(screen.getByRole('button', { name: 'Importar pedido' }))
+    await assentar()
+  }
+
+  it('suspende o acompanhamento no limite e informa que a importação demora', async () => {
+    mocks.apiGet.mockResolvedValue({
+      jobId: 'job_1',
+      orderId: null,
+      status: 'RUNNING',
+      events: [],
+    })
+
+    render(<ImportarPedido limiteAcompanhamentoMs={4_500} />)
+    await iniciar()
+
+    expect(screen.getByText('Processando')).toBeInTheDocument()
+    expect(mocks.apiGet).toHaveBeenCalledTimes(1)
+
+    await avancar(1_500)
+    expect(mocks.apiGet).toHaveBeenCalledTimes(2)
+    await avancar(1_500)
+    expect(mocks.apiGet).toHaveBeenCalledTimes(3)
+
+    expect(screen.getByText(/A importação está demorando mais que o esperado/)).toBeInTheDocument()
+    expect(screen.getByText('Processando')).toBeInTheDocument()
+    expect(screen.queryByText('Importação falhou')).not.toBeInTheDocument()
+
+    await avancar(10_000)
+    expect(mocks.apiGet).toHaveBeenCalledTimes(3)
+  })
+
+  it('consulta o mesmo job manualmente e reconhece o sucesso sem novo POST', async () => {
+    mocks.apiGet.mockResolvedValueOnce({
+      jobId: 'job_1',
+      orderId: null,
+      status: 'RUNNING',
+      events: [],
+    })
+
+    render(<ImportarPedido limiteAcompanhamentoMs={1_500} />)
+    await iniciar()
+
+    expect(screen.getByText(/A importação está demorando mais que o esperado/)).toBeInTheDocument()
+
+    mocks.apiGet.mockResolvedValueOnce({
+      jobId: 'job_1',
+      orderId: 'order_1',
+      status: 'SUCCEEDED',
+      events: [evento('SUCCEEDED', 'IMPORTED')],
+    })
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Consultar andamento' }))
+      await vi.advanceTimersByTimeAsync(0)
+    })
+
+    expect(screen.getByText('Importação concluída')).toBeInTheDocument()
+    expect(mocks.apiGet).toHaveBeenLastCalledWith('/api/integracao/pedidos/job_1')
+    expect(mocks.apiPost).toHaveBeenCalledTimes(1)
+    expect(screen.queryByRole('button', { name: 'Consultar andamento' })).not.toBeInTheDocument()
+  })
+
+  it('não trata falha de consulta como falha da importação', async () => {
+    mocks.apiGet
+      .mockResolvedValueOnce({
+        jobId: 'job_1',
+        orderId: null,
+        status: 'RUNNING',
+        events: [],
+      })
+      .mockRejectedValueOnce(new Error('rede indisponível'))
+
+    render(<ImportarPedido limiteAcompanhamentoMs={3_000} />)
+    await iniciar()
+
+    expect(screen.getByText('Processando')).toBeInTheDocument()
+    await avancar(1_500)
+
+    expect(screen.getByText('Não foi possível consultar o andamento')).toBeInTheDocument()
+    expect(screen.getByText(/pode continuar em andamento/)).toBeInTheDocument()
+    expect(screen.queryByText('Importação falhou')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Consultar andamento' })).toBeInTheDocument()
+
+    await avancar(10_000)
+    expect(mocks.apiGet).toHaveBeenCalledTimes(2)
+  })
+
+  it('limpa o acompanhamento ao desmontar', async () => {
+    mocks.apiGet.mockResolvedValue({
+      jobId: 'job_1',
+      orderId: null,
+      status: 'RUNNING',
+      events: [],
+    })
+
+    const { unmount } = render(<ImportarPedido />)
+    await iniciar()
+
+    expect(mocks.apiGet).toHaveBeenCalledTimes(1)
+
+    unmount()
+    await avancar(10_000)
+
+    expect(mocks.apiGet).toHaveBeenCalledTimes(1)
+  })
+
+  it('mantém o limite padrão conservador de 60s', async () => {
+    const modulo = await import('./importar-pedido')
+
+    expect(modulo.LIMITE_ACOMPANHAMENTO_PADRAO_MS).toBe(60_000)
   })
 })

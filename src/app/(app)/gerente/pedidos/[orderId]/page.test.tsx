@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   apiGet: vi.fn(),
   apiPost: vi.fn(),
   apiPatch: vi.fn(),
+  retorno: null as string | null,
   ApiError: class ApiError extends Error {
     status: number
     code: string
@@ -29,6 +30,8 @@ vi.mock('@/shared/http/api-client', () => ({
 vi.mock('next/navigation', () => ({
   useParams: () => ({ orderId: 'p1' }),
   useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () =>
+    new URLSearchParams(mocks.retorno === null ? {} : { retorno: mocks.retorno }),
 }))
 
 vi.mock('next/link', () => ({
@@ -97,6 +100,7 @@ function configurarApi(pedidoData = pedido()) {
 }
 
 beforeEach(() => {
+  mocks.retorno = null
   mocks.apiGet.mockReset()
   mocks.apiPost.mockReset()
   mocks.apiPatch.mockReset()
@@ -119,6 +123,17 @@ describe('PedidoGerentePage', () => {
     expect(await screen.findByRole('link', { name: /voltar para os pedidos/i })).toHaveAttribute(
       'href',
       '/gerente/pedidos',
+    )
+  })
+
+  it('volta à listagem preservando filtros e página (PR #7)', async () => {
+    mocks.retorno = '/gerente/pedidos?cliente=Ana&pagina=2'
+    configurarApi()
+    render(<PedidoGerentePage />)
+
+    expect(await screen.findByRole('link', { name: /voltar para os pedidos/i })).toHaveAttribute(
+      'href',
+      '/gerente/pedidos?cliente=Ana&pagina=2',
     )
   })
 

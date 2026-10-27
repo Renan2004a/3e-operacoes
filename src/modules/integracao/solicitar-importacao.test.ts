@@ -26,6 +26,17 @@ function createFakeRepo(): SolicitacaoImportacaoRepository & {
         ) ?? null
       )
     },
+    async findLatestByOrderNumberSince(legacyOrderNumber, since) {
+      return (
+        jobs
+          .filter(
+            (job) =>
+              job.legacyOrderNumber === legacyOrderNumber &&
+              job.createdAt.getTime() >= since.getTime(),
+          )
+          .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0] ?? null
+      )
+    },
     async criarComAuditoria({ legacyOrderNumber, idempotencyKey, now, requestedByUserId }) {
       const existing = jobs.find((job) => job.idempotencyKey === idempotencyKey)
       let job = existing
@@ -159,12 +170,37 @@ describe('solicitarImportacao', () => {
     })
   })
 
-  it('após a janela, reutiliza o job e audita como nova tentativa', async () => {
+  it('após a janela, reutiliza job ativo antigo sem novo despacho e audita como reutilização', async () => {
     const repo = createFakeRepo()
     const first = await solicitarImportacao(
       { orderNumber: '70435', now: NOW, requestedByUserId: SOLICITANTE },
       repo,
     )
+
+    const after = new Date(NOW.getTime() + IDEMPOTENCY_WINDOW_MS + 1)
+    const second = await solicitarImportacao(
+      { orderNumber: '70435', now: after, requestedByUserId: 'user_outro' },
+      repo,
+    )
+
+    expect(second).toEqual({ jobId: first.jobId, reused: true })
+    expect(repo.jobs).toHaveLength(1)
+    expect(repo.audits).toHaveLength(2)
+    expect(repo.audits[1]).toMatchObject({
+      jobId: first.jobId,
+      requestedByUserId: 'user_outro',
+      requestKind: 'REUSED_JOB',
+      newDispatch: false,
+    })
+  })
+
+  it('após a janela, job final antigo inicia nova tentativa e audita novo despacho', async () => {
+    const repo = createFakeRepo()
+    const first = await solicitarImportacao(
+      { orderNumber: '70435', now: NOW, requestedByUserId: SOLICITANTE },
+      repo,
+    )
+    repo.jobs[0].status = 'SUCCEEDED'
 
     const after = new Date(NOW.getTime() + IDEMPOTENCY_WINDOW_MS + 1)
     const second = await solicitarImportacao(

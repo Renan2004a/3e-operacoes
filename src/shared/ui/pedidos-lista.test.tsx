@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest'
+import { StrictMode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
@@ -15,6 +16,8 @@ vi.mock('@/shared/http/api-client', () => ({
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
   useParams: () => ({}),
+  useSearchParams: () =>
+    new URLSearchParams(typeof window === 'undefined' ? '' : window.location.search),
 }))
 
 import { PedidosLista, type PedidoListado } from './pedidos-lista'
@@ -443,6 +446,24 @@ describe('PedidosLista', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Ir para a primeira página' }))
 
     await waitFor(() => expect(mocks.apiGet).toHaveBeenLastCalledWith('/api/pedidos'))
+  })
+
+  it('preserva a página de um link direto na montagem em StrictMode (A1)', async () => {
+    window.history.replaceState({}, '', '/?pagina=2')
+    mocks.apiGet.mockResolvedValue(
+      resposta([PEDIDO], { offset: 20, pagina: 2, total: 45, totalPaginas: 3 }),
+    )
+
+    render(
+      <StrictMode>
+        <PedidosLista onSelecionar={vi.fn()} />
+      </StrictMode>,
+    )
+
+    await screen.findByText('Pedido 100')
+    await waitFor(() => expect(mocks.apiGet).toHaveBeenCalled())
+    expect(mocks.apiGet.mock.calls.every(([url]) => String(url).includes('offset=20'))).toBe(true)
+    expect(window.location.search).toContain('pagina=2')
   })
 
   it('volta para a primeira página ao recarregar após importar um pedido (A1, D5)', async () => {

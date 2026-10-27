@@ -109,8 +109,8 @@ Os 9 PRs abertos do Marcelo foram revisados, integrados com resolução de confl
 
 - **Commit no `main`**: `ccd8f8d` (branch de integração `integracao-prs`).
 - **Conflitos resolvidos**: importação (#5/#8/#11/#13), lista/detalhe (#6/#7/#9/#10/#12) e `STATE.md` (ADs).
-- **Decisão de conflito**: a UI de importação do **#8** (transparência/reimportação) foi mantida como vigente; o #13 (espera prolongada) fica para reaplicação. A política do #8 de **não duplicar** job ativo antigo foi preservada, com o teste do #5 ajustado.
-- **Auditoria (#11)** combinada com a leitura do job mais recente/retry (#8): `criarComAuditoria` + `registrarAuditoriaSolicitacao` convivem com `findLatestByOrderNumberSince`.
+- **Decisão de conflito**: a UI de importação do **#8** (transparência/reimportação) foi mantida como vigente; o #13 (espera prolongada) foi reaplicado sobre ela na revisão pós-merge (`fix/vendedor-integracao-pos-merge`). A política do #8 de **não duplicar** job ativo antigo foi preservada, com o teste do #5 ajustado.
+- **Auditoria (#11)** combinada com a leitura do job mais recente/retry (#8): `criarComAuditoria` + `registrarAuditoriaSolicitacao` convivem com `findLatestByOrderNumberSince`. Na revisão pós-merge, job ativo antigo passou a ser auditado como `REUSED_JOB` (`newDispatch: false`), coerente com a ausência de novo despacho.
 
 > Os PRs foram integrados por merge local (a `main` contém todas as mudanças); os PRs no GitHub foram fechados com a referência do commit, já que os branches conflitavam entre si.
 
@@ -138,3 +138,18 @@ Deploy do commit `4be4bc2` (feature + pool + documentação) e validação do fl
 - **Banco**: 13 ocorrências persistidas, com vínculo ao pedido/item/setor/responsável/motivo.
 - **Configuração nova (opcional)**: `DB_CONNECTION_LIMIT` (padrão 15) e `DB_ACQUIRE_TIMEOUT_MS` (padrão 30000). Se o Railway tiver limite menor de conexões, ajustar no serviço.
 - **Ressalva**: o deploy usou o mesmo token de projeto de 2026-10-25; **rotacionar/revogar** após a entrega. O banco do app continua compartilhado com o ambiente de desenvolvimento (go-live real exige banco separado).
+
+## 9. Validação local do PR #14 (2026-10-25)
+
+Validação feita na branch `fix/vendedor-integracao-pos-merge`, sem alterar produção.
+
+- **Banco**: MySQL 8.0.46 isolado em `/tmp/opencode/mysql-3e`, porta 3307. O app usou `3e_operacoes_test` (migrations + seed) e os testes de integração usaram `3e_operacoes_integration`, ambos criados do zero e descartáveis.
+- **Aplicação**: `next dev` local em `http://localhost:3000`, com dados de 25 pedidos de teste.
+- **Conector**: servidor HTTP local simulado em `127.0.0.1:4010`, com callback assinado para a aplicação. **Não é o conector Top Gerente real**; a simulação cobriu sucesso, espera de 120 s, falha `ORDER_NOT_FOUND` e callback manual.
+- **Navegador**: Playwright/Chromium, 15/15 cenários aprovados — login, filtros/pesquisa/período, página 2, retorno do detalhe (Vendedor e Gerente), links diretos, retorno externo bloqueado, importação nova/reutilizada/falha, falha de consulta, pausa de 60 s e retomada manual, sem erro de página no console.
+- **MySQL real**: 24/24 testes de integração (`consulta-pedidos` e `prazos`) aprovados em `RUN_INTEGRATION_TESTS=1`, incluindo paginação, filtros combinados e prazos.
+- **API/banco**: job ativo antigo reutilizado sem despacho, com `REUSED_JOB`/`newDispatch: false`; job novo e retry de falha com `NEW_ATTEMPT`/`newDispatch: true`; eventos e pedidos persistidos.
+- **Defeitos corrigidos durante a validação**: (1) link direto com `pagina=2` perdia a página na montagem em StrictMode; (2) a listagem lia `window` no primeiro render e gerava divergência de hidratação; (3) o retorno client-side do detalhe montava a listagem antes da query e perdia filtros. Correções nos commits `d26c0bb` e `3f161ab`.
+- **Checks finais**: 1017 testes automatizados aprovados (24 de integração ignorados na suíte padrão), typecheck, typecheck do conector, lint sem erros e build OK.
+
+**Ainda não validado:** conector Top Gerente real, dados reais, deploy/hospedagem e teste manual em dispositivo físico. As decisões pendentes AD-010, AD-011, AD-012, AD-013, AD-016 e AD-017 continuam fora do escopo.

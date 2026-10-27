@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import Link from 'next/link'
 import type { RoleCode } from '@/generated/prisma/client'
 import {
   contarCaracteresMotivo,
@@ -650,9 +649,12 @@ export function PedidoDetalhe({
   return (
     <section className="grid gap-4">
       <div className="grid gap-2">
-        <Link href={destinoVoltar} className={cn('text-sm font-medium text-accent', FOCO_VISIVEL)}>
+        {/* Navegação completa de propósito: o retorno carrega a listagem com a
+            query da URL. Em navegação client-side o estado inicial podia ser
+            hidratado antes da troca da URL e perder filtros/página. */}
+        <a href={destinoVoltar} className={cn('text-sm font-medium text-accent', FOCO_VISIVEL)}>
           ← Voltar para os pedidos
-        </Link>
+        </a>
         <PageHead
           title={`Pedido ${pedido.numero}`}
           description={pedido.cliente ?? 'Sem cliente'}

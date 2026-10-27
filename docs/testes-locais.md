@@ -168,7 +168,7 @@ npm run dev            # http://localhost:3000
 | 12 | Conferir o total exibido | É o total de pedidos que atendem aos filtros, não o tamanho da página |
 | 13 | Repetir em largura de celular e com teclado | Sem rolagem horizontal da página; botões com alvo adequado e foco visível; leitor de tela anuncia a paginação |
 
-Registrar como evidência: perfil usado, URL da lista, quantidade total exibida, página acessada, captura de tela e qualquer divergência. A A1 permanece **aprovada provisoriamente** até esse roteiro ser concluído.
+Registrar como evidência: perfil usado, URL da lista, quantidade total exibida, página acessada, captura de tela e qualquer divergência. Em 2026-10-25, os cenários de filtros, página 2, links diretos e retorno do detalhe foram validados localmente com Playwright nos perfis Vendedor e Gerente; o roteiro manual em dispositivo físico permanece pendente.
 
 ---
 
@@ -203,7 +203,7 @@ Executar com o app local e banco do app migrado. Repetir no **Vendedor** e no **
 
 ## 8. Validação manual — transparência da reimportação e unidade
 
-**Status:** roteiro pendente; não executado nesta alteração. Requer aplicação, conector local e ambiente de teste com dados controlados.
+**Status:** validado localmente em 2026-10-25 com MySQL isolado e conector HTTP simulado (15 cenários Playwright; 24 testes de integração MySQL). Pendente repetir com o conector Top Gerente real e em dispositivo físico.
 
 | # | Passo | Resultado esperado |
 | --- | --- | --- |
@@ -214,8 +214,12 @@ Executar com o app local e banco do app migrado. Repetir no **Vendedor** e no **
 | 5 | Alterar a unidade de um item sem registros operacionais e reimportar | Unidade e quantidade são atualizadas, sem conversão automática |
 | 6 | Conferir os logs/eventos | `UNIT_DIVERGENCE` no `AuditLog` e no job; nenhum registro operacional apagado |
 | 7 | Conferir o pedido na listagem | Nenhuma duplicação de pedido e `createdAt` inalterado |
+| 8 | Manter um job sem concluir por mais de 60 s (conector lento ou pausado) | O acompanhamento automático é pausado; o status conhecido permanece e a tela informa que a importação está demorando |
+| 9 | Clicar em **Consultar andamento** | Consulta o mesmo job, sem criar novo despacho nem nova importação |
+| 10 | Forçar uma falha definitiva (ex.: pedido inexistente) | A tela mostra a orientação específica além do código técnico; uma falha de consulta não é apresentada como falha da importação |
+| 11 | Reabrir a lista após um sucesso e voltar do detalhe (Vendedor e Gerente) | Filtros e página são preservados na URL de retorno |
 
-**Evidência mínima:** perfil, número do pedido, origem da solicitação (nova/em andamento/anterior), unidade anterior e nova, mensagem exibida, link aberto e captura de tela.
+**Evidência mínima:** perfil, número do pedido, origem da solicitação (nova/em andamento/anterior), unidade anterior e nova, mensagem exibida, link aberto, tempo de espera observado e captura de tela.
 
 ---
 

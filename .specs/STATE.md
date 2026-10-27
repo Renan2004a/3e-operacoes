@@ -261,6 +261,24 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Files changed**: `src/app/(app)/operador/{fila,ocorrencias,atividades/[id]}`, `src/app/(app)/gerente/painel/page.tsx`, `src/shared/ui/{navegacao-perfil,app-shell}`, `src/modules/ocorrencias/{painel-ocorrencias,adapters/prisma-ocorrencias-repository}`, `src/app/api/producao/ocorrencias`, `src/app/api/indicadores/ocorrencias`, `src/shared/db/prisma.ts`, `scripts/validar-operador.mjs`, testes e documentos (`docs/diagnostico-operador.md`, `docs/testes-locais.md`, `docs/avaliacao-heuristicas.md`, `docs/README.md`, este arquivo).
 - **Branch**: main
 
+## Handoff — revisão integrada pós-merges (2026-10-25)
+
+- **Feature**: revisão do perfil Vendedor e das correções dos PRs #5–#13 após os merges
+- **Phase / Task**: correções aplicadas e validadas localmente; PR #14 aberto para revisão
+- **Completed**:
+  - Reaplicação do #13 sobre a UI de transparência do #8: limite técnico de 60s, pausa do polling, consulta manual do mesmo job e falha de consulta separada de falha da importação.
+  - Recuperação das mensagens de erro do #5: o código técnico continua visível, mas a orientação traduzida (`mensagens-importacao`) voltou a ser usada.
+  - Auditoria do #11 corrigida para job ativo antigo: `REUSED_JOB`/`newDispatch: false`, pois não há novo despacho.
+  - Retorno do detalhe do Gerente passou a preservar filtros e página, como no Vendedor (componente compartilhado do #7).
+  - Validação local em 2026-10-25: MySQL isolado com migrations/seed, 24 testes de integração reais, API de importação com job ativo antigo e retry, e 15 cenários de navegador (Vendedor/Gerente, importação, espera prolongada, falhas e retorno).
+  - Defeitos encontrados e corrigidos na validação: perda de página/filtros na hidratação de link direto, divergência de hidratação e perda de filtros no retorno client-side do detalhe.
+  - Preservados: transparência de reimportação e unidade do #8, quantidades/vocabulário do #9, proteção de remessas do #10, rótulo do período do #12, filtros AD-014/AD-018/AD-019 e paginação A1.
+- **In-progress**: nenhum
+- **Next step**: revisar/mergear o PR #14; manter pendente a validação com o conector Top Gerente real e em produção.
+- **Blockers**: conector Top Gerente real e ambiente de produção; decisões pendentes AD-010, AD-012/T00.4, AD-013, AD-016/D6 e AD-017/D7.
+- **Branch**: fix/vendedor-integracao-pos-merge
+- **PR**: #14
+
 ## Handoff — auditoria da solicitação de importação (AD-015)
 
 - **Feature**: rastreabilidade do usuário autenticado que solicita importação de pedido
