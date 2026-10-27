@@ -18,22 +18,22 @@ export const NAV_POR_PERFIL: Record<RoleCode, readonly ItemNav[]> = {
   PRODUCTION_MANAGER: [
     { href: '/gerente/painel', label: 'Painel' },
     { href: '/gerente/pedidos', label: 'Pedidos' },
-    { href: '/integracao', label: 'Importar' },
+    { href: '/integracao', label: 'Importar pedido' },
     // A matriz concede `registrar_execucao` ao gerente, então ele acessa a fila
     // de produção compartilhada com o operador (QF-10). Fica por último para
     // preservar o painel como tela inicial (FEP-11).
-    { href: '/operador/fila', label: 'Fila' },
+    { href: '/operador/fila', label: 'Fila de produção' },
   ],
   SELLER: [{ href: '/vendedor/pedidos', label: 'Vendas' }],
   SHIPPING: [{ href: '/expedicao/entregas', label: 'Entregas' }],
   SYSTEM_RESPONSIBLE: [
     { href: '/admin/usuarios', label: 'Usuários' },
     { href: '/admin/setores', label: 'Setores' },
-    { href: '/integracao', label: 'Importar' },
+    { href: '/integracao', label: 'Importar pedido' },
   ],
   TECHNICAL_RESPONSIBLE: [
     { href: '/tecnico/integracao', label: 'Integração' },
-    { href: '/integracao', label: 'Importar' },
+    { href: '/integracao', label: 'Importar pedido' },
   ],
 }
 

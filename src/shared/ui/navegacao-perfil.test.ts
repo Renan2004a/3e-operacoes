@@ -13,7 +13,7 @@ describe('navegacao por perfil', () => {
   it('inclui a fila de produção na navegação do gerente (QF-10)', () => {
     expect(NAV_POR_PERFIL.PRODUCTION_MANAGER).toContainEqual({
       href: '/operador/fila',
-      label: 'Fila',
+      label: 'Fila de produção',
     })
   })
 
@@ -22,7 +22,9 @@ describe('navegacao por perfil', () => {
   })
 
   it('aponta a fila do gerente para a mesma rota de produção do operador (QF-10)', () => {
-    const filaGerente = NAV_POR_PERFIL.PRODUCTION_MANAGER.find((item) => item.label === 'Fila')
+    const filaGerente = NAV_POR_PERFIL.PRODUCTION_MANAGER.find(
+      (item) => item.label === 'Fila de produção',
+    )
 
     expect(filaGerente?.href).toBe(NAV_POR_PERFIL.OPERATOR[0]?.href)
   })
