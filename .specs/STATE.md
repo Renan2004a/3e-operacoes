@@ -258,7 +258,7 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Trade-off**: O histórico usa a auditoria genérica (não uma tabela específica de prazos); a consulta é sob demanda. O Vendedor deixa de confirmar/remover remessas (API 403); a Expedição ainda não tem uma tela dedicada de remessas — a gestão continua no detalhe pelo Gerente até a migração do banco. A previsão da lista usa o **maior** prazo entre os itens (pedido completo), não o próximo prazo.
 - **Scope**: lista/detalhe do Vendedor e Gerente, atividade/ordem do Operador, Entregas, Administração (setores/usuários), imports de formatação, prazos, remessas, testes e documentação. Sem migração de banco.
 - **Date**: 2026-10-27
-- **Status**: active (implementada; 1034 testes, lint 0 erros, typecheck/build OK; validação de navegador e deploy em andamento).
+- **Status**: active (implementada; **1037 testes**, lint 0 erros, typecheck/build OK; Playwright **15/15** de UI; deploy e validação hospedada concluídos; vídeo completo em `docs/video/demo-completa-2026-10-27.mp4`).
 
 ### AD-024
 

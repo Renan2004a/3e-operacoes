@@ -177,3 +177,29 @@ Deploy do commit `c3f1ff0` (merge dos PRs #15 e #14) e validação dos fluxos al
 - **Ressalva**: o deploy reutilizou o token de projeto de 2026-10-25; **rotacionar/revogar** após a entrega. O banco do app continua compartilhado com o desenvolvimento.
 
 **Evidências**: `docs/video/validacao-prs-14-15/` e `docs/video/validacao-prod/`.
+
+---
+
+## 11. Atualização 2026-10-27 — correções de UI (professor/Saul)
+
+Deploy do commit `ce4fbd5` (correções de UI) com o ajuste final de recarga do histórico de prazos, e validação em produção.
+
+| Item | Local | Hospedado |
+| --- | --- | --- |
+| Unidades com vírgula e percentuais com 1 casa decimal | ✅ | ✅ |
+| Previsão de entrega na lista, detalhe, operador, expedição e impressão | ✅ | ✅ |
+| Histórico de prazos (auditoria) | ✅ | ✅ |
+| Remessa com número automático e Vendedor sem gestão de remessas | ✅ | ✅ |
+| Explicação do mapeamento e lista de mapeamentos | ✅ | ✅ |
+| Explicação da inativação de usuários | ✅ | ✅ |
+| Testes automatizados | **1037** verdes + 24 ignorados | mesmos artefatos |
+| Lint / typecheck / build | 0 erros (7 avisos) / OK / OK | — |
+| Playwright — correções de UI (`validar-correcoes-ui.mjs`) | **15/15** | **15/15** |
+| Playwright — responsivo/impressão | **11/11** | **11/11** |
+| Playwright — Operador | **9/9** | **9/9** |
+| `/api/health` / `/login` | — | **200 / 200** |
+
+- **Vídeo**: `docs/video/demo-completa-2026-10-27.mp4` (8m43s, legendas queimadas), com capítulo de app, alteração/restauração de prazo e capítulo de banco (DBeaver + consultas reais).
+- **Banco**: duas linhas de `DEADLINE_CHANGED` criadas na demonstração (06/12 → 13/12 e 13/12 → 06/12); o valor atual do item foi restaurado. Nenhum outro dado operacional foi alterado na gravação.
+- **Reestruturação do banco**: planejada em `docs/revisao-banco-professor.md`; não executada.
+- **Ressalva**: token de projeto do Railway ainda ativo; rotacionar/revogar.

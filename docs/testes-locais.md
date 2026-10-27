@@ -304,7 +304,7 @@ Novos testes: `painel-ocorrencias.test.ts`, `api/producao/ocorrencias/route.test
 
 | Gate | Resultado |
 | --- | --- |
-| `npm run test` | **1034 aprovados** + 24 de integração ignorados |
+| `npm run test` | **1037 aprovados** + 24 de integração ignorados |
 | `npm run lint` | 0 erros (7 avisos) |
 | `npm run typecheck` | OK |
 | `npm run build` | OK |
