@@ -240,6 +240,9 @@ export default function PainelPage() {
 
   const { painel, pcp } = dados
   const { cumprimentoPrazo } = pcp
+  // Sem atividades concluídas com prazo não há percentual: "0%" induziria a
+  // leitura de péssimo desempenho (P04 da avaliação do Gerente).
+  const temCumprimentoDePrazo = cumprimentoPrazo.concluidasComPrazo > 0
 
   const totalPorStatus = (status: ActivityStatus) =>
     painel.porStatus.find((contagem) => contagem.status === status)?.total ?? 0
@@ -283,9 +286,13 @@ export default function PainelPage() {
 
         <Metric
           label="Cumprimento de prazo"
-          value={`${cumprimentoPrazo.percentual}%`}
-          tone="success"
-          helper={`${cumprimentoPrazo.concluidasNoPrazo} de ${cumprimentoPrazo.concluidasComPrazo} no prazo.`}
+          value={temCumprimentoDePrazo ? `${Math.round(cumprimentoPrazo.percentual)}%` : '—'}
+          tone={temCumprimentoDePrazo ? 'success' : 'default'}
+          helper={
+            temCumprimentoDePrazo
+              ? `${cumprimentoPrazo.concluidasNoPrazo} de ${cumprimentoPrazo.concluidasComPrazo} no prazo.`
+              : 'Sem concluídas com prazo.'
+          }
         />
       </div>
 

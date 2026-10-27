@@ -118,6 +118,9 @@ describe('PainelPage', () => {
     expect(await screen.findByText('setor-corte: 30 UN')).toBeInTheDocument()
     expect(screen.getByText('setor-corte: 15 M')).toBeInTheDocument()
     expect(screen.queryByText(/45/)).not.toBeInTheDocument()
+    // Sem denominador não há percentual: "0%" seria lido como desempenho ruim (P04).
+    expect(screen.getByText('—')).toBeInTheDocument()
+    expect(screen.getByText('Sem concluídas com prazo.')).toBeInTheDocument()
   })
 
   it('mostra os alertas operacionais com atrasados, parados e não encaminhados (IND-11)', async () => {
