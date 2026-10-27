@@ -219,10 +219,10 @@ describe('PedidoGerentePage', () => {
     })
     render(<PedidoGerentePage />)
 
-    fireEvent.change(await screen.findByLabelText('Prazo do item 1'), {
+    fireEvent.change(await screen.findByLabelText('Prazo de entrega (item 1)'), {
       target: { value: '2026-02-01' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar prazo do item 1' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar prazo de entrega (item 1)' }))
 
     await waitFor(() =>
       expect(mocks.apiPatch).toHaveBeenCalledWith('/api/pedidos/itens/item_1/prazo', {
@@ -238,10 +238,10 @@ describe('PedidoGerentePage', () => {
     })
     render(<PedidoGerentePage />)
 
-    fireEvent.change(await screen.findByLabelText('Prazo do item 1'), {
+    fireEvent.change(await screen.findByLabelText('Prazo de entrega (item 1)'), {
       target: { value: '2026-02-01' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar prazo do item 1' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar prazo de entrega (item 1)' }))
 
     expect(await screen.findByText('Prazo de entrega: 01/02/2026')).toBeInTheDocument()
   })
@@ -253,7 +253,7 @@ describe('PedidoGerentePage', () => {
     })
     render(<PedidoGerentePage />)
 
-    expect(await screen.findByLabelText('Prazo do item 1')).toHaveValue('2026-02-01')
+    expect(await screen.findByLabelText('Prazo de entrega (item 1)')).toHaveValue('2026-02-01')
     expect(screen.getByText('Prazo de entrega: 01/02/2026')).toBeInTheDocument()
   })
 
@@ -262,7 +262,7 @@ describe('PedidoGerentePage', () => {
     render(<PedidoGerentePage />)
 
     expect(await screen.findByText('Sem prazo')).toBeInTheDocument()
-    expect(screen.getByLabelText('Prazo do item 1')).toHaveValue('')
+    expect(screen.getByLabelText('Prazo de entrega (item 1)')).toHaveValue('')
   })
 
   it('mostra pedido não encontrado quando a API responde 404 (FEP-13)', async () => {

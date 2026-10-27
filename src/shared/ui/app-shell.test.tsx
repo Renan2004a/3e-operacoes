@@ -48,8 +48,8 @@ const PERFIS: Array<{ perfil: RoleCode; itens: Array<{ nome: string; href: strin
     itens: [
       { nome: 'Painel', href: '/gerente/painel' },
       { nome: 'Pedidos', href: '/gerente/pedidos' },
-      { nome: 'Importar', href: '/integracao' },
-      { nome: 'Fila', href: '/operador/fila' },
+      { nome: 'Importar pedido', href: '/integracao' },
+      { nome: 'Fila de produção', href: '/operador/fila' },
     ],
   },
   { perfil: 'SELLER', itens: [{ nome: 'Vendas', href: '/vendedor/pedidos' }] },
@@ -59,14 +59,14 @@ const PERFIS: Array<{ perfil: RoleCode; itens: Array<{ nome: string; href: strin
     itens: [
       { nome: 'Usuários', href: '/admin/usuarios' },
       { nome: 'Setores', href: '/admin/setores' },
-      { nome: 'Importar', href: '/integracao' },
+      { nome: 'Importar pedido', href: '/integracao' },
     ],
   },
   {
     perfil: 'TECHNICAL_RESPONSIBLE',
     itens: [
       { nome: 'Integração', href: '/tecnico/integracao' },
-      { nome: 'Importar', href: '/integracao' },
+      { nome: 'Importar pedido', href: '/integracao' },
     ],
   },
 ]
@@ -182,7 +182,7 @@ describe('AppShell', () => {
   it('não mostra rotas de outros perfis para o responsável técnico (FEP-10)', () => {
     render(<AppShell perfil="TECHNICAL_RESPONSIBLE">{conteudo}</AppShell>)
 
-    expect(screen.getByRole('link', { name: 'Importar' })).toHaveAttribute('href', '/integracao')
+    expect(screen.getByRole('link', { name: 'Importar pedido' })).toHaveAttribute('href', '/integracao')
     expect(screen.queryByRole('link', { name: 'Pedidos' })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Usuários' })).not.toBeInTheDocument()
   })
@@ -190,7 +190,7 @@ describe('AppShell', () => {
   it('o gerente vê a fila e não vê rotas de expedição ou administração (FEP-10, QF-10)', () => {
     render(<AppShell perfil="PRODUCTION_MANAGER">{conteudo}</AppShell>)
 
-    expect(screen.getByRole('link', { name: 'Fila' })).toHaveAttribute('href', '/operador/fila')
+    expect(screen.getByRole('link', { name: 'Fila de produção' })).toHaveAttribute('href', '/operador/fila')
     expect(screen.queryByRole('link', { name: 'Entregas' })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Usuários' })).not.toBeInTheDocument()
   })

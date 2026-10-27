@@ -116,6 +116,7 @@ export default function OcorrenciasPage() {
   // não se perder na hidratação do componente no cliente.
   useEffect(() => {
     const daUrl = atividadeDaUrl()
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- pré-seleção vinda da URL, aplicada após a hidratação
     if (daUrl) setAtividadeSelecionada(daUrl)
   }, [])
 

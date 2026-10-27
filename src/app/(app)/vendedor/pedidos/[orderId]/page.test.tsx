@@ -213,10 +213,10 @@ describe('PedidoVendedorPage', () => {
     })
     render(<PedidoVendedorPage />)
 
-    fireEvent.change(await screen.findByLabelText('Prazo do item 1'), {
+    fireEvent.change(await screen.findByLabelText('Prazo de entrega (item 1)'), {
       target: { value: '2026-03-10' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar prazo do item 1' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar prazo de entrega (item 1)' }))
 
     expect(await screen.findByText('Prazo atualizado com sucesso.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /voltar para os pedidos/i })).toHaveAttribute(
@@ -250,7 +250,7 @@ describe('PedidoVendedorPage', () => {
 
     expect(await screen.findByText('Solicitado')).toBeInTheDocument()
     expect(screen.getByText('Pendente')).toBeInTheDocument()
-    expect(screen.getByLabelText('Prazo do item 1')).toBeInTheDocument()
+    expect(screen.getByLabelText('Prazo de entrega (item 1)')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Classificar item 1' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Adicionar remessa do item 1' })).toBeInTheDocument()
   })
@@ -268,13 +268,13 @@ describe('PedidoVendedorPage', () => {
 
     const { unmount } = render(<PedidoVendedorPage />)
 
-    expect(await screen.findByLabelText('Prazo do item 1')).toHaveValue('2026-02-01')
+    expect(await screen.findByLabelText('Prazo de entrega (item 1)')).toHaveValue('2026-02-01')
     expect(screen.getByText('Prazo de entrega: 01/02/2026')).toBeInTheDocument()
 
     unmount()
     render(<PedidoVendedorPage />)
 
-    expect(await screen.findByLabelText('Prazo do item 1')).toHaveValue('2026-02-01')
+    expect(await screen.findByLabelText('Prazo de entrega (item 1)')).toHaveValue('2026-02-01')
     expect(screen.getByText('Prazo de entrega: 01/02/2026')).toBeInTheDocument()
   })
 
@@ -283,7 +283,7 @@ describe('PedidoVendedorPage', () => {
     render(<PedidoVendedorPage />)
 
     expect(await screen.findByText('Sem prazo')).toBeInTheDocument()
-    expect(screen.getByLabelText('Prazo do item 1')).toHaveValue('')
+    expect(screen.getByLabelText('Prazo de entrega (item 1)')).toHaveValue('')
   })
 
   it('usa o prazo devolvido pela API após salvar, sem deslocar o dia (AD-009)', async () => {
@@ -293,13 +293,13 @@ describe('PedidoVendedorPage', () => {
     })
     render(<PedidoVendedorPage />)
 
-    fireEvent.change(await screen.findByLabelText('Prazo do item 1'), {
+    fireEvent.change(await screen.findByLabelText('Prazo de entrega (item 1)'), {
       target: { value: '2026-03-10' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar prazo do item 1' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar prazo de entrega (item 1)' }))
 
     expect(await screen.findByText('Prazo de entrega: 10/03/2026')).toBeInTheDocument()
-    expect(screen.getByLabelText('Prazo do item 1')).toHaveValue('2026-03-10')
+    expect(screen.getByLabelText('Prazo de entrega (item 1)')).toHaveValue('2026-03-10')
   })
 
   it('mostra o prazo operacional apenas para leitura (AD-009, D5)', async () => {
@@ -324,8 +324,8 @@ describe('PedidoVendedorPage', () => {
     })
     render(<PedidoVendedorPage />)
 
-    expect(await screen.findByText('Prazo do setor: 01/02/2026 · Atrasado')).toBeInTheDocument()
-    expect(screen.queryByLabelText('Prazo do setor')).not.toBeInTheDocument()
+    expect(await screen.findByText('Prazo operacional (setor): 01/02/2026 · Atrasado')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Prazo operacional (setor)')).not.toBeInTheDocument()
   })
 
   it('não oferece o formulário de prazo para perfil sem definir_prazo, mas mantém a leitura (D9)', async () => {
@@ -344,8 +344,8 @@ describe('PedidoVendedorPage', () => {
     render(<PedidoVendedorPage />)
 
     expect(await screen.findByText('Prazo de entrega: 01/02/2026')).toBeInTheDocument()
-    expect(screen.queryByLabelText('Prazo do item 1')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Salvar prazo do item 1' })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Prazo de entrega (item 1)')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Salvar prazo de entrega (item 1)' })).not.toBeInTheDocument()
   })
 
   it('desmembra o item e confirma o resultado', async () => {
@@ -575,6 +575,13 @@ describe('quantidades e vocabulário por setor no detalhe do Vendedor', () => {
 
     expect(await screen.findByText('Pendentes de produção e separação')).toBeInTheDocument()
     expect(screen.getByRole('progressbar', { name: 'Separação do item 1' })).toBeInTheDocument()
+    const expandirItem2 = screen.getByRole('button', { name: /Expandir item 2/ })
+    expect(expandirItem2).toHaveAttribute('aria-expanded', 'false')
+    fireEvent.click(expandirItem2)
+    expect(screen.getByRole('button', { name: /Recolher item 2/ })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    )
     expect(screen.getByRole('progressbar', { name: 'Execução do item 2' })).toBeInTheDocument()
     expect(
       screen.getByRole('progressbar', { name: 'Separação do pedido (UN)' }),

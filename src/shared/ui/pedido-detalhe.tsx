@@ -220,6 +220,7 @@ export function PedidoDetalhe({
 
   const [perfis, setPerfis] = useState<RoleCode[]>([])
   const [correcaoAberta, setCorrecaoAberta] = useState<Record<string, boolean>>({})
+  const [itensAbertos, setItensAbertos] = useState<Record<string, boolean>>({})
   const [correcaoSetor, setCorrecaoSetor] = useState<Record<string, string>>({})
   const [correcaoMotivo, setCorrecaoMotivo] = useState<Record<string, string>>({})
   const [correcaoErro, setCorrecaoErro] = useState<Record<string, string>>({})
@@ -616,6 +617,22 @@ export function PedidoDetalhe({
   const semPermissaoParaPrazo = perfis.length > 0 && !pode(perfis, 'definir_prazo')
   const destinoVoltar = resolverRetornoListagem(retorno, basePath)
 
+  // O primeiro item abre por padrão; os demais ficam recolhidos para encurtar a
+  // página (P10 da avaliação do Gerente).
+  const itensDoPedido = pedido.itens
+  const itemEstaAberto = (itemId: string, indice: number) =>
+    itensAbertos[itemId] ?? indice === 0
+  const todosItensAbertos = itensDoPedido.every((item, indice) =>
+    itemEstaAberto(item.itemId, indice),
+  )
+
+  function alternarTodosItens() {
+    const proximo = !todosItensAbertos
+    const estado: Record<string, boolean> = {}
+    for (const item of itensDoPedido) estado[item.itemId] = proximo
+    setItensAbertos(estado)
+  }
+
   const temRevenda = pedido.itens.some((item) => ehRevenda(item.sectorCode, item.sectorName))
   const temProducao = pedido.itens.some((item) => !ehRevenda(item.sectorCode, item.sectorName))
   const rotuloPendentes =
@@ -641,7 +658,7 @@ export function PedidoDetalhe({
           description={pedido.cliente ?? 'Sem cliente'}
           actions={
             pedido.sellerLegacyCode ? (
-              <Badge variant="info">Vendedor {pedido.sellerLegacyCode}</Badge>
+              <Badge variant="info">Vendedor (cód. {pedido.sellerLegacyCode})</Badge>
             ) : null
           }
         />
@@ -727,6 +744,15 @@ export function PedidoDetalhe({
         ) : null}
       </div>
 
+      {pedido.itens.length > 0 ? (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold text-ink">Itens do pedido</h2>
+          <Button type="button" variant="outline" size="sm" onClick={alternarTodosItens}>
+            {todosItensAbertos ? 'Recolher todos' : 'Abrir todos'}
+          </Button>
+        </div>
+      ) : null}
+
       {pedido.itens.length === 0 ? (
         <Alert variant="info" title="Pedido sem itens">
           Este pedido não possui itens.
@@ -737,6 +763,7 @@ export function PedidoDetalhe({
           const desmembrado =
             item.classificationStatus === 'CLASSIFIED' || classificados[item.itemId] === true
           const labelItem = `item ${indice + 1}`
+          const aberto = itemEstaAberto(item.itemId, indice)
           const vocabulario = vocabularioDoSetor(item.sectorCode, item.sectorName)
           const statusAtividade = item.activityStatus
             ? (rotuloSituacaoDoSetor(item.activityStatus, vocabulario) ?? item.activityStatus)
@@ -750,15 +777,32 @@ export function PedidoDetalhe({
           return (
             <Card key={item.itemId}>
               <CardHeader>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <CardTitle className="text-base">
-                    {item.description ?? 'Item sem descrição'}
+                    <button
+                      type="button"
+                      className={cn('flex w-full items-start gap-2 text-left', FOCO_VISIVEL)}
+                      aria-expanded={aberto}
+                      aria-controls={`detalhe-${item.itemId}`}
+                      aria-label={`${aberto ? 'Recolher' : 'Expandir'} ${labelItem}: ${item.description ?? 'item sem descrição'}`}
+                      onClick={() =>
+                        setItensAbertos((atual) => ({ ...atual, [item.itemId]: !aberto }))
+                      }
+                    >
+                      <span aria-hidden="true" className="mt-0.5 text-muted">
+                        {aberto ? '▾' : '▸'}
+                      </span>
+                      <span>{item.description ?? 'Item sem descrição'}</span>
+                    </button>
                   </CardTitle>
                   <p className="mt-1 text-sm text-muted">
                     Item {indice + 1} · Código {item.productCode ?? '—'} · {item.unit}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
+                  {!aberto ? (
+                    <Badge variant={percentual >= 100 ? 'success' : 'neutral'}>{percentual}%</Badge>
+                  ) : null}
                   {item.unit ? <Badge variant="neutral">{item.unit}</Badge> : null}
                   {desmembrado ? (
                     <Badge variant="success">Desmembrado</Badge>
@@ -767,7 +811,10 @@ export function PedidoDetalhe({
                   )}
                 </div>
               </CardHeader>
-              <CardContent className="grid gap-4">
+              <CardContent
+                id={`detalhe-${item.itemId}`}
+                className={aberto ? 'grid gap-4' : 'hidden'}
+              >
                 <Progress
                   label={`${rotuloExecucao(vocabulario)} do ${labelItem}`}
                   value={percentual}
@@ -822,7 +869,7 @@ export function PedidoDetalhe({
 
                 {item.activityStatus || item.activityDeadlineAt ? (
                   <p className="text-sm text-muted">
-                    Prazo do setor:{' '}
+                    Prazo operacional (setor):{' '}
                     {item.activityDeadlineAt
                       ? formatarDiaCivil(item.activityDeadlineAt)
                       : 'sem prazo'}
@@ -839,7 +886,7 @@ export function PedidoDetalhe({
                     }}
                     noValidate
                   >
-                    <Field label={`Prazo do ${labelItem}`}>
+                    <Field label={`Prazo de entrega (${labelItem})`}>
                       {(props) => (
                         <Input
                           {...props}
@@ -857,7 +904,7 @@ export function PedidoDetalhe({
                     <Button
                       type="submit"
                       disabled={salvando === item.itemId}
-                      aria-label={`Salvar prazo do ${labelItem}`}
+                      aria-label={`Salvar prazo de entrega (${labelItem})`}
                     >
                       {salvando === item.itemId ? 'Salvando…' : 'Salvar prazo'}
                     </Button>
@@ -954,9 +1001,10 @@ export function PedidoDetalhe({
                     </div>
 
                     {item.bloqueioCorrecaoSetor ? (
-                      <Alert variant="warning" title="Correção bloqueada">
+                      <p className="text-sm text-muted">
+                        <span className="font-medium text-ink">Correção bloqueada</span> —{' '}
                         {item.bloqueioCorrecaoSetor} O setor deste item não pode ser alterado.
-                      </Alert>
+                      </p>
                     ) : null}
 
                     {!item.bloqueioCorrecaoSetor && correcaoAberta[item.itemId] ? (
