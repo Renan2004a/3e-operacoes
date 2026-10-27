@@ -60,7 +60,9 @@ export function HistoricoPrazos({ itemId }: { itemId: string }) {
   function alternar() {
     const proximo = !aberto
     setAberto(proximo)
-    if (proximo && historico === null && !carregando) void carregar()
+    // Recarrega a cada abertura: uma alteração feita depois da primeira
+    // consulta precisa aparecer sem exigir recarregar a página.
+    if (proximo) void carregar()
   }
 
   return (
