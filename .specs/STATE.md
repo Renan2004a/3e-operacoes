@@ -242,6 +242,31 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Date**: 2026-10-26
 - **Status**: active (implementada e validada localmente: 1023 testes, Playwright 9/9, lint/typecheck/build OK, banco inspecionado).
 
+### AD-022
+
+- **Decision**: Os PRs **#15 (Gerente)** e **#14 (Vendedor/Integração)** foram integrados preservando as duas contribuições: (a) o painel do Gerente carrega indicadores, alertas e ocorrências de forma **independente** (`Promise.allSettled`), com erro por bloco, botão **Atualizar** e horário da última atualização; “Cumprimento de prazo” mostra **—** quando não há concluídas com prazo; (b) o detalhe do pedido permite **recolher/abrir itens** (primeiro aberto, “Abrir todos/Recolher todos”) e padroniza “Prazo de entrega (item)” e “Prazo operacional (setor)”; (c) o menu do Gerente passa a usar **“Importar pedido”** e **“Fila de produção”**; (d) a importação reaplica a **espera prolongada** (60 s técnicos, pausa do polling e consulta manual do mesmo job), separa falha de consulta de falha da importação e combina orientação traduzida com o código técnico; (e) job **ativo antigo** é auditado como `REUSED_JOB` (`newDispatch: false`), pois não há novo despacho; (f) filtros e página são preservados no retorno do detalhe (Vendedor e Gerente) via `useSearchParams` e navegação completa do link “Voltar”.
+- **Reason**: Os dois PRs corrigiam regressões e lacunas de clareza nos perfis Gerente e Vendedor. A integração mantém o comportamento de ambos sem reintroduzir duplicação de despacho, perda de filtros ou mensagens técnicas sem orientação.
+- **Trade-off**: A navegação “Voltar” do detalhe passou a ser **full page load** (mais lenta que client-side), necessária para hidratar a listagem com a query antes do primeiro render. O limite de 60 s é **técnico**, não prazo de negócio/SLA. O job ativo antigo não é reenviado; se o conector ficar preso, a recuperação exige decisão operacional (mesma política anterior). A base local tem 7 pedidos, então o cenário de página 2 não é exercitável nela.
+- **Scope**: painel e detalhe do Gerente, detalhe/lista do Vendedor, importação, auditoria de job ativo, navegação/URL, testes e documentação. Permissões, saldos, prazos, entregas, remessas, ocorrências, Top Gerente e banco preservados. Sem migração.
+- **Date**: 2026-10-27
+- **Status**: active (integrada e validada localmente: **1037 testes**, lint 0 erros, typecheck/build OK; Playwright **15/15** novos + **11/11** responsivo/impressão + **9/9** Operador; deploy hospedado pendente).
+
+## Handoff — integração dos PRs #14 e #15 (2026-10-27)
+
+- **Feature**: correções do Gerente (PR #15) e do Vendedor/importação (PR #14).
+- **Phase / Task**: integração concluída na branch `integracao-prs-14-15`; gates locais aprovados; deploy pendente.
+- **Completed**:
+  - Merge do #15 sem conflitos; merge do #14 com conflitos apenas em `STATE.md`, `docs/testes-locais.md` e `docs/validacao-hospedada.md` (resolvidos mantendo as duas seções).
+  - Código auto-mergeado em `pedido-detalhe.tsx` e `pedidos-lista.tsx`; validação confirmou que o link “Voltar” usa `<a>` e os itens recolhíveis continuam funcionando.
+  - 1037 testes verdes (+14), lint 0 erros, typecheck e build OK.
+  - Navegador: 15/15 (filtros/retorno Vendedor e Gerente, painel/Atualizar, itens recolhíveis, rótulos, importação sem envio, sem erros de console/hidratação).
+  - Regressões: 11/11 responsivo/impressão e 9/9 Operador.
+- **In-progress**: deploy Railway e validação hospedada.
+- **Next step**: publicar a `main`, rodar os três scripts contra produção e atualizar `docs/validacao-hospedada.md`.
+- **Blockers**: testes de integração MySQL continuam gated; conector Top Gerente real e go-live seguem pendentes. PRs #14/#15 no GitHub devem ser fechados/mergeados após o push.
+- **Files changed**: `src/app/(app)/gerente/painel`, `src/app/(app)/gerente/pedidos`, `src/app/(app)/vendedor/pedidos`, `src/shared/ui/{pedido-detalhe,pedidos-lista,importar-pedido,navegacao-perfil}`, `src/modules/integracao/{solicitar-importacao,transparencia-importacao}`, testes, `scripts/validar-prs-14-15.mjs`, docs e este arquivo.
+- **Branch**: `integracao-prs-14-15` → `main`.
+
 ## Handoff — perfil Operador e ocorrências (AD-021)
 
 - **Feature**: separação das telas do Operador, feedback de ações e visibilidade das ocorrências pelo Gerente.

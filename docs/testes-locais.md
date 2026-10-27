@@ -262,3 +262,36 @@ Novos testes: `painel-ocorrencias.test.ts`, `api/producao/ocorrencias/route.test
 **Evidência:** capturas em `docs/video/validacao-operador/` e saída do script `scripts/validar-operador.mjs`.
 
 **Limitação registrada:** o modelo não possui situação de “análise/resolução” da ocorrência; o fluxo não foi inventado (ver `docs/diagnostico-operador.md` §8).
+
+---
+
+## 10. Integração dos PRs #14 e #15 (2026-10-27)
+
+**Escopo:** clareza/resiliência do perfil Gerente (#15, Vanessa) e correções de filtros/importação do Vendedor (#14, Marcelo).
+
+### Gates automatizados
+
+| Gate | Resultado |
+| --- | --- |
+| `npm run test` | **1037 aprovados** + 24 de integração ignorados (1061) |
+| `npm run lint` | 0 erros (4 avisos) |
+| `npm run typecheck` | OK |
+| `npm run build` | OK |
+| Playwright — novos fluxos (`scripts/validar-prs-14-15.mjs`) | **15/15** |
+| Playwright — responsivo/impressão | **11/11** |
+| Playwright — Operador | **9/9** |
+
+### O que foi validado no navegador
+
+- Vendedor: filtro de setor aplicado pela URL; detalhe com `retorno`; “Voltar” preserva o setor e o select.
+- Gerente: painel com **Atualizar**, ocorrências e “Cumprimento de prazo” sem 0% enganoso; atualização manual conclui.
+- Gerente: retorno do detalhe preserva filtros; detalhe com **8 itens**, “Recolher todos/Abrir todos” e rótulos “Prazo de entrega (item)” / “Prazo operacional (setor)”.
+- Importação: formulário disponível; nenhum job foi criado durante a validação.
+- Sem erros de console/hidratação.
+
+### Observações
+
+- A base local tem **7 pedidos**; o cenário de página 2 não é exercitável nela (marcado como N/A). O código de paginação foi validado pelos testes automatizados e pela revisão do #14.
+- Os testes de integração MySQL continuam **gated** (`RUN_INTEGRATION_TESTS=1` + banco de teste); não foram executados nesta rodada.
+- Conflitos do merge #14: apenas `.specs/STATE.md`, `docs/testes-locais.md` e `docs/validacao-hospedada.md`, resolvidos mantendo as duas contribuições.
+- O PR #15 entrou sem conflitos.
