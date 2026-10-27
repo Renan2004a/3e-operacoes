@@ -153,3 +153,27 @@ Validação feita na branch `fix/vendedor-integracao-pos-merge`, sem alterar pro
 - **Checks finais**: 1017 testes automatizados aprovados (24 de integração ignorados na suíte padrão), typecheck, typecheck do conector, lint sem erros e build OK.
 
 **Ainda não validado:** conector Top Gerente real, dados reais, deploy/hospedagem e teste manual em dispositivo físico. As decisões pendentes AD-010, AD-011, AD-012, AD-013, AD-016 e AD-017 continuam fora do escopo.
+
+---
+
+## 10. Atualização 2026-10-27 — integração dos PRs #14 e #15
+
+Deploy do commit `c3f1ff0` (merge dos PRs #15 e #14) e validação dos fluxos alterados em produção.
+
+| Item | Local | Hospedado |
+| --- | --- | --- |
+| PR #15 — painel/detalhe do Gerente (`a25d8b6`) | ✅ | ✅ |
+| PR #14 — filtros/importação do Vendedor (`854d0c3`) | ✅ | ✅ |
+| Testes automatizados | **1037** verdes + 24 ignorados | mesmos artefatos do commit |
+| Lint / typecheck / build | 0 erros / OK / OK | — |
+| Playwright — novos fluxos (`validar-prs-14-15.mjs`) | **15/15** | **15/15** |
+| Playwright — responsivo/impressão | **11/11** | **11/11** |
+| Playwright — Operador | **9/9** | **9/9** |
+| `/api/health` / `/login` | — | **200 / 200** |
+
+- **PRs no GitHub**: #15 e #14 constam como **merged** (`a25d8b6` e `854d0c3`).
+- **Validação hospedada**: filtros/retorno do Vendedor e do Gerente, painel com Atualizar, itens recolhíveis, rótulos de prazo e formulário de importação; sem erros de console/hidratação.
+- **Base de dados**: 7 pedidos; cenário de página 2 não aplicável (N/A) nesta base. Testes de integração MySQL permanecem *gated*.
+- **Ressalva**: o deploy reutilizou o token de projeto de 2026-10-25; **rotacionar/revogar** após a entrega. O banco do app continua compartilhado com o desenvolvimento.
+
+**Evidências**: `docs/video/validacao-prs-14-15/` e `docs/video/validacao-prod/`.

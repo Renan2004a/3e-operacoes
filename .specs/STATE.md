@@ -249,7 +249,7 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Trade-off**: A navegação “Voltar” do detalhe passou a ser **full page load** (mais lenta que client-side), necessária para hidratar a listagem com a query antes do primeiro render. O limite de 60 s é **técnico**, não prazo de negócio/SLA. O job ativo antigo não é reenviado; se o conector ficar preso, a recuperação exige decisão operacional (mesma política anterior). A base local tem 7 pedidos, então o cenário de página 2 não é exercitável nela.
 - **Scope**: painel e detalhe do Gerente, detalhe/lista do Vendedor, importação, auditoria de job ativo, navegação/URL, testes e documentação. Permissões, saldos, prazos, entregas, remessas, ocorrências, Top Gerente e banco preservados. Sem migração.
 - **Date**: 2026-10-27
-- **Status**: active (integrada e validada localmente: **1037 testes**, lint 0 erros, typecheck/build OK; Playwright **15/15** novos + **11/11** responsivo/impressão + **9/9** Operador; deploy hospedado pendente).
+- **Status**: active (integrada e validada localmente: **1037 testes**, lint 0 erros, typecheck/build OK; Playwright **15/15** novos + **11/11** responsivo/impressão + **9/9** Operador; deploy e validação hospedada concluídos em 2026-10-27).
 
 ## Handoff — integração dos PRs #14 e #15 (2026-10-27)
 
@@ -261,9 +261,10 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
   - 1037 testes verdes (+14), lint 0 erros, typecheck e build OK.
   - Navegador: 15/15 (filtros/retorno Vendedor e Gerente, painel/Atualizar, itens recolhíveis, rótulos, importação sem envio, sem erros de console/hidratação).
   - Regressões: 11/11 responsivo/impressão e 9/9 Operador.
-- **In-progress**: deploy Railway e validação hospedada.
-- **Next step**: publicar a `main`, rodar os três scripts contra produção e atualizar `docs/validacao-hospedada.md`.
-- **Blockers**: testes de integração MySQL continuam gated; conector Top Gerente real e go-live seguem pendentes. PRs #14/#15 no GitHub devem ser fechados/mergeados após o push.
+  - Deploy Railway e validação hospedada: 15/15 + 11/11 + 9/9; `/api/health` e `/login` 200.
+- **In-progress**: nenhum.
+- **Next step**: manter os PRs #14/#15 fechados (já constam como merged) e planejar o go-live (conector real + banco dedicado).
+- **Blockers**: testes de integração MySQL continuam gated; conector Top Gerente real e go-live seguem pendentes.
 - **Files changed**: `src/app/(app)/gerente/painel`, `src/app/(app)/gerente/pedidos`, `src/app/(app)/vendedor/pedidos`, `src/shared/ui/{pedido-detalhe,pedidos-lista,importar-pedido,navegacao-perfil}`, `src/modules/integracao/{solicitar-importacao,transparencia-importacao}`, testes, `scripts/validar-prs-14-15.mjs`, docs e este arquivo.
 - **Branch**: `integracao-prs-14-15` → `main`.
 
