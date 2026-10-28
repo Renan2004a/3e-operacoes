@@ -203,6 +203,11 @@ export function PedidoDetalhe({
   const [salvando, setSalvando] = useState<string | null>(null)
 
   const [setores, setSetores] = useState<Setor[]>([])
+  // Diferencia carregamento, falha e lista carregada (inclusive vazia): a
+  // sugestão só pode ser usada depois de validada contra a lista carregada.
+  const [setoresEstado, setSetoresEstado] = useState<'carregando' | 'pronto' | 'erro'>(
+    permitirClassificacao ? 'carregando' : 'pronto',
+  )
   const [escolhas, setEscolhas] = useState<Record<string, string>>({})
   const [classificando, setClassificando] = useState<string | null>(null)
   const [classificados, setClassificados] = useState<Record<string, boolean>>({})
@@ -339,14 +344,58 @@ export function PedidoDetalhe({
 
   useEffect(() => {
     if (!permitirClassificacao) return
+    let ativo = true
     apiGet<{ sectors: Setor[] }>('/api/setores')
-      .then((dados) => setSetores(dados.sectors))
-      .catch(() => setErroAcao('Não foi possível carregar os setores.'))
+      .then((dados) => {
+        if (!ativo) return
+        setSetores(dados.sectors)
+        setSetoresEstado('pronto')
+      })
+      .catch(() => {
+        if (!ativo) return
+        setSetores([])
+        setSetoresEstado('erro')
+        setErroAcao('Não foi possível carregar os setores.')
+      })
+    return () => {
+      ativo = false
+    }
   }, [permitirClassificacao])
 
+  /**
+   * Seleção efetiva do desmembramento: a escolha manual prevalece, inclusive
+   * quando é explicitamente vazia; sem escolha manual, usa a sugestão apenas se
+   * ela existir na lista de setores ativos já carregada.
+   */
+  function setorEfetivo(item: ItemSaldo): string {
+    const escolhaManual = escolhas[item.itemId]
+    if (escolhaManual !== undefined) {
+      return setores.some((setor) => setor.id === escolhaManual && setor.active)
+        ? escolhaManual
+        : ''
+    }
+
+    const sugerido = item.suggestedSectorId
+    if (!sugerido) return ''
+    return setores.some((setor) => setor.id === sugerido && setor.active) ? sugerido : ''
+  }
+
   async function classificar(itemId: string) {
-    const sectorId = escolhas[itemId] ?? ''
+    const item = pedido?.itens.find((candidato) => candidato.itemId === itemId)
+    // Captura a seleção no início: mudanças posteriores no seletor não alteram
+    // o resultado desta solicitação.
+    const sectorId = item ? setorEfetivo(item) : ''
     limparFeedback()
+
+    if (setoresEstado !== 'pronto') {
+      setErroAcao(
+        setoresEstado === 'carregando'
+          ? 'Aguarde o carregamento dos setores para desmembrar.'
+          : 'Não foi possível carregar os setores. Recarregue a página e tente novamente.',
+      )
+      return
+    }
+
     if (sectorId === '') {
       setErroAcao('Escolha o setor do item antes de desmembrar.')
       return
@@ -354,17 +403,20 @@ export function PedidoDetalhe({
 
     setClassificando(itemId)
     try {
-      const item = pedido?.itens.find((candidato) => candidato.itemId === itemId)
-      await apiPost(`/api/pedidos/itens/${itemId}/classificar`, {
-        sectorId,
-        // Ensina o de/para categoria→setor para as próximas importações.
-        legacyCategory: item?.legacyCategory ?? undefined,
-      })
-      marcarClassificado(itemId)
+      const resposta = await apiPost<{ status: string; sectorId?: string; activityId?: string }>(
+        `/api/pedidos/itens/${itemId}/classificar`,
+        {
+          sectorId,
+          // Ensina o de/para categoria→setor para as próximas importações.
+          legacyCategory: item?.legacyCategory ?? undefined,
+        },
+      )
+      marcarClassificado(itemId, resposta?.sectorId || sectorId)
       setClassificados((atual) => ({ ...atual, [itemId]: true }))
       setSucesso('Item desmembrado com sucesso.')
     } catch (error) {
       if (error instanceof ApiError && error.status === 409) {
+        // V03: o conflito continua com o comportamento atual deste PR.
         marcarClassificado(itemId)
         setClassificados((atual) => ({ ...atual, [itemId]: true }))
         setSucesso('O item já estava desmembrado.')
@@ -378,8 +430,8 @@ export function PedidoDetalhe({
     }
   }
 
-  function marcarClassificado(itemId: string) {
-    const setor = setores.find((s) => s.id === (escolhas[itemId] ?? ''))
+  function marcarClassificado(itemId: string, sectorId?: string) {
+    const setor = setores.find((s) => s.id === (sectorId ?? escolhas[itemId] ?? ''))
     setPedido((atual) =>
       atual
         ? {
@@ -771,6 +823,9 @@ export function PedidoDetalhe({
           const percentual = percentualExecutado(item)
           const desmembrado =
             item.classificationStatus === 'CLASSIFIED' || classificados[item.itemId] === true
+          const setorSugerido = item.suggestedSectorId
+            ? setores.find((setor) => setor.id === item.suggestedSectorId && setor.active)
+            : undefined
           const labelItem = `item ${indice + 1}`
           const aberto = itemEstaAberto(item.itemId, indice)
           const vocabulario = vocabularioDoSetor(item.sectorCode, item.sectorName)
@@ -942,11 +997,23 @@ export function PedidoDetalhe({
                 {permitirClassificacao ? (
                   <div className="grid gap-3 border-t border-line pt-4">
                     <p className="text-sm font-semibold text-ink">Desmembramento</p>
-                    {item.suggestedSectorId && !desmembrado ? (
+                    {setorSugerido && !desmembrado ? (
                       <p className="text-xs text-muted">
-                        Sugerido pelo produto:{' '}
-                        {setores.find((s) => s.id === item.suggestedSectorId)?.name ?? '—'}
+                        Sugerido pelo produto: {setorSugerido.name}
                       </p>
+                    ) : null}
+                    {setoresEstado === 'carregando' ? (
+                      <p role="status" className="text-xs text-muted">
+                        Carregando setores…
+                      </p>
+                    ) : null}
+                    {setoresEstado === 'erro' ? (
+                      <p className="text-sm font-medium text-danger">
+                        Não foi possível carregar os setores. Recarregue a página.
+                      </p>
+                    ) : null}
+                    {setoresEstado === 'pronto' && !setores.some((setor) => setor.active) ? (
+                      <p className="text-sm text-muted">Nenhum setor ativo disponível.</p>
                     ) : null}
                     {desmembrado ? (
                       <Alert variant="success" title="Item desmembrado">
@@ -968,7 +1035,7 @@ export function PedidoDetalhe({
                               id={props.id}
                               aria-describedby={props['aria-describedby']}
                               className={CLASSE_SELECT}
-                              value={escolhas[item.itemId] ?? item.suggestedSectorId ?? ''}
+                              value={setorEfetivo(item)}
                               onChange={(evento) =>
                                 setEscolhas((atual) => ({
                                   ...atual,
@@ -977,17 +1044,19 @@ export function PedidoDetalhe({
                               }
                             >
                               <option value="">Selecione…</option>
-                              {setores.map((setor) => (
-                                <option key={setor.id} value={setor.id}>
-                                  {setor.name}
-                                </option>
-                              ))}
+                              {setores
+                                .filter((setor) => setor.active)
+                                .map((setor) => (
+                                  <option key={setor.id} value={setor.id}>
+                                    {setor.name}
+                                  </option>
+                                ))}
                             </select>
                           )}
                         </Field>
                         <Button
                           type="submit"
-                          disabled={classificando === item.itemId}
+                          disabled={classificando === item.itemId || setoresEstado !== 'pronto'}
                           aria-label={`Classificar ${labelItem}`}
                         >
                           {classificando === item.itemId ? 'Desmembrando…' : 'Desmembrar'}
