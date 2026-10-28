@@ -25,7 +25,7 @@ interface Atividade {
 }
 
 const ROTULO_STATUS: Record<ActivityStatus, string> = {
-  PENDING: 'Pendente',
+  PENDING: 'A iniciar',
   IN_PROGRESS: 'Em andamento',
   PAUSED: 'Pausada',
   COMPLETED: 'Concluída',
@@ -110,7 +110,8 @@ export default function FilaPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-                        Prioridade {atividade.priority} · {atividade.sectorName ?? 'Setor'}
+                        {atividade.priority > 0 ? `Prioridade ${atividade.priority} · ` : ''}
+                        {atividade.sectorName ?? 'Setor'}
                       </p>
                       <CardTitle className="mt-1 text-base">
                         {atividade.itemDescription ?? atividade.productCode ?? 'Item sem descrição'}
