@@ -214,6 +214,18 @@ describe('POST /api/pedidos/itens/[itemId]/classificar', () => {
     expect(mocks.audits[0]).toMatchObject({ action: 'CREATE', entityType: 'CategorySectorMapping' })
   })
 
+  it('responde 404 quando o item não existe', async () => {
+    seedSector()
+
+    const response = await POST(
+      request('item_inexistente', { sectorId: 'setor_telhas' }),
+      context('item_inexistente'),
+    )
+
+    expect(response.status).toBe(404)
+    expect(await response.json()).toEqual({ error: 'item_not_found' })
+  })
+
   it('responde 409 quando o item já está classificado', async () => {
     seedItem({ classificationStatus: 'CLASSIFIED' })
     seedSector()
