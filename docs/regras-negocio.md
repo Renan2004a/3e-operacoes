@@ -51,7 +51,11 @@ Item operacional: **solicitado → executado conforme o setor → disponível �
 - Atraso só existe quando o prazo aplicável é conhecido e foi ultrapassado sem conclusão correspondente.
 - Os dois níveis são independentes (AD-009): item = prazo de entrega; atividade = prazo operacional do setor. Não há herança entre eles.
 - O prazo é uma data civil interpretada em `America/Sao_Paulo` e vale até o **fim do dia**. O prazo de hoje não está atrasado; o de ontem está. O formato aceito é `YYYY-MM-DD`, sem horário.
-- Remoção de prazo, alerta comercial por prazo de entrega e auditoria de prazo não fazem parte desta etapa (ver `docs/backlog.md`).
+- Remoção de prazo e auditoria de prazo não fazem parte desta etapa (ver `docs/backlog.md`). O alerta comercial, antes adiado, foi implementado **somente no detalhe** pela AD-025 (2026-10-28), conforme abaixo.
+- **Atraso comercial do item (AD-025):** existe quando o item tem prazo de entrega, o prazo terminou e `entregue < solicitado`. Não usar `executado`, `pendente` nem o status da atividade como substitutos da quantidade entregue. Atendimento integral (`entregue >= solicitado`) encerra o atraso **atual**, ainda que a entrega tenha ocorrido depois do prazo; entrega tardia já concluída seria um indicador histórico, fora desta etapa.
+- O atraso comercial é derivado na consulta ao detalhe e não é persistido. O status representa o instante da consulta e só muda em nova consulta; não há atualização automática à meia-noite.
+- Em **Revenda**, indisponibilidade não é entrega e não encerra o atraso. A regra preserva a AD-012 e continua sujeita à decisão T00.4.
+- **Cancelamento** de item não é inferido pela ausência no payload. Enquanto a AD-010 não criar campo e contrato, itens cancelados já persistidos não são excluídos do atraso comercial.
 
 ## Reimportação, unidade e histórico operacional
 

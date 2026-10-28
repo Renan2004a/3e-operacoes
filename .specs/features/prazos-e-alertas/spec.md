@@ -18,7 +18,7 @@ O pedido pode nascer sem data de entrega e, mesmo com data, não há como sinali
 | Notificações push/e-mail de alerta | Fora do escopo atual; aqui é consulta. |
 | Interface | Fase de frontend. |
 | Remoção de prazo | AD-009/D3: não faz parte desta etapa. |
-| Alerta comercial por prazo de entrega | AD-009/D4: depende do atendimento integral (AD-011). |
+| Alerta comercial por prazo de entrega | AD-009/D4: dependia do atendimento integral (AD-011). **Parcialmente superado pela AD-025 (2026-10-28): implementado somente no detalhe; painel, lista e histórico continuam fora.** |
 | Importar data de entrega do Top Gerente | AD-009/D8: conector inalterado; sem precedência. |
 | Auditoria de alteração de prazo | AD-009/D7: etapa própria de RFN006. |
 | Prazos por item no Top Gerente | Não alterar o legado. |
@@ -169,3 +169,50 @@ O pedido pode nascer sem data de entrega e, mesmo com data, não há como sinali
 - [x] O prazo de hoje não é atrasado; o de ontem é.
 - [x] Item e atividade mantêm prazos independentes.
 - [x] Formato de data estrito, sem deslocamento de dia.
+
+---
+
+## Adendo 2026-10-28 — AD-025 (atraso comercial do detalhe)
+
+**Contexto:** o critério de atraso comercial que dependia da AD-011 foi decidido e implementado **somente no detalhe do pedido** (Vendedor/Gerente). O alerta operacional do painel não foi alterado.
+
+**Fora deste adendo:** painel, lista, filtros, PCP e indicador histórico de entrega tardia. A entrega feita depois do prazo, mas já integral, não é sinalizada como atraso atual.
+
+### P1: Atraso comercial do item ⭐ MVP
+
+**User Story:** Como Vendedor ou Gerente, quero ver no detalhe se a entrega ao cliente está atrasada, para cobrar o atendimento sem confundir com o prazo do setor.
+
+**Acceptance Criteria:**
+
+1. WHEN o item não tem prazo de entrega THEN o sistema SHALL retornar `SEM_PRAZO`.
+2. WHEN o prazo ainda não terminou THEN o sistema SHALL retornar `EM_DIA`.
+3. WHEN o prazo terminou e `entregue < solicitado` THEN o sistema SHALL retornar `ATRASADO`.
+4. WHEN o prazo terminou e `entregue >= solicitado` THEN o sistema SHALL retornar `EM_DIA`, ainda que a entrega tenha ocorrido depois do prazo.
+5. The system SHALL NOT usar `executado`, `pendente` ou o status da atividade como substitutos da quantidade entregue.
+6. The system SHALL calcular o status no servidor, com um único instante de referência para a resposta, e expor `statusPrazoEntrega` sem persistência.
+7. WHEN `statusPrazoEntrega` for `ATRASADO` THEN o detalhe SHALL exibir “Entrega atrasada”; o prazo operacional do setor SHALL continuar independente.
+8. WHEN uma nova consulta for feita THEN o status SHALL ser recalculado; não haverá atualização automática à meia-noite nem polling.
+
+**Independent Test:** item solicitado 10, executado 10, entregue 0, prazo vencido → “Entrega atrasada”; depois de entregar 10, nova consulta → sem atraso.
+
+### Edge Cases
+
+- Revenda com indisponibilidade e sem entrega: atraso permanece; indisponibilidade não substitui entrega (AD-012, sujeita a T00.4).
+- Item cancelado: não há campo/contrato; o cancelamento não é inferido pela ausência no payload (AD-010).
+- Solicitado zero e entregue zero: `EM_DIA`; a validação comercial da importação não muda.
+- Nova leitura com solicitado alterado: o status pode mudar; não há histórico.
+
+### Requirement Traceability
+
+| Requirement ID | Story | Tasks | Status |
+| --- | --- | --- | --- |
+| PRAZO-22 | P1: Atraso comercial — sem prazo | T10 | Implementado |
+| PRAZO-23 | P1: Atraso comercial — prazo futuro | T10 | Implementado |
+| PRAZO-24 | P1: Atraso comercial — produção sem entrega | T10, T11 | Implementado |
+| PRAZO-25 | P1: Atraso comercial — atendimento integral | T10, T11 | Implementado |
+| PRAZO-26 | P1: Atraso comercial — decimais e zero | T10 | Implementado |
+| PRAZO-27 | P1: Atraso comercial — Revenda/independência operacional | T11 | Implementado |
+| PRAZO-28 | P1: Atraso comercial — contrato da API | T12 | Implementado |
+| PRAZO-29 | P1: Atraso comercial — interface Vendedor/Gerente | T12 | Implementado |
+
+**Coverage:** 8 novos critérios mapeados para T10–T12; os 21 critérios anteriores permanecem válidos.

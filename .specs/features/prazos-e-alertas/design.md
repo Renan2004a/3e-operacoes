@@ -98,7 +98,7 @@ Regra de status: `SEM_PRAZO` quando não há data; `ATRASADO` quando `agora > pr
 | Prazo por item e por setor | `deadlineAt` duplicado | Ambiguidade | Item = entrega; atividade = setor; sem herança. |
 | Dados antigos em meia-noite UTC | `pedidos_itens` / `atividades` | Prazo exibido um dia antes | Sem conversão automática (D6). Em demonstração, re-salvar pela interface; dados reais exigem autorização. |
 | Sem alertas ativos | RF012 | Sem notificação | Aqui é consulta; notificação fica fora do escopo. |
-| Alerta comercial ausente | `indicadores/alertas` | “Atrasados” é operacional | D4: não implementar até a AD-011; não confundir os níveis. |
+| Alerta comercial ausente | `indicadores/alertas` | “Atrasados” é operacional | D4 foi parcialmente superado pela AD-025: o atraso comercial existe apenas no detalhe; o painel continua operacional. Não confundir os níveis. |
 
 ---
 
@@ -109,7 +109,22 @@ Regra de status: `SEM_PRAZO` quando não há data; `ATRASADO` quando `agora > pr
 | Status derivado | `SEM_PRAZO`/`EM_DIA`/`ATRASADO` | Sem novo campo. |
 | Atraso | Só com prazo e não concluído | `docs/regras-negocio.md`. |
 | Permissão | `definir_prazo` (gerente, vendedor); leitura `consultar_pedidos` | Matriz existente (D9). |
-| Alertas | Consulta de atividades atrasadas | RF012; alerta comercial adiado (D4). |
+| Alertas | Consulta de atividades atrasadas | RF012; alerta comercial adiado (D4), posteriormente implementado no detalhe pela AD-025. |
 | Data civil | `YYYY-MM-DD` estrito, fim do dia em SP | AD-009/D2. |
 | Leitura do detalhe | `deadlineAt` + `activityDeadlineAt` | Sem estado local efêmero. |
 | Prazo operacional na UI | Somente leitura | AD-009/D5. |
+
+---
+
+## Adendo 2026-10-28 — AD-025 (atraso comercial do detalhe)
+
+| Decision | Choice | Rationale |
+| --- | --- | --- |
+| Fonte do atraso comercial | `entregue < solicitado` com `OrderItem.deadlineAt` vencido | Atendimento ao cliente (AD-011), sem usar `executado`/`pendente`. |
+| Local do cálculo | `detalharPedido`, com instante de referência injetável | Precisão `Prisma.Decimal`, um único instante por resposta e teste determinístico. |
+| Contrato | `ItemDetalhado.statusPrazoEntrega: 'SEM_PRAZO' \| 'EM_DIA' \| 'ATRASADO'` | Aditivo, derivado, sem schema nem migration. |
+| Interface | “Entrega atrasada” no detalhe compartilhado Vendedor/Gerente | Diferencia do “Atrasado” do prazo operacional do setor. |
+| Atualização | Nova consulta recalcula; sem polling/relógio | Estado da consulta; não prometer atualização automática à meia-noite. |
+| Painel/lista | Sem alteração | O alerta do painel continua operacional, por prazo de atividade. |
+| Revenda | Indisponibilidade não encerra o atraso | Preserva AD-012; sujeita a T00.4. |
+| Cancelamento | Fora do escopo | Sem campo/contrato; não inferir pela ausência no payload (AD-010). |

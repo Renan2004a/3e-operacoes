@@ -235,3 +235,39 @@ O banco, a migration, a permissão `definir_prazo` e a sincronização foram ver
 - O detalhe usa uma atividade por item (`take: 1`), então itens com múltiplas atividades mostram apenas a primeira no prazo operacional.
 - O badge do item exibe a data sem sinalizar atraso. A indicação de atraso do item depende do critério de conclusão (AD-011); o cálculo de domínio (`calcularStatusPrazo`) já existe. Registrado no backlog.
 - Alerta comercial, remoção, auditoria e edição do prazo operacional seguem fora do escopo (D3, D4, D5, D7).
+
+---
+
+## Adendo V04 — atraso comercial pela entrega (AD-025, 2026-10-28)
+
+**Result**: ✅ PASS nos critérios do adendo. A observação histórica “o badge do item exibe a data sem sinalizar atraso” fica **superada** para o detalhe; painel, lista e histórico continuam fora.
+
+### Evidências por critério
+
+| AC | Critério | Evidência | Resultado |
+| -- | --- | --- | --- |
+| PRAZO-22 | Sem prazo → `SEM_PRAZO` | `src/modules/prazos/status-prazo-entrega.test.ts` (sem prazo); `consulta-pedidos.test.ts` (detalhe sem prazo) | ✅ |
+| PRAZO-23 | Prazo futuro → sem atraso | `status-prazo-entrega.test.ts` (prazo futuro) | ✅ |
+| PRAZO-24 | Solicitado 10, executado 10, entregue 0 → `ATRASADO` | `status-prazo-entrega.test.ts`; `consulta-pedidos.test.ts` (produzido e não entregue) | ✅ |
+| PRAZO-25 | Atendimento integral → `EM_DIA`; 8/8/10 → `ATRASADO` | `status-prazo-entrega.test.ts` (entregue 10 e 12; caso 8 de 10); `consulta-pedidos.test.ts` (independência do status operacional) | ✅ |
+| PRAZO-26 | Decimais e solicitado zero | `status-prazo-entrega.test.ts` (10,00/9,99; 0/0) | ✅ |
+| PRAZO-27 | Revenda/indisponibilidade e independência operacional | `consulta-pedidos.test.ts` (Revenda sem entrega; atividade `COMPLETED` x entrega incompleta) | ✅ |
+| PRAZO-28 | API devolve `statusPrazoEntrega` | `src/app/api/pedidos/[orderId]/route.test.ts` (campo e caso atrasado) | ✅ |
+| PRAZO-29 | Vendedor e Gerente exibem “Entrega atrasada” | `src/app/(app)/vendedor/pedidos/[orderId]/page.test.tsx` (3 casos) e `src/app/(app)/gerente/pedidos/[orderId]/page.test.tsx` (1 caso) | ✅ |
+
+### Gates executados
+
+| Gate | Comando | Resultado |
+| --- | --- | --- |
+| Testes | `npm test` | **1085 aprovados**, 24 ignorados (125 arquivos aprovados, 2 ignorados) |
+| Lint | `npm run lint` | 0 erros; 7 avisos pré-existentes |
+| Typecheck | `npm run typecheck` | OK |
+| Build | `DATABASE_URL` fictícia + `npm run build` | OK; nenhuma operação de banco |
+| Diff | `git diff --check` | OK |
+
+### Limitações
+
+- Validação no navegador/E2E **não executada** nesta entrega; a cobertura é de domínio, consulta, rota e componente.
+- Revenda com indisponibilidade continua sujeita à T00.4; o atraso não é encerrado pela indisponibilidade (AD-012).
+- Cancelamento depende da AD-010; não há campo/contrato e a ausência no payload não é usada.
+- Não há indicador histórico de entrega tardia, alerta comercial no painel/lista ou atualização automática à meia-noite.

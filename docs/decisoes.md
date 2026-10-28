@@ -37,6 +37,7 @@ Decisões formais do AD-009 (aprovadas em 2026-10-22).
 - O prazo é uma **data civil**: o texto aceito é `YYYY-MM-DD`, validado de forma estrita (datas inexistentes, formatos ambíguos e timestamps são rejeitados), e é persistido como o **fim do dia em `America/Sao_Paulo`**. Assim, um prazo para hoje não é atrasado; um prazo de ontem é. Datas exibidas usam o mesmo fuso, sem deslocamento de um dia.
 - A remoção de um prazo existente **não** faz parte desta etapa. Fica registrada no backlog.
 - Alertas **comerciais** por prazo de entrega não são implementados nesta etapa; dependem do critério de atendimento integral da AD-011. A quantidade executada não substitui a entregue.
+- **Atualização em 2026-10-28 (AD-025):** a frase anterior fica superada **somente para o detalhe**. O atraso comercial do item passa a ser derivado na leitura com o critério `prazo vencido e entregue < solicitado`; atendimento integral (`entregue >= solicitado`) encerra o atraso atual, sem indicador histórico. O painel e a lista continuam sem alerta comercial; o alerta operacional do painel permanece no prazo da atividade. A decisão detalhada está no AD-025 em `.specs/STATE.md`.
 - A interface permite **apenas leitura** do prazo operacional. A edição do prazo operacional não faz parte desta etapa.
 - Datas de entrega do Top Gerente **não** são importadas nesta etapa; não existe regra de precedência entre ERP e alteração local.
 - A auditoria de alteração de prazo fica pendente para uma etapa de RFN006; nenhuma auditoria nova foi criada.
