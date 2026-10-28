@@ -78,9 +78,9 @@ describe('OrdemProducaoPage', () => {
 
     expect(await screen.findByRole('heading', { level: 2, name: 'TELHA ONDULADA' })).toBeInTheDocument()
     expect(screen.getByText('Pedido 70435 · Setor Telhas')).toBeInTheDocument()
-    expect(screen.getByText('10 M')).toBeInTheDocument()
-    expect(screen.getByText('8 M')).toBeInTheDocument()
-    expect(screen.getByText('2 M')).toBeInTheDocument()
+    expect(screen.getByText('10,00 M')).toBeInTheDocument()
+    expect(screen.getByText('8,00 M')).toBeInTheDocument()
+    expect(screen.getByText('2,00 M')).toBeInTheDocument()
   })
 
   it('usa o cabeçalho de página e busca a ordem da atividade (LAC-07)', async () => {

@@ -21,6 +21,8 @@ export interface MapeamentoAudit {
 export interface MapeamentoRepository {
   /** Busca o mapeamento da categoria, ativo ou inativo, ou null. */
   findByCategory(legacyCategory: string): Promise<CategorySectorMapping | null>
+  /** Lista todos os mapeamentos, para a tela de administração. */
+  listAll(): Promise<CategorySectorMapping[]>
   /** Busca o mapeamento pelo id. */
   findById(id: string): Promise<CategorySectorMapping | null>
   /** Persiste um novo mapeamento ativo. */

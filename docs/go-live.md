@@ -125,3 +125,44 @@ mesma porta.
 - Confirmar a categoria oficial do produto no Top Gerente real.
 - Validar a query real com amostras conhecidas antes de liberar a troca.
 - Criar o usuário `SELECT` no Top Gerente real com escopo restrito.
+
+---
+
+## Checklist para rodar na empresa (revisão de 2026-10-27)
+
+### Banco e dados
+- [ ] Usar um MySQL **dedicado** (não o banco de demonstração). Criar o banco, aplicar `npx prisma migrate deploy` e rodar o seed.
+- [ ] Rodar o seed com `SEED_ADMIN_PASSWORD` forte e **sem** `SEED_DEMO=1` (as contas `*@3e.local` não são criadas).
+- [ ] Cadastrar os usuários reais em **Administração → Usuários**, com perfil e setor. Inativar/remover as contas de demonstração que já existirem.
+- [ ] Definir backup automático do MySQL (diário, com retenção) e testar a restauração uma vez.
+- [ ] Conferir setores ativos, mapeamentos categoria→setor e regras produto→setor antes de importar.
+
+### Aplicação
+- [ ] `SESSION_SECRET` com pelo menos 32 caracteres (o app recusa o valor de exemplo em produção).
+- [ ] `COOKIE_SECURE=true` com HTTPS (padrão). Em rede interna sem HTTPS, definir `COOKIE_SECURE=false` **apenas** se o app não estiver exposto à internet; o recomendado é publicar com TLS.
+- [ ] Confirmar a versão do Next.js atualizada (`16.4.3`) e rodar `npm ci`, `npm run build`.
+- [ ] Health check em `/api/health` e login com um usuário real.
+- [ ] Rodar `npm run validar:melhorias` (com `PLAYWRIGHT_BASE_URL` do ambiente) para conferir login, 404, cabeçalhos e telas principais.
+- [ ] Conferir que `X-Frame-Options`, `nosniff` e `Referrer-Policy` chegam nas respostas.
+- [ ] Limitar o acesso ao domínio (VPN/Cloudflare Access) enquanto o sistema estiver em homologação.
+
+### Conector e Top Gerente
+- [ ] Usuário MySQL **somente `SELECT`**, restrito às tabelas do legado (o conector também abre a sessão em modo read-only).
+- [ ] `CONNECTOR_SHARED_TOKEN` e `CONNECTOR_CALLBACK_TOKEN` diferentes entre si e rotacionados.
+- [ ] Cloudflare Access/mTLS entre app e conector; porta 3306 fechada.
+- [ ] `GET /health` do conector respondendo `200` (ele testa a conexão com o legado).
+- [ ] Importar um pedido conhecido e comparar número, cliente e itens; repetir a importação e confirmar que **não duplica**.
+- [ ] Verificar o comportamento com o conector fora: o job deve terminar `FAILED` e uma nova tentativa deve funcionar após 10 minutos (job travado é liberado automaticamente).
+
+### Operação
+- [ ] Treinar Vendedor (prazos/desmembramento), Gerente (painel, correção de setor, entregas), Operador (execução/ocorrências), Expedição (entregas) e Administração (usuários/setores).
+- [ ] Definir quem aprova exceções de entrega e quem trata divergências.
+- [ ] Combinar o canal de suporte e a janela de manutenção.
+- [ ] Rotacionar o token do Railway usado no deploy e revisar acessos do projeto.
+
+### Pendências funcionais conhecidas (não bloqueiam a demonstração)
+- Cancelamento lógico de item (AD-010) e regra de Revenda com indisponibilidade (RN031) dependem de decisão de negócio.
+- Remessas ainda não registram quem confirmou nem geram entrega automática (AD-016/D6).
+- A tela do Gerente não permite pausar/retomar atividade; a prioridade existe na API, sem tela.
+- Unidades aceitas hoje: metro/metro² e peça. Confirmar a lista real do Top Gerente antes de liberar quantidades fracionárias de outras unidades.
+

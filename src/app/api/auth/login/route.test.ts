@@ -33,10 +33,10 @@ import { POST } from './route'
 
 const ORIGINAL_SECRET = process.env.SESSION_SECRET
 
-function request(body: unknown): Request {
+function request(body: unknown, headers: Record<string, string> = {}): Request {
   return new Request('http://localhost/api/auth/login', {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...headers },
     body: JSON.stringify(body),
   })
 }
@@ -128,5 +128,25 @@ describe('POST /api/auth/login', () => {
     expect(response.status).toBe(400)
     expect((await response.json()).error).toBe('invalid_body')
     expect(cookieDaResposta(response)).toBe('')
+  })
+
+  it('bloqueia com 429 após 5 falhas do mesmo IP e e-mail', async () => {
+    await seedUsuario({ email: 'bruta@example.com', senha: 'senha-certa' })
+    const cabecalhos = { 'x-forwarded-for': '203.0.113.10' }
+
+    for (let tentativa = 0; tentativa < 5; tentativa += 1) {
+      const falha = await POST(
+        request({ email: 'bruta@example.com', senha: 'errada' }, cabecalhos),
+      )
+      expect(falha.status).toBe(401)
+    }
+
+    const bloqueada = await POST(
+      request({ email: 'bruta@example.com', senha: 'senha-certa' }, cabecalhos),
+    )
+    expect(bloqueada.status).toBe(429)
+    expect((await bloqueada.json()).error).toBe('too_many_attempts')
+    expect(Number(bloqueada.headers.get('retry-after'))).toBeGreaterThan(0)
+    expect(cookieDaResposta(bloqueada)).toBe('')
   })
 })

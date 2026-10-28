@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { RoleCode } from '@/generated/prisma/client'
 import { TODOS_PERFIS } from '@/modules/usuarios/permissoes'
+import { MENSAGEM_SENHA_CURTA, SENHA_MINIMA } from '@/modules/usuarios/politica-senha'
 import { ApiError, apiGet, apiPatch, apiPost } from '@/shared/http/api-client'
 import { Alert } from '@/shared/ui/alert'
 import { Badge } from '@/shared/ui/badge'
@@ -99,6 +100,11 @@ export default function UsuariosPage() {
       return
     }
 
+    if (senha.length < SENHA_MINIMA) {
+      setErroForm(MENSAGEM_SENHA_CURTA)
+      return
+    }
+
     setEnviando(true)
     try {
       await apiPost('/api/usuarios', { name: nome, email, senha, roles, sectorIds })
@@ -112,6 +118,8 @@ export default function UsuariosPage() {
     } catch (error) {
       if (error instanceof ApiError && error.status === 409) {
         setErroForm('E-mail já cadastrado. Use outro e-mail.')
+      } else if (error instanceof ApiError && error.code === 'weak_password') {
+        setErroForm(MENSAGEM_SENHA_CURTA)
       } else if (error instanceof ApiError && error.status === 403) {
         setErroForm('Sem permissão para gerenciar usuários.')
       } else {
@@ -176,8 +184,14 @@ export default function UsuariosPage() {
   }
 
   return (
-    <section className="grid gap-4">
+    <section className="grid min-w-0 gap-4">
       <PageHead title="Usuários" description="Cadastre usuários, associe perfis e setores e controle o acesso." />
+
+      <Alert variant="info" title="Inativação em vez de exclusão">
+        Usuários não são excluídos para preservar o histórico de pedidos, execuções, ocorrências e
+        auditoria. Use <strong>Inativar</strong> para bloquear o acesso imediatamente; a reativação
+        é uma nova ação.
+      </Alert>
 
       <div aria-live="polite" className="grid gap-2">
         {sucesso ? (
@@ -221,12 +235,13 @@ export default function UsuariosPage() {
                 )}
               </Field>
 
-              <Field label="Senha" required>
+              <Field label="Senha" required hint={`Mínimo de ${SENHA_MINIMA} caracteres.`}>
                 {(props) => (
                   <Input
                     {...props}
                     type="password"
                     autoComplete="new-password"
+                    minLength={SENHA_MINIMA}
                     value={senha}
                     onChange={(evento) => setSenha(evento.target.value)}
                   />
@@ -287,10 +302,10 @@ export default function UsuariosPage() {
           {usuarios.length === 0 ? (
             <p className="text-sm text-muted">Nenhum usuário cadastrado.</p>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="min-w-0 overflow-x-auto">
               <table
                 aria-label="Usuários"
-                className="tabela-responsiva w-full border-collapse text-left text-sm"
+                className="tabela-responsiva w-full min-w-0 border-collapse text-left text-sm"
               >
                 <thead>
                   <tr className="border-b border-line text-xs uppercase tracking-wide text-muted">
@@ -317,9 +332,9 @@ export default function UsuariosPage() {
                         key={usuario.id}
                         className="border-b border-line last:border-b-0 hover:bg-surface-2"
                       >
-                        <td data-label="Usuário" className="px-3 py-3">
+                        <td data-label="Usuário" className="min-w-0 px-3 py-3">
                           <p className="font-semibold text-ink">{usuario.name}</p>
-                          <p className="text-muted">{usuario.email}</p>
+                          <p className="break-all text-muted">{usuario.email}</p>
                         </td>
                         <td data-label="Perfil" className="px-3 py-3">
                           <div className="flex flex-wrap gap-1">
@@ -331,7 +346,9 @@ export default function UsuariosPage() {
                           </div>
                         </td>
                         <td data-label="Setor" className="px-3 py-3 text-muted">
-                          Setores: {usuario.sectorIds.map(nomeDoSetor).join(', ')}
+                          {usuario.sectorIds.length > 0
+                            ? `Setores: ${usuario.sectorIds.map(nomeDoSetor).join(', ')}`
+                            : 'Nenhum setor'}
                         </td>
                         <td data-label="Status" className="px-3 py-3">
                           <div className="flex flex-wrap items-center gap-2">

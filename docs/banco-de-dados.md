@@ -2,6 +2,8 @@
 
 Documento para inspeção e manutenção do banco: **qual banco é qual**, **como o fluxo funciona**, **por que cada tabela existe**, **relacionamentos**, **nomenclatura**, **migrations/seed** e **como abrir no DBeaver**. Nenhuma credencial aparece aqui.
 
+> **Revisão pendente (2026-10-27)**: o professor apontou mistura de nomes em português/inglês, IDs string (CUID), `usuarios_perfis` sem tabela `perfis`, `remessas_programadas` desnecessária e `execucoes` sem início/fim. O diagnóstico e o plano de migração estão em [`revisao-banco-professor.md`](revisao-banco-professor.md). **Nenhuma migração destrutiva foi executada**; o histórico de prazos foi resolvido usando `logs_auditoria`.
+
 ---
 
 ## 1. Dois bancos com papéis diferentes

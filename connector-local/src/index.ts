@@ -1,4 +1,5 @@
 import 'dotenv/config'
+import { timingSafeEqual } from 'node:crypto'
 import { pathToFileURL } from 'node:url'
 import express from 'express'
 import mysql from 'mysql2/promise'
@@ -26,6 +27,14 @@ export interface ImportOrderResult {
   body: Record<string, unknown>
 }
 
+/** Compara tokens sem vazar o tamanho por tempo de resposta. */
+function tokenValido(recebido: string | null, esperado: string): boolean {
+  if (!esperado || !recebido) return false
+  const a = Buffer.from(recebido)
+  const b = Buffer.from(esperado)
+  return a.length === b.length && timingSafeEqual(a, b)
+}
+
 /**
  * Handler puro do conector: autentica, consulta o Top Gerente, normaliza e
  * devolve o payload por callback. Sem dependência de servidor HTTP, o que o
@@ -35,8 +44,8 @@ export async function handleImportOrder(
   request: { authorization: string | null; body: unknown },
   deps: ImportOrderDeps,
 ): Promise<ImportOrderResult> {
-  const token = request.authorization?.replace(/^Bearer\s+/i, '')
-  if (!deps.sharedToken || token !== deps.sharedToken) {
+  const token = request.authorization?.replace(/^Bearer\s+/i, '') ?? null
+  if (!tokenValido(token, deps.sharedToken)) {
     return { status: 401, body: { error: 'unauthorized' } }
   }
 
@@ -69,9 +78,19 @@ export async function handleImportOrder(
 
 export function createApp(deps: ImportOrderDeps) {
   const app = express()
-  app.use(express.json())
+  app.disable('x-powered-by')
+  app.use(express.json({ limit: '256kb' }))
 
-  app.get('/health', (_req, res) => res.json({ status: 'ok' }))
+  // Saúde de verdade: confirma que o MySQL do Top Gerente responde. Um 503
+  // aqui evita descobrir a indisponibilidade só na primeira importação.
+  app.get('/health', async (_req, res) => {
+    try {
+      await deps.queryable.query('SELECT 1', [])
+      res.json({ status: 'ok' })
+    } catch {
+      res.status(503).json({ status: 'degraded' })
+    }
+  })
 
   app.post('/jobs/import-order', async (req, res) => {
     const result = await handleImportOrder(
@@ -80,6 +99,22 @@ export function createApp(deps: ImportOrderDeps) {
     )
     res.status(result.status).json(result.body)
   })
+
+  // Tratamento final: JSON malformado ou falha inesperada não devolvem stack
+  // trace nem detalhes internos ao chamador.
+  app.use(
+    (
+      erro: unknown,
+      _req: express.Request,
+      res: express.Response,
+      next: express.NextFunction,
+    ) => {
+      if (erro instanceof SyntaxError) return res.status(400).json({ error: 'invalid_json' })
+      console.error('[connector] erro inesperado', erro instanceof Error ? erro.message : erro)
+      if (res.headersSent) return next(erro)
+      return res.status(500).json({ error: 'internal_error' })
+    },
+  )
 
   return app
 }
@@ -92,7 +127,16 @@ function createLegadoQueryable(): LegadoQueryable {
     user: process.env.TOPGERENTE_USER,
     password: process.env.TOPGERENTE_PASSWORD,
     connectionLimit: 2,
+    connectTimeout: 10_000,
+    enableKeepAlive: true,
   })
+
+  // Defesa em profundidade: a sessão do conector não pode escrever no legado,
+  // mesmo que uma query futura seja escrita por engano.
+  pool.on('connection', (conexao) => {
+    conexao.query('SET SESSION TRANSACTION READ ONLY')
+  })
+
   return {
     query: (sql, params) => pool.query(sql, params) as Promise<[unknown, unknown?]>,
   }

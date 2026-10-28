@@ -11,6 +11,7 @@ import type {
   PapelUsuario,
   RegistrarEntregaPortResult,
 } from '../registrar-entrega'
+import { EntregaAcimaDoDisponivelError } from '../registrar-entrega'
 import type { ItemDoPedido, SaldoPedidoRepository } from '../saldo-pedido'
 
 /** Porta única de expedição, composta pelas portas de cada caso de uso. */
@@ -116,6 +117,29 @@ export const prismaExpedicaoRepository: ExpedicaoRepository = {
 
   async registrarEntrega(input): Promise<RegistrarEntregaPortResult> {
     return prisma.$transaction(async (tx) => {
+      // Trava a linha do item: duas entregas simultâneas (duas abas/tablets)
+      // não podem passar juntas pela checagem e gravar acima do disponível.
+      await tx.$queryRaw`SELECT id FROM pedidos_itens WHERE id = ${input.itemId} FOR UPDATE`
+
+      if (!input.managerOverride) {
+        const [execucoes, entregas] = await Promise.all([
+          tx.execution.aggregate({
+            where: { activity: { orderItemId: input.itemId } },
+            _sum: { quantity: true },
+          }),
+          tx.delivery.aggregate({
+            where: { orderItemId: input.itemId },
+            _sum: { quantity: true },
+          }),
+        ])
+        const executado = execucoes._sum.quantity ?? new Prisma.Decimal(0)
+        const entregue = entregas._sum.quantity ?? new Prisma.Decimal(0)
+        const disponivel = executado.minus(entregue)
+        if (input.quantidade.gt(disponivel)) {
+          throw new EntregaAcimaDoDisponivelError(input.itemId, input.quantidade, disponivel)
+        }
+      }
+
       const entregaRow = await tx.delivery.create({
         data: {
           orderItemId: input.itemId,

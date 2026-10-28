@@ -32,6 +32,8 @@ export interface AtividadeDoPedido {
 export interface ItemDoPedidoConsultado {
   classificationStatus: StatusClassificacaoItem
   atividades: AtividadeDoPedido[]
+  /** Prazo de entrega do item, usado para a previsão do pedido (AD-009). */
+  deadlineAt?: Date | null
 }
 
 /** Pedido como o repositório entrega para consulta: cabeçalho e itens. */
@@ -64,6 +66,10 @@ export interface PedidoListado {
   numero: string
   cliente: string | null
   status: StatusPedido
+  /** Maior prazo de entrega entre os itens; null quando nenhum item tem prazo. */
+  previsao: Date | null
+  /** Alguma atividade do pedido foi marcada como divergente e precisa de análise. */
+  divergente: boolean
 }
 
 /**
@@ -124,6 +130,8 @@ export interface EspecificacaoItem {
   activityDeadlineAt?: Date | null
   /** Situação de classificação do item, base da classificação manual (LAC-04). */
   classificationStatus: StatusClassificacaoItem
+  /** Categoria do produto no legado, usada para aprender o de/para categoria→setor. */
+  legacyCategory?: string | null
   /** Setor da atividade do item, para o desmembramento. */
   sectorId?: string | null
   sectorCode?: string | null
@@ -145,6 +153,8 @@ export interface ItemDetalhado extends ItemSaldo {
   /** Prazo operacional do setor, ou `null` quando não definido (AD-009, D5). */
   activityDeadlineAt: Date | null
   classificationStatus: StatusClassificacaoItem
+  /** Categoria do produto no legado (para aprender o de/para categoria→setor). */
+  legacyCategory?: string | null
   sectorId?: string | null
   sectorCode?: string | null
   sectorName?: string | null
@@ -276,6 +286,15 @@ export async function listarPedidos(
       numero: pedido.numero,
       cliente: pedido.cliente,
       status: statusDoPedido(pedido.itens),
+      // Previsão do pedido: o prazo mais distante entre os itens, pois o
+      // pedido só está completo quando o último item também é entregue.
+      previsao: pedido.itens.reduce<Date | null>((maior, item) => {
+        if (!item.deadlineAt) return maior
+        return !maior || item.deadlineAt > maior ? item.deadlineAt : maior
+      }, null),
+      divergente: pedido.itens.some((item) =>
+        item.atividades.some((atividade) => atividade.status === 'DIVERGENT'),
+      ),
     })),
     paginacao: {
       limite,
@@ -337,6 +356,7 @@ export async function detalharPedido(
       deadlineAt: especificacao?.deadlineAt ?? null,
       activityDeadlineAt: especificacao?.activityDeadlineAt ?? null,
       classificationStatus: especificacao?.classificationStatus ?? 'PENDING_CLASSIFICATION',
+      legacyCategory: especificacao?.legacyCategory ?? null,
       sectorId: especificacao?.sectorId ?? null,
       sectorCode: especificacao?.sectorCode ?? null,
       sectorName: especificacao?.sectorName ?? null,

@@ -8,6 +8,8 @@ const mocks = vi.hoisted(() => {
   const remessas: Remessa[] = []
   const perfis: Record<string, RoleCode[]> = {}
   const repo = {
+    listarPorItem: async (orderItemId: string) =>
+      remessas.filter((item) => item.orderItemId === orderItemId),
     buscarPorNumero: async (orderItemId: string, remessa: number) =>
       remessas.find((item) => item.orderItemId === orderItemId && item.remessa === remessa) ?? null,
     criar: async (input: {
@@ -110,7 +112,26 @@ describe('POST /api/pedidos/itens/[itemId]/remessas', () => {
     expect((await response.json()).error).toBe('remessa_duplicada')
   })
 
-  it('responde 400 sem número ou data', async () => {
+  it('atribui o próximo número automaticamente quando não informado', async () => {
+    mocks.remessas.push({
+      id: 'r1',
+      orderItemId: 'item_1',
+      remessa: 1,
+      scheduledAt: new Date(),
+      confirmedAt: null,
+      note: null,
+    })
+
+    const response = await POST(
+      request({ scheduledAt: '2026-11-20' }),
+      context('item_1'),
+    )
+
+    expect(response.status).toBe(201)
+    expect((await response.json()).remessa.remessa).toBe(2)
+  })
+
+  it('responde 400 sem data', async () => {
     const response = await POST(request({}), context('item_1'))
     expect(response.status).toBe(400)
     expect(mocks.remessas).toHaveLength(0)

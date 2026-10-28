@@ -7,14 +7,15 @@ import {
 import { prismaMapeamentoRepository } from '../../../modules/setores/adapters/prisma-setores-repository'
 import { autorizar } from '../../../shared/http/autorizacao'
 
-/** GET /api/mapeamentos?category=... — retorna o mapeamento da categoria (AUTH-14). */
+/** GET /api/mapeamentos — lista todos; com ?category=..., retorna um (AUTH-14). */
 export async function GET(request: Request) {
   const auth = await autorizar(request, 'gerenciar_setores')
   if (!auth.autorizado) return auth.resposta
 
   const category = new URL(request.url).searchParams.get('category')
   if (!category) {
-    return Response.json({ error: 'invalid_category' }, { status: 400 })
+    const mappings = await prismaMapeamentoRepository.listAll()
+    return Response.json({ mappings }, { status: 200 })
   }
 
   const mapping = await prismaMapeamentoRepository.findByCategory(category)

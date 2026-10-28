@@ -6,8 +6,9 @@ import { QuantidadeInvalidaError, unidadeUsaCasasDecimais } from './unidade-medi
 
 /**
  * Formata a quantidade para exibição reutilizando a regra de unidade:
- * peça inteira, metro com 2 casas (RN022). Valor inválido não vira zero:
- * lança `QuantidadeInvalidaError` para o chamador decidir o que exibir.
+ * peça inteira, metro com 2 casas (RN022), sempre no padrão brasileiro
+ * (vírgula decimal). Valor inválido não vira zero: lança
+ * `QuantidadeInvalidaError` para o chamador decidir o que exibir.
  */
 export function formatarQuantidade(
   unidade: string,
@@ -19,5 +20,8 @@ export function formatarQuantidade(
   } catch {
     throw new QuantidadeInvalidaError(unidade, String(valor))
   }
-  return unidadeUsaCasasDecimais(unidade) ? quantidade.toFixed(2) : quantidade.toFixed(0)
+  const formatador = unidadeUsaCasasDecimais(unidade)
+    ? new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 })
+  return formatador.format(quantidade.toNumber())
 }

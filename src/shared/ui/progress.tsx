@@ -2,6 +2,15 @@ import { cn } from './utils'
 
 export type ProgressTone = 'accent' | 'success' | 'warning' | 'danger' | 'neutral'
 
+/** Percentual no padrão brasileiro, com até 1 casa decimal (vírgula). */
+export function formatarPercentual(valor: number): string {
+  const seguro = Math.min(100, Math.max(0, Number.isFinite(valor) ? valor : 0))
+  return new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 1,
+  }).format(seguro)
+}
+
 const PREENCHIMENTO: Record<ProgressTone, string> = {
   accent: 'bg-accent',
   success: 'bg-success',
@@ -27,20 +36,21 @@ export interface ProgressProps {
  * `accent` em andamento, `success` concluído, `warning` atenção e `danger` falha.
  */
 export function Progress({ value, label, helper, tone = 'accent', className }: ProgressProps) {
-  const seguro = Math.min(100, Math.max(0, Math.round(Number.isFinite(value) ? value : 0)))
+  const seguro = Math.min(100, Math.max(0, Number.isFinite(value) ? value : 0))
+  const exibicao = formatarPercentual(seguro)
 
   return (
     <div className={cn('grid gap-1', className)}>
       <div className="flex items-center justify-between gap-2 text-sm">
         <span className="font-medium text-ink">{label}</span>
-        <span className="font-semibold text-ink">{seguro}%</span>
+        <span className="font-semibold text-ink">{exibicao}%</span>
       </div>
       <div
         role="progressbar"
         aria-label={label}
         aria-valuemin={0}
         aria-valuemax={100}
-        aria-valuenow={seguro}
+        aria-valuenow={Number(seguro.toFixed(1))}
         className="h-3 w-full overflow-hidden rounded-full bg-line"
       >
         <div

@@ -8,6 +8,8 @@ import { Alert } from '@/shared/ui/alert'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import { PageHead } from '@/shared/ui/page-head'
+import { formatarDiaCivil } from '@/shared/time/dia-civil'
+import { formatarQuantidadeParaExibicao } from '@/shared/ui/totais-unidade'
 import { Spinner } from '@/shared/ui/spinner'
 import { cn, FOCO_VISIVEL } from '@/shared/ui/utils'
 
@@ -20,6 +22,7 @@ interface Ordem {
   solicitado: string | number
   executado: string | number
   pendente: string | number
+  previsao: string | null
 }
 
 /**
@@ -133,25 +136,31 @@ export default function OrdemProducaoPage() {
               <dd className="font-semibold">{ordem.setor}</dd>
             </div>
             <div className="flex justify-between gap-4 sm:block">
+              <dt className="text-muted">Previsão de entrega</dt>
+              <dd className="font-semibold">
+                {ordem.previsao ? formatarDiaCivil(ordem.previsao) : 'Sem previsão'}
+              </dd>
+            </div>
+            <div className="flex justify-between gap-4 sm:block">
               <dt className="text-muted">Unidade</dt>
               <dd className="font-semibold">{ordem.unidade}</dd>
             </div>
             <div className="flex justify-between gap-4 sm:block">
               <dt className="text-muted">Solicitado</dt>
               <dd className="font-semibold">
-                {ordem.solicitado} {ordem.unidade}
+                {formatarQuantidadeParaExibicao(ordem.unidade, ordem.solicitado)} {ordem.unidade}
               </dd>
             </div>
             <div className="flex justify-between gap-4 sm:block">
               <dt className="text-muted">Executado</dt>
               <dd className="font-semibold">
-                {ordem.executado} {ordem.unidade}
+                {formatarQuantidadeParaExibicao(ordem.unidade, ordem.executado)} {ordem.unidade}
               </dd>
             </div>
             <div className="flex justify-between gap-4 sm:block">
               <dt className="text-muted">Pendente</dt>
               <dd className="font-semibold">
-                {ordem.pendente} {ordem.unidade}
+                {formatarQuantidadeParaExibicao(ordem.unidade, ordem.pendente)} {ordem.unidade}
               </dd>
             </div>
           </dl>

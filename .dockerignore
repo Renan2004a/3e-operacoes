@@ -6,6 +6,8 @@ playwright-report
 test-results
 .env
 .env.*
+**/.env
+**/.env.*
 !.env.example
 *.log
 *.tsbuildinfo

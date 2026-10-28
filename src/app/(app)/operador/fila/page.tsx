@@ -92,14 +92,14 @@ export default function FilaPage() {
   return (
     <section className="grid gap-4">
       <PageHead
-        title="Meus pedidos"
-        description="Atividades dos seus setores. Abra uma atividade para registrar a produção."
+        title="Fila de produção"
+        description="Atividades em aberto nos setores. Abra uma atividade para registrar a produção."
       />
 
       {listaAtividades.length === 0 ? (
         <EmptyState
-          title="Nenhum pedido para você agora"
-          description="Quando houver atividades nos seus setores, elas aparecerão aqui."
+          title="Nenhuma atividade em aberto"
+          description="Quando houver atividades nos setores, elas aparecerão aqui."
         />
       ) : (
         <ul aria-label="Minhas atividades" className="grid gap-3">
@@ -110,7 +110,9 @@ export default function FilaPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-                        {atividade.priority > 0 ? `Prioridade ${atividade.priority} · ` : ''}
+                        {atividade.priority > 0
+                          ? `Prioridade ${atividade.priority} · `
+                          : ''}
                         {atividade.sectorName ?? 'Setor'}
                       </p>
                       <CardTitle className="mt-1 text-base">

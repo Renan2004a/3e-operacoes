@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { apiGet } from '@/shared/http/api-client'
 import { CODIGOS_SETOR, ehCodigoSetor, type CodigoSetor } from '@/modules/setores/codigos-setor'
 import { Alert } from './alert'
@@ -11,6 +12,7 @@ import { Field } from './field'
 import { Input } from './input'
 import { Spinner } from './spinner'
 import { caminhoDaListagemAtual } from './retorno-lista'
+import { formatarDiaCivil } from '@/shared/time/dia-civil'
 import { FOCO_VISIVEL } from './utils'
 
 export type StatusPedido = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED'
@@ -20,6 +22,10 @@ export interface PedidoListado {
   numero: string
   cliente: string | null
   status: StatusPedido
+  /** Previsão de entrega (maior prazo entre os itens), em ISO. */
+  previsao?: string | null
+  /** Alguma atividade do pedido está divergente e precisa de análise. */
+  divergente?: boolean
 }
 
 export interface ContextoRetornoListagem {
@@ -111,9 +117,7 @@ function montarUrl(filtros: Filtros, pagina: number): string {
 }
 
 /** Recupera os filtros da URL, preservando o contexto ao voltar do detalhe. */
-function lerFiltrosDaUrl(): Filtros {
-  if (typeof window === 'undefined') return FILTROS_VAZIOS
-  const params = new URLSearchParams(window.location.search)
+function lerFiltrosDaUrl(params: { get(nome: string): string | null }): Filtros {
   return {
     numero: params.get('numero') ?? '',
     cliente: params.get('cliente') ?? '',
@@ -125,9 +129,8 @@ function lerFiltrosDaUrl(): Filtros {
 }
 
 /** Página atual da URL; valores inválidos voltam para a primeira (A1). */
-function lerPaginaDaUrl(): number {
-  if (typeof window === 'undefined') return 1
-  const valor = Number(new URLSearchParams(window.location.search).get('pagina'))
+function lerPaginaDaUrl(params: { get(nome: string): string | null }): number {
+  const valor = Number(params.get('pagina'))
   return Number.isInteger(valor) && valor > 0 ? valor : 1
 }
 
@@ -150,15 +153,20 @@ function sincronizarUrl(filtros: Filtros, pagina: number): void {
  * (`.tabela-responsiva`).
  */
 export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProps) {
-  const [filtros, setFiltros] = useState<Filtros>(() => lerFiltrosDaUrl())
-  const [pagina, setPagina] = useState(() => lerPaginaDaUrl())
+  // `useSearchParams` entrega a mesma query no servidor e no cliente, evitando
+  // divergência de hidratação em links diretos com filtros/página.
+  const searchParams = useSearchParams()
+  const filtrosDaUrl = lerFiltrosDaUrl(searchParams)
+  const paginaDaUrl = lerPaginaDaUrl(searchParams)
+  const [filtros, setFiltros] = useState<Filtros>(filtrosDaUrl)
+  const [pagina, setPagina] = useState(paginaDaUrl)
   const [pedidos, setPedidos] = useState<PedidoListado[] | null>(null)
   const [paginacao, setPaginacao] = useState<PaginacaoPedidos | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState(false)
-  const primeiraCarga = useRef(true)
-  const filtrosIniciais = useRef(filtros)
-  const paginaInicial = useRef(pagina)
+  const tokenRecargaAnterior = useRef(recarregarToken)
+  const filtrosIniciais = useRef(filtrosDaUrl)
+  const paginaInicial = useRef(paginaDaUrl)
   const ajudaPeriodoId = useId()
 
   const buscar = useCallback(
@@ -180,11 +188,11 @@ export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProp
 
   // Recarrega quando o token muda (ex.: após importar um pedido). O pedido novo
   // entra no topo da ordenação, então a lista volta para a primeira página (A1).
+  // A comparação com o valor anterior também protege a montagem em StrictMode,
+  // que reexecuta efeitos e não deve apagar `pagina` de um link direto.
   useEffect(() => {
-    if (primeiraCarga.current) {
-      primeiraCarga.current = false
-      return
-    }
+    if (tokenRecargaAnterior.current === recarregarToken) return
+    tokenRecargaAnterior.current = recarregarToken
     setPagina(1)
     sincronizarUrl(filtros, 1)
     setCarregando(true)
@@ -371,7 +379,8 @@ export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProp
         <>
           {paginacao ? (
             <p className="text-sm text-muted" role="status">
-              {paginacao.total} pedido(s) encontrado(s)
+              {paginacao.total}{' '}
+              {paginacao.total === 1 ? 'pedido encontrado' : 'pedidos encontrados'}
               {paginacao.totalPaginas > 1 && pagina <= paginacao.totalPaginas
                 ? ` — página ${pagina} de ${paginacao.totalPaginas}`
                 : ''}
@@ -412,6 +421,9 @@ export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProp
                         Cliente
                       </th>
                       <th scope="col" className="px-4 py-3 font-semibold">
+                        Previsão
+                      </th>
+                      <th scope="col" className="px-4 py-3 font-semibold">
                         Status
                       </th>
                       <th scope="col" className="px-4 py-3 text-right font-semibold">
@@ -431,10 +443,18 @@ export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProp
                         <td data-label="Cliente" className="px-4 py-3 text-muted">
                           {pedido.cliente ?? 'Sem cliente'}
                         </td>
+                        <td data-label="Previsão" className="whitespace-nowrap px-4 py-3 text-muted">
+                          {pedido.previsao ? formatarDiaCivil(pedido.previsao) : 'Sem previsão'}
+                        </td>
                         <td data-label="Status" className="px-4 py-3">
-                          <Badge variant={VARIANTE_STATUS[pedido.status]}>
-                            {ROTULO_STATUS[pedido.status]}
-                          </Badge>
+                          <span className="inline-flex flex-wrap items-center gap-2">
+                            <Badge variant={VARIANTE_STATUS[pedido.status]}>
+                              {ROTULO_STATUS[pedido.status]}
+                            </Badge>
+                            {pedido.divergente ? (
+                              <Badge variant="danger">Divergente</Badge>
+                            ) : null}
+                          </span>
                         </td>
                         <td data-label="Ações" className="px-4 py-3 md:text-right">
                           <Button

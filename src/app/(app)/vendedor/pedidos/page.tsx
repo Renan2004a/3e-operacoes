@@ -59,9 +59,9 @@ export default function VendedorPedidosPage() {
                   3
                 </span>
                 <span>
-                  Defina o <strong>prazo de entrega</strong> e programe as{' '}
-                  <strong>remessas</strong>; acompanhe o saldo (solicitado, executado, disponível,
-                  entregue e pendente).
+                  Defina o <strong>prazo de entrega</strong> e acompanhe o saldo (solicitado,
+                  executado, disponível, entregue e pendente). As <strong>remessas</strong> são
+                  programadas pela Gerência e pela Expedição; aqui você acompanha as datas.
                 </span>
               </li>
             </ol>

@@ -25,6 +25,7 @@ const mocks = vi.hoisted(() => {
       const found = mappings.find((mapping) => mapping.id === id)
       return found ? { ...found } : null
     },
+    listAll: async () => mappings.map((mapping) => ({ ...mapping })),
     create: async ({ legacyCategory, sectorId }: { legacyCategory: string; sectorId: string }) => {
       const created = {
         id: `map_${mappings.length + 1}`,
@@ -175,11 +176,14 @@ describe('/api/mapeamentos', () => {
     expect(body.mapping).toMatchObject({ legacyCategory: 'Telhas', sectorId: 'setor_telhas' })
   })
 
-  it('responde 400 no GET sem o parâmetro category', async () => {
+  it('lista todos os mapeamentos no GET sem categoria', async () => {
+    seedMapping({ sectorId: 'setor_telhas' })
     const response = await GET(request('GET'))
 
-    expect(response.status).toBe(400)
-    expect(await response.json()).toEqual({ error: 'invalid_category' })
+    expect(response.status).toBe(200)
+    const body = await response.json()
+    expect(body.mappings).toHaveLength(1)
+    expect(body.mappings[0]).toMatchObject({ legacyCategory: 'Telhas', sectorId: 'setor_telhas' })
   })
 
   it('responde 404 no GET quando a categoria não tem mapeamento', async () => {

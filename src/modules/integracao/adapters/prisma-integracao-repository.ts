@@ -171,6 +171,19 @@ export const prismaIntegracaoRepository: IntegracaoRepository &
     await prisma.auditLog.create({ data: dadosDaAuditoria(input) })
   },
 
+  async registrarJobObsoleto({ jobId, now }) {
+    // Não altera o status: o novo despacho reutiliza a mesma linha e a move
+    // para DISPATCHED/RUNNING. O evento explica por que houve nova tentativa.
+    await prisma.integrationJobEvent.create({
+      data: {
+        jobId,
+        type: 'STALE_TIMEOUT',
+        detail: 'Tentativa anterior sem resposta do conector; nova consulta iniciada.',
+        createdAt: now,
+      },
+    })
+  },
+
   async updateStatus({ jobId, status, now, orderId, errorCode, errorMessage, completedAt }) {
     const row = await prisma.integrationJob.update({
       where: { id: jobId },

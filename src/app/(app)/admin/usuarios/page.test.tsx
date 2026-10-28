@@ -53,7 +53,7 @@ function configurarApi(usuarios: unknown[] = []) {
 function preencherFormulario() {
   fireEvent.change(screen.getByLabelText('Nome'), { target: { value: 'Beto' } })
   fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'beto@x.com' } })
-  fireEvent.change(screen.getByLabelText('Senha'), { target: { value: 'segredo' } })
+  fireEvent.change(screen.getByLabelText('Senha'), { target: { value: 'segredo-forte' } })
 }
 
 beforeEach(() => {
@@ -107,7 +107,7 @@ describe('UsuariosPage', () => {
       expect(mocks.apiPost).toHaveBeenCalledWith('/api/usuarios', {
         name: 'Beto',
         email: 'beto@x.com',
-        senha: 'segredo',
+        senha: 'segredo-forte',
         roles: ['SELLER'],
         sectorIds: ['s1'],
       }),

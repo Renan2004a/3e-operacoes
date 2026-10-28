@@ -18,7 +18,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!sessao) redirect('/login')
 
   const usuario = await prismaUsuariosRepository.findById(sessao.userId)
-  if (!usuario || usuario.roles.length === 0) redirect('/login')
+  if (!usuario || usuario.status === 'INACTIVE' || usuario.roles.length === 0) redirect('/login')
   const perfil: RoleCode = usuario.roles[0]
 
   return (

@@ -19,6 +19,7 @@ function dados(
     unidade: 'M',
     solicitado: new Prisma.Decimal(10),
     executado: new Prisma.Decimal(8),
+    previsao: null,
   }
   return { ...base, ...overrides }
 }
@@ -80,6 +81,6 @@ describe('montarOrdemProducao', () => {
 
     const ordem = await montarOrdemProducao('act_1', repo)
 
-    expect(formatarPendenteOrdem(ordem)).toBe('2.00')
+    expect(formatarPendenteOrdem(ordem)).toBe('2,00')
   })
 })

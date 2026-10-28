@@ -168,7 +168,7 @@ npm run dev            # http://localhost:3000
 | 12 | Conferir o total exibido | É o total de pedidos que atendem aos filtros, não o tamanho da página |
 | 13 | Repetir em largura de celular e com teclado | Sem rolagem horizontal da página; botões com alvo adequado e foco visível; leitor de tela anuncia a paginação |
 
-Registrar como evidência: perfil usado, URL da lista, quantidade total exibida, página acessada, captura de tela e qualquer divergência. A A1 permanece **aprovada provisoriamente** até esse roteiro ser concluído.
+Registrar como evidência: perfil usado, URL da lista, quantidade total exibida, página acessada, captura de tela e qualquer divergência. Em 2026-10-25, os cenários de filtros, página 2, links diretos e retorno do detalhe foram validados localmente com Playwright nos perfis Vendedor e Gerente; o roteiro manual em dispositivo físico permanece pendente.
 
 ---
 
@@ -203,7 +203,7 @@ Executar com o app local e banco do app migrado. Repetir no **Vendedor** e no **
 
 ## 8. Validação manual — transparência da reimportação e unidade
 
-**Status:** roteiro pendente; não executado nesta alteração. Requer aplicação, conector local e ambiente de teste com dados controlados.
+**Status:** validado localmente em 2026-10-25 com MySQL isolado e conector HTTP simulado (15 cenários Playwright; 24 testes de integração MySQL). Pendente repetir com o conector Top Gerente real e em dispositivo físico.
 
 | # | Passo | Resultado esperado |
 | --- | --- | --- |
@@ -214,8 +214,12 @@ Executar com o app local e banco do app migrado. Repetir no **Vendedor** e no **
 | 5 | Alterar a unidade de um item sem registros operacionais e reimportar | Unidade e quantidade são atualizadas, sem conversão automática |
 | 6 | Conferir os logs/eventos | `UNIT_DIVERGENCE` no `AuditLog` e no job; nenhum registro operacional apagado |
 | 7 | Conferir o pedido na listagem | Nenhuma duplicação de pedido e `createdAt` inalterado |
+| 8 | Manter um job sem concluir por mais de 60 s (conector lento ou pausado) | O acompanhamento automático é pausado; o status conhecido permanece e a tela informa que a importação está demorando |
+| 9 | Clicar em **Consultar andamento** | Consulta o mesmo job, sem criar novo despacho nem nova importação |
+| 10 | Forçar uma falha definitiva (ex.: pedido inexistente) | A tela mostra a orientação específica além do código técnico; uma falha de consulta não é apresentada como falha da importação |
+| 11 | Reabrir a lista após um sucesso e voltar do detalhe (Vendedor e Gerente) | Filtros e página são preservados na URL de retorno |
 
-**Evidência mínima:** perfil, número do pedido, origem da solicitação (nova/em andamento/anterior), unidade anterior e nova, mensagem exibida, link aberto e captura de tela.
+**Evidência mínima:** perfil, número do pedido, origem da solicitação (nova/em andamento/anterior), unidade anterior e nova, mensagem exibida, link aberto, tempo de espera observado e captura de tela.
 
 ---
 
@@ -258,3 +262,65 @@ Novos testes: `painel-ocorrencias.test.ts`, `api/producao/ocorrencias/route.test
 **Evidência:** capturas em `docs/video/validacao-operador/` e saída do script `scripts/validar-operador.mjs`.
 
 **Limitação registrada:** o modelo não possui situação de “análise/resolução” da ocorrência; o fluxo não foi inventado (ver `docs/diagnostico-operador.md` §8).
+
+---
+
+## 10. Integração dos PRs #14 e #15 (2026-10-27)
+
+**Escopo:** clareza/resiliência do perfil Gerente (#15, Vanessa) e correções de filtros/importação do Vendedor (#14, Marcelo).
+
+### Gates automatizados
+
+| Gate | Resultado |
+| --- | --- |
+| `npm run test` | **1037 aprovados** + 24 de integração ignorados (1061) |
+| `npm run lint` | 0 erros (4 avisos) |
+| `npm run typecheck` | OK |
+| `npm run build` | OK |
+| Playwright — novos fluxos (`scripts/validar-prs-14-15.mjs`) | **15/15** |
+| Playwright — responsivo/impressão | **11/11** |
+| Playwright — Operador | **9/9** |
+
+### O que foi validado no navegador
+
+- Vendedor: filtro de setor aplicado pela URL; detalhe com `retorno`; “Voltar” preserva o setor e o select.
+- Gerente: painel com **Atualizar**, ocorrências e “Cumprimento de prazo” sem 0% enganoso; atualização manual conclui.
+- Gerente: retorno do detalhe preserva filtros; detalhe com **8 itens**, “Recolher todos/Abrir todos” e rótulos “Prazo de entrega (item)” / “Prazo operacional (setor)”.
+- Importação: formulário disponível; nenhum job foi criado durante a validação.
+- Sem erros de console/hidratação.
+
+### Observações
+
+- A base local tem **7 pedidos**; o cenário de página 2 não é exercitável nela (marcado como N/A). O código de paginação foi validado pelos testes automatizados e pela revisão do #14.
+- Os testes de integração MySQL continuam **gated** (`RUN_INTEGRATION_TESTS=1` + banco de teste); não foram executados nesta rodada.
+- Conflitos do merge #14: apenas `.specs/STATE.md`, `docs/testes-locais.md` e `docs/validacao-hospedada.md`, resolvidos mantendo as duas contribuições.
+- O PR #15 entrou sem conflitos.
+
+---
+
+## 11. Correções de UI do professor/Saul (2026-10-27)
+
+**Escopo:** padrão brasileiro de unidades, percentuais com decimais, previsão de entrega em todos os perfis, histórico de prazos, remessa automática, restrição do Vendedor e clareza das telas administrativas.
+
+| Gate | Resultado |
+| --- | --- |
+| `npm run test` | **1037 aprovados** + 24 de integração ignorados |
+| `npm run lint` | 0 erros (7 avisos) |
+| `npm run typecheck` | OK |
+| `npm run build` | OK |
+| Playwright — correções de UI (`scripts/validar-correcoes-ui.mjs`) | **15/15** |
+
+### O que foi verificado no navegador
+
+- Vendedor: coluna **Previsão**; quantidades com vírgula; **histórico de prazos**; sem botões de remessa (somente leitura).
+- Gerente: painel com **Atualizar**; previsão; histórico; remessa com número **automático** (sem campo de número).
+- Admin: explicação do mapeamento + **Mapeamentos cadastrados**; explicação da inativação de usuários.
+- Operador: **Previsão de entrega** na atividade e na ordem de produção.
+- Sem erros de console/hidratação.
+
+### Observações
+
+- A previsão da lista usa o **maior** prazo entre os itens (pedido completo).
+- O histórico usa `logs_auditoria` com a ação `DEADLINE_CHANGED`; não há tabela nova.
+- A reestruturação do banco (IDs inteiros, `perfis`, remoção de `remessas_programadas`, `apontamentos`) está planejada em `docs/revisao-banco-professor.md` e **não** foi executada.
+- A Expedição ainda não tem tela própria de remessas; a gestão permanece no detalhe do Gerente até a migração.

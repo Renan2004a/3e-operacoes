@@ -1,0 +1,222 @@
+[
+  {
+    "segundo": 1,
+    "titulo": "Login e perfis",
+    "texto": "Entrada única. Vou entrar como Vendedor; o sistema identifica o perfil e abre a tela inicial correta."
+  },
+  {
+    "segundo": 12,
+    "titulo": "Vendedor · Vendas",
+    "texto": "Tela de Vendas: importação por número, instruções e a lista de pedidos com filtros. O Vendedor consulta todos os pedidos."
+  },
+  {
+    "segundo": 22,
+    "titulo": "Vendedor · filtros",
+    "texto": "Filtrei por setor Telhas. A lista, o total e a URL acompanham o filtro; o botão Limpar filtros aparece."
+  },
+  {
+    "segundo": 30,
+    "titulo": "Vendedor · lista",
+    "texto": "Cada linha mostra pedido, cliente, previsão de entrega e status. A previsão é o maior prazo entre os itens do pedido."
+  },
+  {
+    "segundo": 43,
+    "titulo": "Vendedor · detalhe",
+    "texto": "Detalhe do pedido: identificação, itens, pendências de desmembramento e pendências de produção. O botão Voltar preserva filtros e página."
+  },
+  {
+    "segundo": 51,
+    "titulo": "Vendedor · resumo",
+    "texto": "Resumo por unidade e por setor. Unidades diferentes nunca são somadas; o progresso mostra percentual com vírgula quando há fração."
+  },
+  {
+    "segundo": 58,
+    "titulo": "Vendedor · abrir todos",
+    "texto": "O primeiro item abre por padrão. “Abrir todos” expande os 8 itens; “Recolher todos” compacta a página."
+  },
+  {
+    "segundo": 64,
+    "titulo": "Vendedor · recolher todos",
+    "texto": "Com os itens recolhidos, o percentual de cada um continua visível no cabeçalho; a página fica curta para consulta rápida."
+  },
+  {
+    "segundo": 71,
+    "titulo": "Vendedor · prazo",
+    "texto": "O prazo de entrega do item é editável pelo Vendedor e pelo Gerente. O prazo operacional do setor aparece apenas para leitura."
+  },
+  {
+    "segundo": 79,
+    "titulo": "Vendedor · histórico de prazos",
+    "texto": "O histórico mostra quem alterou o prazo, quando e o valor anterior e o novo. Se ainda não houve alteração, aparece o estado vazio."
+  },
+  {
+    "segundo": 86,
+    "titulo": "Vendedor · desmembramento",
+    "texto": "O desmembramento associa o item a um setor. As remessas são tarefas da Expedição: o Vendedor apenas acompanha as datas, sem criar, confirmar ou remover."
+  },
+  {
+    "segundo": 96,
+    "titulo": "Vendedor · retorno",
+    "texto": "Voltamos à lista; filtros e página são preservados."
+  },
+  {
+    "segundo": 100,
+    "titulo": "Login e perfis",
+    "texto": "Entrada única. Vou entrar como Gerente de Produção; o sistema identifica o perfil e abre a tela inicial correta."
+  },
+  {
+    "segundo": 112,
+    "titulo": "Gerente · painel",
+    "texto": "Painel do Gerente: pendências, em andamento, concluídas e cumprimento de prazo. Sem concluídas com prazo, o indicador mostra “—”, não 0%."
+  },
+  {
+    "segundo": 120,
+    "titulo": "Gerente · alertas",
+    "texto": "Alertas de atrasados, parados e não encaminhados. Cada alerta abre o pedido correspondente."
+  },
+  {
+    "segundo": 127,
+    "titulo": "Gerente · ocorrências",
+    "texto": "Ocorrências registradas pelos Operadores: total, últimos 7 dias, tipo, pedido, item, setor, responsável e motivo. É o elo entre o chão de fábrica e o Gerente."
+  },
+  {
+    "segundo": 138,
+    "titulo": "Gerente · atualização",
+    "texto": "A atualização recarrega os blocos de forma independente; uma falha em um bloco não derruba os demais."
+  },
+  {
+    "segundo": 144,
+    "titulo": "Gerente · pedidos",
+    "texto": "A mesma consulta do Vendedor, com filtros, previsão e paginação; o Gerente pode abrir o detalhe e corrigir setor."
+  },
+  {
+    "segundo": 156,
+    "titulo": "Gerente · detalhe",
+    "texto": "No detalhe, o Gerente vê os mesmos saldos e prazos e pode corrigir o setor com justificativa quando o item já tem histórico."
+  },
+  {
+    "segundo": 165,
+    "titulo": "Gerente · histórico",
+    "texto": "O histórico é o mesmo para os dois perfis; a auditoria registra antes e depois."
+  },
+  {
+    "segundo": 171,
+    "titulo": "Gerente · alteração de prazo",
+    "texto": "Este item está sem prazo. O Gerente pode definir uma data; o campo e o histórico ficam disponíveis."
+  },
+  {
+    "segundo": 176,
+    "titulo": "Gerente · remessa automática",
+    "texto": "A remessa recebe o próximo número automaticamente; o usuário informa apenas a data prevista. Vou programar e remover para não deixar resíduo."
+  },
+  {
+    "segundo": 187,
+    "titulo": "Gerente · remessa criada",
+    "texto": "Remessa criada sem digitar número. Agora vou removê-la para demonstrar a confirmação."
+  },
+  {
+    "segundo": 193,
+    "titulo": "Gerente · remessa removida",
+    "texto": "Remoção confirmada; entregas e saldos não foram alterados."
+  },
+  {
+    "segundo": 197,
+    "titulo": "Login e perfis",
+    "texto": "Entrada única. Vou entrar como Operador; o sistema identifica o perfil e abre a tela inicial correta."
+  },
+  {
+    "segundo": 210,
+    "titulo": "Operador · meus pedidos",
+    "texto": "Fila do turno: somente atividades dos setores do Operador, com prioridade, item, pedido e status. Um clique abre a execução."
+  },
+  {
+    "segundo": 219,
+    "titulo": "Operador · executar",
+    "texto": "A atividade mostra item, pedido, setor e a previsão de entrega definida pelo Gerente. O progresso e o saldo vêm das execuções."
+  },
+  {
+    "segundo": 226,
+    "titulo": "Operador · registrar execução",
+    "texto": "O Operador informa a quantidade na unidade da atividade. Vou apenas preencher para demonstrar; o registro não será enviado nesta gravação."
+  },
+  {
+    "segundo": 234,
+    "titulo": "Operador · ocorrências",
+    "texto": "Tela dedicada: registrar para uma das atividades e consultar o histórico. A atividade já vem pré-selecionada quando o Operador veio da execução."
+  },
+  {
+    "segundo": 243,
+    "titulo": "Operador · formulário",
+    "texto": "Tipo, motivo, quantidade e observação. Perda, refugo e indisponibilidade exigem motivo; o formulário preserva os dados se a gravação falhar."
+  },
+  {
+    "segundo": 257,
+    "titulo": "Operador · ordem de produção",
+    "texto": "Documento de produção: pedido, item, setor, previsão, unidade, solicitado, executado e pendente. A impressão remove o menu e cabe em uma página."
+  },
+  {
+    "segundo": 265,
+    "titulo": "Login e perfis",
+    "texto": "Entrada única. Vou entrar como Expedição; o sistema identifica o perfil e abre a tela inicial correta."
+  },
+  {
+    "segundo": 278,
+    "titulo": "Expedição · entregas",
+    "texto": "Selecione o pedido para ver os itens, o disponível e a previsão de entrega. A entrega é registrada por item."
+  },
+  {
+    "segundo": 287,
+    "titulo": "Expedição · itens",
+    "texto": "Cada item mostra disponível, previsão e saldos. A entrega acima do disponível exige autorização de gerente e motivo."
+  },
+  {
+    "segundo": 294,
+    "titulo": "Expedição · exceção",
+    "texto": "Ao digitar acima do disponível, o sistema avisa e oferece a autorização com motivo. Não vou registrar para não alterar o estoque."
+  },
+  {
+    "segundo": 301,
+    "titulo": "Login e perfis",
+    "texto": "Entrada única. Vou entrar como Responsável pelo Sistema; o sistema identifica o perfil e abre a tela inicial correta."
+  },
+  {
+    "segundo": 315,
+    "titulo": "Admin · usuários",
+    "texto": "Cadastro de usuários com perfis e setores. Usuários não são excluídos: a inativação bloqueia o acesso e preserva pedidos, execuções e auditoria."
+  },
+  {
+    "segundo": 323,
+    "titulo": "Admin · confirmação",
+    "texto": "A inativação pede confirmação em linha, com Confirmar e Cancelar. Vou cancelar para não alterar o usuário."
+  },
+  {
+    "segundo": 331,
+    "titulo": "Admin · setores",
+    "texto": "A tela explica o mapeamento: a categoria vem do Top Gerente e o mapa define o setor usado na importação e no desmembramento."
+  },
+  {
+    "segundo": 341,
+    "titulo": "Admin · consulta de mapa",
+    "texto": "A busca mostra o setor atual da categoria; salvar de novo atualiza o mapeamento. A lista abaixo mostra todos os mapeamentos cadastrados."
+  },
+  {
+    "segundo": 351,
+    "titulo": "Técnico · integração",
+    "texto": "Jobs de importação com status, tentativas e erros. Ao selecionar um job, aparecem os eventos (solicitado, despachado, concluído/falhou)."
+  },
+  {
+    "segundo": 360,
+    "titulo": "Técnico · eventos",
+    "texto": "Eventos do job selecionado. Esta tela é somente leitura; o retry é feito na importação."
+  },
+  {
+    "segundo": 366,
+    "titulo": "Importação",
+    "texto": "Importação por número: o app consulta o Top Gerente via conector, mostra o andamento e permite consultar o mesmo job sem duplicar despacho."
+  },
+  {
+    "segundo": 373,
+    "titulo": "Encerramento",
+    "texto": "Fluxo completo: login por perfil, Vendas, detalhe, prazos e histórico, Painel do Gerente, execução e ocorrências do Operador, Entregas, Administração, Integração e impressão. O banco é mostrado no capítulo seguinte."
+  }
+]

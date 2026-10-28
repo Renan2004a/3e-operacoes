@@ -91,11 +91,13 @@ export async function registrarOcorrencia(
     await validarMotivo(input.tipo, motivoId, repo)
   }
 
+  // Quantidade é opcional (a tela diz "quando houver perda/refugo em
+  // quantidade"); validar string vazia fazia o registro de perda sem número
+  // falhar com 400.
   const informouQuantidade = input.quantidade !== undefined && input.quantidade !== null
-  const quantidade =
-    informouQuantidade || exigeMotivo
-      ? validarQuantidade(atividade.unidade, input.quantidade ?? '')
-      : null
+  const quantidade = informouQuantidade
+    ? validarQuantidade(atividade.unidade, input.quantidade ?? '')
+    : null
 
   return repo.registrarOcorrencia({
     atividadeId: input.atividadeId,

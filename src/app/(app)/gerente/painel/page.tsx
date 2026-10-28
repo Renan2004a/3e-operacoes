@@ -12,10 +12,10 @@ import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import { Metric } from '@/shared/ui/metric'
 import { PageHead } from '@/shared/ui/page-head'
-import { Progress } from '@/shared/ui/progress'
+import { Progress, formatarPercentual } from '@/shared/ui/progress'
 import { ROTULO_PERFIL } from '@/shared/ui/rotulos-perfil'
 import { Spinner } from '@/shared/ui/spinner'
-import { rotuloDaUnidade } from '@/shared/ui/totais-unidade'
+import { formatarQuantidadeParaExibicao, rotuloDaUnidade } from '@/shared/ui/totais-unidade'
 
 interface ContagemPorSetor {
   sectorId: string
@@ -363,7 +363,7 @@ export default function PainelPage() {
         >
           <Metric
             label="Cumprimento de prazo"
-            value={temCumprimentoDePrazo ? `${Math.round(cumprimentoPrazo.percentual)}%` : '—'}
+            value={temCumprimentoDePrazo ? `${formatarPercentual(cumprimentoPrazo.percentual)}%` : '—'}
             tone={temCumprimentoDePrazo ? 'success' : 'default'}
             helper={
               temCumprimentoDePrazo
@@ -393,7 +393,7 @@ export default function PainelPage() {
             </Alert>
           ) : (
             <div className="grid gap-4 lg:grid-cols-3">
-              <GrupoAlertas titulo="Atrasados" tom="danger" itens={alertas?.atrasados ?? []} />
+              <GrupoAlertas titulo="Atividades atrasadas" tom="danger" itens={alertas?.atrasados ?? []} />
               <GrupoAlertas titulo="Parados" tom="warning" itens={alertas?.parados ?? []} />
               <GrupoAlertas
                 titulo="Não encaminhados"
@@ -488,7 +488,7 @@ export default function PainelPage() {
             <ul aria-label="Produção por setor" className="grid gap-3">
               {pcp.producaoPorSetor.map((producao) => {
                 const nome = producao.sectorName ?? producao.sectorId
-                const quantidade = `${producao.quantidade} ${rotuloDaUnidade(producao.unidade)}`
+                const quantidade = `${formatarQuantidadeParaExibicao(producao.unidade, producao.quantidade)} ${rotuloDaUnidade(producao.unidade)}`
                 const percentual = percentualProducao(producao)
                 return (
                   <li key={`${producao.sectorId}-${producao.unidade ?? ''}`} className="grid gap-1">

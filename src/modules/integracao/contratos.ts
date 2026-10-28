@@ -6,6 +6,14 @@ export type JobStatus = (typeof JOB_STATUSES)[number]
 /** Janela de idempotência por número de pedido, em milissegundos. */
 export const IDEMPOTENCY_WINDOW_MS = 60_000
 
+/**
+ * Tempo máximo sem atualização para considerar um job ainda ativo (PENDING,
+ * DISPATCHED ou RUNNING) como travado. Sem isso, uma resposta perdida do
+ * conector deixaria o pedido preso em "em andamento" para sempre, sem permitir
+ * nova importação.
+ */
+export const STALE_ACTIVE_JOB_MS = 10 * 60 * 1000
+
 /** Chave de idempotência estável por pedido; o repositório garante unicidade. */
 export function buildIdempotencyKey(orderNumber: string): string {
   return `pedido:${orderNumber}`

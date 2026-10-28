@@ -59,6 +59,7 @@ export const prismaIndicadoresRepository: IndicadoresRepository = {
           items: {
             select: {
               classificationStatus: true,
+              deadlineAt: true,
               activities: { select: { status: true, sector: { select: { code: true } } } },
             },
           },
@@ -78,6 +79,7 @@ export const prismaIndicadoresRepository: IndicadoresRepository = {
         criadoEm: row.createdAt,
         itens: row.items.map((item) => ({
           classificationStatus: item.classificationStatus,
+          deadlineAt: item.deadlineAt,
           atividades: item.activities.map((atividade) => ({
             sectorCode: atividade.sector.code,
             status: atividade.status,
@@ -113,6 +115,7 @@ export const prismaIndicadoresRepository: IndicadoresRepository = {
         unit: true,
         deadlineAt: true,
         classificationStatus: true,
+        legacyCategory: true,
         activities: {
           select: {
             sectorId: true,
@@ -141,6 +144,7 @@ export const prismaIndicadoresRepository: IndicadoresRepository = {
         deadlineAt: row.deadlineAt,
         activityDeadlineAt: atividade?.deadlineAt ?? null,
         classificationStatus: row.classificationStatus,
+        legacyCategory: row.legacyCategory,
         sectorId: atividade?.sectorId ?? null,
         sectorCode: atividade?.sector.code ?? null,
         sectorName: atividade?.sector.name ?? null,

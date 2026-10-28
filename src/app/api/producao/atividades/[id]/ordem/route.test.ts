@@ -52,6 +52,7 @@ function seedOrdem(
     unidade: 'M',
     solicitado: new Prisma.Decimal(opts.solicitado ?? 10),
     executado: new Prisma.Decimal(opts.executado ?? 8),
+    previsao: null,
   })
 }
 

@@ -60,9 +60,15 @@ function detalhe(disponivel: number) {
   }
 }
 
-function configurarApi(detalhes: ReturnType<typeof detalhe>[]) {
+function configurarApi(
+  detalhes: ReturnType<typeof detalhe>[],
+  papel: 'PRODUCTION_MANAGER' | 'SHIPPING' = 'PRODUCTION_MANAGER',
+) {
   let chamadas = 0
   mocks.apiGet.mockImplementation((url: string) => {
+    if (url === '/api/auth/sessao') {
+      return Promise.resolve({ usuario: { roles: [papel] } })
+    }
     if (url === '/api/pedidos') {
       return Promise.resolve({ pedidos: [{ id: 'p1', numero: '100', cliente: 'Ana' }] })
     }
@@ -124,18 +130,17 @@ describe('EntregasPage', () => {
   })
 
   it('bloqueia entrega acima do disponível sem autorização de gerente (FEP-07)', async () => {
-    configurarApi([detalhe(5)])
+    configurarApi([detalhe(5)], 'SHIPPING')
     render(<EntregasPage />)
 
     await selecionarPedido()
     fireEvent.change(await screen.findByLabelText('Quantidade do item 1'), {
       target: { value: '9' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Registrar entrega do item 1' }))
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      /autorização de gerente com motivo/i,
-    )
+    expect(await screen.findByText(/Peça ao gerente de produção/)).toBeInTheDocument()
+    expect(screen.queryByLabelText('Autorizar acima do disponível')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar entrega do item 1' }))
     expect(mocks.apiPost).not.toHaveBeenCalled()
   })
 
@@ -178,9 +183,18 @@ describe('EntregasPage', () => {
   })
 
   it('mostra erro acessível e permite tentar de novo quando a API falha (FEP-13)', async () => {
-    mocks.apiGet
-      .mockRejectedValueOnce(new Error('falha'))
-      .mockResolvedValueOnce({ pedidos: [] })
+    let primeiraLista = true
+    mocks.apiGet.mockImplementation((url: string) => {
+      if (url === '/api/auth/sessao') return Promise.resolve({ usuario: { roles: ['SHIPPING'] } })
+      if (url === '/api/pedidos') {
+        if (primeiraLista) {
+          primeiraLista = false
+          return Promise.reject(new Error('falha'))
+        }
+        return Promise.resolve({ pedidos: [] })
+      }
+      return Promise.reject(new Error(`url inesperada: ${url}`))
+    })
     render(<EntregasPage />)
 
     const alert = await screen.findByRole('alert')
@@ -229,7 +243,7 @@ describe('EntregasPage', () => {
     await selecionarPedido()
 
     const disponiveis = (await screen.findByText('Disponíveis')).closest('div.rounded-card')
-    expect(disponiveis).toHaveTextContent('5 un · 4 m')
-    expect(screen.getByText('Pendentes').closest('div.rounded-card')).toHaveTextContent('2 un · 0 m')
+    expect(disponiveis).toHaveTextContent('5 un · 4,00 m')
+    expect(screen.getByText('Pendentes').closest('div.rounded-card')).toHaveTextContent('2 un · 0,00 m')
   })
 })

@@ -227,6 +227,9 @@ function createClassificacaoPort(
       const found = mappings.find((candidate) => candidate.legacyCategory === legacyCategory)
       return found ? { ...found } : null
     },
+    async listAll() {
+      return mappings.map((mapping) => ({ ...mapping }))
+    },
     async findById(id) {
       const found = mappings.find((candidate) => candidate.id === id)
       return found ? { ...found } : null
@@ -482,45 +485,70 @@ describe('processarCallback', () => {
   })
 
   it('não repete o upsert quando o job já está concluído', async () => {
-    for (const status of ['SUCCEEDED', 'FAILED'] as const) {
-      const integracao = createIntegracaoFake([makeJob('job_1', status)])
-      const pedidos = createPedidosFake({
-        seed: [
-          {
-            id: 'order_1',
-            legacyOrderKey: '1:70435',
-            customerName: 'MARCO ANTONIO DE OLIVEIRA',
-            items: [
-              {
-                legacyItemKey: '1',
-                requestedQuantity: '5.000',
-                executedQuantity: '0.000',
-                deliveredQuantity: '0.000',
-              },
-            ],
-          },
-        ],
-      })
-
-      await processarCallback(
-        validCallback({
+    const integracao = createIntegracaoFake([makeJob('job_1', 'SUCCEEDED')])
+    const pedidos = createPedidosFake({
+      seed: [
+        {
+          id: 'order_1',
+          legacyOrderKey: '1:70435',
+          customerName: 'MARCO ANTONIO DE OLIVEIRA',
           items: [
             {
-              seq: 1,
-              productCode: 'P001',
-              description: 'TELHA',
-              unit: 'UN',
-              requestedQuantity: '9.000',
-              legacyCategory: null,
+              legacyItemKey: '1',
+              requestedQuantity: '5.000',
+              executedQuantity: '0.000',
+              deliveredQuantity: '0.000',
             },
           ],
-        }),
-        { integracao: integracao.repo, pedidos: pedidos.repo, now: () => NOW },
-      )
+        },
+      ],
+    })
 
-      expect(pedidos.orders[0].items[0].requestedQuantity).toBe('5.000')
-      expect(integracao.events).toHaveLength(0)
-    }
+    await processarCallback(
+      validCallback({
+        items: [
+          {
+            seq: 1,
+            productCode: 'P001',
+            description: 'TELHA',
+            unit: 'UN',
+            requestedQuantity: '9.000',
+            legacyCategory: null,
+          },
+        ],
+      }),
+      { integracao: integracao.repo, pedidos: pedidos.repo, now: () => NOW },
+    )
+
+    expect(pedidos.orders[0].items[0].requestedQuantity).toBe('5.000')
+    expect(integracao.events).toHaveLength(0)
+  })
+
+  it('aceita callback atrasado de job marcado FAILED e registra o evento', async () => {
+    const integracao = createIntegracaoFake([
+      { ...makeJob('job_1', 'FAILED'), errorCode: 'CONNECTOR_TIMEOUT' },
+    ])
+    const pedidos = createPedidosFake({})
+
+    await processarCallback(
+      validCallback({
+        items: [
+          {
+            seq: 1,
+            productCode: 'P001',
+            description: 'TELHA',
+            unit: 'UN',
+            requestedQuantity: '9.000',
+            legacyCategory: null,
+          },
+        ],
+      }),
+      { integracao: integracao.repo, pedidos: pedidos.repo, now: () => NOW },
+    )
+
+    expect(integracao.jobs[0].status).toBe('SUCCEEDED')
+    expect(pedidos.orders).toHaveLength(1)
+    expect(integracao.events.map((event) => event.type)).toContain('LATE_CALLBACK')
   })
 
   it('registra evento DIVERGENCE quando a quantidade é menor que a executada', async () => {

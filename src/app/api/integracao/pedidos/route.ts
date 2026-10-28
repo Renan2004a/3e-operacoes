@@ -1,5 +1,6 @@
 import {
   IDEMPOTENCY_WINDOW_MS,
+  STALE_ACTIVE_JOB_MS,
   InvalidOrderNumberError,
 } from '../../../../modules/integracao/contratos'
 import {
@@ -52,11 +53,13 @@ export async function POST(request: Request) {
   const job = await prismaIntegracaoRepository.findById(result.jobId)
   const statusReal = job?.status ?? 'PENDING'
   // Job ativo antigo (fora da janela) ainda é uma tentativa em andamento: não
-  // dispara outro processamento. Apenas job final antigo inicia nova consulta.
+  // dispara outro processamento. Job ativo sem atualização além do limite está
+  // travado (conector não respondeu) e precisa aceitar nova consulta.
   const jobAtivoAntigo =
     job !== null &&
     !result.reused &&
     statusEstaAtivo(statusReal) &&
+    solicitadoEm.getTime() - job.updatedAt.getTime() <= STALE_ACTIVE_JOB_MS &&
     job.createdAt.getTime() < solicitadoEm.getTime() - IDEMPOTENCY_WINDOW_MS
   const origem = jobAtivoAntigo
     ? 'EM_ANDAMENTO'

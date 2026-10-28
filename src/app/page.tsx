@@ -15,7 +15,7 @@ export default async function Home() {
   if (!sessao) redirect('/login')
 
   const usuario = await prismaUsuariosRepository.findById(sessao.userId)
-  if (!usuario || usuario.roles.length === 0) redirect('/login')
+  if (!usuario || usuario.status === 'INACTIVE' || usuario.roles.length === 0) redirect('/login')
 
   const destino = rotaInicialDoPerfil(usuario.roles[0])
   if (destino !== '/') redirect(destino)

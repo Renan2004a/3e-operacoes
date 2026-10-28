@@ -242,6 +242,68 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Date**: 2026-10-26
 - **Status**: active (implementada e validada localmente: 1023 testes, Playwright 9/9, lint/typecheck/build OK, banco inspecionado).
 
+### AD-022
+
+- **Decision**: Os PRs **#15 (Gerente)** e **#14 (Vendedor/Integração)** foram integrados preservando as duas contribuições: (a) o painel do Gerente carrega indicadores, alertas e ocorrências de forma **independente** (`Promise.allSettled`), com erro por bloco, botão **Atualizar** e horário da última atualização; “Cumprimento de prazo” mostra **—** quando não há concluídas com prazo; (b) o detalhe do pedido permite **recolher/abrir itens** (primeiro aberto, “Abrir todos/Recolher todos”) e padroniza “Prazo de entrega (item)” e “Prazo operacional (setor)”; (c) o menu do Gerente passa a usar **“Importar pedido”** e **“Fila de produção”**; (d) a importação reaplica a **espera prolongada** (60 s técnicos, pausa do polling e consulta manual do mesmo job), separa falha de consulta de falha da importação e combina orientação traduzida com o código técnico; (e) job **ativo antigo** é auditado como `REUSED_JOB` (`newDispatch: false`), pois não há novo despacho; (f) filtros e página são preservados no retorno do detalhe (Vendedor e Gerente) via `useSearchParams` e navegação completa do link “Voltar”.
+- **Reason**: Os dois PRs corrigiam regressões e lacunas de clareza nos perfis Gerente e Vendedor. A integração mantém o comportamento de ambos sem reintroduzir duplicação de despacho, perda de filtros ou mensagens técnicas sem orientação.
+- **Trade-off**: A navegação “Voltar” do detalhe passou a ser **full page load** (mais lenta que client-side), necessária para hidratar a listagem com a query antes do primeiro render. O limite de 60 s é **técnico**, não prazo de negócio/SLA. O job ativo antigo não é reenviado; se o conector ficar preso, a recuperação exige decisão operacional (mesma política anterior). A base local tem 7 pedidos, então o cenário de página 2 não é exercitável nela.
+- **Scope**: painel e detalhe do Gerente, detalhe/lista do Vendedor, importação, auditoria de job ativo, navegação/URL, testes e documentação. Permissões, saldos, prazos, entregas, remessas, ocorrências, Top Gerente e banco preservados. Sem migração.
+- **Date**: 2026-10-27
+- **Status**: active (integrada e validada localmente: **1037 testes**, lint 0 erros, typecheck/build OK; Playwright **15/15** novos + **11/11** responsivo/impressão + **9/9** Operador; deploy e validação hospedada concluídos em 2026-10-27).
+
+### AD-023
+
+- **Decision**: Correções de interface pedidas pelo professor/Saul aplicadas imediatamente: (a) quantidades sempre no **padrão brasileiro** (vírgula; metro com 2 casas, peça inteira) e percentuais com **1 casa decimal** (ex.: 62,5%); (b) **previsão de entrega** visível na lista do Vendedor/Gerente, no detalhe, na atividade do Operador, na Expedição e na impressão; (c) **histórico de prazos** por item, usando `logs_auditoria` (`DEADLINE_CHANGED`, antes/depois, usuário e data), sem nova tabela; (d) **remessa com número automático** (o usuário informa só a data) e **Vendedor sem ações de remessa** — apenas leitura das datas; `programar_remessa` passa a Gerente/Expedição; (e) tela de Setores explica o mapeamento categoria→setor e lista os mapeamentos; (f) tela de Usuários explica que a inativação preserva o histórico.
+- **Reason**: O professor considerou as correções de UI urgentes para apresentar ao cliente; Saul não entendia o mapeamento e a inativação de usuários; o Vendedor não deveria executar tarefas da Expedição.
+- **Trade-off**: O histórico usa a auditoria genérica (não uma tabela específica de prazos); a consulta é sob demanda. O Vendedor deixa de confirmar/remover remessas (API 403); a Expedição ainda não tem uma tela dedicada de remessas — a gestão continua no detalhe pelo Gerente até a migração do banco. A previsão da lista usa o **maior** prazo entre os itens (pedido completo), não o próximo prazo.
+- **Scope**: lista/detalhe do Vendedor e Gerente, atividade/ordem do Operador, Entregas, Administração (setores/usuários), imports de formatação, prazos, remessas, testes e documentação. Sem migração de banco.
+- **Date**: 2026-10-27
+- **Status**: active (implementada; **1037 testes**, lint 0 erros, typecheck/build OK; Playwright **15/15** de UI; deploy `365f143` validado em produção; vídeo completo em `docs/video/demo-completa-2026-10-27.mp4`).
+
+### AD-024
+
+- **Decision**: A reestruturação do banco apontada pelo professor **não** foi executada nesta rodada. O diagnóstico e o plano estão em `docs/revisao-banco-professor.md`: padronizar nomes físicos em **português**, trocar CUID por **BIGINT**, criar `perfis` + `usuarios_perfis`, substituir `remessas_programadas` por previsões/entregas, remodelar `execucoes` como `apontamentos` e renomear `managerOverride`/`regra_produto_setor`, além de detalhar as regras de negócio.
+- **Reason**: A mudança altera PKs/FKs, URLs, DTOs, repositórios, dados e testes; o professor sugeriu desenhar o banco manualmente e gerar o SQL antes de mexer no código. Fazer isso junto com correções de UI colocaria a demonstração em risco.
+- **Trade-off**: O banco continua com nomes mistos e IDs string até a migração aprovada; a dívida está documentada. O histórico de prazos já foi resolvido sem schema novo.
+- **Scope**: banco, Prisma, ETL, contratos e documentação. Fora do escopo desta rodada.
+- **Date**: 2026-10-27
+- **Status**: proposed (aguardando decisão/migração dedicada).
+
+## Handoff — correções de UI, vídeo e deploy (2026-10-27)
+
+- **Feature**: correções pedidas pelo professor/Saul (AD-023), demonstração completa legendada e capítulo de banco.
+- **Phase / Task**: concluída; código, documentação e vídeo publicados em `main`.
+- **Completed**:
+  - Correções de UI: vírgula/decimais, previsão em todas as telas, histórico de prazos, remessa automática, Vendedor sem remessas, explicações de mapeamento e de inativação.
+  - `fix` posterior ao `ce4fbd5`: o histórico recarrega **a cada abertura** (`historico-prazos.tsx`), mostrando alteração feita depois da primeira consulta.
+  - Vídeo `docs/video/demo-completa-2026-10-27.mp4` (8m43s, legendas queimadas): fluxo do app, alteração/restauração de prazo no pedido 82249 e capítulo de banco (DBeaver + consultas reais). Transcrição em `docs/video/demo-completa-2026-10-27-transcricao.json`.
+  - Scripts de reprodução: `scripts/gravar-demo-completa-2026-10-27.mjs`, `scripts/gravar-demo-prazo.mjs`, `scripts/gerar-capitulo-banco.mjs`, `scripts/gravar-capitulo-banco.mjs`.
+  - Gates: **1037 testes** verdes + 24 ignorados; lint 0 erros (7 avisos); typecheck e build OK.
+  - Publicação: commits `6205dc3` (fix), `c0ec7e5` (scripts), `fd1f2e4` (vídeo) e `365f143` (docs/evidências); deploy Railway validado com `/api/health` 200, `/login` 200 e Playwright **15/15** contra a produção.
+  - Auditoria de prazos em produção: 4 linhas de `DEADLINE_CHANGED` no item 1 do pedido 82249 (duas gravações da demonstração); o vídeo mostra as duas primeiras e o valor atual é 06/12/2026.
+- **In-progress**: nenhum.
+- **Next step**: aceite do convite de colaborador da Vanusa no GitHub; migração do banco (AD-024) após aprovação; eventual regravação com escrita em banco de teste dedicado.
+- **Blockers**: convite da Vanusa pendente de aceite; reestruturação do banco depende de decisões (AD-024); testes de integração MySQL continuam gated.
+- **Files changed**: `src/shared/ui/historico-prazos.tsx`, `docs/video/*`, `scripts/{gravar-demo-completa-2026-10-27,gravar-demo-prazo,gerar-capitulo-banco,gravar-capitulo-banco}.mjs`, `docs/{validacao-hospedada,testes-locais}.md`, `.gitignore` e este arquivo.
+- **Branch**: `main`.
+
+## Handoff — integração dos PRs #14 e #15 (2026-10-27)
+
+- **Feature**: correções do Gerente (PR #15) e do Vendedor/importação (PR #14).
+- **Phase / Task**: integração concluída na branch `integracao-prs-14-15`; gates locais aprovados; deploy pendente.
+- **Completed**:
+  - Merge do #15 sem conflitos; merge do #14 com conflitos apenas em `STATE.md`, `docs/testes-locais.md` e `docs/validacao-hospedada.md` (resolvidos mantendo as duas seções).
+  - Código auto-mergeado em `pedido-detalhe.tsx` e `pedidos-lista.tsx`; validação confirmou que o link “Voltar” usa `<a>` e os itens recolhíveis continuam funcionando.
+  - 1037 testes verdes (+14), lint 0 erros, typecheck e build OK.
+  - Navegador: 15/15 (filtros/retorno Vendedor e Gerente, painel/Atualizar, itens recolhíveis, rótulos, importação sem envio, sem erros de console/hidratação).
+  - Regressões: 11/11 responsivo/impressão e 9/9 Operador.
+  - Deploy Railway e validação hospedada: 15/15 + 11/11 + 9/9; `/api/health` e `/login` 200.
+- **In-progress**: nenhum.
+- **Next step**: manter os PRs #14/#15 fechados (já constam como merged) e planejar o go-live (conector real + banco dedicado).
+- **Blockers**: testes de integração MySQL continuam gated; conector Top Gerente real e go-live seguem pendentes.
+- **Files changed**: `src/app/(app)/gerente/painel`, `src/app/(app)/gerente/pedidos`, `src/app/(app)/vendedor/pedidos`, `src/shared/ui/{pedido-detalhe,pedidos-lista,importar-pedido,navegacao-perfil}`, `src/modules/integracao/{solicitar-importacao,transparencia-importacao}`, testes, `scripts/validar-prs-14-15.mjs`, docs e este arquivo.
+- **Branch**: `integracao-prs-14-15` → `main`.
+
 ## Handoff — perfil Operador e ocorrências (AD-021)
 
 - **Feature**: separação das telas do Operador, feedback de ações e visibilidade das ocorrências pelo Gerente.
@@ -260,6 +322,24 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Blockers**: situação de análise/resolução de ocorrência depende de decisão de negócio; idempotência de ocorrência e notificação ativa ao gerente fora do escopo.
 - **Files changed**: `src/app/(app)/operador/{fila,ocorrencias,atividades/[id]}`, `src/app/(app)/gerente/painel/page.tsx`, `src/shared/ui/{navegacao-perfil,app-shell}`, `src/modules/ocorrencias/{painel-ocorrencias,adapters/prisma-ocorrencias-repository}`, `src/app/api/producao/ocorrencias`, `src/app/api/indicadores/ocorrencias`, `src/shared/db/prisma.ts`, `scripts/validar-operador.mjs`, testes e documentos (`docs/diagnostico-operador.md`, `docs/testes-locais.md`, `docs/avaliacao-heuristicas.md`, `docs/README.md`, este arquivo).
 - **Branch**: main
+
+## Handoff — revisão integrada pós-merges (2026-10-25)
+
+- **Feature**: revisão do perfil Vendedor e das correções dos PRs #5–#13 após os merges
+- **Phase / Task**: correções aplicadas e validadas localmente; PR #14 aberto para revisão
+- **Completed**:
+  - Reaplicação do #13 sobre a UI de transparência do #8: limite técnico de 60s, pausa do polling, consulta manual do mesmo job e falha de consulta separada de falha da importação.
+  - Recuperação das mensagens de erro do #5: o código técnico continua visível, mas a orientação traduzida (`mensagens-importacao`) voltou a ser usada.
+  - Auditoria do #11 corrigida para job ativo antigo: `REUSED_JOB`/`newDispatch: false`, pois não há novo despacho.
+  - Retorno do detalhe do Gerente passou a preservar filtros e página, como no Vendedor (componente compartilhado do #7).
+  - Validação local em 2026-10-25: MySQL isolado com migrations/seed, 24 testes de integração reais, API de importação com job ativo antigo e retry, e 15 cenários de navegador (Vendedor/Gerente, importação, espera prolongada, falhas e retorno).
+  - Defeitos encontrados e corrigidos na validação: perda de página/filtros na hidratação de link direto, divergência de hidratação e perda de filtros no retorno client-side do detalhe.
+  - Preservados: transparência de reimportação e unidade do #8, quantidades/vocabulário do #9, proteção de remessas do #10, rótulo do período do #12, filtros AD-014/AD-018/AD-019 e paginação A1.
+- **In-progress**: nenhum
+- **Next step**: revisar/mergear o PR #14; manter pendente a validação com o conector Top Gerente real e em produção.
+- **Blockers**: conector Top Gerente real e ambiente de produção; decisões pendentes AD-010, AD-012/T00.4, AD-013, AD-016/D6 e AD-017/D7.
+- **Branch**: fix/vendedor-integracao-pos-merge
+- **PR**: #14
 
 ## Handoff — auditoria da solicitação de importação (AD-015)
 

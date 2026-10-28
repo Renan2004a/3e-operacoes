@@ -1,57 +1,82 @@
-# Vídeos de demonstração
+# Demonstração completa — 3E Operações (27/10/2026)
 
-Gravações automáticas do fluxo do 3E Operações (Playwright + Chromium), com
-legendas que ficam visíveis por tempo proporcional ao texto.
+**Arquivo**: `demo-completa-2026-10-27.mp4` (8m43s, 1280×800, legendas queimadas, sem áudio)
+**Transcrição**: `demo-completa-2026-10-27-transcricao.json` (tempo, título e texto de cada legenda do app)
+**Capítulo de banco**: `capitulo-banco.html` (consultas reais) + `dbeaver-test.png` (janela do DBeaver)
 
-| Arquivo | Duração | Modo | Conteúdo |
-| --- | --- | --- | --- |
-| `demo-3e.mp4` | ~1min27 | navegação | Versão curta. |
-| `demo-3e-completo.mp4` | ~4min35 | navegação | Todas as telas, com cartões de seção e legendas lentas. |
-| `demo-3e-execucao.mp4` | ~5min37 | **execução real** | Importa o pedido e **registra execução, ocorrência e entrega** (grava no banco do app). |
-| `demo-fluxo.mp4` | ~5min | **fluxo completo (real)** | Por perfil: vendedor **puxa do Top Gerente**, vê o **setor sugerido pelo produto**, desmembra e **programa/confirma a remessa**; operador executa/ocorrência; gerente com **alertas operacionais**; expedição entrega; admin e técnico. |
+---
 
-Os modos "navegação" não alteram dados: navegam e exibem as telas (em um ponto
-preenchem um campo apenas para mostrar o formulário). O modo "execução real"
-**grava** no banco próprio do app; o Top Gerente permanece somente leitura.
+## Capítulos
 
-## Roteiro (versão completa / execução)
+| Tempo | Capítulo | Conteúdo |
+| --- | --- | --- |
+| 00:00–06:25 | **Fluxo do app** | Login por perfil; Vendedor (lista, filtros, detalhe, prazos, histórico, desmembramento, sem remessas); Gerente (painel, alertas, ocorrências, atualização, pedidos, detalhe, remessa automática); Operador (fila, execução, ocorrências, ordem/impressão); Expedição (entregas, previsão, exceção); Admin (usuários, inativação, setores, mapeamento); Técnico (jobs/eventos); Importação |
+| 06:25–07:31 | **Alteração de prazo** | Item com prazo no pedido 82249: alteração para +7 dias, gravação, histórico com antes/depois e restauração do valor original |
+| 07:31–08:43 | **Banco de dados** | DBeaver (conexões), mapa das tabelas, contagens, pedido/item/atividade, ocorrências, entregas, remessas e histórico de prazos em `logs_auditoria` |
 
-1. Abertura e login por perfil.
-2. **Vendedor**: lista, pedido `70435`, cinco valores, **setor sugerido pelo produto**,
-   desmembramento por setor, **remessa programada e confirmada** e prazo.
-3. **Gerente de Produção**: painel com **alertas operacionais** (atrasados, parados e
-   não encaminhados), pedidos, detalhe, fila e **importação** (na versão de execução,
-   a importação é disparada e confirmada).
-4. **Operador**: fila, **execução** (registra 5 un.), **ocorrência** (perda com
-   motivo) e ordem de produção.
-5. **Expedição**: entregas — na versão de execução, **registra a entrega**; na
-   de navegação, mostra o fluxo de exceção (acima do disponível).
-6. **Responsável de Sistema**: usuários, setores e mapeamento de categoria.
-7. **Responsável Técnico**: jobs de integração e eventos.
-8. Saldo atualizado, responsividade (celular) e logout.
+---
 
-## Como regenerar
+## O que foi executado de verdade
+
+- **Login** nos cinco perfis (Vendedor, Gerente, Operador, Expedição, Administrador).
+- **Leitura** de todas as telas, filtros, expansão/recolhimento de itens, painel e atualização, jobs de integração, impressão.
+- **Remessa**: criação com número automático e remoção com confirmação (sem resíduo).
+- **Prazo**: alteração e restauração no pedido 82249. O vídeo mostra as duas primeiras linhas de `logs_auditoria`; gravações repetidas deixaram **quatro** linhas de `DEADLINE_CHANGED` no mesmo item (auditoria preservada), com o valor atual em 06/12/2026.
+- **Consultas reais** no banco do app para o capítulo de banco (somente leitura).
+
+## O que foi mostrado como formulário, sem enviar
+
+Para **não alterar dados de produção** (o banco do app é compartilhado com o ambiente de demonstração), estas ações foram preenchidas e explicadas, mas **não confirmadas**:
+
+- Importação de pedido (o conector local não está disponível neste ambiente).
+- Registro de execução do Operador.
+- Registro de ocorrência.
+- Registro de entrega e exceção.
+- Criação de usuário e confirmação de inativação.
+- Salvar mapeamento de categoria.
+
+> Para gravar uma versão com essas ações concluídas, use um **banco de teste separado** (`3e_operacoes_test`), rode `prisma migrate deploy` + seed e aponte `DATABASE_URL` para ele. O roteiro e os scripts estão em `scripts/gravar-demo-completa-2026-10-27.mjs`, `scripts/gravar-demo-prazo.mjs` e `scripts/gravar-capitulo-banco.mjs`.
+
+---
+
+## Sobre o capítulo de banco / DBeaver
+
+- O DBeaver está instalado no ambiente; a captura mostra a janela real com as conexões `topgerente` e `localhost`.
+- O desktop do agente é **kiosk** (a janela visível é a do OpenCode), então a navegação ao vivo dentro do DBeaver não pôde ser roteirizada com segurança. Para não inventar dados, o capítulo combina:
+  - a **captura real da janela do DBeaver**;
+  - o **mapa das tabelas**;
+  - **consultas SQL reais** e seus resultados, executados no banco do app.
+- As consultas estão em `capitulo-banco.html`; copie o SQL para o DBeaver para reproduzir.
+
+---
+
+## Como reproduzir a gravação
 
 ```bash
-npm run dev            # em outro terminal (porta 3000)
+# app local
+npm run dev
 
-# versão de navegação (não grava dados)
-npm run video:demo:completo
+# 1) fluxo completo (gera webm + transcrição)
+node scripts/gravar-demo-completa-2026-10-27.mjs
 
-# versão de execução real (precisa do conector local no ar; GRAVA dados)
-# PowerShell:
-$env:MODO='execucao'; npm run video:demo:completo
+# 2) complemento de prazo
+node scripts/gravar-demo-prazo.mjs
 
-# versão curta
-npm run video:demo
+# 3) capítulo de banco (HTML + consultas reais)
+node scripts/gerar-capitulo-banco.mjs
+node scripts/gravar-capitulo-banco.mjs
+
+# 4) converter e concatenar (ffmpeg)
+#    ver comandos usados em docs/testes-locais.md §11
 ```
 
-Requisitos:
+## Arquivos
 
-- app rodando em `http://localhost:3000` (banco configurado em `.env`);
-- pedido `PEDIDO_DEMO` (padrão `70435`) já importado;
-- para o modo `execucao`, o **conector local** no ar
-  (`npm --workspace connector-local run start`, porta 8787);
-- Playwright instalado (browsers) e um `ffmpeg` no PATH para o `.mp4`.
-
-Os screenshots de cada passo ficam em `docs/video/steps*/` (não versionados).
+| Arquivo | Uso |
+| --- | --- |
+| `demo-completa-2026-10-27.mp4` | Vídeo final legendado |
+| `demo-completa-2026-10-27-transcricao.json` | Transcrição com tempos |
+| `capitulo-banco.html` | Roteiro do banco + resultados reais |
+| `dbeaver-test.png` | Captura da janela do DBeaver |
+| `validacao-ui/` | Evidências das correções de UI |
+| `validacao-prod/` | Evidências da produção |

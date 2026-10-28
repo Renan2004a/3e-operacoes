@@ -109,8 +109,8 @@ Os 9 PRs abertos do Marcelo foram revisados, integrados com resolução de confl
 
 - **Commit no `main`**: `ccd8f8d` (branch de integração `integracao-prs`).
 - **Conflitos resolvidos**: importação (#5/#8/#11/#13), lista/detalhe (#6/#7/#9/#10/#12) e `STATE.md` (ADs).
-- **Decisão de conflito**: a UI de importação do **#8** (transparência/reimportação) foi mantida como vigente; o #13 (espera prolongada) fica para reaplicação. A política do #8 de **não duplicar** job ativo antigo foi preservada, com o teste do #5 ajustado.
-- **Auditoria (#11)** combinada com a leitura do job mais recente/retry (#8): `criarComAuditoria` + `registrarAuditoriaSolicitacao` convivem com `findLatestByOrderNumberSince`.
+- **Decisão de conflito**: a UI de importação do **#8** (transparência/reimportação) foi mantida como vigente; o #13 (espera prolongada) foi reaplicado sobre ela na revisão pós-merge (`fix/vendedor-integracao-pos-merge`). A política do #8 de **não duplicar** job ativo antigo foi preservada, com o teste do #5 ajustado.
+- **Auditoria (#11)** combinada com a leitura do job mais recente/retry (#8): `criarComAuditoria` + `registrarAuditoriaSolicitacao` convivem com `findLatestByOrderNumberSince`. Na revisão pós-merge, job ativo antigo passou a ser auditado como `REUSED_JOB` (`newDispatch: false`), coerente com a ausência de novo despacho.
 
 > Os PRs foram integrados por merge local (a `main` contém todas as mudanças); os PRs no GitHub foram fechados com a referência do commit, já que os branches conflitavam entre si.
 
@@ -138,3 +138,92 @@ Deploy do commit `4be4bc2` (feature + pool + documentação) e validação do fl
 - **Banco**: 13 ocorrências persistidas, com vínculo ao pedido/item/setor/responsável/motivo.
 - **Configuração nova (opcional)**: `DB_CONNECTION_LIMIT` (padrão 15) e `DB_ACQUIRE_TIMEOUT_MS` (padrão 30000). Se o Railway tiver limite menor de conexões, ajustar no serviço.
 - **Ressalva**: o deploy usou o mesmo token de projeto de 2026-10-25; **rotacionar/revogar** após a entrega. O banco do app continua compartilhado com o ambiente de desenvolvimento (go-live real exige banco separado).
+
+## 9. Validação local do PR #14 (2026-10-25)
+
+Validação feita na branch `fix/vendedor-integracao-pos-merge`, sem alterar produção.
+
+- **Banco**: MySQL 8.0.46 isolado em `/tmp/opencode/mysql-3e`, porta 3307. O app usou `3e_operacoes_test` (migrations + seed) e os testes de integração usaram `3e_operacoes_integration`, ambos criados do zero e descartáveis.
+- **Aplicação**: `next dev` local em `http://localhost:3000`, com dados de 25 pedidos de teste.
+- **Conector**: servidor HTTP local simulado em `127.0.0.1:4010`, com callback assinado para a aplicação. **Não é o conector Top Gerente real**; a simulação cobriu sucesso, espera de 120 s, falha `ORDER_NOT_FOUND` e callback manual.
+- **Navegador**: Playwright/Chromium, 15/15 cenários aprovados — login, filtros/pesquisa/período, página 2, retorno do detalhe (Vendedor e Gerente), links diretos, retorno externo bloqueado, importação nova/reutilizada/falha, falha de consulta, pausa de 60 s e retomada manual, sem erro de página no console.
+- **MySQL real**: 24/24 testes de integração (`consulta-pedidos` e `prazos`) aprovados em `RUN_INTEGRATION_TESTS=1`, incluindo paginação, filtros combinados e prazos.
+- **API/banco**: job ativo antigo reutilizado sem despacho, com `REUSED_JOB`/`newDispatch: false`; job novo e retry de falha com `NEW_ATTEMPT`/`newDispatch: true`; eventos e pedidos persistidos.
+- **Defeitos corrigidos durante a validação**: (1) link direto com `pagina=2` perdia a página na montagem em StrictMode; (2) a listagem lia `window` no primeiro render e gerava divergência de hidratação; (3) o retorno client-side do detalhe montava a listagem antes da query e perdia filtros. Correções nos commits `d26c0bb` e `3f161ab`.
+- **Checks finais**: 1017 testes automatizados aprovados (24 de integração ignorados na suíte padrão), typecheck, typecheck do conector, lint sem erros e build OK.
+
+**Ainda não validado:** conector Top Gerente real, dados reais, deploy/hospedagem e teste manual em dispositivo físico. As decisões pendentes AD-010, AD-011, AD-012, AD-013, AD-016 e AD-017 continuam fora do escopo.
+
+---
+
+## 10. Atualização 2026-10-27 — integração dos PRs #14 e #15
+
+Deploy do commit `c3f1ff0` (merge dos PRs #15 e #14) e validação dos fluxos alterados em produção.
+
+| Item | Local | Hospedado |
+| --- | --- | --- |
+| PR #15 — painel/detalhe do Gerente (`a25d8b6`) | ✅ | ✅ |
+| PR #14 — filtros/importação do Vendedor (`854d0c3`) | ✅ | ✅ |
+| Testes automatizados | **1037** verdes + 24 ignorados | mesmos artefatos do commit |
+| Lint / typecheck / build | 0 erros / OK / OK | — |
+| Playwright — novos fluxos (`validar-prs-14-15.mjs`) | **15/15** | **15/15** |
+| Playwright — responsivo/impressão | **11/11** | **11/11** |
+| Playwright — Operador | **9/9** | **9/9** |
+| `/api/health` / `/login` | — | **200 / 200** |
+
+- **PRs no GitHub**: #15 e #14 constam como **merged** (`a25d8b6` e `854d0c3`).
+- **Validação hospedada**: filtros/retorno do Vendedor e do Gerente, painel com Atualizar, itens recolhíveis, rótulos de prazo e formulário de importação; sem erros de console/hidratação.
+- **Base de dados**: 7 pedidos; cenário de página 2 não aplicável (N/A) nesta base. Testes de integração MySQL permanecem *gated*.
+- **Ressalva**: o deploy reutilizou o token de projeto de 2026-10-25; **rotacionar/revogar** após a entrega. O banco do app continua compartilhado com o desenvolvimento.
+
+**Evidências**: `docs/video/validacao-prs-14-15/` e `docs/video/validacao-prod/`.
+
+---
+
+## 11. Atualização 2026-10-27 — correções de UI (professor/Saul)
+
+Deploy do commit `ce4fbd5` (correções de UI) com o ajuste final de recarga do histórico de prazos, e validação em produção.
+
+| Item | Local | Hospedado |
+| --- | --- | --- |
+| Unidades com vírgula e percentuais com 1 casa decimal | ✅ | ✅ |
+| Previsão de entrega na lista, detalhe, operador, expedição e impressão | ✅ | ✅ |
+| Histórico de prazos (auditoria) | ✅ | ✅ |
+| Remessa com número automático e Vendedor sem gestão de remessas | ✅ | ✅ |
+| Explicação do mapeamento e lista de mapeamentos | ✅ | ✅ |
+| Explicação da inativação de usuários | ✅ | ✅ |
+| Testes automatizados | **1037** verdes + 24 ignorados | mesmos artefatos |
+| Lint / typecheck / build | 0 erros (7 avisos) / OK / OK | — |
+| Playwright — correções de UI (`validar-correcoes-ui.mjs`) | **15/15** | **15/15** |
+| Playwright — responsivo/impressão | **11/11** | **11/11** |
+| Playwright — Operador | **9/9** | **9/9** |
+| `/api/health` / `/login` | — | **200 / 200** |
+
+- **Vídeo**: `docs/video/demo-completa-2026-10-27.mp4` (8m43s, legendas queimadas), com capítulo de app, alteração/restauração de prazo e capítulo de banco (DBeaver + consultas reais).
+- **Banco**: a demonstração criou linhas de `DEADLINE_CHANGED` no item 1 do pedido 82249 (06/12 → 13/12 e 13/12 → 06/12; gravações repetidas deixaram quatro linhas no total). O valor atual do item foi restaurado e nenhum outro dado operacional foi alterado na gravação. A remessa criada foi removida.
+- **Vídeo**: `docs/video/demo-completa-2026-10-27.mp4` (8m43s) publicado em `main` no commit `fd1f2e4`; deploy validado no commit `365f143`.
+- **Reestruturação do banco**: planejada em `docs/revisao-banco-professor.md`; não executada.
+- **Ressalva**: token de projeto do Railway ainda ativo; rotacionar/revogar.
+
+---
+
+## 12. Revisão de prontidão (2026-10-28) — deploy `65d6dd8`
+
+Revisão completa antes da apresentação ao cliente: segurança, domínio, UI e deploy.
+
+| Item | Local | Hospedado |
+| --- | --- | --- |
+| Testes automatizados | **1049** verdes + 24 ignorados | mesmos artefatos |
+| Lint / typecheck / build | 0 erros (7 avisos) / OK / OK | — |
+| Playwright — correções de UI (`validar-correcoes-ui.mjs`) | **15/15** | **15/15** |
+| Playwright — revisão de prontidão (`validar-melhorias.mjs`) | **15/15** | **15/15** |
+| `/api/health` / `/login` | — | **200 / 200** |
+| Cabeçalhos de segurança | — | `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, HSTS |
+| `robots.txt` | — | `Disallow: /` (sistema interno) |
+| Limite de tentativas de login | — | 6ª tentativa do mesmo e-mail retorna **429** |
+
+- **Next.js** atualizado de `16.3.5` para `16.4.3` (correções de segurança do framework).
+- **Sessão**: cookie `Secure` configurável (`COOKIE_SECURE`), `SESSION_SECRET` com 64 caracteres no Railway, usuário inativado perde a sessão na hora.
+- **Dados**: textos do legado com dupla codificação corrigidos (`Dobradiça`, `Maurício`); descrições `.` e código `0` normalizados; mapeamento inválido `CORTE_DOBRA:` removido; job travado em `RUNNING` encerrado.
+- **Importação**: dois pedidos novos importados pelo conector local (82271 e 82270), com encoding correto e sem duplicação.
+- **Pendente para a demo**: o conector em produção ainda aponta para `http://localhost:8787`. Para importar ao vivo é preciso expor o conector (túnel) e ajustar `LOCAL_CONNECTOR_BASE_URL`, ou rodar a demo no ambiente local.

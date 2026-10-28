@@ -24,11 +24,20 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [erro, setErro] = useState<string | null>(null)
+  const [erroValidacao, setErroValidacao] = useState(false)
   const [enviando, setEnviando] = useState(false)
 
   async function aoEnviar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault()
     setErro(null)
+    setErroValidacao(false)
+
+    if (email.trim() === '' || senha === '') {
+      setErro('Informe e-mail e senha para entrar.')
+      setErroValidacao(true)
+      return
+    }
+
     setEnviando(true)
 
     try {
@@ -47,6 +56,10 @@ export default function LoginPage() {
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         setErro('E-mail ou senha inválidos. Verifique e tente novamente.')
+      } else if (error instanceof ApiError && error.status === 429) {
+        setErro(
+          'Muitas tentativas de acesso. Aguarde alguns minutos antes de tentar novamente ou fale com o responsável pelo sistema.',
+        )
       } else {
         setErro('Não foi possível entrar agora. Tente novamente.')
       }
@@ -94,7 +107,10 @@ export default function LoginPage() {
 
           <form className="mt-6 grid gap-4" onSubmit={aoEnviar} noValidate>
             {erro ? (
-              <Alert variant="error" title="Não foi possível entrar">
+              <Alert
+                variant="error"
+                title={erroValidacao ? 'Dados incompletos' : 'Não foi possível entrar'}
+              >
                 {erro}
               </Alert>
             ) : null}

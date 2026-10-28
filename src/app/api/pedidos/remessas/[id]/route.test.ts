@@ -105,14 +105,14 @@ describe('PATCH/DELETE /api/pedidos/remessas/[id]', () => {
     expect(response.status).toBe(403)
   })
 
-  it('permite que o Vendedor confirme e remova a remessa (permissão preservada)', async () => {
+  it('nega confirmação e remoção ao Vendedor (remessa é tarefa da expedição)', async () => {
     mocks.perfis.user_seller = ['SELLER']
 
     const confirmacao = await PATCH(request('PATCH', { usuarioId: 'user_seller' }), context('r1'))
-    expect(confirmacao.status).toBe(200)
+    expect(confirmacao.status).toBe(403)
 
     const remocao = await DELETE(request('DELETE', { usuarioId: 'user_seller' }), context('r1'))
-    expect(remocao.status).toBe(204)
+    expect(remocao.status).toBe(403)
   })
 
   it('confirmações repetidas não duplicam a remessa', async () => {

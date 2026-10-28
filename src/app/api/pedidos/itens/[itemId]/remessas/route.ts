@@ -22,8 +22,12 @@ export async function POST(request: Request, context: { params: Promise<{ itemId
   }
 
   const dados = (body ?? {}) as { remessa?: unknown; scheduledAt?: unknown; note?: unknown }
-  const remessa = Number(dados.remessa)
-  if (!Number.isInteger(remessa) || typeof dados.scheduledAt !== 'string') {
+  const remessa =
+    dados.remessa === undefined || dados.remessa === null ? undefined : Number(dados.remessa)
+  if (
+    (remessa !== undefined && (!Number.isInteger(remessa) || remessa <= 0)) ||
+    typeof dados.scheduledAt !== 'string'
+  ) {
     return Response.json({ error: 'invalid_body' }, { status: 400 })
   }
 

@@ -69,6 +69,14 @@ export const prismaProducaoRepository: ProducaoRepository = {
     return rows.map((row) => row.sectorId)
   },
 
+  async listarTodosOsSetores() {
+    const rows = await prisma.sector.findMany({
+      where: { active: true },
+      select: { id: true },
+    })
+    return rows.map((row) => row.id)
+  },
+
   async listarAtividadesPorSetores(sectorIds) {
     if (sectorIds.length === 0) return []
     const rows = await prisma.activity.findMany({
@@ -117,6 +125,11 @@ export const prismaProducaoRepository: ProducaoRepository = {
 
   async registrarExecucao(input): Promise<RegistrarExecucaoPortResult> {
     return prisma.$transaction(async (tx) => {
+      // Serializa execuções da mesma atividade: duas submissões simultâneas não
+      // podem calcular o status só com as próprias linhas e deixar o item em
+      // IN_PROGRESS com o total já completo.
+      await tx.$queryRaw`SELECT id FROM atividades WHERE id = ${input.atividadeId} FOR UPDATE`
+
       const execucaoRow = await tx.execution.create({
         data: {
           activityId: input.atividadeId,
@@ -164,6 +177,7 @@ export const prismaProducaoRepository: ProducaoRepository = {
       unidade: row.orderItem.unit,
       solicitado: row.orderItem.requestedQuantity,
       executado: somarExecucoes(row.executions.map((execution) => execution.quantity)),
+      previsao: row.orderItem.deadlineAt,
     }
   },
 }

@@ -13,7 +13,10 @@ import {
 export const depsAutorizacao: ExigirPerfilDeps = {
   async carregarPerfis(userId) {
     const usuario = await prismaUsuariosRepository.findById(userId)
-    return usuario?.roles ?? []
+    // Inativar um usuário também derruba a sessão que ele já tinha: sem isso,
+    // o cookie continuaria válido por até 8 h mesmo após a inativação.
+    if (!usuario || usuario.status === 'INACTIVE') return []
+    return usuario.roles
   },
   pode,
 }

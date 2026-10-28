@@ -18,6 +18,7 @@ function atividade(
 function createDeps(seed: {
   setores?: Record<string, string[]>
   atividades?: Atividade[]
+  todosSetores?: string[]
 }) {
   const setoresPorUsuario = seed.setores ?? {}
   const atividades = [...(seed.atividades ?? [])]
@@ -26,6 +27,9 @@ function createDeps(seed: {
   const repo: FilaRepository = {
     async listarSetoresDoUsuario(usuarioId) {
       return [...(setoresPorUsuario[usuarioId] ?? [])]
+    },
+    async listarTodosOsSetores() {
+      return [...(seed.todosSetores ?? [])]
     },
     async listarAtividadesPorSetores(sectorIds) {
       setoresConsultados.push(sectorIds)
@@ -141,5 +145,20 @@ describe('listarFila', () => {
 
     expect(fila).toEqual([])
     expect(setoresConsultados).toHaveLength(0)
+  })
+
+  it('gerente vê todos os setores ativos, mesmo sem vínculo', async () => {
+    const { repo } = createDeps({
+      setores: { user_gerente: [] },
+      todosSetores: ['setor_telhas', 'setor_corte'],
+      atividades: [
+        atividade({ id: 'act_telha', sectorId: 'setor_telhas' }),
+        atividade({ id: 'act_corte', sectorId: 'setor_corte' }),
+      ],
+    })
+
+    const fila = await listarFila('user_gerente', repo, { todosOsSetores: true })
+
+    expect(fila.map((item) => item.id).sort()).toEqual(['act_corte', 'act_telha'])
   })
 })

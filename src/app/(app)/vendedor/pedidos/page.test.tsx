@@ -16,6 +16,8 @@ vi.mock('@/shared/http/api-client', () => ({
 vi.mock('next/navigation', () => ({
   useParams: () => ({}),
   useRouter: () => ({ push: mocks.push }),
+  useSearchParams: () =>
+    new URLSearchParams(typeof window === 'undefined' ? '' : window.location.search),
 }))
 
 vi.mock('next/link', () => ({

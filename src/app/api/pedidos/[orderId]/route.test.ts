@@ -152,6 +152,7 @@ describe('GET /api/pedidos/[orderId]', () => {
       deadlineAt: null,
       activityDeadlineAt: null,
       classificationStatus: 'PENDING_CLASSIFICATION',
+      legacyCategory: null,
       sectorId: null,
       sectorCode: null,
       sectorName: null,
