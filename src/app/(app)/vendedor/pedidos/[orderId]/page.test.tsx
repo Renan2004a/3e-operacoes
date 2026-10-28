@@ -74,6 +74,7 @@ function detalhe() {
         classificationStatus: 'PENDING_CLASSIFICATION' as 'CLASSIFIED' | 'PENDING_CLASSIFICATION',
         deadlineAt: null as string | null,
         activityDeadlineAt: null as string | null,
+        statusPrazoEntrega: 'SEM_PRAZO' as 'SEM_PRAZO' | 'EM_DIA' | 'ATRASADO',
         sectorId: null as string | null,
         sectorCode: null as string | null,
         sectorName: null as string | null,
@@ -287,6 +288,69 @@ describe('PedidoVendedorPage', () => {
 
     expect(await screen.findByText('Sem prazo')).toBeInTheDocument()
     expect(screen.getByLabelText('Prazo de entrega (item 1)')).toHaveValue('')
+  })
+
+  it('exibe “Entrega atrasada” quando o servidor deriva atraso comercial (AD-025)', async () => {
+    configurarApiCom({
+      ...detalhe(),
+      itens: [
+        {
+          ...detalhe().itens[0],
+          solicitado: '10',
+          executado: '10',
+          entregue: '0',
+          disponivel: '10',
+          pendente: '0',
+          deadlineAt: '2026-02-02T02:59:59.999Z',
+          statusPrazoEntrega: 'ATRASADO' as const,
+        },
+      ],
+    })
+    render(<PedidoVendedorPage />)
+
+    expect(await screen.findByText('Entrega atrasada')).toBeInTheDocument()
+    expect(screen.getByText('Prazo de entrega: 01/02/2026')).toBeInTheDocument()
+  })
+
+  it('não exibe “Entrega atrasada” quando o atendimento integral foi alcançado (AD-025)', async () => {
+    configurarApiCom({
+      ...detalhe(),
+      itens: [
+        {
+          ...detalhe().itens[0],
+          solicitado: '10',
+          entregue: '10',
+          deadlineAt: '2026-02-02T02:59:59.999Z',
+          statusPrazoEntrega: 'EM_DIA' as const,
+        },
+      ],
+    })
+    render(<PedidoVendedorPage />)
+
+    expect(await screen.findByText('Prazo de entrega: 01/02/2026')).toBeInTheDocument()
+    expect(screen.queryByText('Entrega atrasada')).not.toBeInTheDocument()
+  })
+
+  it('mantém os atrasos comercial e operacional independentes (AD-025)', async () => {
+    configurarApiCom({
+      ...detalhe(),
+      itens: [
+        {
+          ...detalhe().itens[0],
+          deadlineAt: '2026-02-02T02:59:59.999Z',
+          statusPrazoEntrega: 'EM_DIA' as const,
+          classificationStatus: 'CLASSIFIED',
+          activityStatus: 'PENDING',
+          activityDeadlineAt: '2026-02-02T02:59:59.999Z',
+        },
+      ],
+    })
+    render(<PedidoVendedorPage />)
+
+    expect(
+      await screen.findByText('Prazo operacional (setor): 01/02/2026 · Atrasado'),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('Entrega atrasada')).not.toBeInTheDocument()
   })
 
   it('usa o prazo devolvido pela API após salvar, sem deslocar o dia (AD-009)', async () => {

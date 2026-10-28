@@ -75,6 +75,7 @@ function pedido(
         unit: 'peca',
         deadlineAt: null as string | null,
         activityDeadlineAt: null as string | null,
+        statusPrazoEntrega: 'SEM_PRAZO' as 'SEM_PRAZO' | 'EM_DIA' | 'ATRASADO',
         classificationStatus,
       },
     ],
@@ -278,6 +279,28 @@ describe('PedidoGerentePage', () => {
 
     expect(await screen.findByText('Sem prazo')).toBeInTheDocument()
     expect(screen.getByLabelText('Prazo de entrega (item 1)')).toHaveValue('')
+  })
+
+  it('exibe “Entrega atrasada” conforme o status derivado pelo servidor (AD-025)', async () => {
+    configurarApi({
+      ...pedido(),
+      itens: [
+        {
+          ...pedido().itens[0],
+          solicitado: '10',
+          executado: '10',
+          entregue: '0',
+          disponivel: '10',
+          pendente: '0',
+          deadlineAt: '2026-02-02T02:59:59.999Z',
+          statusPrazoEntrega: 'ATRASADO' as const,
+        },
+      ],
+    })
+    render(<PedidoGerentePage />)
+
+    expect(await screen.findByText('Entrega atrasada')).toBeInTheDocument()
+    expect(screen.getByText('Prazo de entrega: 01/02/2026')).toBeInTheDocument()
   })
 
   it('mostra pedido não encontrado quando a API responde 404 (FEP-13)', async () => {
