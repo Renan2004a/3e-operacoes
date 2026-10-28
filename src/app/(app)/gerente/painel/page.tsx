@@ -325,7 +325,7 @@ export default function PainelPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Link
-          href="/gerente/atividades?status=ABERTAS"
+          href="/gerente/atividades?status=ABERTAS&origem=painel"
           target="_blank"
           rel="noopener noreferrer"
           className="block"
@@ -335,7 +335,7 @@ export default function PainelPage() {
         </Link>
 
         <Link
-          href="/gerente/atividades?status=IN_PROGRESS"
+          href="/gerente/atividades?status=IN_PROGRESS&origem=painel"
           target="_blank"
           rel="noopener noreferrer"
           className="block"
@@ -345,7 +345,7 @@ export default function PainelPage() {
         </Link>
 
         <Link
-          href="/gerente/atividades?status=COMPLETED"
+          href="/gerente/atividades?status=COMPLETED&origem=painel"
           target="_blank"
           rel="noopener noreferrer"
           className="block"
@@ -355,7 +355,7 @@ export default function PainelPage() {
         </Link>
 
         <Link
-          href="/gerente/atividades?status=COMPLETED"
+          href="/gerente/atividades?status=COMPLETED&origem=painel"
           target="_blank"
           rel="noopener noreferrer"
           className="block"
@@ -392,7 +392,7 @@ export default function PainelPage() {
               Verifique sua conexão e tente novamente.
             </Alert>
           ) : (
-            <div className="grid gap-4 lg:grid-cols-3">
+            <div className="grid items-start gap-4 lg:grid-cols-3">
               <GrupoAlertas titulo="Atividades atrasadas" tom="danger" itens={alertas?.atrasados ?? []} />
               <GrupoAlertas titulo="Parados" tom="warning" itens={alertas?.parados ?? []} />
               <GrupoAlertas

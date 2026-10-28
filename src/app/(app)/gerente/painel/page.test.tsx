@@ -316,16 +316,16 @@ describe('PainelPage', () => {
     const pendentes = await screen.findByRole('link', {
       name: 'Abrir atividades pendentes em nova aba',
     })
-    expect(pendentes).toHaveAttribute('href', '/gerente/atividades?status=ABERTAS')
+    expect(pendentes).toHaveAttribute('href', '/gerente/atividades?status=ABERTAS&origem=painel')
     expect(pendentes).toHaveAttribute('target', '_blank')
     expect(
       screen.getByRole('link', { name: 'Abrir atividades em execução em nova aba' }),
-    ).toHaveAttribute('href', '/gerente/atividades?status=IN_PROGRESS')
+    ).toHaveAttribute('href', '/gerente/atividades?status=IN_PROGRESS&origem=painel')
     expect(
       screen.getByRole('link', { name: 'Abrir atividades concluídas em nova aba' }),
-    ).toHaveAttribute('href', '/gerente/atividades?status=COMPLETED')
+    ).toHaveAttribute('href', '/gerente/atividades?status=COMPLETED&origem=painel')
     expect(
       screen.getByRole('link', { name: 'Abrir atividades concluídas com prazo em nova aba' }),
-    ).toHaveAttribute('href', '/gerente/atividades?status=COMPLETED')
+    ).toHaveAttribute('href', '/gerente/atividades?status=COMPLETED&origem=painel')
   })
 })

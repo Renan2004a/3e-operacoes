@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import type { ActivityStatus } from '@/modules/producao/tipos'
 import { apiGet } from '@/shared/http/api-client'
 import { Alert } from '@/shared/ui/alert'
@@ -61,6 +62,12 @@ function filtroDaUrl(): Filtro {
   return valor && valor in TITULO ? (valor as Filtro) : 'ABERTAS'
 }
 
+/** Indica que a aba foi aberta a partir dos cartões do painel. */
+function abertaPeloPainel(): boolean {
+  if (typeof window === 'undefined') return false
+  return new URLSearchParams(window.location.search).get('origem') === 'painel'
+}
+
 /** Data civil (YYYY-MM-DD) sem deslocamento de fuso. */
 function formatarDia(valor: string | null): string {
   if (!valor) return 'sem prazo'
@@ -70,7 +77,9 @@ function formatarDia(valor: string | null): string {
 
 /** Lista as atividades por status, aberta a partir dos cartões do painel (P07). */
 export default function AtividadesPage() {
+  const router = useRouter()
   const [filtro] = useState<Filtro>(filtroDaUrl)
+  const [origemPainel] = useState(abertaPeloPainel)
   const [atividades, setAtividades] = useState<AtividadeIndicador[] | null>(null)
   const [erro, setErro] = useState(false)
   const [carregando, setCarregando] = useState(true)
@@ -98,7 +107,21 @@ export default function AtividadesPage() {
     void buscar()
   }
 
-  const voltar = (
+  function voltarAoPainel() {
+    // A aba foi aberta pelo painel: fecha. Se o navegador bloquear, navega de volta.
+    window.close()
+    window.setTimeout(() => router.push('/gerente/painel'), 150)
+  }
+
+  const voltar = origemPainel ? (
+    <button
+      type="button"
+      onClick={voltarAoPainel}
+      className={cn('text-left text-sm font-medium text-accent', FOCO_VISIVEL)}
+    >
+      ← Voltar para o painel
+    </button>
+  ) : (
     <Link href="/gerente/painel" className={cn('text-sm font-medium text-accent', FOCO_VISIVEL)}>
       ← Voltar para o painel
     </Link>

@@ -186,8 +186,7 @@ export default function ExecutarAtividadePage() {
                 ordem.unidade,
                 Number(ordem.executado) - Number(ordem.solicitado),
               )}{' '}
-              {ordem.unidade} acima do solicitado. A atividade fica marcada como divergente para
-              análise do gerente.
+              {ordem.unidade} acima do solicitado. A atividade fica marcada como divergente.
             </Alert>
           ) : null}
         </CardContent>
