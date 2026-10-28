@@ -18,6 +18,7 @@ export const NAV_POR_PERFIL: Record<RoleCode, readonly ItemNav[]> = {
   PRODUCTION_MANAGER: [
     { href: '/gerente/painel', label: 'Painel' },
     { href: '/gerente/pedidos', label: 'Pedidos' },
+    { href: '/expedicao/entregas', label: 'Entregas' },
     { href: '/integracao', label: 'Importar pedido' },
     // A matriz concede `registrar_execucao` ao gerente, então ele acessa a fila
     // de produção compartilhada com o operador (QF-10). Fica por último para

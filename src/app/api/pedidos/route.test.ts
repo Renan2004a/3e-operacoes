@@ -116,7 +116,7 @@ describe('GET /api/pedidos', () => {
 
     expect(resposta.status).toBe(200)
     expect(resposta.body.pedidos).toEqual([
-      { id: 'ped_1', numero: '1001', cliente: 'Construtora X', status: 'COMPLETED', previsao: null },
+      { id: 'ped_1', numero: '1001', cliente: 'Construtora X', status: 'COMPLETED', previsao: null, divergente: false },
     ])
     expect(resposta.body.paginacao).toEqual({
       limite: 20,

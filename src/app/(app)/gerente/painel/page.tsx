@@ -372,7 +372,7 @@ export default function PainelPage() {
             </Alert>
           ) : (
             <div className="grid gap-4 lg:grid-cols-3">
-              <GrupoAlertas titulo="Atrasados" tom="danger" itens={alertas?.atrasados ?? []} />
+              <GrupoAlertas titulo="Atividades atrasadas" tom="danger" itens={alertas?.atrasados ?? []} />
               <GrupoAlertas titulo="Parados" tom="warning" itens={alertas?.parados ?? []} />
               <GrupoAlertas
                 titulo="Não encaminhados"

@@ -69,7 +69,7 @@ describe('FilaPage', () => {
     mocks.apiGet.mockResolvedValue({ atividades: [] })
     render(<FilaPage />)
 
-    expect(await screen.findByText('Nenhum pedido para você agora')).toBeInTheDocument()
+    expect(await screen.findByText('Nenhuma atividade em aberto')).toBeInTheDocument()
   })
 
   it('mostra erro acessível e permite tentar de novo (FE-14)', async () => {
@@ -105,7 +105,7 @@ describe('FilaPage', () => {
     mocks.apiGet.mockResolvedValue({ atividades: [atividade()] })
     render(<FilaPage />)
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Meus pedidos' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Fila de produção' })).toBeInTheDocument()
   })
 
   it('mostra setor e prioridade no card da atividade (PROT-05)', async () => {

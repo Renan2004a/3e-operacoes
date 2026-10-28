@@ -24,6 +24,8 @@ export interface PedidoListado {
   status: StatusPedido
   /** Previsão de entrega (maior prazo entre os itens), em ISO. */
   previsao?: string | null
+  /** Alguma atividade do pedido está divergente e precisa de análise. */
+  divergente?: boolean
 }
 
 export interface ContextoRetornoListagem {
@@ -377,7 +379,8 @@ export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProp
         <>
           {paginacao ? (
             <p className="text-sm text-muted" role="status">
-              {paginacao.total} pedido(s) encontrado(s)
+              {paginacao.total}{' '}
+              {paginacao.total === 1 ? 'pedido encontrado' : 'pedidos encontrados'}
               {paginacao.totalPaginas > 1 && pagina <= paginacao.totalPaginas
                 ? ` — página ${pagina} de ${paginacao.totalPaginas}`
                 : ''}
@@ -444,9 +447,14 @@ export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProp
                           {pedido.previsao ? formatarDiaCivil(pedido.previsao) : 'Sem previsão'}
                         </td>
                         <td data-label="Status" className="px-4 py-3">
-                          <Badge variant={VARIANTE_STATUS[pedido.status]}>
-                            {ROTULO_STATUS[pedido.status]}
-                          </Badge>
+                          <span className="inline-flex flex-wrap items-center gap-2">
+                            <Badge variant={VARIANTE_STATUS[pedido.status]}>
+                              {ROTULO_STATUS[pedido.status]}
+                            </Badge>
+                            {pedido.divergente ? (
+                              <Badge variant="danger">Divergente</Badge>
+                            ) : null}
+                          </span>
                         </td>
                         <td data-label="Ações" className="px-4 py-3 md:text-right">
                           <Button

@@ -179,6 +179,17 @@ export default function ExecutarAtividadePage() {
               Pendente: {formatarQuantidadeParaExibicao(ordem.unidade, ordem.pendente)} {ordem.unidade}
             </li>
           </ul>
+          {Number(ordem.executado) > Number(ordem.solicitado) ? (
+            <Alert variant="warning" title="Produção acima do solicitado">
+              Foram executadas{' '}
+              {formatarQuantidadeParaExibicao(
+                ordem.unidade,
+                Number(ordem.executado) - Number(ordem.solicitado),
+              )}{' '}
+              {ordem.unidade} acima do solicitado. A atividade fica marcada como divergente para
+              análise do gerente.
+            </Alert>
+          ) : null}
         </CardContent>
       </Card>
 

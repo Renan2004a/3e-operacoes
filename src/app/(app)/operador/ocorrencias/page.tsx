@@ -16,6 +16,13 @@ import { PageHead } from '@/shared/ui/page-head'
 import { Spinner } from '@/shared/ui/spinner'
 import { cn, FOCO_VISIVEL } from '@/shared/ui/utils'
 
+/** Quantidade de ocorrência no padrão brasileiro, sem arrastar o runtime decimal. */
+function formatarQuantidadeOcorrencia(valor: string | number): string {
+  const numero = Number(valor)
+  if (!Number.isFinite(numero)) return String(valor)
+  return new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 3 }).format(numero)
+}
+
 interface AtividadeFila {
   id: string
   orderNumber?: string | null
@@ -258,7 +265,7 @@ export default function OcorrenciasPage() {
                       Setor: {ocorrencia.setor ?? '—'} ·{' '}
                       {ocorrencia.motivo ?? 'Sem motivo informado'}
                       {ocorrencia.quantidade !== null
-                        ? ` · Quantidade: ${ocorrencia.quantidade}`
+                        ? ` · Quantidade: ${formatarQuantidadeOcorrencia(ocorrencia.quantidade)}`
                         : ''}
                     </p>
                     {ocorrencia.observacao ? (

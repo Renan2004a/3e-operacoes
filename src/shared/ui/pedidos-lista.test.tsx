@@ -320,7 +320,7 @@ describe('PedidosLista', () => {
     )
     render(<PedidosLista onSelecionar={vi.fn()} />)
 
-    expect(await screen.findByText(/137 pedido\(s\) encontrado\(s\)/)).toBeInTheDocument()
+    expect(await screen.findByText(/137 pedidos encontrados/)).toBeInTheDocument()
     const paginacao = screen.getByRole('navigation', { name: 'Paginação' })
     expect(within(paginacao).getByText(/página 1 de 7/i)).toBeInTheDocument()
   })

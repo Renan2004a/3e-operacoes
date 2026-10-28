@@ -17,6 +17,9 @@ import { formatarQuantidadeParaExibicao, valorPorUnidade, type TotalUnidadeView 
 interface ItemSaldo {
   itemId: string
   unit: string
+  /** Descrição e código do produto, para o expedidor conferir o item. */
+  description?: string | null
+  productCode?: string | null
   /** Previsão de entrega do item (ISO), quando o gerente definiu. */
   deadlineAt?: string | null
   solicitado: string | number
@@ -51,6 +54,8 @@ interface EntregaFormProps {
   item: ItemSaldo
   /** Rótulo humano do item na tela (posição), no lugar do CUID. */
   rotulo: string
+  /** O perfil atual pode autorizar entrega acima do disponível. */
+  podeAutorizar: boolean
   onRegistrada: () => void
 }
 
@@ -58,7 +63,7 @@ interface EntregaFormProps {
  * Formulário de entrega de um item (FEP-06, FEP-07). Dentro do disponível
  * registra direto; acima do disponível exige autorização de gerente com motivo.
  */
-function EntregaForm({ item, rotulo, onRegistrada }: EntregaFormProps) {
+function EntregaForm({ item, rotulo, podeAutorizar, onRegistrada }: EntregaFormProps) {
   const [quantidade, setQuantidade] = useState('')
   const [excecao, setExcecao] = useState(false)
   const [motivo, setMotivo] = useState('')
@@ -147,30 +152,38 @@ function EntregaForm({ item, rotulo, onRegistrada }: EntregaFormProps) {
           <p className="text-sm font-semibold text-warning">
             Quantidade acima do disponível: exige autorização de gerente.
           </p>
-          <label className="flex items-center gap-2 text-sm font-medium text-ink">
-            <input
-              type="checkbox"
-              className="h-5 w-5"
-              checked={excecao}
-              onChange={(evento) => setExcecao(evento.target.checked)}
-            />
-            Autorizar acima do disponível
-          </label>
-          <Field label={`Motivo da exceção do ${rotulo}`} required>
-            {(props) => (
-              <Input
-                {...props}
-                value={motivo}
-                onChange={(evento) => setMotivo(evento.target.value)}
-              />
-            )}
-          </Field>
+          {podeAutorizar ? (
+            <>
+              <label className="flex items-center gap-2 text-sm font-medium text-ink">
+                <input
+                  type="checkbox"
+                  className="h-5 w-5"
+                  checked={excecao}
+                  onChange={(evento) => setExcecao(evento.target.checked)}
+                />
+                Autorizar acima do disponível
+              </label>
+              <Field label={`Motivo da exceção do ${rotulo}`} required>
+                {(props) => (
+                  <Input
+                    {...props}
+                    value={motivo}
+                    onChange={(evento) => setMotivo(evento.target.value)}
+                  />
+                )}
+              </Field>
+            </>
+          ) : (
+            <p className="text-sm text-warning">
+              Peça ao gerente de produção para registrar a entrega com autorização e motivo.
+            </p>
+          )}
         </div>
       ) : null}
 
       <Button
         type="submit"
-        disabled={enviando}
+        disabled={enviando || (excede && (!podeAutorizar || !excecao))}
         aria-label={`Registrar entrega do ${rotulo}`}
       >
         {enviando ? 'Registrando…' : 'Registrar entrega'}
@@ -189,6 +202,14 @@ export default function EntregasPage() {
   const [pedido, setPedido] = useState<PedidoDetalhado | null>(null)
   const [carregandoPedido, setCarregandoPedido] = useState(false)
   const [erroPedido, setErroPedido] = useState(false)
+  const [podeAutorizar, setPodeAutorizar] = useState(false)
+
+  useEffect(() => {
+    // A exceção acima do disponível é exclusiva do gerente de produção.
+    apiGet<{ usuario: { roles: string[] } }>('/api/auth/sessao')
+      .then((dados) => setPodeAutorizar(dados.usuario.roles.includes('PRODUCTION_MANAGER')))
+      .catch(() => setPodeAutorizar(false))
+  }, [])
 
   const buscarPedidos = useCallback(
     () =>
@@ -280,6 +301,12 @@ export default function EntregasPage() {
 
       {carregandoPedido ? <Spinner /> : null}
 
+      {!carregandoPedido && !pedido && !erroPedido ? (
+        <Alert variant="info" title="Selecione um pedido">
+          Escolha o pedido acima para ver os itens, o saldo disponível e registrar a entrega.
+        </Alert>
+      ) : null}
+
       {erroPedido ? (
         <Alert variant="error" title="Não foi possível carregar o pedido">
           Verifique sua conexão e tente novamente.
@@ -306,8 +333,15 @@ export default function EntregasPage() {
           {pedido.itens.map((item, indice) => (
             <Card key={item.itemId}>
               <CardHeader>
-                <div>
-                  <CardTitle className="text-base">Item {indice + 1}</CardTitle>
+                <div className="min-w-0">
+                  <CardTitle className="text-base break-words">
+                    {item.description ?? `Item ${indice + 1} sem descrição`}
+                  </CardTitle>
+                  <p className="mt-1 text-sm text-muted">
+                    Item {indice + 1}
+                    {item.productCode ? ` · Código ${item.productCode}` : ''}
+                    {pedido.cliente ? ` · Cliente ${pedido.cliente}` : ''}
+                  </p>
                   <p className="mt-1 text-sm text-ink">
                     Disponível: {formatarQuantidadeParaExibicao(item.unit ?? null, item.disponivel)}
                   </p>
@@ -327,11 +361,20 @@ export default function EntregasPage() {
                   {formatarQuantidadeParaExibicao(item.unit ?? null, item.entregue)} · Pendente:{' '}
                   {formatarQuantidadeParaExibicao(item.unit ?? null, item.pendente)}
                 </p>
-                <EntregaForm
-                  item={item}
-                  rotulo={`item ${indice + 1}`}
-                  onRegistrada={() => void carregarPedido(orderId)}
-                />
+                {numero(item.disponivel) <= 0 && !podeAutorizar ? (
+                  <Alert variant="info" title="Aguardando produção">
+                    Este item ainda não tem saldo disponível para entrega. A Expedição poderá
+                    registrar assim que a produção avançar; acima do disponível, apenas o gerente
+                    autoriza.
+                  </Alert>
+                ) : (
+                  <EntregaForm
+                    item={item}
+                    rotulo={`item ${indice + 1}`}
+                    podeAutorizar={podeAutorizar}
+                    onRegistrada={() => void carregarPedido(orderId)}
+                  />
+                )}
               </CardContent>
             </Card>
           ))}

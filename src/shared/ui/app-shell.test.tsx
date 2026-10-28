@@ -48,6 +48,7 @@ const PERFIS: Array<{ perfil: RoleCode; itens: Array<{ nome: string; href: strin
     itens: [
       { nome: 'Painel', href: '/gerente/painel' },
       { nome: 'Pedidos', href: '/gerente/pedidos' },
+      { nome: 'Entregas', href: '/expedicao/entregas' },
       { nome: 'Importar pedido', href: '/integracao' },
       { nome: 'Fila de produção', href: '/operador/fila' },
     ],
@@ -187,11 +188,11 @@ describe('AppShell', () => {
     expect(screen.queryByRole('link', { name: 'Usuários' })).not.toBeInTheDocument()
   })
 
-  it('o gerente vê a fila e não vê rotas de expedição ou administração (FEP-10, QF-10)', () => {
+  it('o gerente vê a fila e as entregas, mas não vê rotas de administração (FEP-10, QF-10)', () => {
     render(<AppShell perfil="PRODUCTION_MANAGER">{conteudo}</AppShell>)
 
     expect(screen.getByRole('link', { name: 'Fila de produção' })).toHaveAttribute('href', '/operador/fila')
-    expect(screen.queryByRole('link', { name: 'Entregas' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Entregas' })).toHaveAttribute('href', '/expedicao/entregas')
     expect(screen.queryByRole('link', { name: 'Usuários' })).not.toBeInTheDocument()
   })
 })

@@ -59,6 +59,8 @@ interface ItemSaldo {
   /** Prazo operacional da atividade do setor, ou null quando não definido (AD-009). */
   activityDeadlineAt?: string | null
   classificationStatus: 'CLASSIFIED' | 'PENDING_CLASSIFICATION'
+  /** Categoria do produto no legado; o desmembramento manual aprende o de/para. */
+  legacyCategory?: string | null
   sectorId?: string | null
   sectorCode?: string | null
   sectorName?: string | null
@@ -193,6 +195,9 @@ export function PedidoDetalhe({
   const [pedido, setPedido] = useState<PedidoDetalhado | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState<'falha' | 'nao_encontrado' | null>(null)
+  // Relógio fixado na primeira renderização do detalhe. O conteúdo só existe
+  // depois da busca no cliente, então não há divergência de hidratação.
+  const [agora] = useState(() => Date.now())
 
   const [rascunhos, setRascunhos] = useState<Record<string, string>>({})
   const [salvando, setSalvando] = useState<string | null>(null)
@@ -349,7 +354,12 @@ export function PedidoDetalhe({
 
     setClassificando(itemId)
     try {
-      await apiPost(`/api/pedidos/itens/${itemId}/classificar`, { sectorId })
+      const item = pedido?.itens.find((candidato) => candidato.itemId === itemId)
+      await apiPost(`/api/pedidos/itens/${itemId}/classificar`, {
+        sectorId,
+        // Ensina o de/para categoria→setor para as próximas importações.
+        legacyCategory: item?.legacyCategory ?? undefined,
+      })
       marcarClassificado(itemId)
       setClassificados((atual) => ({ ...atual, [itemId]: true }))
       setSucesso('Item desmembrado com sucesso.')
@@ -791,14 +801,17 @@ export function PedidoDetalhe({
                       <span aria-hidden="true" className="mt-0.5 text-muted">
                         {aberto ? '▾' : '▸'}
                       </span>
-                      <span>{item.description ?? 'Item sem descrição'}</span>
+                      <span className="min-w-0 break-words">
+                        {item.description ?? 'Item sem descrição'}
+                      </span>
                     </button>
                   </CardTitle>
                   <p className="mt-1 text-sm text-muted">
-                    Item {indice + 1} · Código {item.productCode ?? '—'} · {item.unit}
+                    Item {indice + 1}
+                    {item.productCode ? ` · Código ${item.productCode}` : ''} · {item.unit}
                   </p>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
                   {!aberto ? (
                     <Badge variant={percentual >= 100 ? 'success' : 'neutral'}>{formatarPercentual(percentual)}%</Badge>
                   ) : null}
@@ -911,9 +924,15 @@ export function PedidoDetalhe({
                 ) : null}
 
                 {item.deadlineAt ? (
-                  <Badge variant="success">
-                    Prazo de entrega: {formatarDiaCivil(item.deadlineAt)}
-                  </Badge>
+                  <span className="inline-flex flex-wrap items-center gap-2">
+                    <Badge variant="success">
+                      Prazo de entrega: {formatarDiaCivil(item.deadlineAt)}
+                    </Badge>
+                    {numero(item.pendente) > 0 &&
+                    new Date(item.deadlineAt).getTime() < agora ? (
+                      <Badge variant="warning">Atrasado</Badge>
+                    ) : null}
+                  </span>
                 ) : (
                   <Badge variant="neutral">Sem prazo</Badge>
                 )}
