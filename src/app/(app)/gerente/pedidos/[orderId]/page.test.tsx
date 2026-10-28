@@ -353,6 +353,35 @@ describe('PedidoGerentePage', () => {
     expect(await screen.findByText('Item desmembrado')).toBeInTheDocument()
   })
 
+  it('mostra a orientação de gestão de remessas para o Gerente', async () => {
+    const classificado = {
+      ...pedido('CLASSIFIED'),
+      itens: [
+        {
+          ...pedido('CLASSIFIED').itens[0],
+          sectorId: 'setor_telhas',
+          sectorCode: 'TELHAS',
+          sectorName: 'Telhas',
+        },
+      ],
+    }
+    mocks.apiGet.mockImplementation((url: string) => {
+      if (url === '/api/setores') return Promise.resolve({ sectors: SETORES })
+      if (url === '/api/auth/sessao') {
+        return Promise.resolve({ usuario: { roles: ['PRODUCTION_MANAGER'] } })
+      }
+      return Promise.resolve({ pedido: classificado })
+    })
+    render(<PedidoGerentePage />)
+
+    expect(
+      await screen.findByText(/Você pode continuar com as remessas abaixo\./),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText(/Acompanhe abaixo as datas das remessas programadas/),
+    ).not.toBeInTheDocument()
+  })
+
   it('indica o item já classificado e não oferece classificar de novo (LAC-05)', async () => {
     configurarApi(pedido('CLASSIFIED'))
     render(<PedidoGerentePage />)

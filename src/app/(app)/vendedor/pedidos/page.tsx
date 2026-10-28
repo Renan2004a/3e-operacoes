@@ -10,9 +10,10 @@ import { montarUrlDetalhe } from '@/shared/ui/retorno-lista'
 
 /**
  * Área de Vendas (FEP-03, FEP-04, FEP-05). O vendedor puxa o pedido do Top
- * Gerente pelo número, desmembra os itens por setor, define prazos e programa
- * remessas. A produção permanece somente leitura. A abertura do pedido navega
- * para a rota de detalhe (e o "Voltar" retorna para esta lista).
+ * Gerente pelo número, desmembra os itens por setor, define prazos e acompanha
+ * as datas das remessas (a gestão é da Gerência/Expedição). A produção permanece
+ * somente leitura. A abertura do pedido navega para a rota de detalhe (e o
+ * "Voltar" retorna para esta lista).
  */
 export default function VendedorPedidosPage() {
   const router = useRouter()

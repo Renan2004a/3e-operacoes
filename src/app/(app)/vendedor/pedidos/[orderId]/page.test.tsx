@@ -108,10 +108,35 @@ function configurarApiCom(pedido: ReturnType<typeof detalhe>) {
   })
 }
 
+function configurarApiComPerfis(pedido: ReturnType<typeof detalhe>, roles: string[]) {
+  mocks.apiGet.mockImplementation((url: string) => {
+    if (url === '/api/pedidos/p1') return Promise.resolve({ pedido })
+    if (url === '/api/setores') return Promise.resolve({ sectors: SETORES })
+    if (url === '/api/auth/sessao') {
+      return Promise.resolve({ usuario: { id: 'user_1', expiraEm: null, roles } })
+    }
+    return Promise.reject(new Error(`url inesperada: ${url}`))
+  })
+}
+
 function itemDetalhe(
   overrides: Partial<ReturnType<typeof detalhe>['itens'][number]> = {},
 ): ReturnType<typeof detalhe>['itens'][number] {
   return { ...detalhe().itens[0], ...overrides }
+}
+
+function detalheClassificado(): ReturnType<typeof detalhe> {
+  return {
+    ...detalhe(),
+    itens: [
+      itemDetalhe({
+        classificationStatus: 'CLASSIFIED',
+        sectorId: 'setor_telhas',
+        sectorCode: 'TELHAS',
+        sectorName: 'Telhas',
+      }),
+    ],
+  }
 }
 
 interface RemessaMock {
@@ -367,6 +392,101 @@ describe('PedidoVendedorPage', () => {
       }),
     )
     expect(await screen.findByText('Item desmembrado com sucesso.')).toBeInTheDocument()
+  })
+
+  it('orienta o Vendedor a apenas acompanhar as remessas após desmembrar', async () => {
+    configurarApiComPerfis(detalhe(), ['SELLER'])
+    mocks.apiPost.mockResolvedValue({})
+    render(<PedidoVendedorPage />)
+
+    fireEvent.change(await screen.findByLabelText('Setor do item 1'), {
+      target: { value: 'setor_telhas' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Classificar item 1' }))
+
+    expect(await screen.findByText('Item desmembrado com sucesso.')).toBeInTheDocument()
+    expect(
+      screen.getByText(/Acompanhe abaixo as datas das remessas programadas pela Gerência\/Expedição\./),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/Você pode continuar com as remessas abaixo\./)).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Adicionar remessa do item 1' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('mantém a orientação de gestão para quem tem programar_remessa', async () => {
+    configurarApiComPerfis(detalhe(), ['PRODUCTION_MANAGER'])
+    mocks.apiPost.mockResolvedValue({})
+    render(<PedidoVendedorPage />)
+
+    fireEvent.change(await screen.findByLabelText('Setor do item 1'), {
+      target: { value: 'setor_telhas' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Classificar item 1' }))
+
+    expect(await screen.findByText('Item desmembrado com sucesso.')).toBeInTheDocument()
+    expect(
+      screen.getByText(/Você pode continuar com as remessas abaixo\./),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText(/Acompanhe abaixo as datas das remessas programadas/),
+    ).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Adicionar remessa do item 1' })).toBeInTheDocument()
+  })
+
+  it('usa a permissão efetiva de usuário com múltiplos perfis', async () => {
+    configurarApiComPerfis(detalhe(), ['SELLER', 'SHIPPING'])
+    mocks.apiPost.mockResolvedValue({})
+    render(<PedidoVendedorPage />)
+
+    fireEvent.change(await screen.findByLabelText('Setor do item 1'), {
+      target: { value: 'setor_telhas' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Classificar item 1' }))
+
+    expect(
+      await screen.findByText(/Você pode continuar com as remessas abaixo\./),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/Acompanhe abaixo as datas das remessas/)).not.toBeInTheDocument()
+  })
+
+  it('não mostra orientação de gestão para Vendedor em item já desmembrado', async () => {
+    configurarApiComPerfis(detalheClassificado(), ['SELLER'])
+    render(<PedidoVendedorPage />)
+
+    expect(await screen.findByText(/Setor definido: Telhas/)).toBeInTheDocument()
+    expect(
+      screen.getByText(/Acompanhe abaixo as datas das remessas programadas pela Gerência\/Expedição\./),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/Você pode continuar com as remessas abaixo\./)).not.toBeInTheDocument()
+  })
+
+  it('usa orientação neutra enquanto os perfis ainda carregam', async () => {
+    const perfis = promessaAdiada<{ usuario: { roles: string[] } }>()
+    mocks.apiGet.mockImplementation((url: string) => {
+      if (url === '/api/pedidos/p1') return Promise.resolve({ pedido: detalheClassificado() })
+      if (url === '/api/setores') return Promise.resolve({ sectors: SETORES })
+      if (url === '/api/auth/sessao') return perfis.promessa
+      return Promise.reject(new Error(`url inesperada: ${url}`))
+    })
+    render(<PedidoVendedorPage />)
+
+    expect(await screen.findByText(/Setor definido: Telhas/)).toBeInTheDocument()
+    expect(
+      screen.getByText(/Acompanhe abaixo as datas das remessas programadas pela Gerência\/Expedição\./),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/Você pode continuar com as remessas abaixo\./)).not.toBeInTheDocument()
+  })
+
+  it('usa orientação neutra quando a consulta de perfis falha', async () => {
+    configurarApiCom(detalheClassificado())
+    render(<PedidoVendedorPage />)
+
+    expect(await screen.findByText(/Setor definido: Telhas/)).toBeInTheDocument()
+    expect(
+      screen.getByText(/Acompanhe abaixo as datas das remessas programadas pela Gerência\/Expedição\./),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/Você pode continuar com as remessas abaixo\./)).not.toBeInTheDocument()
   })
 
   it('mostra a remessa programada, mas não oferece ações de expedição ao Vendedor', async () => {
