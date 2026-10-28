@@ -15,7 +15,14 @@ export async function GET(request: Request) {
   }
 
   const registro = await prismaUsuariosRepository.findById(usuario.userId)
-  const roles = registro?.roles ?? []
+  if (!registro || registro.status === 'INACTIVE' || registro.roles.length === 0) {
+    return Response.json(
+      { error: 'unauthorized' },
+      { status: 401, headers: { 'Set-Cookie': serializarCookieSessaoExpirado() } },
+    )
+  }
+
+  const roles = registro.roles
 
   return Response.json(
     { usuario: { id: usuario.userId, expiraEm: usuario.expiraEm, roles } },

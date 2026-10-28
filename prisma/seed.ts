@@ -152,7 +152,20 @@ async function main() {
   }
 
   const email = process.env.SEED_ADMIN_EMAIL ?? 'admin@3e.local'
-  const senha = process.env.SEED_ADMIN_PASSWORD ?? 'admin123'
+  const emProducao =
+    process.env.NODE_ENV === 'production' || process.env.SEED_PRODUCAO === '1'
+  const senhaAdmin = process.env.SEED_ADMIN_PASSWORD
+  if (emProducao && (!senhaAdmin || senhaAdmin.length < 8)) {
+    throw new Error(
+      'Em produção, defina SEED_ADMIN_PASSWORD com pelo menos 8 caracteres antes de rodar o seed.',
+    )
+  }
+  const senha = senhaAdmin ?? 'admin123'
+  if (!senhaAdmin) {
+    console.warn(
+      '[seed] SEED_ADMIN_PASSWORD não definida: usando a senha de desenvolvimento. Troque antes do go-live.',
+    )
+  }
   const passwordHash = await hashSenha(senha)
 
   const admin = await prisma.user.upsert({
@@ -167,7 +180,15 @@ async function main() {
     create: { userId: admin.id, role: 'SYSTEM_RESPONSIBLE' },
   })
 
-  for (const demo of USUARIOS_DEMO) {
+  // Contas de demonstração: só são criadas com SEED_DEMO=1 (ambiente de
+  // apresentação). Em produção, usuários reais são cadastrados pela tela de
+  // Administração.
+  const criarDemo = process.env.SEED_DEMO === '1'
+  if (!criarDemo) {
+    console.log('[seed] Usuários de demonstração não criados (defina SEED_DEMO=1 para criá-los).')
+  }
+
+  for (const demo of criarDemo ? USUARIOS_DEMO : []) {
     const hash = await hashSenha(demo.senha)
     const usuario = await prisma.user.upsert({
       where: { email: demo.email },
@@ -194,7 +215,8 @@ async function main() {
   }
 
   console.log(
-    `Seed concluído: ${SETORES.length} setores, ${MOTIVOS.length} motivos, ${USUARIOS_DEMO.length + 1} usuários (admin ${email}).`,
+    `Seed concluído: ${SETORES.length} setores, ${MOTIVOS.length} motivos, administrador ${email}` +
+      `${criarDemo ? `, ${USUARIOS_DEMO.length} usuários de demonstração` : ''}.`,
   )
   await prisma.$disconnect()
 }

@@ -5,6 +5,7 @@ import {
 } from '../../../modules/usuarios/gerenciar-usuarios'
 import { prismaUsuariosRepository } from '../../../modules/usuarios/adapters/prisma-usuarios-repository'
 import { TODOS_PERFIS } from '../../../modules/usuarios/permissoes'
+import { senhaAtendePolitica } from '../../../modules/usuarios/politica-senha'
 import { autorizar } from '../../../shared/http/autorizacao'
 
 interface UsuarioBody {
@@ -60,6 +61,10 @@ export async function POST(request: Request) {
     (sectorIds !== undefined && !ehListaDeIds(sectorIds))
   ) {
     return Response.json({ error: 'invalid_body' }, { status: 400 })
+  }
+
+  if (!senhaAtendePolitica(senha)) {
+    return Response.json({ error: 'weak_password' }, { status: 400 })
   }
 
   try {

@@ -37,9 +37,20 @@ export interface ExigirPerfilDeps {
   pode(perfis: RoleCode[], acao: string): boolean
 }
 
-/** Atributos comuns do cookie de sessão: httpOnly, mesmo site e escopo global (AUTH-06). */
+/**
+ * Atributos comuns do cookie de sessão: httpOnly, mesmo site e escopo global
+ * (AUTH-06). `Secure` acompanha o padrão do ambiente, mas pode ser desligado
+ * explicitamente (`COOKIE_SECURE=false`) para a instalação on-premise em HTTP
+ * na rede interna — sem isso o navegador descarta o cookie e o login não fixa.
+ */
 function atributosCookie(): string {
-  const seguro = process.env.NODE_ENV === 'production' ? '; Secure' : ''
+  const configuravel = process.env.COOKIE_SECURE
+  const seguro =
+    configuravel === 'false'
+      ? ''
+      : configuravel === 'true' || process.env.NODE_ENV === 'production'
+        ? '; Secure'
+        : ''
   return `; Path=/; HttpOnly; SameSite=Lax${seguro}`
 }
 

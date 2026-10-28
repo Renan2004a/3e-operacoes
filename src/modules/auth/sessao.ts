@@ -14,6 +14,18 @@ interface SessaoPayload {
 function segredo(): string {
   const secret = process.env.SESSION_SECRET
   if (!secret) throw new Error('SESSION_SECRET não configurada')
+
+  // Fail-closed em produção: um segredo curto ou conhecido permitiria forjar
+  // sessões de qualquer usuário.
+  if (process.env.NODE_ENV === 'production') {
+    if (secret.length < 32) {
+      throw new Error('SESSION_SECRET deve ter pelo menos 32 caracteres em produção')
+    }
+    if (secret === 'trocar-em-producao' || secret === 'dev-session-secret-trocar') {
+      throw new Error('SESSION_SECRET está com o valor de exemplo; gere um valor aleatório')
+    }
+  }
+
   return secret
 }
 

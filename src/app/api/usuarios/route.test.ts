@@ -161,7 +161,7 @@ describe('/api/usuarios', () => {
     const response = await POST(
       request(
         'POST',
-        { name: 'Outra', email: 'admin@example.com', senha: 'x' },
+        { name: 'Outra', email: 'admin@example.com', senha: 'senha-valida' },
         { userId: 'user_admin' },
       ),
     )
