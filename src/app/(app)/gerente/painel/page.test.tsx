@@ -18,8 +18,17 @@ vi.mock('next/navigation', () => ({
 }))
 
 vi.mock('next/link', () => ({
-  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
+  default: ({
+    children,
+    href,
+    ...props
+  }: {
+    children: React.ReactNode
+    href: string
+  } & React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
   ),
 }))
 
@@ -298,5 +307,25 @@ describe('PainelPage', () => {
     fireEvent.click(screen.getByRole('button', { name: '+2 outros…' }))
     expect(screen.getByText('Pedido 907')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Mostrar menos' })).toBeInTheDocument()
+  })
+
+  it('abre cada cartão em nova aba com o filtro correspondente (P07)', async () => {
+    mockRespostas()
+    render(<PainelPage />)
+
+    const pendentes = await screen.findByRole('link', {
+      name: 'Abrir atividades pendentes em nova aba',
+    })
+    expect(pendentes).toHaveAttribute('href', '/gerente/atividades?status=ABERTAS')
+    expect(pendentes).toHaveAttribute('target', '_blank')
+    expect(
+      screen.getByRole('link', { name: 'Abrir atividades em execução em nova aba' }),
+    ).toHaveAttribute('href', '/gerente/atividades?status=IN_PROGRESS')
+    expect(
+      screen.getByRole('link', { name: 'Abrir atividades concluídas em nova aba' }),
+    ).toHaveAttribute('href', '/gerente/atividades?status=COMPLETED')
+    expect(
+      screen.getByRole('link', { name: 'Abrir atividades concluídas com prazo em nova aba' }),
+    ).toHaveAttribute('href', '/gerente/atividades?status=COMPLETED')
   })
 })

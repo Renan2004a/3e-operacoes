@@ -324,22 +324,54 @@ export default function PainelPage() {
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Metric label="Atividades pendentes" value={painel.pendencias} />
+        <Link
+          href="/gerente/atividades?status=ABERTAS"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block"
+          aria-label="Abrir atividades pendentes em nova aba"
+        >
+          <Metric label="Atividades pendentes" value={painel.pendencias} />
+        </Link>
 
-        <Metric label="Em execução" value={totalPorStatus('IN_PROGRESS')} tone="info" />
+        <Link
+          href="/gerente/atividades?status=IN_PROGRESS"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block"
+          aria-label="Abrir atividades em execução em nova aba"
+        >
+          <Metric label="Em execução" value={totalPorStatus('IN_PROGRESS')} tone="info" />
+        </Link>
 
-        <Metric label="Concluídas" value={totalPorStatus('COMPLETED')} tone="success" />
+        <Link
+          href="/gerente/atividades?status=COMPLETED"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block"
+          aria-label="Abrir atividades concluídas em nova aba"
+        >
+          <Metric label="Concluídas" value={totalPorStatus('COMPLETED')} tone="success" />
+        </Link>
 
-        <Metric
-          label="Cumprimento de prazo"
-          value={temCumprimentoDePrazo ? `${Math.round(cumprimentoPrazo.percentual)}%` : '—'}
-          tone={temCumprimentoDePrazo ? 'success' : 'default'}
-          helper={
-            temCumprimentoDePrazo
-              ? `${cumprimentoPrazo.concluidasNoPrazo} de ${cumprimentoPrazo.concluidasComPrazo} no prazo.`
-              : 'Sem concluídas com prazo.'
-          }
-        />
+        <Link
+          href="/gerente/atividades?status=COMPLETED"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block"
+          aria-label="Abrir atividades concluídas com prazo em nova aba"
+        >
+          <Metric
+            label="Cumprimento de prazo"
+            value={temCumprimentoDePrazo ? `${Math.round(cumprimentoPrazo.percentual)}%` : '—'}
+            tone={temCumprimentoDePrazo ? 'success' : 'default'}
+            helper={
+              temCumprimentoDePrazo
+                ? `${cumprimentoPrazo.concluidasNoPrazo} de ${cumprimentoPrazo.concluidasComPrazo} no prazo.`
+                : 'Sem concluídas com prazo.'
+            }
+          />
+        </Link>
       </div>
 
       <Card>
