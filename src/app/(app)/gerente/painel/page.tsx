@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import type { ActivityStatus } from '@/modules/producao/tipos'
 import type { TipoOcorrencia } from '@/modules/ocorrencias/motivos'
+import type { RoleCode } from '@/generated/prisma/client'
 import { apiGet } from '@/shared/http/api-client'
 import { Alert } from '@/shared/ui/alert'
 import { Badge } from '@/shared/ui/badge'
@@ -12,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import { Metric } from '@/shared/ui/metric'
 import { PageHead } from '@/shared/ui/page-head'
 import { Progress } from '@/shared/ui/progress'
+import { ROTULO_PERFIL } from '@/shared/ui/rotulos-perfil'
 import { Spinner } from '@/shared/ui/spinner'
 import { rotuloDaUnidade } from '@/shared/ui/totais-unidade'
 
@@ -82,6 +84,7 @@ interface OcorrenciaDetalhada {
   item: string | null
   setor: string | null
   usuario: string | null
+  perfil?: RoleCode | null
 }
 
 interface ResumoOcorrencias {
@@ -141,6 +144,8 @@ function GrupoAlertas({
   tom: TomAlerta
   itens: Alerta[]
 }) {
+  const [expandido, setExpandido] = useState(false)
+  const visiveis = expandido ? itens : itens.slice(0, 6)
   return (
     <div className="grid gap-2">
       <div className="flex items-center justify-between">
@@ -151,7 +156,7 @@ function GrupoAlertas({
         <p className="text-sm text-muted">Nada por aqui.</p>
       ) : (
         <ul className="grid gap-2">
-          {itens.slice(0, 6).map((alerta) => (
+          {visiveis.map((alerta) => (
             <li
               key={`${alerta.tipo}-${alerta.itemId}`}
               className="rounded-lg border border-line p-2 text-sm"
@@ -170,30 +175,22 @@ function GrupoAlertas({
             </li>
           ))}
           {itens.length > 6 ? (
-            <li className="text-xs text-muted">+{itens.length - 6} outros…</li>
+            <li>
+              <button
+                type="button"
+                className="text-xs font-semibold text-accent underline"
+                aria-expanded={expandido}
+                onClick={() => setExpandido((valor) => !valor)}
+              >
+                {expandido ? 'Mostrar menos' : `+${itens.length - 6} outros…`}
+              </button>
+            </li>
           ) : null}
         </ul>
       )}
     </div>
   )
 }
-
-const ROTULO_STATUS: Record<ActivityStatus, string> = {
-  PENDING: 'Pendente',
-  IN_PROGRESS: 'Em andamento',
-  PAUSED: 'Pausada',
-  COMPLETED: 'Concluída',
-  DIVERGENT: 'Divergente',
-}
-
-const VARIANTE_STATUS: Record<ActivityStatus, 'neutral' | 'info' | 'warning' | 'success' | 'danger'> =
-  {
-    PENDING: 'neutral',
-    IN_PROGRESS: 'info',
-    PAUSED: 'warning',
-    COMPLETED: 'success',
-    DIVERGENT: 'danger',
-  }
 
 /** Painel do gerente: contagens por setor/status, pendências e indicadores de PCP (FEP-01, FEP-02). */
 export default function PainelPage() {
@@ -284,6 +281,8 @@ export default function PainelPage() {
 
   const totalPorStatus = (status: ActivityStatus) =>
     painel.porStatus.find((contagem) => contagem.status === status)?.total ?? 0
+  const pausadas = totalPorStatus('PAUSED')
+  const divergentes = totalPorStatus('DIVERGENT')
   /** Maior produção entre as linhas da mesma unidade: só se compara o que tem a mesma medida (RN01). */
   const maxProducaoDaUnidade = (unidade: string | null) =>
     Math.max(
@@ -325,25 +324,11 @@ export default function PainelPage() {
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Metric
-          label="Pendências"
-          value={painel.pendencias}
-          helper="Atividades não concluídas."
-        />
+        <Metric label="Atividades pendentes" value={painel.pendencias} />
 
-        <Metric
-          label="Em andamento"
-          value={totalPorStatus('IN_PROGRESS')}
-          tone="info"
-          helper="Em execução."
-        />
+        <Metric label="Em execução" value={totalPorStatus('IN_PROGRESS')} tone="info" />
 
-        <Metric
-          label="Concluídas"
-          value={totalPorStatus('COMPLETED')}
-          tone="success"
-          helper="Finalizadas."
-        />
+        <Metric label="Concluídas" value={totalPorStatus('COMPLETED')} tone="success" />
 
         <Metric
           label="Cumprimento de prazo"
@@ -360,6 +345,10 @@ export default function PainelPage() {
       <Card>
         <CardHeader>
           <CardTitle>Alertas operacionais</CardTitle>
+          <div className="flex flex-wrap gap-2">
+            {pausadas > 0 ? <Badge variant="warning">Pausadas: {pausadas}</Badge> : null}
+            {divergentes > 0 ? <Badge variant="danger">Divergentes: {divergentes}</Badge> : null}
+          </div>
         </CardHeader>
         <CardContent>
           {erroAlertas ? (
@@ -439,8 +428,8 @@ export default function PainelPage() {
                       Pedido {ocorrencia.pedido} · {ocorrencia.item ?? 'Item'}
                     </p>
                     <p className="text-muted">
-                      Setor: {ocorrencia.setor ?? '—'} · Responsável:{' '}
-                      {ocorrencia.usuario ?? '—'}
+                      Setor: {ocorrencia.setor ?? '—'} · Responsável: {ocorrencia.usuario ?? '—'}
+                      {ocorrencia.perfil ? ` (${ROTULO_PERFIL[ocorrencia.perfil]})` : ''}
                     </p>
                     {ocorrencia.motivo ? (
                       <p className="text-muted">Motivo: {ocorrencia.motivo}</p>
@@ -456,79 +445,33 @@ export default function PainelPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Produção por setor</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {pcp.producaoPorSetor.length === 0 ? (
-              <p className="text-sm text-muted">Sem produção registrada.</p>
-            ) : (
-              <ul aria-label="Produção por setor" className="grid gap-3">
-                {pcp.producaoPorSetor.map((producao) => {
-                  const nome = producao.sectorName ?? producao.sectorId
-                  const quantidade = `${producao.quantidade} ${rotuloDaUnidade(producao.unidade)}`
-                  const percentual = percentualProducao(producao)
-                  return (
-                    <li key={`${producao.sectorId}-${producao.unidade ?? ''}`} className="grid gap-1">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-ink">{nome}</span>
-                        <span className="font-semibold text-ink">{quantidade}</span>
-                      </div>
-                      <Progress
-                        label={`Produção do setor ${nome}`}
-                        value={percentual}
-                        tone={percentual >= 100 ? 'success' : 'accent'}
-                      />
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Atividades por status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {painel.porStatus.length === 0 ? (
-              <p className="text-sm text-muted">Sem atividades por status.</p>
-            ) : (
-              <ul aria-label="Atividades por status" className="grid gap-2">
-                {painel.porStatus.map((contagem) => (
-                  <li
-                    key={contagem.status}
-                    className="flex items-center justify-between gap-2 text-sm"
-                  >
-                    <Badge variant={VARIANTE_STATUS[contagem.status]}>
-                      {ROTULO_STATUS[contagem.status]}
-                    </Badge>
-                    <span className="text-ink">Total: {contagem.total}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
       <Card>
         <CardHeader>
-          <CardTitle>Atividades por setor</CardTitle>
+          <CardTitle>Produção por setor</CardTitle>
         </CardHeader>
         <CardContent>
-          {painel.porSetor.length === 0 ? (
-            <p className="text-sm text-muted">Sem atividades por setor.</p>
+          {pcp.producaoPorSetor.length === 0 ? (
+            <p className="text-sm text-muted">Sem produção registrada.</p>
           ) : (
-            <ul aria-label="Atividades por setor" className="grid gap-1">
-              {painel.porSetor.map((contagem) => (
-                <li key={contagem.sectorId} className="text-sm text-ink">
-                  {contagem.sectorName ?? contagem.sectorId}: {contagem.total}
-                </li>
-              ))}
+            <ul aria-label="Produção por setor" className="grid gap-3">
+              {pcp.producaoPorSetor.map((producao) => {
+                const nome = producao.sectorName ?? producao.sectorId
+                const quantidade = `${producao.quantidade} ${rotuloDaUnidade(producao.unidade)}`
+                const percentual = percentualProducao(producao)
+                return (
+                  <li key={`${producao.sectorId}-${producao.unidade ?? ''}`} className="grid gap-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-ink">{nome}</span>
+                      <span className="font-semibold text-ink">{quantidade}</span>
+                    </div>
+                    <Progress
+                      label={`Produção do setor ${nome}`}
+                      value={percentual}
+                      tone={percentual >= 100 ? 'success' : 'accent'}
+                    />
+                  </li>
+                )
+              })}
             </ul>
           )}
         </CardContent>

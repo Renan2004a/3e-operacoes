@@ -1,5 +1,6 @@
 import type { ActivityStatus } from '../producao/tipos'
 import type { Quantidade } from '../producao/unidades'
+import type { RoleCode } from '@/generated/prisma/client'
 import { TIPOS_OCORRENCIA, type TipoOcorrencia } from './motivos'
 
 /**
@@ -20,6 +21,8 @@ export interface OcorrenciaDetalhada {
   setor: string | null
   /** Nome de quem registrou. */
   usuario: string | null
+  /** Perfil de quem registrou, quando disponível. */
+  perfil?: RoleCode | null
   /** Situação da atividade no momento da leitura (Pendente, Em execução…). */
   activityStatus: ActivityStatus | null
 }
