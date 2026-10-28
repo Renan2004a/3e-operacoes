@@ -204,3 +204,26 @@ Deploy do commit `ce4fbd5` (correções de UI) com o ajuste final de recarga do 
 - **Vídeo**: `docs/video/demo-completa-2026-10-27.mp4` (8m43s) publicado em `main` no commit `fd1f2e4`; deploy validado no commit `365f143`.
 - **Reestruturação do banco**: planejada em `docs/revisao-banco-professor.md`; não executada.
 - **Ressalva**: token de projeto do Railway ainda ativo; rotacionar/revogar.
+
+---
+
+## 12. Revisão de prontidão (2026-10-28) — deploy `65d6dd8`
+
+Revisão completa antes da apresentação ao cliente: segurança, domínio, UI e deploy.
+
+| Item | Local | Hospedado |
+| --- | --- | --- |
+| Testes automatizados | **1049** verdes + 24 ignorados | mesmos artefatos |
+| Lint / typecheck / build | 0 erros (7 avisos) / OK / OK | — |
+| Playwright — correções de UI (`validar-correcoes-ui.mjs`) | **15/15** | **15/15** |
+| Playwright — revisão de prontidão (`validar-melhorias.mjs`) | **15/15** | **15/15** |
+| `/api/health` / `/login` | — | **200 / 200** |
+| Cabeçalhos de segurança | — | `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, HSTS |
+| `robots.txt` | — | `Disallow: /` (sistema interno) |
+| Limite de tentativas de login | — | 6ª tentativa do mesmo e-mail retorna **429** |
+
+- **Next.js** atualizado de `16.3.5` para `16.4.3` (correções de segurança do framework).
+- **Sessão**: cookie `Secure` configurável (`COOKIE_SECURE`), `SESSION_SECRET` com 64 caracteres no Railway, usuário inativado perde a sessão na hora.
+- **Dados**: textos do legado com dupla codificação corrigidos (`Dobradiça`, `Maurício`); descrições `.` e código `0` normalizados; mapeamento inválido `CORTE_DOBRA:` removido; job travado em `RUNNING` encerrado.
+- **Importação**: dois pedidos novos importados pelo conector local (82271 e 82270), com encoding correto e sem duplicação.
+- **Pendente para a demo**: o conector em produção ainda aponta para `http://localhost:8787`. Para importar ao vivo é preciso expor o conector (túnel) e ajustar `LOCAL_CONNECTOR_BASE_URL`, ou rodar a demo no ambiente local.

@@ -127,7 +127,7 @@ try {
   // ---------------- Operador ----------------
   await login('operador@3e.local', 'operador123')
   await pagina.goto(`${BASE}/operador/fila`, { waitUntil: 'domcontentloaded' })
-  await pagina.getByRole('heading', { name: 'Meus pedidos' }).waitFor({ timeout: 30000 })
+  await pagina.getByRole('heading', { name: 'Fila de produção' }).waitFor({ timeout: 30000 })
   await pagina.getByRole('link', { name: /Abrir atividade/ }).first().click()
   await pagina.waitForURL(/\/operador\/atividades\/.+/, { timeout: 30000 })
   await pagina.getByText('Previsão de entrega:').waitFor({ timeout: 30000 })
