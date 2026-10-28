@@ -182,6 +182,23 @@ describe('registrarOcorrencia', () => {
     expect(ocorrencias).toHaveLength(0)
   })
 
+  it('registra perda sem quantidade, mantendo o motivo obrigatório (OCO-01)', async () => {
+    const { repo, ocorrencias } = createDeps({
+      atividades: [atividade({ id: 'act_1', unidade: 'UN' })],
+      motivos: [motivo({ id: 'm_perda', tipo: 'PERDA' })],
+    })
+
+    const result = await registrarOcorrencia(
+      { atividadeId: 'act_1', usuarioId: 'user_1', tipo: 'PERDA', motivoId: 'm_perda' },
+      repo,
+    )
+
+    expect(result.tipo).toBe('PERDA')
+    expect(result.quantidade).toBeNull()
+    expect(result.motivoId).toBe('m_perda')
+    expect(ocorrencias).toHaveLength(1)
+  })
+
   it('rejeita quantidade fracionária em peça (OCO-04)', async () => {
     const { repo, ocorrencias } = createDeps({
       atividades: [atividade({ id: 'act_1', unidade: 'UN' })],

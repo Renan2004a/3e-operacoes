@@ -85,10 +85,23 @@ export async function processarCallback(
   const job = await deps.integracao.findById(data.jobId)
   if (!job) throw new JobNotFoundError(data.jobId)
 
-  // Callback duplicado ou job já concluído: responde sem repetir o upsert.
-  if (job.status === 'SUCCEEDED' || job.status === 'FAILED') return
+  // Callback duplicado de um job já concluído com sucesso: responde sem repetir
+  // o upsert. Job marcado FAILED por timeout ainda pode receber o callback
+  // atrasado do conector — descartá-lo perderia um pedido que existe no legado.
+  if (job.status === 'SUCCEEDED') return
 
   const now = deps.now?.() ?? new Date()
+
+  if (job.status === 'FAILED') {
+    await deps.integracao
+      .appendEvent({
+        jobId: job.id,
+        type: 'LATE_CALLBACK',
+        detail: job.errorCode ?? 'FAILED',
+        now,
+      })
+      .catch(() => undefined)
+  }
 
   try {
     const result = await importarPedido(toPedidoImportado(data), deps.pedidos, deps.classificacao)

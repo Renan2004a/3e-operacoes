@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { IDEMPOTENCY_WINDOW_MS, InvalidOrderNumberError, type IntegrationJob } from './contratos'
+import {
+  IDEMPOTENCY_WINDOW_MS,
+  STALE_ACTIVE_JOB_MS,
+  InvalidOrderNumberError,
+  type IntegrationJob,
+} from './contratos'
 import {
   SolicitanteObrigatorioError,
   solicitarImportacao,
@@ -10,14 +15,17 @@ import {
 function createFakeRepo(): SolicitacaoImportacaoRepository & {
   jobs: IntegrationJob[]
   audits: AuditoriaSolicitacaoImportacao[]
+  obsoletos: { jobId: string; now: Date }[]
 } {
   const jobs: IntegrationJob[] = []
   const audits: AuditoriaSolicitacaoImportacao[] = []
+  const obsoletos: { jobId: string; now: Date }[] = []
   let seq = 0
 
   return {
     jobs,
     audits,
+    obsoletos,
     async findRecentByIdempotencyKey(idempotencyKey, since) {
       return (
         jobs.find(
@@ -69,6 +77,9 @@ function createFakeRepo(): SolicitacaoImportacaoRepository & {
     },
     async registrarAuditoriaSolicitacao(input) {
       audits.push(input)
+    },
+    async registrarJobObsoleto(input) {
+      obsoletos.push(input)
     },
   }
 }
@@ -191,6 +202,31 @@ describe('solicitarImportacao', () => {
       requestedByUserId: 'user_outro',
       requestKind: 'REUSED_JOB',
       newDispatch: false,
+    })
+  })
+
+  it('job ativo sem atualização além do limite aceita nova tentativa e registra o evento', async () => {
+    const repo = createFakeRepo()
+    const first = await solicitarImportacao(
+      { orderNumber: '70435', now: NOW, requestedByUserId: SOLICITANTE },
+      repo,
+    )
+    repo.jobs[0].status = 'RUNNING'
+    repo.jobs[0].updatedAt = NOW
+
+    const depois = new Date(NOW.getTime() + STALE_ACTIVE_JOB_MS + 1)
+    const second = await solicitarImportacao(
+      { orderNumber: '70435', now: depois, requestedByUserId: 'user_outro' },
+      repo,
+    )
+
+    expect(second).toEqual({ jobId: first.jobId, reused: false })
+    expect(repo.obsoletos).toEqual([{ jobId: first.jobId, now: depois }])
+    expect(repo.audits[1]).toMatchObject({
+      jobId: first.jobId,
+      requestedByUserId: 'user_outro',
+      requestKind: 'NEW_ATTEMPT',
+      newDispatch: true,
     })
   })
 

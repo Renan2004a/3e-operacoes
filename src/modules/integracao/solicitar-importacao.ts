@@ -1,5 +1,6 @@
 import {
   IDEMPOTENCY_WINDOW_MS,
+  STALE_ACTIVE_JOB_MS,
   InvalidOrderNumberError,
   buildIdempotencyKey,
   type IntegrationJob,
@@ -53,6 +54,12 @@ export interface SolicitacaoImportacaoRepository {
     requestedByUserId: string
   }): Promise<IntegrationJob>
   registrarAuditoriaSolicitacao(input: AuditoriaSolicitacaoImportacao): Promise<void>
+  /**
+   * Registra que uma tentativa ativa ficou sem resposta além do limite. O job
+   * permanece na mesma linha (a próxima tentativa a reutiliza), mas o evento
+   * fica visível no histórico técnico.
+   */
+  registrarJobObsoleto?(input: { jobId: string; now: Date }): Promise<void>
 }
 
 /** Autoria ausente: o fluxo autenticado nunca deve registrar um job sem solicitante. */
@@ -129,6 +136,26 @@ async function reaproveitarOuRetentar(
   input: SolicitarImportacaoInput,
   repo: SolicitacaoImportacaoRepository,
 ): Promise<SolicitarImportacaoResult> {
+  // Tentativa ativa sem atualização além do limite: o conector não respondeu
+  // (ou o processo caiu). Registra o evento e libera uma nova consulta em vez
+  // de deixar o pedido preso em "em andamento" para sempre.
+  const paradoHaMuito =
+    statusEstaAtivo(job.status) &&
+    input.now.getTime() - job.updatedAt.getTime() > STALE_ACTIVE_JOB_MS
+  if (paradoHaMuito) {
+    await repo.registrarJobObsoleto?.({ jobId: job.id, now: input.now })
+    await repo.registrarAuditoriaSolicitacao({
+      jobId: job.id,
+      legacyOrderNumber: orderNumber,
+      idempotencyKey: job.idempotencyKey,
+      requestedByUserId,
+      now: input.now,
+      requestKind: 'NEW_ATTEMPT',
+      newDispatch: true,
+    })
+    return { jobId: job.id, reused: false }
+  }
+
   if (job.status === 'FAILED') {
     // Chave estável por job falho: duas solicitações concorrentes após a mesma
     // falha apontam para o mesmo job de retry, sem herdar status/eventos.

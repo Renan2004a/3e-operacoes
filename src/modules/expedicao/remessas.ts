@@ -67,17 +67,35 @@ export async function programarRemessa(
   input: { orderItemId: string; remessa?: number; scheduledAt: Date; note?: string | null },
   repo: RemessaRepository,
 ): Promise<Remessa> {
-  const existentes = await repo.listarPorItem(input.orderItemId)
-  const proxima = existentes.reduce((maior, remessa) => Math.max(maior, remessa.remessa), 0) + 1
-  const numero = input.remessa ?? proxima
-
-  if (!Number.isInteger(numero) || numero <= 0) {
+  if (!Number.isInteger(input.remessa ?? 1) || (input.remessa !== undefined && input.remessa <= 0)) {
     throw new RemessaInvalidaError('O número da remessa deve ser um inteiro positivo')
   }
   if (Number.isNaN(input.scheduledAt.getTime())) {
     throw new RemessaInvalidaError('Data prevista inválida')
   }
 
+  // Número automático: duas pessoas no mesmo item podem calcular o mesmo
+  // "próximo". A violação da chave única é traduzida em RemessaDuplicadaError
+  // e a operação recalcula o número (até 3 tentativas) em vez de estourar 500.
+  if (input.remessa === undefined) {
+    for (let tentativa = 1; tentativa <= 3; tentativa += 1) {
+      const existentes = await repo.listarPorItem(input.orderItemId)
+      const proxima =
+        existentes.reduce((maior, remessa) => Math.max(maior, remessa.remessa), 0) + 1
+      try {
+        return await repo.criar({
+          orderItemId: input.orderItemId,
+          remessa: proxima,
+          scheduledAt: input.scheduledAt,
+          note: input.note ?? null,
+        })
+      } catch (erro) {
+        if (!(erro instanceof RemessaDuplicadaError) || tentativa === 3) throw erro
+      }
+    }
+  }
+
+  const numero = input.remessa as number
   const existente = await repo.buscarPorNumero(input.orderItemId, numero)
   if (existente) throw new RemessaDuplicadaError(numero)
 

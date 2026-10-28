@@ -22,14 +22,24 @@ export interface FilaRepository {
   listarSetoresDoUsuario(usuarioId: string): Promise<string[]>
   /** Atividades dos setores informados. */
   listarAtividadesPorSetores(sectorIds: string[]): Promise<Atividade[]>
+  /** Todos os setores ativos (fila do gerente, que não tem setor fixo). */
+  listarTodosOsSetores?(): Promise<string[]>
 }
 
 /**
  * Fila de atividades do operador: apenas os setores aos quais ele pertence,
  * ordenadas por prioridade decrescente e, depois, por criação (PROD-01..03).
+ * O gerente de produção vê todos os setores (`todosOsSetores`), pois não tem
+ * vínculo fixo e precisa acompanhar a fábrica inteira.
  */
-export async function listarFila(usuarioId: string, repo: FilaRepository): Promise<Atividade[]> {
-  const setores = await repo.listarSetoresDoUsuario(usuarioId)
+export async function listarFila(
+  usuarioId: string,
+  repo: FilaRepository,
+  opcoes: { todosOsSetores?: boolean } = {},
+): Promise<Atividade[]> {
+  const setores = opcoes.todosOsSetores
+    ? ((await repo.listarTodosOsSetores?.()) ?? (await repo.listarSetoresDoUsuario(usuarioId)))
+    : await repo.listarSetoresDoUsuario(usuarioId)
   if (setores.length === 0) return []
 
   const atividades = await repo.listarAtividadesPorSetores(setores)
