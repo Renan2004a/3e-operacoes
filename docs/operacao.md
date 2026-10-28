@@ -63,7 +63,7 @@ npm run dev
 
 Abra `http://localhost:3000` (ou `http://localhost:3000/login`). A tela de login funciona mesmo sem banco; os dados (fila, pedidos, indicadores) precisam do MySQL.
 
-**Login do seed:** `admin@3e.local` / `admin123` (troque em produção).
+**Login do seed:** `admin@3e.local` / `admin123` (troque em produção — ou defina `SEED_ADMIN_PASSWORD` antes de rodar o seed).
 
 ## 6. Depurar no VS Code
 

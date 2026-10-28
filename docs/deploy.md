@@ -42,8 +42,13 @@ A Vercel hospeda o Next.js muito bem, mas é **serverless** e **não** hospeda M
 
 ```bash
 DATABASE_URL="<url-da-nuvem>" npx prisma migrate deploy
-DATABASE_URL="<url-da-nuvem>" npm run prisma:seed
+DATABASE_URL="<url-da-nuvem>" SEED_ADMIN_PASSWORD="<senha-forte>" npm run prisma:seed
 ```
+
+Em produção, `SEED_ADMIN_PASSWORD` é obrigatória (mínimo 8 caracteres) e as contas
+de demonstração (`*@3e.local`) **não** são criadas. Use `SEED_DEMO=1` apenas em
+ambiente de apresentação. O app recusa `SESSION_SECRET` curto ou de exemplo em
+produção; gere um valor aleatório com pelo menos 32 caracteres.
 
 ## Deploy via CLI (alternativa quando o auto-deploy do GitHub falha)
 

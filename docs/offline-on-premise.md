@@ -96,3 +96,11 @@ Serviços:
 - Credenciais apenas nos `.env` (fora do Git).
 - Conector lê o Top Gerente **somente leitura** (ideal: usuário `SELECT` dedicado).
 - Restrinja o acesso à porta 3000 à rede interna.
+- **HTTPS na rede interna é o recomendado.** O cookie de sessão nasce com `Secure`
+  em produção; em HTTP o navegador o descarta e o login não fixa. Para um piloto
+  sem TLS, defina `COOKIE_SECURE=false` no app e mantenha a porta 3000 fechada
+  para a internet.
+- O seed em produção exige `SEED_ADMIN_PASSWORD` (mínimo 8 caracteres) e não cria
+  as contas de demonstração sem `SEED_DEMO=1`.
+- O `.env` do conector é ignorado pelo build (`connector-local/.dockerignore`);
+  confira antes de publicar a imagem.
