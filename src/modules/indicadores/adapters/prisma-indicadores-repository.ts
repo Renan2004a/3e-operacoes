@@ -11,10 +11,35 @@ import { montarWherePedidos } from './filtros-pedidos-prisma'
 import type { AtividadeIndicador, PainelRepository } from '../painel'
 import type { AtividadeComPrazo, ExecucaoIndicador, PcpRepository } from '../pcp'
 import type { AlertasRepository, ItemParaAlerta } from '../alertas'
+import type { ActivityStatus } from '@/modules/producao/tipos'
+
+/** Atividade detalhada para a lista do painel (P07). */
+export interface AtividadeDetalhadaIndicador {
+  id: string
+  orderId: string
+  orderNumber: string
+  itemDescription: string | null
+  sectorName: string
+  status: ActivityStatus
+  priority: number
+  deadlineAt: Date | null
+}
+
+/** Porta de leitura das atividades por status (P07). */
+export interface AtividadesIndicadorRepository {
+  listarAtividadesDetalhadas(filtro?: {
+    status?: ActivityStatus | 'ABERTAS' | null
+    limite?: number
+  }): Promise<AtividadeDetalhadaIndicador[]>
+}
 
 /** Porta única de indicadores, composta pelas portas de cada caso de uso. */
 export interface IndicadoresRepository
-  extends ConsultaPedidosRepository, PainelRepository, PcpRepository, AlertasRepository {}
+  extends ConsultaPedidosRepository,
+    PainelRepository,
+    PcpRepository,
+    AlertasRepository,
+    AtividadesIndicadorRepository {}
 
 /** Implementação Prisma da porta `IndicadoresRepository` (somente o banco do app). */
 export const prismaIndicadoresRepository: IndicadoresRepository = {
@@ -241,6 +266,48 @@ export const prismaIndicadoresRepository: IndicadoresRepository = {
       status: row.status,
       deadlineAt: row.deadlineAt,
       completedAt: row.executions[0]?.occurredAt ?? null,
+    }))
+  },
+
+  async listarAtividadesDetalhadas({ status, limite = 200 } = {}): Promise<
+    AtividadeDetalhadaIndicador[]
+  > {
+    const where =
+      status === 'ABERTAS'
+        ? { status: { not: 'COMPLETED' as const } }
+        : status
+          ? { status }
+          : undefined
+
+    const rows = await prisma.activity.findMany({
+      where,
+      select: {
+        id: true,
+        status: true,
+        priority: true,
+        deadlineAt: true,
+        orderItem: {
+          select: {
+            description: true,
+            productCode: true,
+            order: { select: { id: true, legacyNumber: true } },
+          },
+        },
+        sector: { select: { name: true } },
+      },
+      orderBy: [{ status: 'asc' }, { createdAt: 'asc' }],
+      take: limite,
+    })
+
+    return rows.map((row) => ({
+      id: row.id,
+      orderId: row.orderItem.order.id,
+      orderNumber: row.orderItem.order.legacyNumber,
+      itemDescription: row.orderItem.description ?? row.orderItem.productCode,
+      sectorName: row.sector.name,
+      status: row.status,
+      priority: row.priority,
+      deadlineAt: row.deadlineAt,
     }))
   },
 }
