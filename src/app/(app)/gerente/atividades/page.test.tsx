@@ -25,6 +25,10 @@ vi.mock('next/link', () => ({
   ),
 }))
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}))
+
 import AtividadesPage from './page'
 
 const ATIVIDADE = {
@@ -89,5 +93,15 @@ describe('AtividadesPage', () => {
       await screen.findByRole('heading', { level: 1, name: 'Atividades pendentes' }),
     ).toBeInTheDocument()
     expect(mocks.apiGet).toHaveBeenCalledWith('/api/indicadores/atividades?status=ABERTAS')
+  })
+
+  it('usa botão de voltar quando a aba foi aberta pelo painel', async () => {
+    window.history.pushState({}, '', '/gerente/atividades?status=ABERTAS&origem=painel')
+    mocks.apiGet.mockResolvedValue({ atividades: [] })
+    render(<AtividadesPage />)
+
+    expect(await screen.findByText('Nada por aqui')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '← Voltar para o painel' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: '← Voltar para o painel' })).not.toBeInTheDocument()
   })
 })
