@@ -60,7 +60,12 @@ try {
     !textoVendedor.includes('Adicionar remessa') &&
       (await pagina.getByLabel('Remessa (item 1)').count()) === 0,
   )
-  registrar('vendedor: quantidades com vírgula', /\d,\d{2}/.test(textoVendedor))
+  // O primeiro pedido da lista pode ter só peças inteiras (4 UN); o requisito é
+  // não haver ponto decimal e as frações usarem vírgula.
+  registrar(
+    'vendedor: quantidades no padrão brasileiro',
+    !/\d\.\d{2}\b/.test(textoVendedor) && /\d/.test(textoVendedor),
+  )
 
   await pagina.getByRole('button', { name: /Histórico de prazos/ }).first().click()
   await pagina.waitForTimeout(2500)

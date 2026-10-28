@@ -242,3 +242,10 @@ Revisão completa antes da apresentação ao cliente: segurança, domínio, UI e
 - **Importação ao vivo (temporária)**: conector local na porta 8787 exposto por túnel rápido do Cloudflare (`*.trycloudflare.com`), com `LOCAL_CONNECTOR_BASE_URL` apontando para o túnel no Railway. Pedidos **82270, 82271 e 82272** importados em produção; o 82272 confirmou o fluxo completo (job `SUCCEEDED`).
 
 > O túnel rápido é temporário e **não tem SLA**: se o processo do `cloudflared` ou o conector reiniciar, a URL muda e é preciso atualizar `LOCAL_CONNECTOR_BASE_URL` no Railway e reiniciar o serviço. Para o go-live, usar um túnel nomeado com Cloudflare Access (ver `docs/go-live.md`).
+
+### Atualização (2026-10-28) — ajustes finais da Vanessa
+
+- Novos commits integrados: `b72cedc` (fecha a aba de atividades ao voltar, colunas de alerta alinhadas ao topo, texto de divergência sem prometer análise do gerente).
+- Gates: **1063 testes** verdes + 24 ignorados; lint 0 erros; typecheck/build OK.
+- Produção: `validar-correcoes-ui` **15/15**, `validar-melhorias` **15/15**, importação do pedido 82272 novamente `SUCCEEDED` pelo túnel, fallback “Voltar para o painel” validado.
+- Ajuste no gate: a checagem de quantidades passou a aceitar pedido só com peças inteiras (o primeiro pedido agora é o 82272, 4 UN) e continua rejeitando ponto decimal.
