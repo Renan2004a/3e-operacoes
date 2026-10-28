@@ -25,6 +25,7 @@ export type Acao =
   | 'programar_remessa'
   | 'corrigir_setor'
   | 'corrigir_setor_justificado'
+  | 'consultar_atividades_gerente'
 
 /** Matriz ação × perfis permitidos (design.md). Fonte única da autorização no servidor. */
 const MATRIZ: Record<Acao, readonly RoleCode[]> = {
@@ -43,6 +44,12 @@ const MATRIZ: Record<Acao, readonly RoleCode[]> = {
   programar_remessa: ['PRODUCTION_MANAGER', 'SHIPPING'],
   corrigir_setor: ['PRODUCTION_MANAGER', 'SYSTEM_RESPONSIBLE', 'SELLER'],
   corrigir_setor_justificado: ['PRODUCTION_MANAGER', 'SYSTEM_RESPONSIBLE'],
+  // Drill-down dos cartões do painel: visão da fábrica inteira, não do operador.
+  consultar_atividades_gerente: [
+    'PRODUCTION_MANAGER',
+    'SYSTEM_RESPONSIBLE',
+    'TECHNICAL_RESPONSIBLE',
+  ],
 }
 
 /**

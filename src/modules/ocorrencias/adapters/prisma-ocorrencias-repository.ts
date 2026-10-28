@@ -147,7 +147,7 @@ export const prismaOcorrenciasRepository: OcorrenciasRepository = {
         note: true,
         occurredAt: true,
         motivo: { select: { descricao: true } },
-        user: { select: { name: true } },
+        user: { select: { name: true, roles: { select: { role: true } } } },
         activity: {
           select: {
             id: true,
@@ -179,6 +179,7 @@ export const prismaOcorrenciasRepository: OcorrenciasRepository = {
       item: row.activity.orderItem.description ?? row.activity.orderItem.productCode,
       setor: row.activity.sector.name,
       usuario: row.user.name,
+      perfil: row.user.roles[0]?.role ?? null,
       activityStatus: row.activity.status,
     }))
   },

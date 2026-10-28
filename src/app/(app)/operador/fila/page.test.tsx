@@ -61,8 +61,16 @@ describe('FilaPage', () => {
     render(<FilaPage />)
 
     expect(await screen.findByText('Chapa dobrada')).toBeInTheDocument()
-    expect(screen.getByText('Pendente')).toBeInTheDocument()
+    expect(screen.getByText('A iniciar')).toBeInTheDocument()
     expect(mocks.apiGet).toHaveBeenCalledWith('/api/producao/atividades')
+  })
+
+  it('oculta a prioridade quando ela é zero', async () => {
+    mocks.apiGet.mockResolvedValue({ atividades: [atividade({ priority: 0 })] })
+    render(<FilaPage />)
+
+    expect(await screen.findByText('Chapa dobrada')).toBeInTheDocument()
+    expect(screen.queryByText(/prioridade 0/i)).not.toBeInTheDocument()
   })
 
   it('mostra estado vazio quando não há atividades (FE-08)', async () => {

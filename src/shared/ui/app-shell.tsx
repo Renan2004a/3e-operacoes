@@ -19,6 +19,7 @@ import type { RoleCode } from '@/generated/prisma/client'
 import { cn, FOCO_VISIVEL } from './utils'
 import { Button } from './button'
 import { NAV_POR_PERFIL } from './navegacao-perfil'
+import { ROTULO_PERFIL } from './rotulos-perfil'
 
 const ICONE_POR_HREF: Record<string, LucideIcon> = {
   '/gerente/painel': LayoutDashboard,
@@ -31,15 +32,6 @@ const ICONE_POR_HREF: Record<string, LucideIcon> = {
   '/admin/usuarios': Users,
   '/admin/setores': Building2,
   '/tecnico/integracao': Plug,
-}
-
-const ROTULO_PERFIL: Record<RoleCode, string> = {
-  OPERATOR: 'Operador',
-  PRODUCTION_MANAGER: 'Gerente de Produção',
-  SELLER: 'Vendedor',
-  SHIPPING: 'Expedição',
-  SYSTEM_RESPONSIBLE: 'Responsável pelo Sistema',
-  TECHNICAL_RESPONSIBLE: 'Responsável Técnico',
 }
 
 export interface AppShellProps {

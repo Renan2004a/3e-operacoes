@@ -18,8 +18,17 @@ vi.mock('next/navigation', () => ({
 }))
 
 vi.mock('next/link', () => ({
-  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
+  default: ({
+    children,
+    href,
+    ...props
+  }: {
+    children: React.ReactNode
+    href: string
+  } & React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
   ),
 }))
 
@@ -85,11 +94,10 @@ describe('PainelPage', () => {
     mockRespostas()
     render(<PainelPage />)
 
-    expect(await screen.findByText('setor-corte: 3')).toBeInTheDocument()
-    expect(screen.getByText('setor-telhas: 1')).toBeInTheDocument()
-    expect(screen.getByText('Pendente')).toBeInTheDocument()
-    expect(screen.getByText('Total: 2')).toBeInTheDocument()
-    expect(screen.getByText('Pendências').closest('div.rounded-card')).toHaveTextContent('2')
+    expect(await screen.findByText('Atividades pendentes')).toBeInTheDocument()
+    expect(
+      screen.getByText('Atividades pendentes').closest('div.rounded-card'),
+    ).toHaveTextContent('2')
     expect(mocks.apiGet).toHaveBeenCalledWith('/api/indicadores')
   })
 
@@ -170,7 +178,8 @@ describe('PainelPage', () => {
             pedido: '82269',
             item: 'Perfil UE',
             setor: 'Corte e Dobra',
-            usuario: 'Operador',
+            usuario: 'João',
+            perfil: 'OPERATOR',
           },
         ],
       },
@@ -181,7 +190,7 @@ describe('PainelPage', () => {
     expect(screen.getByText('2 no total')).toBeInTheDocument()
     expect(screen.getByText('1 nos últimos 7 dias')).toBeInTheDocument()
     expect(screen.getByText('Pedido 82269 · Perfil UE')).toBeInTheDocument()
-    expect(screen.getByText(/Responsável: Operador/)).toBeInTheDocument()
+    expect(screen.getByText(/Responsável: João \(Operador\)/)).toBeInTheDocument()
     expect(screen.getByText(/Defeito de corte/)).toBeInTheDocument()
   })
 
@@ -189,8 +198,8 @@ describe('PainelPage', () => {
     mockRespostas()
     render(<PainelPage />)
 
-    expect(await screen.findByText('Pendente')).toBeInTheDocument()
-    expect(screen.getByText('Concluída')).toBeInTheDocument()
+    expect(await screen.findByText('Em execução')).toBeInTheDocument()
+    expect(screen.getByText('Concluídas')).toBeInTheDocument()
   })
 
   it('mostra erro acessível e permite tentar de novo (FEP-13)', async () => {
@@ -216,7 +225,7 @@ describe('PainelPage', () => {
     falhar = false
     fireEvent.click(botao)
 
-    expect(await screen.findByText('setor-corte: 3')).toBeInTheDocument()
+    expect(await screen.findByText('Atividades pendentes')).toBeInTheDocument()
     expect(mocks.apiGet).toHaveBeenCalledWith('/api/indicadores/alertas')
   })
 
@@ -245,7 +254,7 @@ describe('PainelPage', () => {
     })
     render(<PainelPage />)
 
-    expect(await screen.findByText('Pendências')).toBeInTheDocument()
+    expect(await screen.findByText('Atividades pendentes')).toBeInTheDocument()
     expect(await screen.findByText('Não foi possível carregar as ocorrências')).toBeInTheDocument()
   })
 
@@ -255,5 +264,68 @@ describe('PainelPage', () => {
 
     expect(await screen.findByText(/Atualizado às/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Atualizar' })).toBeInTheDocument()
+  })
+
+  it('mostra pausadas e divergentes sem o card de status (P14)', async () => {
+    const base = indicadores()
+    mockRespostas({
+      ...base,
+      painel: {
+        ...base.painel,
+        porStatus: [
+          { status: 'PENDING', total: 2 },
+          { status: 'PAUSED', total: 1 },
+          { status: 'DIVERGENT', total: 1 },
+        ],
+      },
+    })
+    render(<PainelPage />)
+
+    expect(await screen.findByText('Pausadas: 1')).toBeInTheDocument()
+    expect(screen.getByText('Divergentes: 1')).toBeInTheDocument()
+    expect(screen.queryByText('Atividades por status')).not.toBeInTheDocument()
+    expect(screen.queryByText('Atividades por setor')).not.toBeInTheDocument()
+  })
+
+  it('expande os alertas além dos seis primeiros (P01)', async () => {
+    const parados = Array.from({ length: 8 }, (_, indice) => ({
+      tipo: 'PARADO' as const,
+      orderId: `o${indice}`,
+      orderNumber: `90${indice}`,
+      itemId: `i${indice}`,
+      itemDescription: `Item ${indice}`,
+      sectorName: 'Telhas',
+      detail: 'Sem movimento há 10 dias',
+    }))
+    mockRespostas(indicadores(), {
+      alertas: { atrasados: [], parados, naoEncaminhados: [] },
+    })
+    render(<PainelPage />)
+
+    expect(await screen.findByText('Pedido 905')).toBeInTheDocument()
+    expect(screen.queryByText('Pedido 907')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '+2 outros…' }))
+    expect(screen.getByText('Pedido 907')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Mostrar menos' })).toBeInTheDocument()
+  })
+
+  it('abre cada cartão em nova aba com o filtro correspondente (P07)', async () => {
+    mockRespostas()
+    render(<PainelPage />)
+
+    const pendentes = await screen.findByRole('link', {
+      name: 'Abrir atividades pendentes em nova aba',
+    })
+    expect(pendentes).toHaveAttribute('href', '/gerente/atividades?status=ABERTAS')
+    expect(pendentes).toHaveAttribute('target', '_blank')
+    expect(
+      screen.getByRole('link', { name: 'Abrir atividades em execução em nova aba' }),
+    ).toHaveAttribute('href', '/gerente/atividades?status=IN_PROGRESS')
+    expect(
+      screen.getByRole('link', { name: 'Abrir atividades concluídas em nova aba' }),
+    ).toHaveAttribute('href', '/gerente/atividades?status=COMPLETED')
+    expect(
+      screen.getByRole('link', { name: 'Abrir atividades concluídas com prazo em nova aba' }),
+    ).toHaveAttribute('href', '/gerente/atividades?status=COMPLETED')
   })
 })

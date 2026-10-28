@@ -73,6 +73,9 @@ holder.repo = {
   async listarItensParaAlerta() {
     return []
   },
+  async listarAtividadesDetalhadas() {
+    return []
+  },
 }
 
 const ORIGINAL_SECRET = process.env.SESSION_SECRET
