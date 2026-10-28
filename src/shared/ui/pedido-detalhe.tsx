@@ -354,12 +354,8 @@ export function PedidoDetalhe({
 
     setClassificando(itemId)
     try {
-      const item = pedido?.itens.find((candidato) => candidato.itemId === itemId)
-      await apiPost(`/api/pedidos/itens/${itemId}/classificar`, {
-        sectorId,
-        // Ensina o de/para categoria→setor para as próximas importações.
-        legacyCategory: item?.legacyCategory ?? undefined,
-      })
+      // A categoria do de/para é lida pelo servidor a partir do item persistido.
+      await apiPost(`/api/pedidos/itens/${itemId}/classificar`, { sectorId })
       marcarClassificado(itemId)
       setClassificados((atual) => ({ ...atual, [itemId]: true }))
       setSucesso('Item desmembrado com sucesso.')

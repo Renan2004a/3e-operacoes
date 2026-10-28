@@ -71,6 +71,7 @@ function detalhe() {
         description: 'Telha',
         productCode: '470',
         unit: 'm',
+        legacyCategory: 'Telhas',
         classificationStatus: 'PENDING_CLASSIFICATION' as 'CLASSIFIED' | 'PENDING_CLASSIFICATION',
         deadlineAt: null as string | null,
         activityDeadlineAt: null as string | null,

@@ -125,7 +125,7 @@ function seedItem(
 ) {
   mocks.items.push({
     id: overrides.id ?? 'item_1',
-    legacyCategory: overrides.legacyCategory ?? 'Telhas',
+    legacyCategory: overrides.legacyCategory !== undefined ? overrides.legacyCategory : 'Telhas',
     classificationStatus: overrides.classificationStatus ?? 'PENDING_CLASSIFICATION',
   })
 }
@@ -195,8 +195,41 @@ describe('POST /api/pedidos/itens/[itemId]/classificar', () => {
     expect(mocks.items[0].classificationStatus).toBe('CLASSIFIED')
   })
 
-  it('responde 200 e cria o mapeamento quando a categoria é informada', async () => {
+  it('usa a categoria persistida no item e ignora a categoria e a autoria do corpo', async () => {
     seedItem()
+    seedSector()
+
+    const response = await POST(
+      request('item_1', {
+        sectorId: 'setor_telhas',
+        legacyCategory: 'Nova Categoria',
+        userId: 'user_forjado',
+        actorId: 'user_forjado',
+      }),
+      context('item_1'),
+    )
+
+    expect(response.status).toBe(200)
+    expect(mocks.mappings).toHaveLength(1)
+    expect(mocks.mappings[0]).toMatchObject({
+      legacyCategory: 'Telhas',
+      sectorId: 'setor_telhas',
+      status: 'ACTIVE',
+    })
+    expect(mocks.audits[0]).toMatchObject({
+      action: 'CREATE',
+      entityType: 'CategorySectorMapping',
+      userId: 'user_mgr',
+      afterJson: {
+        legacyCategory: 'Telhas',
+        sectorId: 'setor_telhas',
+        status: 'ACTIVE',
+      },
+    })
+  })
+
+  it('não cria mapeamento quando o item não tem categoria, mesmo com categoria no corpo', async () => {
+    seedItem({ legacyCategory: null })
     seedSector()
 
     const response = await POST(
@@ -205,13 +238,49 @@ describe('POST /api/pedidos/itens/[itemId]/classificar', () => {
     )
 
     expect(response.status).toBe(200)
+    expect(mocks.mappings).toHaveLength(0)
+    expect(mocks.audits).toHaveLength(0)
+  })
+
+  it('reutiliza o mapeamento ativo sem alterar o setor', async () => {
+    seedItem()
+    seedSector()
+    seedSector({ id: 'setor_corte' })
+    mocks.mappings.push({
+      id: 'map_1',
+      legacyCategory: 'Telhas',
+      sectorId: 'setor_telhas',
+      status: 'ACTIVE',
+      createdAt: NOW,
+      updatedAt: NOW,
+    })
+
+    const response = await POST(
+      request('item_1', { sectorId: 'setor_corte' }),
+      context('item_1'),
+    )
+
+    expect(response.status).toBe(200)
     expect(mocks.mappings).toHaveLength(1)
     expect(mocks.mappings[0]).toMatchObject({
-      legacyCategory: 'Nova Categoria',
+      legacyCategory: 'Telhas',
       sectorId: 'setor_telhas',
       status: 'ACTIVE',
     })
-    expect(mocks.audits[0]).toMatchObject({ action: 'CREATE', entityType: 'CategorySectorMapping' })
+    expect(mocks.audits).toHaveLength(0)
+  })
+
+  it('responde 404 quando o item não existe', async () => {
+    seedSector()
+
+    const response = await POST(
+      request('item_inexistente', { sectorId: 'setor_telhas' }),
+      context('item_inexistente'),
+    )
+
+    expect(response.status).toBe(404)
+    expect(await response.json()).toEqual({ error: 'item_not_found' })
+    expect(mocks.mappings).toHaveLength(0)
   })
 
   it('responde 409 quando o item já está classificado', async () => {
