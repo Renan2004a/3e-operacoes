@@ -31,6 +31,21 @@ function row(overrides: Record<string, unknown> = {}): Record<string, unknown> {
 }
 
 describe('consultarPedidoTopGerente', () => {
+  it('corrige texto do legado com dupla codificação e normaliza descrição/código vazios', async () => {
+    const { queryable } = createQueryable([
+      row({ nome_cliente: 'MaurÃ­cio Marcomini', descr_produto: 'DobradiÃ§a 3 x 2.5/8' }),
+      row({ seq: 2, prod: '0', descr_produto: '.' }),
+    ])
+
+    const result = await consultarPedidoTopGerente(queryable, '70435')
+    if (!result.found) throw new Error('pedido deveria existir')
+
+    expect(result.order.customerName).toBe('Maurício Marcomini')
+    expect(result.order.items[0].description).toBe('Dobradiça 3 x 2.5/8')
+    expect(result.order.items[1].productCode).toBe('')
+    expect(result.order.items[1].description).toBe('')
+  })
+
   it('normaliza o cabeçalho do pedido', async () => {
     const { queryable } = createQueryable([row()])
 

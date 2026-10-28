@@ -40,10 +40,44 @@ function toNumber(value: unknown): number {
   return typeof value === 'number' ? value : Number(value)
 }
 
+/**
+ * Corrige texto do legado gravado com dupla codificação (UTF-8 lido como
+ * latin1, ex.: "DobradiÃ§a"). O Top Gerente guarda os bytes assim; sem isso o
+ * nome do produto chega quebrado à tela. Quando a conversão não resulta em
+ * texto válido, mantém o valor original.
+ */
+export function corrigirTextoLegado(valor: string): string {
+  if (!/[ÃÂ]/.test(valor)) return valor
+  try {
+    const convertido = Buffer.from(valor, 'latin1').toString('utf8')
+    return convertido.includes('\uFFFD') ? valor : convertido
+  } catch {
+    return valor
+  }
+}
+
 function toStringOrNull(value: unknown): string | null {
   if (value === null || value === undefined) return null
-  const text = String(value).trim()
+  const text = corrigirTextoLegado(String(value).trim())
   return text.length > 0 ? text : null
+}
+
+/**
+ * Descrição exibível do item. O legado às vezes traz apenas "." ou espaços
+ * para itens sem cadastro; devolver vazio permite a interface mostrar um
+ * rótulo claro em vez de um ponto solto.
+ */
+function descricaoLegivel(value: unknown): string {
+  const texto = toStringOrNull(value)
+  if (!texto || texto === '.' || texto === '-' || texto === '--') return ''
+  return texto
+}
+
+/** Código de produto "0" (ou vazio) significa "não informado" no legado. */
+function codigoLegivel(value: unknown): string {
+  const texto = toStringOrNull(value)
+  if (!texto || texto === '0') return ''
+  return texto
 }
 
 /** Decimal como string com três casas, sem depender do arredondamento do driver. */
@@ -78,8 +112,8 @@ export async function consultarPedidoTopGerente(
     if (String(row.cancelado).toUpperCase() === 'S') continue
     items.push({
       seq: toNumber(row.seq),
-      productCode: toStringOrNull(row.prod) ?? '',
-      description: toStringOrNull(row.descr_produto) ?? '',
+      productCode: codigoLegivel(row.prod),
+      description: descricaoLegivel(row.descr_produto),
       unit: toStringOrNull(row.unidade_venda) ?? toStringOrNull(row.unidade) ?? '',
       requestedQuantity: toDecimalString(row.qtde),
       legacyCategory: null,
