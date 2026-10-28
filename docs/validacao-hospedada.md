@@ -227,3 +227,18 @@ Revisão completa antes da apresentação ao cliente: segurança, domínio, UI e
 - **Dados**: textos do legado com dupla codificação corrigidos (`Dobradiça`, `Maurício`); descrições `.` e código `0` normalizados; mapeamento inválido `CORTE_DOBRA:` removido; job travado em `RUNNING` encerrado.
 - **Importação**: dois pedidos novos importados pelo conector local (82271 e 82270), com encoding correto e sem duplicação.
 - **Pendente para a demo**: o conector em produção ainda aponta para `http://localhost:8787`. Para importar ao vivo é preciso expor o conector (túnel) e ajustar `LOCAL_CONNECTOR_BASE_URL`, ou rodar a demo no ambiente local.
+
+---
+
+## 13. Integração da branch da Vanessa e importação ao vivo (2026-10-28)
+
+- **Branch integrada**: `feat/gerente-ajustes` (4 commits, Vanessa), sem PR aberto.
+  - Painel do Gerente simplificado, cartões com drill-down e abertura em nova aba.
+  - Nova página `/gerente/atividades` (filtro por status) e API `GET /api/indicadores/atividades`.
+  - Ocorrências mostram nome e perfil de quem registrou; `+N outros` expande a lista.
+  - Fila do operador: status e prioridade mais claros (prioridade 0 não aparece).
+- **Ajustes na integração**: a API de atividades passou a exigir `consultar_atividades_gerente` (Gerente, Responsável pelo Sistema e Técnico; Operador recebe **403**); a data do drill-down usa o fuso `America/Sao_Paulo` (evita um dia de diferença).
+- **Gates após o merge**: **1062 testes** verdes + 24 ignorados; lint 0 erros; typecheck/build OK; `validar-correcoes-ui` **15/15** e `validar-melhorias` **15/15** em produção.
+- **Importação ao vivo (temporária)**: conector local na porta 8787 exposto por túnel rápido do Cloudflare (`*.trycloudflare.com`), com `LOCAL_CONNECTOR_BASE_URL` apontando para o túnel no Railway. Pedidos **82270, 82271 e 82272** importados em produção; o 82272 confirmou o fluxo completo (job `SUCCEEDED`).
+
+> O túnel rápido é temporário e **não tem SLA**: se o processo do `cloudflared` ou o conector reiniciar, a URL muda e é preciso atualizar `LOCAL_CONNECTOR_BASE_URL` no Railway e reiniciar o serviço. Para o go-live, usar um túnel nomeado com Cloudflare Access (ver `docs/go-live.md`).
