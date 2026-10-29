@@ -14,6 +14,7 @@ import { HistoricoEntregas } from '@/shared/ui/historico-entregas'
 import { Input } from '@/shared/ui/input'
 import { Metric } from '@/shared/ui/metric'
 import { PageHead } from '@/shared/ui/page-head'
+import { Progress } from '@/shared/ui/progress'
 import { Spinner } from '@/shared/ui/spinner'
 import { resolverRetornoListagem } from '@/shared/ui/retorno-lista'
 import { cn, FOCO_VISIVEL } from '@/shared/ui/utils'
@@ -34,6 +35,15 @@ interface ItemSaldo {
   disponivel: string | number
   entregue: string | number
   pendente: string | number
+  /** Entregas programadas pela venda ou pela gerência; a Expedição só consulta. */
+  remessas?: RemessaProgramada[]
+}
+
+interface RemessaProgramada {
+  id: string
+  remessa: number
+  scheduledAt: string
+  confirmedAt: string | null
 }
 
 interface PedidoDetalhado {
@@ -46,6 +56,12 @@ interface PedidoDetalhado {
 
 function numero(valor: string | number): number {
   return Number(String(valor).replace(',', '.'))
+}
+
+function formatarDataRemessa(valor: string): string {
+  const data = new Date(valor)
+  if (Number.isNaN(data.getTime())) return valor
+  return new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo' }).format(data)
 }
 
 /** Evita ruído de ponto flutuante (0,1 + 0,2) nos totais mostrados na confirmação. */
@@ -352,6 +368,21 @@ export default function EntregasPedidoPage() {
         }
       />
 
+      <details className="rounded-lg border border-line bg-surface-2 p-3 text-sm text-ink">
+        <summary className={cn('cursor-pointer font-semibold', FOCO_VISIVEL)}>
+          Como funciona a entrega
+        </summary>
+        <ul className="mt-2 grid list-disc gap-1 pl-5">
+          <li>Disponível é o que já foi produzido e ainda não foi entregue.</li>
+          <li>Você pode entregar até o valor disponível, de uma vez ou em partes.</li>
+          <li>Uma entrega parcial não conclui o item: o que sobrar continua disponível.</li>
+          <li>
+            Acima do disponível, só o gerente de produção pode autorizar, com motivo e auditoria.
+          </li>
+          <li>Uma entrega registrada não pode ser desfeita. Confira antes de confirmar.</li>
+        </ul>
+      </details>
+
       {carregandoPedido ? <Spinner /> : null}
 
       {erroPedido ? (
@@ -384,9 +415,9 @@ export default function EntregasPedidoPage() {
               helper="Para entrega, por unidade."
             />
             <Metric
-              label="Pendentes"
+              label="Falta produzir"
               value={valorPorUnidade(pedido.totaisPorUnidade, 'pendente')}
-              helper="A produzir, por unidade."
+              helper="Ainda em produção, por unidade."
             />
           </div>
 
@@ -409,7 +440,7 @@ export default function EntregasPedidoPage() {
                     Item {indice + 1}
                     {item.productCode ? ` · Código ${item.productCode}` : ''}
                   </p>
-                  <p className="mt-1 text-sm text-ink">
+                  <p className="mt-1 text-base font-semibold text-ink">
                     Disponível: {formatarQuantidadeParaExibicao(item.unit ?? null, item.disponivel)}
                   </p>
                   <p className="text-sm text-muted">
@@ -420,12 +451,50 @@ export default function EntregasPedidoPage() {
                 <Badge variant={situacao.variante}>{situacao.rotulo}</Badge>
               </CardHeader>
               <CardContent className="grid gap-4">
-                <p className="text-sm text-muted">
-                  Solicitado: {formatarQuantidadeParaExibicao(item.unit ?? null, item.solicitado)} · Executado:{' '}
-                  {formatarQuantidadeParaExibicao(item.unit ?? null, item.executado)} · Entregue:{' '}
-                  {formatarQuantidadeParaExibicao(item.unit ?? null, item.entregue)} · Pendente:{' '}
-                  {formatarQuantidadeParaExibicao(item.unit ?? null, item.pendente)}
-                </p>
+                <div className="grid gap-3">
+                  <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+                    {[
+                      ['Solicitado', item.solicitado],
+                      ['Produzido', item.executado],
+                      ['Entregue', item.entregue],
+                      ['Falta produzir', item.pendente],
+                    ].map(([rotulo, valor]) => (
+                      <div key={rotulo}>
+                        <dt className="text-muted">{rotulo}</dt>
+                        <dd className="font-semibold text-ink">
+                          {formatarQuantidadeParaExibicao(item.unit ?? null, valor)}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                  <Progress
+                    label="Entregue do solicitado"
+                    value={
+                      numero(item.solicitado) > 0
+                        ? (numero(item.entregue) / numero(item.solicitado)) * 100
+                        : 0
+                    }
+                    tone={situacao.codigo === 'ENTREGUE' ? 'success' : 'accent'}
+                  />
+                  <div className="text-sm">
+                    <p className="font-semibold text-ink">Remessas programadas</p>
+                    {item.remessas && item.remessas.length > 0 ? (
+                      <ol className="mt-1 grid gap-1" aria-label="Remessas programadas">
+                        {item.remessas.map((remessa) => (
+                          <li key={remessa.id} className="text-muted">
+                            {remessa.remessa}ª remessa · prevista para{' '}
+                            {formatarDataRemessa(remessa.scheduledAt)} ·{' '}
+                            {remessa.confirmedAt
+                              ? `Confirmada em ${formatarDataRemessa(remessa.confirmedAt)}`
+                              : 'Aguardando confirmação'}
+                          </li>
+                        ))}
+                      </ol>
+                    ) : (
+                      <p className="text-muted">Nenhuma remessa programada.</p>
+                    )}
+                  </div>
+                </div>
                 {semSaldo ? (
                   <Alert
                     variant="info"

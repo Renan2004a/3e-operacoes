@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
 const mocks = vi.hoisted(() => ({
   apiGet: vi.fn(),
@@ -335,7 +335,9 @@ describe('EntregasPedidoPage', () => {
     })
     render(<EntregasPedidoPage />)
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(/não foi possível carregar o pedido/i)
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      /não foi possível carregar o pedido/i,
+    )
 
     fireEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }))
 
@@ -385,6 +387,74 @@ describe('EntregasPedidoPage', () => {
     expect(screen.getAllByText(/Cliente Ana/)).toHaveLength(1)
   })
 
+  function comRemessas(remessas: unknown[]) {
+    const base = detalhe(5)
+    return { ...base, itens: [{ ...base.itens[0], remessas }] }
+  }
+
+  it('mostra as remessas programadas do item, previstas e confirmadas (H6)', async () => {
+    configurarApi(
+      [
+        comRemessas([
+          { id: 'r1', remessa: 1, scheduledAt: '2026-11-05T15:00:00.000Z', confirmedAt: null },
+          {
+            id: 'r2',
+            remessa: 2,
+            scheduledAt: '2026-11-12T15:00:00.000Z',
+            confirmedAt: '2026-11-13T15:00:00.000Z',
+          },
+        ]),
+      ],
+      'SHIPPING',
+    )
+    render(<EntregasPedidoPage />)
+
+    const lista = await screen.findByRole('list', { name: 'Remessas programadas' })
+    const itens = within(lista).getAllByRole('listitem')
+    expect(itens[0]).toHaveTextContent('1ª remessa · prevista para 05/11/2026')
+    expect(itens[0]).toHaveTextContent('Aguardando confirmação')
+    expect(itens[1]).toHaveTextContent('2ª remessa · prevista para 12/11/2026')
+    expect(itens[1]).toHaveTextContent('Confirmada em 13/11/2026')
+  })
+
+  it('sem remessa programada, diz isso em vez de deixar a dúvida (H6)', async () => {
+    configurarApi([detalhe(5)], 'SHIPPING')
+    render(<EntregasPedidoPage />)
+
+    expect(await screen.findByText('Nenhuma remessa programada.')).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Remessas programadas' })).not.toBeInTheDocument()
+  })
+
+  it('apresenta as quantidades do item em termos de expedição, com progresso (H2, H8)', async () => {
+    configurarApi([detalhe(5)], 'SHIPPING')
+    render(<EntregasPedidoPage />)
+
+    const solicitado = await screen.findByText('Solicitado')
+    const quantidades = solicitado.closest('dl') as HTMLElement
+    expect(within(quantidades).getByText('Solicitado').nextSibling).toHaveTextContent('10')
+    expect(within(quantidades).getByText('Produzido').nextSibling).toHaveTextContent('8')
+    expect(within(quantidades).getByText('Entregue').nextSibling).toHaveTextContent('3')
+    expect(within(quantidades).getByText('Falta produzir').nextSibling).toHaveTextContent('2')
+
+    const barra = screen.getByRole('progressbar', { name: 'Entregue do solicitado' })
+    expect(barra).toHaveAttribute('aria-valuenow', '30')
+  })
+
+  it('a ajuda explica o disponível, a entrega parcial e a exceção (H10)', async () => {
+    configurarApi([detalhe(5)], 'SHIPPING')
+    render(<EntregasPedidoPage />)
+
+    const ajuda = await screen.findByText('Como funciona a entrega')
+    const detalhes = ajuda.closest('details') as HTMLElement
+    expect(detalhes).not.toHaveAttribute('open')
+    expect(detalhes).toHaveTextContent(
+      /Disponível é o que já foi produzido e ainda não foi entregue/,
+    )
+    expect(detalhes).toHaveTextContent(/entrega parcial não conclui o item/i)
+    expect(detalhes).toHaveTextContent(/só o gerente.*motivo.*auditoria/i)
+    expect(detalhes).toHaveTextContent(/não pode ser desfeita/i)
+  })
+
   it('usa o cabeçalho de página com o título (VIS-09)', async () => {
     configurarApi([detalhe(5)])
     render(<EntregasPedidoPage />)
@@ -398,7 +468,7 @@ describe('EntregasPedidoPage', () => {
 
     expect(await screen.findByText('Disponíveis')).toBeInTheDocument()
     expect(screen.getByText('Disponíveis').closest('div.rounded-card')).toHaveTextContent('5')
-    expect(screen.getByText('Pendentes')).toBeInTheDocument()
+    expect(screen.getByText('Ainda em produção, por unidade.')).toBeInTheDocument()
   })
 
   it('resume disponíveis e pendentes por unidade, sem somar unidades diferentes (RN02)', async () => {
@@ -408,11 +478,35 @@ describe('EntregasPedidoPage', () => {
         ...base,
         itens: [
           ...base.itens,
-          { ...base.itens[0], itemId: 'item_2', solicitado: '4', executado: '4', disponivel: '4', entregue: '0', pendente: '0' },
+          {
+            ...base.itens[0],
+            itemId: 'item_2',
+            solicitado: '4',
+            executado: '4',
+            disponivel: '4',
+            entregue: '0',
+            pendente: '0',
+          },
         ],
         totaisPorUnidade: [
-          { unidade: 'un', itens: 1, solicitado: '10', executado: '8', disponivel: '5', entregue: '3', pendente: '2' },
-          { unidade: 'm', itens: 1, solicitado: '4', executado: '4', disponivel: '4', entregue: '0', pendente: '0' },
+          {
+            unidade: 'un',
+            itens: 1,
+            solicitado: '10',
+            executado: '8',
+            disponivel: '5',
+            entregue: '3',
+            pendente: '2',
+          },
+          {
+            unidade: 'm',
+            itens: 1,
+            solicitado: '4',
+            executado: '4',
+            disponivel: '4',
+            entregue: '0',
+            pendente: '0',
+          },
         ],
       },
     ])
@@ -420,6 +514,8 @@ describe('EntregasPedidoPage', () => {
 
     const disponiveis = (await screen.findByText('Disponíveis')).closest('div.rounded-card')
     expect(disponiveis).toHaveTextContent('5 un · 4,00 m')
-    expect(screen.getByText('Pendentes').closest('div.rounded-card')).toHaveTextContent('2 un · 0,00 m')
+    expect(
+      screen.getByText('Ainda em produção, por unidade.').closest('div.rounded-card'),
+    ).toHaveTextContent('2 un · 0,00 m')
   })
 })
