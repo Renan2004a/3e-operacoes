@@ -168,6 +168,20 @@ interface PedidoDetalhado {
   totaisPorUnidade: TotalUnidadeView[]
 }
 
+type ResultadoBusca =
+  | { ok: true; pedido: PedidoDetalhado }
+  | { ok: false; naoEncontrado: boolean }
+  | null
+
+/** Conflito reconhecido de classificação já efetivada (HTTP 409 da API). */
+function ehConflitoClassificacao(error: unknown): error is ApiError {
+  return (
+    error instanceof ApiError &&
+    error.status === 409 &&
+    error.code === 'item_already_classified'
+  )
+}
+
 export interface PedidoDetalheProps {
   orderId: string
   /** Rota da lista, usada no link de voltar. */
@@ -211,6 +225,10 @@ export function PedidoDetalhe({
   const [escolhas, setEscolhas] = useState<Record<string, string>>({})
   const [classificando, setClassificando] = useState<string | null>(null)
   const [classificados, setClassificados] = useState<Record<string, boolean>>({})
+  // Itens cujo conflito de classificação ainda não pôde ser reconciliado com o
+  // estado persistido. O formulário fica oculto até uma atualização bem-sucedida.
+  const [conflitos, setConflitos] = useState<Record<string, boolean>>({})
+  const requisicaoDetalheRef = useRef(0)
 
   const [remessaAberta, setRemessaAberta] = useState<Record<string, boolean>>({})
   const [remessaData, setRemessaData] = useState<Record<string, string>>({})
@@ -239,23 +257,42 @@ export function PedidoDetalhe({
   const [erroAcao, setErroAcao] = useState<string | null>(null)
 
   const buscar = useCallback(
-    () =>
-      apiGet<{ pedido: PedidoDetalhado }>(`/api/pedidos/${orderId}`)
+    (opcoes: { manterDetalheEmFalha?: boolean } = {}): Promise<ResultadoBusca> => {
+      const requisicao = ++requisicaoDetalheRef.current
+      return apiGet<{ pedido: PedidoDetalhado }>(`/api/pedidos/${orderId}`)
         .then((dados) => {
+          // Resposta de uma consulta anterior (ou de outro pedido) não pode
+          // sobrescrever o detalhe atual.
+          if (requisicao !== requisicaoDetalheRef.current) return null
           setPedido(dados.pedido)
           setErro(null)
+          return { ok: true, pedido: dados.pedido } as const
         })
         .catch((error) => {
-          if (error instanceof ApiError && error.status === 404) setErro('nao_encontrado')
-          else setErro('falha')
+          if (requisicao !== requisicaoDetalheRef.current) return null
+          const naoEncontrado = error instanceof ApiError && error.status === 404
+          if (naoEncontrado) setErro('nao_encontrado')
+          else if (!opcoes.manterDetalheEmFalha) setErro('falha')
+          return { ok: false, naoEncontrado } as const
         })
-        .finally(() => setCarregando(false)),
+        .finally(() => {
+          if (requisicao === requisicaoDetalheRef.current) setCarregando(false)
+        })
+    },
     [orderId],
   )
 
   useEffect(() => {
     void buscar()
   }, [buscar])
+
+  useEffect(
+    () => () => {
+      // Invalida qualquer resposta pendente ao desmontar ou trocar de pedido.
+      requisicaoDetalheRef.current += 1
+    },
+    [],
+  )
 
   // Ao abrir a confirmação, foca a ação menos destrutiva; ao fechar, devolve o
   // foco ao botão que iniciou a exclusão (quando ele ainda existe).
@@ -362,10 +399,69 @@ export function PedidoDetalhe({
     }
   }, [permitirClassificacao])
 
+  function definirConflito(itemId: string, ativo: boolean) {
+    setConflitos((atual) => {
+      const copia = { ...atual }
+      if (ativo) copia[itemId] = true
+      else delete copia[itemId]
+      return copia
+    })
+  }
+
   /**
-   * Seleção efetiva do desmembramento: a escolha manual prevalece, inclusive
-   * quando é explicitamente vazia; sem escolha manual, usa a sugestão apenas se
-   * ela existir na lista de setores ativos já carregada.
+   * Reconcilia o conflito somente por leitura: consulta o detalhe persistido,
+   * remove a sobreposição local do item e só confirma sucesso se o servidor
+   * realmente devolver o item classificado.
+   */
+  async function resolverConflito(itemId: string) {
+    limparFeedback()
+    const resultado = await buscar({ manterDetalheEmFalha: true })
+    if (resultado === null) return
+
+    if (!resultado.ok) {
+      definirConflito(itemId, true)
+      setErroAcao(
+        resultado.naoEncontrado
+          ? 'O pedido não foi encontrado. Verifique o número e tente novamente.'
+          : 'O item já havia sido desmembrado, mas não foi possível atualizar os dados. Tente atualizar novamente.',
+      )
+      return
+    }
+
+    const itemAtualizado = resultado.pedido.itens.find((item) => item.itemId === itemId)
+    setClassificados((atual) => {
+      const copia = { ...atual }
+      delete copia[itemId]
+      return copia
+    })
+    setEscolhas((atual) => {
+      const copia = { ...atual }
+      delete copia[itemId]
+      return copia
+    })
+
+    if (!itemAtualizado) {
+      definirConflito(itemId, false)
+      setErroAcao('O item não está mais no pedido após a atualização. Verifique o estado atual.')
+      return
+    }
+
+    if (itemAtualizado.classificationStatus === 'CLASSIFIED') {
+      definirConflito(itemId, false)
+      setSucesso('O item já havia sido desmembrado. Os dados foram atualizados.')
+      return
+    }
+
+    definirConflito(itemId, true)
+    setErroAcao(
+      'O item ainda consta como pendente após a atualização. Verifique o estado atual antes de tentar novamente.',
+    )
+  }
+
+  /**
+   * Seleção efetiva do desmembramento (V01 + V03): a escolha manual prevalece,
+   * inclusive quando é explicitamente vazia; sem escolha manual, usa a sugestão
+   * apenas se ela existir na lista de setores ativos já carregada.
    */
   function setorEfetivo(item: ItemSaldo): string {
     const escolhaManual = escolhas[item.itemId]
@@ -415,11 +511,11 @@ export function PedidoDetalhe({
       setClassificados((atual) => ({ ...atual, [itemId]: true }))
       setSucesso('Item desmembrado com sucesso.')
     } catch (error) {
-      if (error instanceof ApiError && error.status === 409) {
-        // V03: o conflito continua com o comportamento atual deste PR.
-        marcarClassificado(itemId)
-        setClassificados((atual) => ({ ...atual, [itemId]: true }))
-        setSucesso('O item já estava desmembrado.')
+      if (ehConflitoClassificacao(error)) {
+        // V03: o conflito não confirma a escolha local — reconcilia pelo GET e
+        // só apresenta sucesso se o estado persistido estiver classificado.
+        definirConflito(itemId, true)
+        await resolverConflito(itemId)
       } else if (error instanceof ApiError && error.status === 400) {
         setErroAcao('Setor inválido. Escolha outro setor e tente novamente.')
       } else {
@@ -823,6 +919,7 @@ export function PedidoDetalhe({
           const percentual = percentualExecutado(item)
           const desmembrado =
             item.classificationStatus === 'CLASSIFIED' || classificados[item.itemId] === true
+          const conflito = conflitos[item.itemId] === true
           const setorSugerido = item.suggestedSectorId
             ? setores.find((setor) => setor.id === item.suggestedSectorId && setor.active)
             : undefined
@@ -1015,7 +1112,25 @@ export function PedidoDetalhe({
                     {setoresEstado === 'pronto' && !setores.some((setor) => setor.active) ? (
                       <p className="text-sm text-muted">Nenhum setor ativo disponível.</p>
                     ) : null}
-                    {desmembrado ? (
+                    {conflito ? (
+                      <Alert
+                        variant="warning"
+                        title="Estado do item desatualizado"
+                        action={
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => void resolverConflito(item.itemId)}
+                          >
+                            Atualizar dados
+                          </Button>
+                        }
+                      >
+                        Não foi possível confirmar o setor deste item. Atualize os dados antes de
+                        continuar.
+                      </Alert>
+                    ) : desmembrado ? (
                       <Alert variant="success" title="Item desmembrado">
                         Setor definido: {item.sectorName ?? '—'}. Você pode continuar com as
                         remessas abaixo.

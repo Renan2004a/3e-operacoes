@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   apiPatch: vi.fn(),
   apiDelete: vi.fn(),
   retorno: null as string | null,
+  orderId: 'p1',
 }))
 
 vi.mock('@/shared/http/api-client', () => ({
@@ -29,7 +30,7 @@ vi.mock('@/shared/http/api-client', () => ({
 }))
 
 vi.mock('next/navigation', () => ({
-  useParams: () => ({ orderId: 'p1' }),
+  useParams: () => ({ orderId: mocks.orderId }),
   useSearchParams: () =>
     new URLSearchParams(mocks.retorno === null ? {} : { retorno: mocks.retorno }),
 }))
@@ -139,6 +140,37 @@ function configurarApiComRemessas(remessas: RemessaMock[]) {
   })
 }
 
+function detalheClassificado(
+  overrides: Partial<ReturnType<typeof detalhe>['itens'][number]> = {},
+): ReturnType<typeof detalhe> {
+  return {
+    ...detalhe(),
+    itens: [
+      itemDetalhe({
+        classificationStatus: 'CLASSIFIED',
+        sectorId: 'setor_telhas',
+        sectorCode: 'TELHAS',
+        sectorName: 'Telhas',
+        ...overrides,
+      }),
+    ],
+  }
+}
+
+function configurarApiSequencial(respostas: Array<ReturnType<typeof detalhe> | Error>) {
+  let indice = 0
+  mocks.apiGet.mockImplementation((url: string) => {
+    if (url === '/api/pedidos/p1') {
+      const resposta = respostas[Math.min(indice, respostas.length - 1)]
+      indice += 1
+      return resposta instanceof Error ? Promise.reject(resposta) : Promise.resolve({ pedido: resposta })
+    }
+    if (url === '/api/setores') return Promise.resolve({ sectors: SETORES })
+    return Promise.reject(new Error(`url inesperada: ${url}`))
+  })
+  return { chamadasPedido: () => indice }
+}
+
 function promessaAdiada<T>() {
   let resolver!: (valor: T) => void
   let rejeitar!: (erro?: unknown) => void
@@ -155,11 +187,43 @@ beforeEach(() => {
   mocks.apiPatch.mockReset()
   mocks.apiDelete.mockReset()
   mocks.retorno = null
+  mocks.orderId = 'p1'
 })
 
 afterEach(cleanup)
 
 describe('PedidoVendedorPage', () => {
+  it('não aplica resposta de outro pedido após a troca do detalhe', async () => {
+    const primeira = promessaAdiada<{ pedido: ReturnType<typeof detalhe> }>()
+    const segunda = promessaAdiada<{ pedido: ReturnType<typeof detalhe> }>()
+    mocks.apiGet.mockImplementation((url: string) => {
+      if (url === '/api/pedidos/p1') return primeira.promessa
+      if (url === '/api/pedidos/p2') return segunda.promessa
+      if (url === '/api/setores') return Promise.resolve({ sectors: SETORES })
+      return Promise.reject(new Error(`url inesperada: ${url}`))
+    })
+
+    const { rerender } = render(<PedidoVendedorPage />)
+    await waitFor(() => expect(mocks.apiGet).toHaveBeenCalledWith('/api/pedidos/p1'))
+
+    mocks.orderId = 'p2'
+    rerender(<PedidoVendedorPage />)
+
+    await act(async () => {
+      segunda.resolver({ pedido: { ...detalhe(), id: 'p2', numero: '200' } })
+    })
+    expect(await screen.findByRole('heading', { level: 1, name: 'Pedido 200' })).toBeInTheDocument()
+
+    await act(async () => {
+      primeira.resolver({ pedido: detalhe() })
+    })
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Pedido 200' })).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { level: 1, name: 'Pedido 100' }),
+    ).not.toBeInTheDocument()
+  })
+
   it('carrega o detalhe e oferece o retorno para a lista', async () => {
     configurarApi()
     render(<PedidoVendedorPage />)
@@ -561,6 +625,161 @@ describe('PedidoVendedorPage', () => {
 
     expect(await screen.findByText(/Setor definido: Telhas/)).toBeInTheDocument()
     expect(screen.queryByText(/Setor definido: Corte e Dobra/)).not.toBeInTheDocument()
+  })
+
+  it('após 409, recarrega o pedido e mostra o setor persistido, sem usar a escolha local', async () => {
+    const { chamadasPedido } = configurarApiSequencial([detalhe(), detalheClassificado()])
+    const { ApiError } = await import('@/shared/http/api-client')
+    mocks.apiPost.mockRejectedValue(new ApiError(409, 'item_already_classified'))
+    render(<PedidoVendedorPage />)
+
+    const seletor = await screen.findByLabelText('Setor do item 1')
+    await screen.findByRole('option', { name: 'Corte e Dobra' })
+    fireEvent.change(seletor, { target: { value: 'setor_corte' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Classificar item 1' }))
+
+    expect(
+      await screen.findByText('O item já havia sido desmembrado. Os dados foram atualizados.'),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/Setor definido: Telhas/)).toBeInTheDocument()
+    expect(screen.queryByText(/Setor definido: Corte e Dobra/)).not.toBeInTheDocument()
+    expect(screen.queryByText('Item desmembrado com sucesso.')).not.toBeInTheDocument()
+    expect(mocks.apiPost).toHaveBeenCalledTimes(1)
+    expect(chamadasPedido()).toBe(2)
+  })
+
+  it('preserva a escolha local de outro item ao reconciliar o conflito', async () => {
+    const doisItens = {
+      ...detalhe(),
+      itens: [itemDetalhe(), itemDetalhe({ itemId: 'item_2', description: 'Telha 2' })],
+    }
+    const comItem1Classificado = {
+      ...doisItens,
+      itens: [
+        itemDetalhe({
+          classificationStatus: 'CLASSIFIED',
+          sectorId: 'setor_telhas',
+          sectorCode: 'TELHAS',
+          sectorName: 'Telhas',
+        }),
+        itemDetalhe({ itemId: 'item_2', description: 'Telha 2' }),
+      ],
+    }
+    configurarApiSequencial([doisItens, comItem1Classificado])
+    const { ApiError } = await import('@/shared/http/api-client')
+    mocks.apiPost.mockRejectedValue(new ApiError(409, 'item_already_classified'))
+    render(<PedidoVendedorPage />)
+
+    const seletorItem2 = await screen.findByLabelText('Setor do item 2')
+    const seletorItem1 = screen.getByLabelText('Setor do item 1')
+    await screen.findAllByRole('option', { name: 'Corte e Dobra' })
+    fireEvent.change(seletorItem2, { target: { value: 'setor_corte' } })
+    fireEvent.change(seletorItem1, { target: { value: 'setor_corte' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Classificar item 1' }))
+
+    expect(
+      await screen.findByText('O item já havia sido desmembrado. Os dados foram atualizados.'),
+    ).toBeInTheDocument()
+    expect(screen.getByLabelText('Setor do item 2')).toHaveValue('setor_corte')
+    expect(screen.getByText(/Setor definido: Telhas/)).toBeInTheDocument()
+  })
+
+  it('se a atualização após 409 falhar, mantém o conflito e recupera somente por GET', async () => {
+    const { chamadasPedido } = configurarApiSequencial([
+      detalhe(),
+      new Error('falha de consulta'),
+      detalheClassificado(),
+    ])
+    const { ApiError } = await import('@/shared/http/api-client')
+    mocks.apiPost.mockRejectedValue(new ApiError(409, 'item_already_classified'))
+    render(<PedidoVendedorPage />)
+
+    const seletor = await screen.findByLabelText('Setor do item 1')
+    await screen.findByRole('option', { name: 'Corte e Dobra' })
+    fireEvent.change(seletor, { target: { value: 'setor_corte' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Classificar item 1' }))
+
+    expect(
+      await screen.findByText(
+        'O item já havia sido desmembrado, mas não foi possível atualizar os dados. Tente atualizar novamente.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Estado do item desatualizado')).toBeInTheDocument()
+    expect(screen.queryByText(/Setor definido: Corte e Dobra/)).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('O item já havia sido desmembrado. Os dados foram atualizados.'),
+    ).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Atualizar dados' }))
+
+    expect(
+      await screen.findByText('O item já havia sido desmembrado. Os dados foram atualizados.'),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/Setor definido: Telhas/)).toBeInTheDocument()
+    expect(mocks.apiPost).toHaveBeenCalledTimes(1)
+    expect(chamadasPedido()).toBe(3)
+  })
+
+  it('não confirma desmembramento se o GET após 409 ainda devolver o item pendente', async () => {
+    configurarApiSequencial([detalhe(), detalhe()])
+    const { ApiError } = await import('@/shared/http/api-client')
+    mocks.apiPost.mockRejectedValue(new ApiError(409, 'item_already_classified'))
+    render(<PedidoVendedorPage />)
+
+    const seletor = await screen.findByLabelText('Setor do item 1')
+    await screen.findByRole('option', { name: 'Corte e Dobra' })
+    fireEvent.change(seletor, { target: { value: 'setor_corte' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Classificar item 1' }))
+
+    expect(
+      await screen.findByText(
+        'O item ainda consta como pendente após a atualização. Verifique o estado atual antes de tentar novamente.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Estado do item desatualizado')).toBeInTheDocument()
+    expect(screen.queryByText(/Setor definido: Corte e Dobra/)).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('O item já havia sido desmembrado. Os dados foram atualizados.'),
+    ).not.toBeInTheDocument()
+    expect(mocks.apiPost).toHaveBeenCalledTimes(1)
+  })
+
+  it('trata pedido removido após o conflito sem confirmar setor', async () => {
+    const { ApiError } = await import('@/shared/http/api-client')
+    configurarApiSequencial([detalhe(), new ApiError(404, 'item_not_found')])
+    mocks.apiPost.mockRejectedValue(new ApiError(409, 'item_already_classified'))
+    render(<PedidoVendedorPage />)
+
+    const seletor = await screen.findByLabelText('Setor do item 1')
+    await screen.findByRole('option', { name: 'Corte e Dobra' })
+    fireEvent.change(seletor, { target: { value: 'setor_corte' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Classificar item 1' }))
+
+    expect(await screen.findByText('Pedido não encontrado')).toBeInTheDocument()
+    expect(screen.queryByText(/Setor definido: Corte e Dobra/)).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('O item já havia sido desmembrado. Os dados foram atualizados.'),
+    ).not.toBeInTheDocument()
+    expect(mocks.apiPost).toHaveBeenCalledTimes(1)
+  })
+
+  it('não trata outros HTTP 409 como classificação confirmada', async () => {
+    const { chamadasPedido } = configurarApiSequencial([detalhe()])
+    const { ApiError } = await import('@/shared/http/api-client')
+    mocks.apiPost.mockRejectedValue(new ApiError(409, 'operational_records'))
+    render(<PedidoVendedorPage />)
+
+    const seletor = await screen.findByLabelText('Setor do item 1')
+    await screen.findByRole('option', { name: 'Corte e Dobra' })
+    fireEvent.change(seletor, { target: { value: 'setor_corte' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Classificar item 1' }))
+
+    expect(
+      await screen.findByText('Não foi possível desmembrar o item. Tente novamente.'),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('Estado do item desatualizado')).not.toBeInTheDocument()
+    expect(mocks.apiPost).toHaveBeenCalledTimes(1)
+    expect(chamadasPedido()).toBe(1)
   })
 
   it('mostra a remessa programada, mas não oferece ações de expedição ao Vendedor', async () => {
