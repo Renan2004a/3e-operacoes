@@ -2,7 +2,7 @@
 import '@testing-library/jest-dom/vitest'
 import { StrictMode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
 const mocks = vi.hoisted(() => ({ apiGet: vi.fn() }))
 
@@ -47,6 +47,16 @@ function resposta(
   }
 }
 
+function promessaAdiada<T>() {
+  let resolver!: (valor: T) => void
+  let rejeitar!: (erro?: unknown) => void
+  const promessa = new Promise<T>((resolve, reject) => {
+    resolver = resolve
+    rejeitar = reject
+  })
+  return { promessa, resolver, rejeitar }
+}
+
 beforeEach(() => {
   mocks.apiGet.mockReset()
   // Isola os testes: o componente lê os filtros da URL (preservação de contexto).
@@ -61,6 +71,197 @@ describe('PedidosLista', () => {
     render(<PedidosLista onSelecionar={vi.fn()} />)
 
     expect(screen.getByRole('status')).toHaveTextContent('Carregando')
+  })
+
+  it('mantém o resultado da consulta mais recente quando respostas chegam fora de ordem', async () => {
+    const primeira = promessaAdiada<ReturnType<typeof resposta>>()
+    const segunda = promessaAdiada<ReturnType<typeof resposta>>()
+    mocks.apiGet.mockReturnValueOnce(primeira.promessa).mockReturnValueOnce(segunda.promessa)
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+
+    await waitFor(() => expect(mocks.apiGet).toHaveBeenCalledTimes(1))
+    fireEvent.change(screen.getByLabelText('Cliente'), { target: { value: 'Bia' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Filtrar' }))
+    await waitFor(() => expect(mocks.apiGet).toHaveBeenCalledTimes(2))
+
+    await act(async () => {
+      segunda.resolver(
+        resposta([{ ...PEDIDO, id: 'p2', numero: '200', cliente: 'Bia' }], {
+          total: 1,
+          totalPaginas: 1,
+        }),
+      )
+    })
+    expect(await screen.findByText('Pedido 200')).toBeInTheDocument()
+    expect(screen.getByText(/1 pedido encontrado/)).toBeInTheDocument()
+
+    await act(async () => {
+      primeira.resolver(resposta([PEDIDO], { total: 7, totalPaginas: 1 }))
+    })
+
+    expect(screen.getByText('Pedido 200')).toBeInTheDocument()
+    expect(screen.queryByText('Pedido 100')).not.toBeInTheDocument()
+    expect(screen.getByText(/1 pedido encontrado/)).toBeInTheDocument()
+  })
+
+  it('não deixa erro de consulta antiga substituir o sucesso vigente', async () => {
+    const primeira = promessaAdiada<ReturnType<typeof resposta>>()
+    const segunda = promessaAdiada<ReturnType<typeof resposta>>()
+    mocks.apiGet.mockReturnValueOnce(primeira.promessa).mockReturnValueOnce(segunda.promessa)
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+
+    await waitFor(() => expect(mocks.apiGet).toHaveBeenCalledTimes(1))
+    fireEvent.change(screen.getByLabelText('Cliente'), { target: { value: 'Bia' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Filtrar' }))
+    await waitFor(() => expect(mocks.apiGet).toHaveBeenCalledTimes(2))
+
+    await act(async () => {
+      segunda.resolver(
+        resposta([{ ...PEDIDO, id: 'p2', numero: '200', cliente: 'Bia' }], {
+          total: 1,
+          totalPaginas: 1,
+        }),
+      )
+    })
+    expect(await screen.findByText('Pedido 200')).toBeInTheDocument()
+
+    await act(async () => {
+      primeira.rejeitar(new Error('falha antiga'))
+    })
+
+    expect(screen.getByText('Pedido 200')).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('não deixa sucesso de consulta antiga apagar o erro vigente', async () => {
+    const primeira = promessaAdiada<ReturnType<typeof resposta>>()
+    const segunda = promessaAdiada<ReturnType<typeof resposta>>()
+    mocks.apiGet.mockReturnValueOnce(primeira.promessa).mockReturnValueOnce(segunda.promessa)
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+
+    await waitFor(() => expect(mocks.apiGet).toHaveBeenCalledTimes(1))
+    fireEvent.change(screen.getByLabelText('Cliente'), { target: { value: 'Bia' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Filtrar' }))
+    await waitFor(() => expect(mocks.apiGet).toHaveBeenCalledTimes(2))
+
+    await act(async () => {
+      segunda.rejeitar(new Error('falha vigente'))
+    })
+    expect(await screen.findByRole('alert')).toHaveTextContent(/não foi possível carregar/i)
+
+    await act(async () => {
+      primeira.resolver(resposta([PEDIDO], { total: 7, totalPaginas: 1 }))
+    })
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/não foi possível carregar/i)
+    expect(screen.queryByText('Pedido 100')).not.toBeInTheDocument()
+  })
+
+  it('mantém o carregamento da consulta vigente quando a anterior termina antes', async () => {
+    const primeira = promessaAdiada<ReturnType<typeof resposta>>()
+    const segunda = promessaAdiada<ReturnType<typeof resposta>>()
+    mocks.apiGet.mockReturnValueOnce(primeira.promessa).mockReturnValueOnce(segunda.promessa)
+    render(<PedidosLista onSelecionar={vi.fn()} />)
+
+    await waitFor(() => expect(mocks.apiGet).toHaveBeenCalledTimes(1))
+    fireEvent.change(screen.getByLabelText('Cliente'), { target: { value: 'Bia' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Filtrar' }))
+    await waitFor(() => expect(mocks.apiGet).toHaveBeenCalledTimes(2))
+
+    await act(async () => {
+      primeira.resolver(resposta([PEDIDO], { total: 7, totalPaginas: 1 }))
+    })
+
+    expect(screen.getByRole('status')).toHaveTextContent('Carregando')
+    expect(screen.queryByText('Pedido 100')).not.toBeInTheDocument()
+
+    await act(async () => {
+      segunda.resolver(
+        resposta([{ ...PEDIDO, id: 'p2', numero: '200', cliente: 'Bia' }], {
+          total: 1,
+          totalPaginas: 1,
+        }),
+      )
+    })
+    expect(await screen.findByText('Pedido 200')).toBeInTheDocument()
+  })
+
+  it('ignora respostas de solicitações pendentes após a desmontagem', async () => {
+    const pendente = promessaAdiada<ReturnType<typeof resposta>>()
+    mocks.apiGet.mockReturnValue(pendente.promessa)
+    const { unmount } = render(<PedidosLista onSelecionar={vi.fn()} />)
+
+    await waitFor(() => expect(mocks.apiGet).toHaveBeenCalledTimes(1))
+    unmount()
+
+    await act(async () => {
+      pendente.resolver(resposta([PEDIDO], { total: 1, totalPaginas: 1 }))
+    })
+
+    expect(screen.queryByText('Pedido 100')).not.toBeInTheDocument()
+    expect(document.body.querySelector('table')).toBeNull()
+  })
+
+  it('mantém a consulta válida do StrictMode e ignora a resposta invalidada', async () => {
+    const primeira = promessaAdiada<ReturnType<typeof resposta>>()
+    const segunda = promessaAdiada<ReturnType<typeof resposta>>()
+    mocks.apiGet.mockReturnValueOnce(primeira.promessa).mockReturnValueOnce(segunda.promessa)
+
+    render(
+      <StrictMode>
+        <PedidosLista onSelecionar={vi.fn()} />
+      </StrictMode>,
+    )
+
+    await waitFor(() => expect(mocks.apiGet).toHaveBeenCalledTimes(2))
+
+    await act(async () => {
+      segunda.resolver(
+        resposta([{ ...PEDIDO, id: 'p2', numero: '200', cliente: 'Bia' }], {
+          total: 1,
+          totalPaginas: 1,
+        }),
+      )
+    })
+    expect(await screen.findByText('Pedido 200')).toBeInTheDocument()
+
+    await act(async () => {
+      primeira.resolver(resposta([PEDIDO], { total: 7, totalPaginas: 1 }))
+    })
+
+    expect(screen.getByText('Pedido 200')).toBeInTheDocument()
+    expect(screen.queryByText('Pedido 100')).not.toBeInTheDocument()
+  })
+
+  it('a recarga após importação prevalece sobre a consulta anterior', async () => {
+    const primeira = promessaAdiada<ReturnType<typeof resposta>>()
+    const recarga = promessaAdiada<ReturnType<typeof resposta>>()
+    mocks.apiGet.mockReturnValueOnce(primeira.promessa).mockReturnValueOnce(recarga.promessa)
+    const { rerender } = render(
+      <PedidosLista onSelecionar={vi.fn()} recarregarToken={0} />,
+    )
+
+    await waitFor(() => expect(mocks.apiGet).toHaveBeenCalledTimes(1))
+    rerender(<PedidosLista onSelecionar={vi.fn()} recarregarToken={1} />)
+    await waitFor(() => expect(mocks.apiGet).toHaveBeenCalledTimes(2))
+
+    await act(async () => {
+      recarga.resolver(
+        resposta([{ ...PEDIDO, id: 'p2', numero: '200', cliente: 'Bia' }], {
+          total: 1,
+          totalPaginas: 1,
+        }),
+      )
+    })
+    expect(await screen.findByText('Pedido 200')).toBeInTheDocument()
+
+    await act(async () => {
+      primeira.resolver(resposta([PEDIDO], { total: 7, totalPaginas: 1 }))
+    })
+
+    expect(screen.getByText('Pedido 200')).toBeInTheDocument()
+    expect(screen.queryByText('Pedido 100')).not.toBeInTheDocument()
+    expect(window.location.search).toBe('')
   })
 
   it('lista os pedidos com número, cliente e status textual (FEP-03)', async () => {

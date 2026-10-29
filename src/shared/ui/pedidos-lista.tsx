@@ -167,24 +167,43 @@ export function PedidosLista({ onSelecionar, recarregarToken }: PedidosListaProp
   const tokenRecargaAnterior = useRef(recarregarToken)
   const filtrosIniciais = useRef(filtrosDaUrl)
   const paginaInicial = useRef(paginaDaUrl)
+  const requisicaoRef = useRef(0)
   const ajudaPeriodoId = useId()
 
   const buscar = useCallback(
-    (aplicados: Filtros, paginaBuscada: number) =>
-      apiGet<RespostaPedidos>(montarUrl(aplicados, paginaBuscada))
+    (aplicados: Filtros, paginaBuscada: number) => {
+      const requisicao = ++requisicaoRef.current
+      return apiGet<RespostaPedidos>(montarUrl(aplicados, paginaBuscada))
         .then((dados) => {
+          // Somente a consulta vigente pode atualizar pedidos, paginação e erro.
+          if (requisicao !== requisicaoRef.current) return
           setPedidos(dados.pedidos)
           setPaginacao(dados.paginacao)
           setErro(false)
         })
-        .catch(() => setErro(true))
-        .finally(() => setCarregando(false)),
+        .catch(() => {
+          if (requisicao !== requisicaoRef.current) return
+          setErro(true)
+        })
+        .finally(() => {
+          // Uma resposta antiga não pode encerrar o carregamento da consulta atual.
+          if (requisicao === requisicaoRef.current) setCarregando(false)
+        })
+    },
     [],
   )
 
   useEffect(() => {
     void buscar(filtrosIniciais.current, paginaInicial.current)
   }, [buscar])
+
+  useEffect(
+    () => () => {
+      // Invalida solicitações pendentes ao desmontar (inclusive no StrictMode).
+      requisicaoRef.current += 1
+    },
+    [],
+  )
 
   // Recarrega quando o token muda (ex.: após importar um pedido). O pedido novo
   // entra no topo da ordenação, então a lista volta para a primeira página (A1).

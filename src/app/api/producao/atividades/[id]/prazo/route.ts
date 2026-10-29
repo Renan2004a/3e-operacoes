@@ -32,7 +32,10 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   }
 
   try {
-    const atividade = await definirPrazoAtividade({ atividadeId: id, prazo }, prismaPrazosRepository)
+    const atividade = await definirPrazoAtividade(
+      { atividadeId: id, prazo, userId: auth.usuario.userId },
+      prismaPrazosRepository,
+    )
     return Response.json({ atividade }, { status: 200 })
   } catch (error) {
     if (error instanceof AtividadeNaoEncontradaError) {

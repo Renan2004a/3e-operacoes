@@ -170,6 +170,20 @@ interface PedidoDetalhado {
   totaisPorUnidade: TotalUnidadeView[]
 }
 
+type ResultadoBusca =
+  | { ok: true; pedido: PedidoDetalhado }
+  | { ok: false; naoEncontrado: boolean }
+  | null
+
+/** Conflito reconhecido de classificação já efetivada (HTTP 409 da API). */
+function ehConflitoClassificacao(error: unknown): error is ApiError {
+  return (
+    error instanceof ApiError &&
+    error.status === 409 &&
+    error.code === 'item_already_classified'
+  )
+}
+
 export interface PedidoDetalheProps {
   orderId: string
   /** Rota da lista, usada no link de voltar. */
@@ -202,9 +216,18 @@ export function PedidoDetalhe({
   const [salvando, setSalvando] = useState<string | null>(null)
 
   const [setores, setSetores] = useState<Setor[]>([])
+  // Diferencia carregamento, falha e lista carregada (inclusive vazia): a
+  // sugestão só pode ser usada depois de validada contra a lista carregada.
+  const [setoresEstado, setSetoresEstado] = useState<'carregando' | 'pronto' | 'erro'>(
+    permitirClassificacao ? 'carregando' : 'pronto',
+  )
   const [escolhas, setEscolhas] = useState<Record<string, string>>({})
   const [classificando, setClassificando] = useState<string | null>(null)
   const [classificados, setClassificados] = useState<Record<string, boolean>>({})
+  // Itens cujo conflito de classificação ainda não pôde ser reconciliado com o
+  // estado persistido. O formulário fica oculto até uma atualização bem-sucedida.
+  const [conflitos, setConflitos] = useState<Record<string, boolean>>({})
+  const requisicaoDetalheRef = useRef(0)
 
   const [remessaAberta, setRemessaAberta] = useState<Record<string, boolean>>({})
   const [remessaData, setRemessaData] = useState<Record<string, string>>({})
@@ -233,23 +256,42 @@ export function PedidoDetalhe({
   const [erroAcao, setErroAcao] = useState<string | null>(null)
 
   const buscar = useCallback(
-    () =>
-      apiGet<{ pedido: PedidoDetalhado }>(`/api/pedidos/${orderId}`)
+    (opcoes: { manterDetalheEmFalha?: boolean } = {}): Promise<ResultadoBusca> => {
+      const requisicao = ++requisicaoDetalheRef.current
+      return apiGet<{ pedido: PedidoDetalhado }>(`/api/pedidos/${orderId}`)
         .then((dados) => {
+          // Resposta de uma consulta anterior (ou de outro pedido) não pode
+          // sobrescrever o detalhe atual.
+          if (requisicao !== requisicaoDetalheRef.current) return null
           setPedido(dados.pedido)
           setErro(null)
+          return { ok: true, pedido: dados.pedido } as const
         })
         .catch((error) => {
-          if (error instanceof ApiError && error.status === 404) setErro('nao_encontrado')
-          else setErro('falha')
+          if (requisicao !== requisicaoDetalheRef.current) return null
+          const naoEncontrado = error instanceof ApiError && error.status === 404
+          if (naoEncontrado) setErro('nao_encontrado')
+          else if (!opcoes.manterDetalheEmFalha) setErro('falha')
+          return { ok: false, naoEncontrado } as const
         })
-        .finally(() => setCarregando(false)),
+        .finally(() => {
+          if (requisicao === requisicaoDetalheRef.current) setCarregando(false)
+        })
+    },
     [orderId],
   )
 
   useEffect(() => {
     void buscar()
   }, [buscar])
+
+  useEffect(
+    () => () => {
+      // Invalida qualquer resposta pendente ao desmontar ou trocar de pedido.
+      requisicaoDetalheRef.current += 1
+    },
+    [],
+  )
 
   // Ao abrir a confirmação, foca a ação menos destrutiva; ao fechar, devolve o
   // foco ao botão que iniciou a exclusão (quando ele ainda existe).
@@ -338,14 +380,117 @@ export function PedidoDetalhe({
 
   useEffect(() => {
     if (!permitirClassificacao) return
+    let ativo = true
     apiGet<{ sectors: Setor[] }>('/api/setores')
-      .then((dados) => setSetores(dados.sectors))
-      .catch(() => setErroAcao('Não foi possível carregar os setores.'))
+      .then((dados) => {
+        if (!ativo) return
+        setSetores(dados.sectors)
+        setSetoresEstado('pronto')
+      })
+      .catch(() => {
+        if (!ativo) return
+        setSetores([])
+        setSetoresEstado('erro')
+        setErroAcao('Não foi possível carregar os setores.')
+      })
+    return () => {
+      ativo = false
+    }
   }, [permitirClassificacao])
 
-  async function classificar(itemId: string) {
-    const sectorId = escolhas[itemId] ?? ''
+  function definirConflito(itemId: string, ativo: boolean) {
+    setConflitos((atual) => {
+      const copia = { ...atual }
+      if (ativo) copia[itemId] = true
+      else delete copia[itemId]
+      return copia
+    })
+  }
+
+  /**
+   * Reconcilia o conflito somente por leitura: consulta o detalhe persistido,
+   * remove a sobreposição local do item e só confirma sucesso se o servidor
+   * realmente devolver o item classificado.
+   */
+  async function resolverConflito(itemId: string) {
     limparFeedback()
+    const resultado = await buscar({ manterDetalheEmFalha: true })
+    if (resultado === null) return
+
+    if (!resultado.ok) {
+      definirConflito(itemId, true)
+      setErroAcao(
+        resultado.naoEncontrado
+          ? 'O pedido não foi encontrado. Verifique o número e tente novamente.'
+          : 'O item já havia sido desmembrado, mas não foi possível atualizar os dados. Tente atualizar novamente.',
+      )
+      return
+    }
+
+    const itemAtualizado = resultado.pedido.itens.find((item) => item.itemId === itemId)
+    setClassificados((atual) => {
+      const copia = { ...atual }
+      delete copia[itemId]
+      return copia
+    })
+    setEscolhas((atual) => {
+      const copia = { ...atual }
+      delete copia[itemId]
+      return copia
+    })
+
+    if (!itemAtualizado) {
+      definirConflito(itemId, false)
+      setErroAcao('O item não está mais no pedido após a atualização. Verifique o estado atual.')
+      return
+    }
+
+    if (itemAtualizado.classificationStatus === 'CLASSIFIED') {
+      definirConflito(itemId, false)
+      setSucesso('O item já havia sido desmembrado. Os dados foram atualizados.')
+      return
+    }
+
+    definirConflito(itemId, true)
+    setErroAcao(
+      'O item ainda consta como pendente após a atualização. Verifique o estado atual antes de tentar novamente.',
+    )
+  }
+
+  /**
+   * Seleção efetiva do desmembramento (V01 + V03): a escolha manual prevalece,
+   * inclusive quando é explicitamente vazia; sem escolha manual, usa a sugestão
+   * apenas se ela existir na lista de setores ativos já carregada.
+   */
+  function setorEfetivo(item: ItemSaldo): string {
+    const escolhaManual = escolhas[item.itemId]
+    if (escolhaManual !== undefined) {
+      return setores.some((setor) => setor.id === escolhaManual && setor.active)
+        ? escolhaManual
+        : ''
+    }
+
+    const sugerido = item.suggestedSectorId
+    if (!sugerido) return ''
+    return setores.some((setor) => setor.id === sugerido && setor.active) ? sugerido : ''
+  }
+
+  async function classificar(itemId: string) {
+    const item = pedido?.itens.find((candidato) => candidato.itemId === itemId)
+    // Captura a seleção no início: mudanças posteriores no seletor não alteram
+    // o resultado desta solicitação.
+    const sectorId = item ? setorEfetivo(item) : ''
+    limparFeedback()
+
+    if (setoresEstado !== 'pronto') {
+      setErroAcao(
+        setoresEstado === 'carregando'
+          ? 'Aguarde o carregamento dos setores para desmembrar.'
+          : 'Não foi possível carregar os setores. Recarregue a página e tente novamente.',
+      )
+      return
+    }
+
     if (sectorId === '') {
       setErroAcao('Escolha o setor do item antes de desmembrar.')
       return
@@ -353,20 +498,23 @@ export function PedidoDetalhe({
 
     setClassificando(itemId)
     try {
-      const item = pedido?.itens.find((candidato) => candidato.itemId === itemId)
-      await apiPost(`/api/pedidos/itens/${itemId}/classificar`, {
-        sectorId,
-        // Ensina o de/para categoria→setor para as próximas importações.
-        legacyCategory: item?.legacyCategory ?? undefined,
-      })
-      marcarClassificado(itemId)
+      // V05: a categoria do de/para é lida pelo servidor a partir do item
+      // persistido; o corpo só informa o setor escolhido.
+      const resposta = await apiPost<{ status: string; sectorId?: string; activityId?: string }>(
+        `/api/pedidos/itens/${itemId}/classificar`,
+        { sectorId },
+      )
+      // V01: a seleção efetiva capturada no início alimenta o estado; o setor
+      // que a ocorrência confirma vem da resposta do servidor.
+      marcarClassificado(itemId, resposta?.sectorId || sectorId)
       setClassificados((atual) => ({ ...atual, [itemId]: true }))
       setSucesso('Item desmembrado com sucesso.')
     } catch (error) {
-      if (error instanceof ApiError && error.status === 409) {
-        marcarClassificado(itemId)
-        setClassificados((atual) => ({ ...atual, [itemId]: true }))
-        setSucesso('O item já estava desmembrado.')
+      if (ehConflitoClassificacao(error)) {
+        // V03: o conflito não confirma a escolha local — reconcilia pelo GET e
+        // só apresenta sucesso se o estado persistido estiver classificado.
+        definirConflito(itemId, true)
+        await resolverConflito(itemId)
       } else if (error instanceof ApiError && error.status === 400) {
         setErroAcao('Setor inválido. Escolha outro setor e tente novamente.')
       } else {
@@ -377,8 +525,8 @@ export function PedidoDetalhe({
     }
   }
 
-  function marcarClassificado(itemId: string) {
-    const setor = setores.find((s) => s.id === (escolhas[itemId] ?? ''))
+  function marcarClassificado(itemId: string, sectorId?: string) {
+    const setor = setores.find((s) => s.id === (sectorId ?? escolhas[itemId] ?? ''))
     setPedido((atual) =>
       atual
         ? {
@@ -770,6 +918,10 @@ export function PedidoDetalhe({
           const percentual = percentualExecutado(item)
           const desmembrado =
             item.classificationStatus === 'CLASSIFIED' || classificados[item.itemId] === true
+          const conflito = conflitos[item.itemId] === true
+          const setorSugerido = item.suggestedSectorId
+            ? setores.find((setor) => setor.id === item.suggestedSectorId && setor.active)
+            : undefined
           const labelItem = `item ${indice + 1}`
           const aberto = itemEstaAberto(item.itemId, indice)
           const vocabulario = vocabularioDoSetor(item.sectorCode, item.sectorName)
@@ -940,16 +1092,48 @@ export function PedidoDetalhe({
                 {permitirClassificacao ? (
                   <div className="grid gap-3 border-t border-line pt-4">
                     <p className="text-sm font-semibold text-ink">Desmembramento</p>
-                    {item.suggestedSectorId && !desmembrado ? (
+                    {setorSugerido && !desmembrado ? (
                       <p className="text-xs text-muted">
-                        Sugerido pelo produto:{' '}
-                        {setores.find((s) => s.id === item.suggestedSectorId)?.name ?? '—'}
+                        Sugerido pelo produto: {setorSugerido.name}
                       </p>
                     ) : null}
-                    {desmembrado ? (
+                    {setoresEstado === 'carregando' ? (
+                      <p role="status" className="text-xs text-muted">
+                        Carregando setores…
+                      </p>
+                    ) : null}
+                    {setoresEstado === 'erro' ? (
+                      <p className="text-sm font-medium text-danger">
+                        Não foi possível carregar os setores. Recarregue a página.
+                      </p>
+                    ) : null}
+                    {setoresEstado === 'pronto' && !setores.some((setor) => setor.active) ? (
+                      <p className="text-sm text-muted">Nenhum setor ativo disponível.</p>
+                    ) : null}
+                    {conflito ? (
+                      <Alert
+                        variant="warning"
+                        title="Estado do item desatualizado"
+                        action={
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => void resolverConflito(item.itemId)}
+                          >
+                            Atualizar dados
+                          </Button>
+                        }
+                      >
+                        Não foi possível confirmar o setor deste item. Atualize os dados antes de
+                        continuar.
+                      </Alert>
+                    ) : desmembrado ? (
                       <Alert variant="success" title="Item desmembrado">
-                        Setor definido: {item.sectorName ?? '—'}. Você pode continuar com as
-                        remessas abaixo.
+                        Setor definido: {item.sectorName ?? '—'}.{' '}
+                        {podeGerenciarRemessas
+                          ? 'Você pode continuar com as remessas abaixo.'
+                          : 'Acompanhe abaixo as datas das remessas programadas pela Gerência/Expedição.'}
                       </Alert>
                     ) : (
                       <form
@@ -966,7 +1150,7 @@ export function PedidoDetalhe({
                               id={props.id}
                               aria-describedby={props['aria-describedby']}
                               className={CLASSE_SELECT}
-                              value={escolhas[item.itemId] ?? item.suggestedSectorId ?? ''}
+                              value={setorEfetivo(item)}
                               onChange={(evento) =>
                                 setEscolhas((atual) => ({
                                   ...atual,
@@ -975,17 +1159,19 @@ export function PedidoDetalhe({
                               }
                             >
                               <option value="">Selecione…</option>
-                              {setores.map((setor) => (
-                                <option key={setor.id} value={setor.id}>
-                                  {setor.name}
-                                </option>
-                              ))}
+                              {setores
+                                .filter((setor) => setor.active)
+                                .map((setor) => (
+                                  <option key={setor.id} value={setor.id}>
+                                    {setor.name}
+                                  </option>
+                                ))}
                             </select>
                           )}
                         </Field>
                         <Button
                           type="submit"
-                          disabled={classificando === item.itemId}
+                          disabled={classificando === item.itemId || setoresEstado !== 'pronto'}
                           aria-label={`Classificar ${labelItem}`}
                         >
                           {classificando === item.itemId ? 'Desmembrando…' : 'Desmembrar'}

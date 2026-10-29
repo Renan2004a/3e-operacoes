@@ -23,7 +23,7 @@
 | Arquivo | Cobertura |
 | --- | --- |
 | `src/app/(app)/vendedor/pedidos/page.test.tsx` | Abrir pedido navega para a rota de detalhe |
-| `src/app/(app)/vendedor/pedidos/[orderId]/page.test.tsx` | Detalhe, voltar, ordem das seções, “+ remessa”, desmembrar com sucesso |
+| `src/app/(app)/vendedor/pedidos/[orderId]/page.test.tsx` | Detalhe, voltar, ordem das seções, remessas somente leitura, desmembrar com sucesso |
 | `src/app/(app)/admin/usuarios/page.test.tsx` | Inativação com confirmação + feedback |
 | `src/app/(app)/gerente/pedidos/[orderId]/page.test.tsx` | Novo layout (quantidades em `dl`, “Resumo do pedido”, “Item desmembrado”) |
 | `src/app/(app)/operador/atividades/[id]/page.test.tsx` | Progresso acessível (`aria-valuenow`) |
@@ -65,8 +65,8 @@ Evidências salvas em `docs/video/validacao/` (PNGs das telas e `ordem-producao.
 | Vendedor: abrir pedido | Lista → “Abrir” | Navega para `/vendedor/pedidos/[id]` |
 | Vendedor: voltar | Detalhe → “← Voltar para os pedidos” | Retorna à lista; filtros preservados na URL |
 | Vendedor: desmembrar | Escolher setor → “Desmembrar” | Item fica “Desmembrado”; mensagem de sucesso |
-| Vendedor: remessa | “+ Adicionar remessa” → número/data → “Programar remessa” | Remessa aparece na lista; mensagem “Remessa criada com sucesso.” |
-| Vendedor: confirmar/remover remessa | “Confirmar” / “Remover” | Status atualiza; mensagens de sucesso |
+| Vendedor: remessas somente leitura | Abrir detalhe com remessa programada | Datas visíveis; sem botões de adicionar, confirmar ou remover |
+| Gerente: programar/confirmar remessa | “+ Adicionar remessa” → data → “Programar remessa”; “Confirmar” | Remessa aparece/atualiza; mensagens de sucesso |
 | Vendedor: prazo | Data → “Salvar prazo” → **F5** → novo login | Badge “Prazo de entrega: dd/mm/aaaa” e campo preenchido antes **e depois** de recarregar/entrar de novo (AD-009) |
 | Gerente: painel | Abrir painel | Alertas (atrasados/parados/não encaminhados) e progresso por setor com percentual |
 | Operador: fila/execução | Abrir atividade → registrar execução | Saldo atualizado; sucesso; progresso acessível |

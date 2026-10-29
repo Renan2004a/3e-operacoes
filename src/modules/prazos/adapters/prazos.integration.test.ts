@@ -79,6 +79,25 @@ function iso(valor: Date | null | undefined): string | null {
   return valor ? valor.toISOString() : null
 }
 
+function deadlineDoJson(valor: unknown): string | null {
+  if (typeof valor !== 'object' || valor === null || !('deadlineAt' in valor)) return null
+  const deadline = (valor as { deadlineAt?: unknown }).deadlineAt
+  return typeof deadline === 'string' ? deadline : null
+}
+
+function auditar(entityType: 'OrderItem' | 'Activity', entityId: string) {
+  return prisma.auditLog.findMany({
+    where: { action: 'DEADLINE_CHANGED', entityType, entityId },
+  })
+}
+
+/**
+ * `logs_auditoria.userId` é VARCHAR(191). Um valor acima do limite faz a
+ * gravação da auditoria falhar no MySQL real, permitindo provar o rollback da
+ * transação sem inserir mecanismo de falha no código de produção.
+ */
+const USER_ID_AUDITORIA_INVALIDO = 'u'.repeat(200)
+
 describe.skipIf(!ativo)('prazos no MySQL (integração AD-009)', () => {
   beforeAll(async () => {
     prisma = (await import('@/shared/db/prisma')).prisma
@@ -218,5 +237,147 @@ describe.skipIf(!ativo)('prazos no MySQL (integração AD-009)', () => {
 
     const row = await prisma.orderItem.findUnique({ where: { id: pedido.itemIds['item-1'] } })
     expect(row?.deadlineAt).toBeNull()
+    expect(await auditar('OrderItem', pedido.itemIds['item-1'])).toHaveLength(0)
+  })
+
+  it('grava valor anterior, novo valor e autoria no prazo do item (V08)', async () => {
+    const pedido = await criarPedido('v08-item-audit', [{ legacyItemKey: 'item-1' }])
+
+    await definirItem(
+      { itemId: pedido.itemIds['item-1'], prazo: '2026-02-01', userId: 'user-v08' },
+      prazos,
+    )
+
+    const auditorias = await auditar('OrderItem', pedido.itemIds['item-1'])
+    expect(auditorias).toHaveLength(1)
+    expect(deadlineDoJson(auditorias[0].beforeJson)).toBeNull()
+    expect(deadlineDoJson(auditorias[0].afterJson)).toBe('2026-02-02T02:59:59.999Z')
+    expect(auditorias[0].userId).toBe('user-v08')
+  })
+
+  it('grava valor anterior, novo valor e autoria no prazo da atividade (V08)', async () => {
+    const pedido = await criarPedido('v08-ativ-audit', [
+      { legacyItemKey: 'item-1', comAtividade: true },
+    ])
+
+    await definirAtividade(
+      { atividadeId: pedido.activityIds['item-1'], prazo: '2026-03-10', userId: 'user-v08' },
+      prazos,
+    )
+
+    const auditorias = await auditar('Activity', pedido.activityIds['item-1'])
+    expect(auditorias).toHaveLength(1)
+    expect(deadlineDoJson(auditorias[0].beforeJson)).toBeNull()
+    expect(deadlineDoJson(auditorias[0].afterJson)).toBe('2026-03-11T02:59:59.999Z')
+    expect(auditorias[0].userId).toBe('user-v08')
+  })
+
+  it('serializa duas alterações simultâneas do mesmo item e mantém a cadeia de auditoria (V08)', async () => {
+    const pedido = await criarPedido('v08-item-concorrente', [{ legacyItemKey: 'item-1' }])
+    const itemId = pedido.itemIds['item-1']
+
+    const resultados = await Promise.allSettled([
+      definirItem({ itemId, prazo: '2026-03-10', userId: 'user-a' }, prazos),
+      definirItem({ itemId, prazo: '2026-04-10', userId: 'user-b' }, prazos),
+    ])
+    expect(resultados.every((resultado) => resultado.status === 'fulfilled')).toBe(true)
+
+    const auditorias = await auditar('OrderItem', itemId)
+    expect(auditorias).toHaveLength(2)
+    const primeira = auditorias.find((auditoria) => deadlineDoJson(auditoria.beforeJson) === null)
+    const segunda = auditorias.find((auditoria) => auditoria !== primeira)
+    expect(primeira).toBeDefined()
+    expect(segunda).toBeDefined()
+    expect(deadlineDoJson(segunda!.beforeJson)).toBe(deadlineDoJson(primeira!.afterJson))
+
+    const row = await prisma.orderItem.findUnique({ where: { id: itemId } })
+    expect(iso(row?.deadlineAt)).toBe(deadlineDoJson(segunda!.afterJson))
+  })
+
+  it('serializa duas alterações simultâneas da mesma atividade e mantém a cadeia de auditoria (V08)', async () => {
+    const pedido = await criarPedido('v08-ativ-concorrente', [
+      { legacyItemKey: 'item-1', comAtividade: true },
+    ])
+    const atividadeId = pedido.activityIds['item-1']
+
+    const resultados = await Promise.allSettled([
+      definirAtividade({ atividadeId, prazo: '2026-05-10', userId: 'user-a' }, prazos),
+      definirAtividade({ atividadeId, prazo: '2026-06-10', userId: 'user-b' }, prazos),
+    ])
+    expect(resultados.every((resultado) => resultado.status === 'fulfilled')).toBe(true)
+
+    const auditorias = await auditar('Activity', atividadeId)
+    expect(auditorias).toHaveLength(2)
+    const primeira = auditorias.find((auditoria) => deadlineDoJson(auditoria.beforeJson) === null)
+    const segunda = auditorias.find((auditoria) => auditoria !== primeira)
+    expect(primeira).toBeDefined()
+    expect(segunda).toBeDefined()
+    expect(deadlineDoJson(segunda!.beforeJson)).toBe(deadlineDoJson(primeira!.afterJson))
+
+    const row = await prisma.activity.findUnique({ where: { id: atividadeId } })
+    expect(iso(row?.deadlineAt)).toBe(deadlineDoJson(segunda!.afterJson))
+  })
+
+  it('reverte o prazo do item quando a auditoria falha (V08)', async () => {
+    const pedido = await criarPedido('v08-item-audit-falha', [{ legacyItemKey: 'item-1' }])
+    const itemId = pedido.itemIds['item-1']
+    await definirItem({ itemId, prazo: '2026-01-10', userId: 'user-v08' }, prazos)
+    const auditoriasAntes = await auditar('OrderItem', itemId)
+    expect(auditoriasAntes).toHaveLength(1)
+
+    await expect(
+      definirItem(
+        { itemId, prazo: '2026-07-10', userId: USER_ID_AUDITORIA_INVALIDO },
+        prazos,
+      ),
+    ).rejects.toBeTruthy()
+
+    const row = await prisma.orderItem.findUnique({ where: { id: itemId } })
+    expect(iso(row?.deadlineAt)).toBe('2026-01-11T02:59:59.999Z')
+    expect(await auditar('OrderItem', itemId)).toHaveLength(1)
+  })
+
+  it('reverte o prazo da atividade quando a auditoria falha (V08)', async () => {
+    const pedido = await criarPedido('v08-ativ-audit-falha', [
+      { legacyItemKey: 'item-1', comAtividade: true },
+    ])
+    const atividadeId = pedido.activityIds['item-1']
+    await definirAtividade(
+      { atividadeId, prazo: '2026-01-10', userId: 'user-v08' },
+      prazos,
+    )
+    const auditoriasAntes = await auditar('Activity', atividadeId)
+    expect(auditoriasAntes).toHaveLength(1)
+
+    await expect(
+      definirAtividade(
+        { atividadeId, prazo: '2026-08-10', userId: USER_ID_AUDITORIA_INVALIDO },
+        prazos,
+      ),
+    ).rejects.toBeTruthy()
+
+    const row = await prisma.activity.findUnique({ where: { id: atividadeId } })
+    expect(iso(row?.deadlineAt)).toBe('2026-01-11T02:59:59.999Z')
+    expect(await auditar('Activity', atividadeId)).toHaveLength(1)
+  })
+
+  it('não grava auditoria para item ou atividade inexistente (V08)', async () => {
+    await expect(
+      prazos.definirPrazoItem({
+        itemId: 'item-inexistente-v08',
+        prazo: new Date('2026-09-10T02:59:59.999Z'),
+        userId: 'user-v08',
+      }),
+    ).resolves.toBeNull()
+    await expect(
+      prazos.definirPrazoAtividade({
+        atividadeId: 'atividade-inexistente-v08',
+        prazo: new Date('2026-09-10T02:59:59.999Z'),
+        userId: 'user-v08',
+      }),
+    ).resolves.toBeNull()
+
+    expect(await auditar('OrderItem', 'item-inexistente-v08')).toHaveLength(0)
+    expect(await auditar('Activity', 'atividade-inexistente-v08')).toHaveLength(0)
   })
 })

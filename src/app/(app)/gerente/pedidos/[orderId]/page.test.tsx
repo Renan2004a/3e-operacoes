@@ -73,6 +73,7 @@ function pedido(
         description: 'Chapa dobrada',
         productCode: 'PRD-77',
         unit: 'peca',
+        legacyCategory: 'Chapa',
         deadlineAt: null as string | null,
         activityDeadlineAt: null as string | null,
         statusPrazoEntrega: 'SEM_PRAZO' as 'SEM_PRAZO' | 'EM_DIA' | 'ATRASADO',
@@ -359,6 +360,32 @@ describe('PedidoGerentePage', () => {
     )
   })
 
+  it('aceita o setor sugerido sem alterar o seletor (LAC-04)', async () => {
+    const comSugestao = {
+      ...pedido(),
+      itens: [{ ...pedido().itens[0], suggestedSectorId: 'setor_telhas' }],
+    }
+    configurarApi(comSugestao)
+    mocks.apiPost.mockResolvedValue({
+      status: 'CLASSIFIED',
+      sectorId: 'setor_telhas',
+      activityId: 'act_1',
+    })
+    render(<PedidoGerentePage />)
+
+    const seletor = await screen.findByLabelText('Setor do item 1')
+    expect(seletor).toHaveValue('setor_telhas')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Classificar item 1' }))
+
+    await waitFor(() =>
+      expect(mocks.apiPost).toHaveBeenCalledWith('/api/pedidos/itens/item_1/classificar', {
+        sectorId: 'setor_telhas',
+      }),
+    )
+    expect(await screen.findByText('Item desmembrado')).toBeInTheDocument()
+  })
+
   it('reflete o item classificado após a ação (LAC-06)', async () => {
     configurarApi()
     mocks.apiPost.mockResolvedValue({
@@ -376,6 +403,35 @@ describe('PedidoGerentePage', () => {
     expect(await screen.findByText('Item desmembrado')).toBeInTheDocument()
   })
 
+  it('mostra a orientação de gestão de remessas para o Gerente', async () => {
+    const classificado = {
+      ...pedido('CLASSIFIED'),
+      itens: [
+        {
+          ...pedido('CLASSIFIED').itens[0],
+          sectorId: 'setor_telhas',
+          sectorCode: 'TELHAS',
+          sectorName: 'Telhas',
+        },
+      ],
+    }
+    mocks.apiGet.mockImplementation((url: string) => {
+      if (url === '/api/setores') return Promise.resolve({ sectors: SETORES })
+      if (url === '/api/auth/sessao') {
+        return Promise.resolve({ usuario: { roles: ['PRODUCTION_MANAGER'] } })
+      }
+      return Promise.resolve({ pedido: classificado })
+    })
+    render(<PedidoGerentePage />)
+
+    expect(
+      await screen.findByText(/Você pode continuar com as remessas abaixo\./),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText(/Acompanhe abaixo as datas das remessas programadas/),
+    ).not.toBeInTheDocument()
+  })
+
   it('indica o item já classificado e não oferece classificar de novo (LAC-05)', async () => {
     configurarApi(pedido('CLASSIFIED'))
     render(<PedidoGerentePage />)
@@ -384,16 +440,44 @@ describe('PedidoGerentePage', () => {
     expect(screen.queryByRole('button', { name: 'Classificar item 1' })).not.toBeInTheDocument()
   })
 
-  it('marca como classificado quando a API responde 409 (LAC-05)', async () => {
-    configurarApi()
+  it('após 409, recarrega e mostra o setor persistido (LAC-05)', async () => {
+    let chamadasPedido = 0
+    const classificado = {
+      ...pedido('CLASSIFIED'),
+      itens: [
+        {
+          ...pedido('CLASSIFIED').itens[0],
+          sectorId: 'setor_telhas',
+          sectorCode: 'TELHAS',
+          sectorName: 'Telhas',
+        },
+      ],
+    }
+    mocks.apiGet.mockImplementation((url: string) => {
+      if (url === '/api/setores') return Promise.resolve({ sectors: SETORES })
+      if (url === '/api/auth/sessao') {
+        return Promise.resolve({ usuario: { roles: ['PRODUCTION_MANAGER'] } })
+      }
+      if (url === '/api/pedidos/p1') {
+        chamadasPedido += 1
+        return Promise.resolve({ pedido: chamadasPedido === 1 ? pedido() : classificado })
+      }
+      return Promise.reject(new Error(`url inesperada: ${url}`))
+    })
     mocks.apiPost.mockRejectedValue(new mocks.ApiError(409, 'item_already_classified'))
     render(<PedidoGerentePage />)
 
-    fireEvent.change(await screen.findByLabelText('Setor do item 1'), {
-      target: { value: 'setor_telhas' },
-    })
+    const seletor = await screen.findByLabelText('Setor do item 1')
+    await screen.findByRole('option', { name: 'Corte e Dobra' })
+    fireEvent.change(seletor, { target: { value: 'setor_corte' } })
     fireEvent.click(screen.getByRole('button', { name: 'Classificar item 1' }))
 
-    expect(await screen.findByText('Item desmembrado')).toBeInTheDocument()
+    expect(
+      await screen.findByText('O item já havia sido desmembrado. Os dados foram atualizados.'),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/Setor definido: Telhas/)).toBeInTheDocument()
+    expect(screen.queryByText(/Setor definido: Corte e Dobra/)).not.toBeInTheDocument()
+    expect(mocks.apiPost).toHaveBeenCalledTimes(1)
+    expect(chamadasPedido).toBe(2)
   })
 })

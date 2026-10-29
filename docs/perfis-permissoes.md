@@ -4,8 +4,8 @@
 |---|---|---|
 | Operador | Atividades dos setores aos quais pertence | execução, status permitido, ocorrências |
 | Gerente de Produção | Todos os pedidos e setores | status, prioridade, prazo, exceções, entregas, remessas programadas e correção justificada de setor |
-| Vendedor | Todos os pedidos | prazo de entrega, desmembramento (classificação por setor), correção de setor sem registros operacionais, remessas programadas e solicitação de importação de pedido pelo número; demais ações de produção permanecem leitura |
-| Expedição | Itens disponíveis e histórico | entregas totais/parciais |
+| Vendedor | Todos os pedidos | prazo de entrega, desmembramento (classificação por setor), correção de setor sem registros operacionais, acompanhamento das remessas (somente leitura) e solicitação de importação de pedido pelo número; demais ações de produção permanecem leitura |
+| Expedição | Itens disponíveis e histórico | entregas totais/parciais e remessas programadas (`programar_remessa`) |
 | Responsável pelo Sistema | cadastros administrativos | usuários, setores, perfis e permissões |
 | Responsável Técnico | integração, jobs e logs | ações técnicas autorizadas |
 
@@ -36,7 +36,7 @@ Ação `solicitar_importacao` (matriz vigente em `src/modules/usuarios/permissoe
 ## Limites do Vendedor
 
 - Não altera quantidade executada, ocorrência, entrega nem status de produção (já documentado acima).
-- Prazo, desmembramento, correção de setor e remessas: permanecem conforme as decisões registradas em `.specs/STATE.md` (AD-003, AD-004, AD-006, AD-007).
+- Prazo, desmembramento, correção de setor e acompanhamento de remessas: permanecem conforme as decisões registradas em `.specs/STATE.md` (AD-003, AD-006, AD-007 e AD-023). A gestão de remessas é de Gerência/Expedição (`programar_remessa`); o Vendedor apenas acompanha as datas.
 
 ## Pendências de permissão (não aprovadas)
 
