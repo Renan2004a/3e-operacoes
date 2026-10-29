@@ -30,15 +30,9 @@ export async function POST(request: Request, context: { params: Promise<{ itemId
     return Response.json({ error: 'invalid_body' }, { status: 400 })
   }
 
-  const rawCategory =
-    typeof body === 'object' && body !== null && 'legacyCategory' in body
-      ? (body as { legacyCategory?: unknown }).legacyCategory
-      : undefined
-  const legacyCategory = typeof rawCategory === 'string' ? rawCategory : null
-
   try {
     const result = await classificarItem(
-      { itemId, sectorId, legacyCategory },
+      { itemId, sectorId, userId: auth.usuario.userId },
       { classificacao: prismaClassificacaoRepository, mapeamento: prismaMapeamentoRepository },
     )
     return Response.json(
