@@ -20,7 +20,11 @@ export interface ClassificacaoRepository {
   findItemById(itemId: string): Promise<ItemParaClassificar | null>
   /** Setor pelo id, ativo ou inativo, ou null se não existir. */
   findSectorById(sectorId: string): Promise<Sector | null>
-  /** Marca o item como CLASSIFIED e cria a Activity (item × setor) na mesma transação. */
+  /**
+   * Marca o item como CLASSIFIED somente se ele ainda estiver pendente e cria a
+   * Activity (item × setor) na mesma transação. A transição condicional é o
+   * árbitro da concorrência; conflito vira `ItemJaClassificadoError`.
+   */
   markClassified(input: { itemId: string; sectorId: string }): Promise<ActivityCriada>
 }
 

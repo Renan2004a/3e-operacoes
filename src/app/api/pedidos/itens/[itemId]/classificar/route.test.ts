@@ -270,7 +270,7 @@ describe('POST /api/pedidos/itens/[itemId]/classificar', () => {
     expect(mocks.audits).toHaveLength(0)
   })
 
-  it('responde 404 quando o item não existe', async () => {
+  it('responde 404 quando o item não existe e não cria mapeamento', async () => {
     seedSector()
 
     const response = await POST(
