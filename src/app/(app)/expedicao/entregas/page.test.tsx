@@ -77,6 +77,20 @@ function configurarApi(
       chamadas += 1
       return Promise.resolve({ pedido: resposta })
     }
+    if (url === '/api/pedidos/itens/item_1/entregas') {
+      return Promise.resolve({
+        entregas: [
+          {
+            id: 'e1',
+            quantidade: '3',
+            usuarioId: 'u1',
+            usuarioNome: 'Paula Expedição',
+            occurredAt: '2026-10-27T15:30:00.000Z',
+            excecao: false,
+          },
+        ],
+      })
+    }
     return Promise.reject(new Error(`url inesperada: ${url}`))
   })
 }
@@ -512,6 +526,43 @@ describe('EntregasPage', () => {
     await screen.findByLabelText('Quantidade do item 1')
 
     expect(screen.queryByRole('button', { name: /Entregar tudo/ })).not.toBeInTheDocument()
+  })
+
+  it('cada item tem o histórico de entregas, que abre sob demanda (EXP-11, H3)', async () => {
+    configurarApi([detalhe(5)], 'SHIPPING')
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+    const botao = await screen.findByRole('button', { name: /histórico de entregas/i })
+    expect(mocks.apiGet).not.toHaveBeenCalledWith('/api/pedidos/itens/item_1/entregas')
+
+    fireEvent.click(botao)
+
+    expect(await screen.findByText(/Paula Expedição/)).toBeInTheDocument()
+    expect(screen.getByText('3 entregues')).toBeInTheDocument()
+  })
+
+  it('o histórico aberto inclui a entrega recém-registrada, sem fechar e abrir (EXP-11)', async () => {
+    configurarApi([detalhe(5), detalhe(2)], 'SHIPPING')
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+    fireEvent.click(await screen.findByRole('button', { name: /histórico de entregas/i }))
+    await screen.findByText(/Paula Expedição/)
+    const chamadasAntes = mocks.apiGet.mock.calls.filter(
+      ([url]) => url === '/api/pedidos/itens/item_1/entregas',
+    ).length
+
+    fireEvent.change(screen.getByLabelText('Quantidade do item 1'), { target: { value: '3' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar entrega do item 1' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar entrega' }))
+
+    await waitFor(() =>
+      expect(
+        mocks.apiGet.mock.calls.filter(([url]) => url === '/api/pedidos/itens/item_1/entregas')
+          .length,
+      ).toBeGreaterThan(chamadasAntes),
+    )
   })
 
   it('usa o cabeçalho de página com o título (VIS-09)', async () => {
