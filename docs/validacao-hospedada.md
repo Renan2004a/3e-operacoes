@@ -249,3 +249,30 @@ Revisão completa antes da apresentação ao cliente: segurança, domínio, UI e
 - Gates: **1063 testes** verdes + 24 ignorados; lint 0 erros; typecheck/build OK.
 - Produção: `validar-correcoes-ui` **15/15**, `validar-melhorias` **15/15**, importação do pedido 82272 novamente `SUCCEEDED` pelo túnel, fallback “Voltar para o painel” validado.
 - Ajuste no gate: a checagem de quantidades passou a aceitar pedido só com peças inteiras (o primeiro pedido agora é o 82272, 4 UN) e continua rejeitando ponto decimal.
+
+---
+
+## 14. Atualização 2026-10-29 — PRs da Vanusa, Vanessa e Marcelo
+
+O `main` avançou de `2f0cbaf` para **`ed20d1c`**, integrando os PRs #18–#24 e #27–#31.
+
+**O que entrou**
+- **Vanessa (#27–#29, expedição)**: confirmação antes de registrar a entrega, mensagens de erro por causa, situação real do item (entregue/aguardando produção) e botão **“Entregar tudo”**.
+- **Marcelo (#18–#24, #30)**: seleção efetiva do setor sugerido, classificação atômica e transacional (mapeamento + atividade), estado após conflito, atraso comercial pela quantidade entregue (AD-025), consulta vigente (V07), histórico de prazo transacional (V08) e orientação de remessas do Vendedor (V09).
+- **Marcelo (#31)**: documentação do marco Vendedor V01–V09, separação de ambientes e avaliação heurística da Expedição.
+- **Sem migração de banco nova**; as migrations existentes continuam válidas.
+
+**Gates e produção**
+| Item | Resultado |
+| --- | --- |
+| Testes | **1174** verdes + 47 ignorados (integração MySQL gated) |
+| Lint / typecheck / build | 0 erros / OK / OK |
+| Deploy Railway (`ed20d1c`) | concluído, `/api/health` 200 |
+| `validar-correcoes-ui` | **15/15** |
+| `validar-melhorias` | **15/15** |
+| Expedição — “Entregar tudo” + confirmação | validado em produção (diálogo cancelado, sem gravação) |
+| Importação | pedido 82272 `SUCCEEDED` pelo túnel |
+
+- O primeiro despacho após a troca do túnel falhou porque o container antigo ainda estava servindo (`CONNECTOR_UNAVAILABLE`); um deploy completo resolveu e a importação seguinte concluiu.
+- O túnel rápido mudou de URL; a variável `LOCAL_CONNECTOR_BASE_URL` foi atualizada no Railway. Para religar: `scripts/conector-demo.ps1`.
+- **Conflito resolvido na integração**: mantivemos a data do drill-down no fuso `America/Sao_Paulo` (a branch usava `slice(0,10)`, que desloca o dia) e a prioridade 0 oculta na fila.
