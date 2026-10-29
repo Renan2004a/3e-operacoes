@@ -282,7 +282,7 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 ## Handoff — V06 atomicidade entre mapeamento, auditoria e classificação (2026-10-29)
 
 - **Feature**: V06 — unidade transacional da classificação manual (AD-026).
-- **Phase / Task**: implementação, testes e gates locais concluídos; PR aberto contra `main` (sem merge).
+- **Phase / Task**: implementação, testes e gates locais concluídos; PR #30 aberto contra `main` (sem merge).
 - **Completed**:
   - `classificar-item.ts`: portas `ClassificacaoEmTransacao` e `UnidadeTrabalhoClassificacao`; `classificarItem` executa a unidade completa (transição → categoria autoritativa → setor → mapeamento/auditoria → atividade).
   - `prisma-classificacao-repository.ts`: helpers de escopo (`transicionarPendenteNoEscopo`, `criarAtividadeNoEscopo`) reutilizados pelo `markClassified` global (fluxo automático preservado) e pela implementação transacional; tradução do `P2002` da atividade única mantida.
@@ -290,8 +290,9 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
   - `prisma-unidade-trabalho-classificacao.ts` (novo): abre a transação interativa, entrega os dois repositórios ligados ao `tx` e repete a unidade completa nos conflitos transatórios (`P2034`; `P2002` de `legacyCategory`), limite de 3 tentativas.
   - Rota de classificação com `401/403/400/404/409/200` preservados (AUTH-14); categoria do item persistido e autor da sessão (V05) intactos.
   - Testes: 8 de adapter (política de retry), 9 de integração V06 (cenários 1–9; o cenário 10 é o conjunto de regressões V02/V05 executado em integração) e suíte padrão com **1114** testes aprovados + 40 gated ignorados.
+- **PR**: #30 — https://github.com/Renan2004a/3e-operacoes/pull/30 (base `main`; draft não usado — gates completos no local).
 - **In-progress**: nenhum.
-- **Next step**: revisão e merge do PR da branch `fix/v06-classificacao-mapeamento-transacional` (número/link registrados no encerramento da sessão); acompanhar CI `verify`.
+- **Next step**: revisão e merge do PR #30; acompanhar CI `verify`.
 - **Blockers**: nenhum para o PR. O banco de integração é exclusivo de V06 (`v06_integration`) no container temporário `3e-review-mysql` (127.0.0.1:33306) — não é o banco da aplicação.
 - **Files changed**: `src/modules/setores/classificar-item.ts` (+ `classificar-item.test.ts`), `src/modules/setores/adapters/prisma-classificacao-repository.ts`, `prisma-setores-repository.ts`, `prisma-unidade-trabalho-classificacao.ts` (+ teste), `classificacao-transacional.integration.test.ts` (novo), `classificacao.integration.test.ts` (ajuste do chamado manual), `src/app/api/pedidos/itens/[itemId]/classificar/route.ts` (+ `route.test.ts`), `.specs/features/setores-e-classificacao/{spec,design,tasks}.md` e este arquivo.
 - **Branch**: `fix/v06-classificacao-mapeamento-transacional` (base `origin/main` @ `a72c79c`, que contém V05 #17 e V02 #19, incluindo o `c192751` confirmado).
