@@ -18,7 +18,7 @@ Demonstração funcional completa do 3E Operações, com interação real na int
 ## Cobertura
 
 - 6 perfis (Vendedor, Gerente, Operador, Expedição, Administração e Técnico).
-- 21 telas/áreas, 18 capítulos e 172 legendas.
+- 21 telas/áreas, 18 capítulos e 181 legendas.
 - Fluxos de leitura e escrita: prazos, desmembramento, correção de setor, remessas, entregas, execuções, ocorrências, usuários, mapeamentos, importação.
 - Validações: campos vazios, senha curta, credenciais inválidas, número inválido, entrega acima do disponível, quantidade inválida, 404 e bloqueio por permissão.
 - Banco: 18 tabelas, estrutura, PK/FK, índices, amostras, auditoria e mapa tela→tabela.

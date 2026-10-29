@@ -1,6 +1,6 @@
 # Relatório de cobertura — demonstração 3E Operações (29/10/2026)
 
-**Vídeo**: `demo-completa-2026-10-29.mp4` — 00:21:47 (33.2 MB), 1920×1080, 30 fps, legendas queimadas e SRT separado.
+**Vídeo**: `demo-completa-2026-10-29.mp4` — 00:22:41 (34.8 MB), 1920×1080, 30 fps, legendas queimadas e SRT separado.
 **Ambiente**: aplicação local em `http://localhost:3000` com banco isolado `3e_operacoes_demo` (MySQL 8.4). Dados de cliente anonimizados.
 **Partes**: 5 arquivos MP4 separados + vídeo concatenado.
 
@@ -17,13 +17,13 @@
 09:17 — Gerente — entregas e exceções
 10:48 — Fim da parte 2
 10:53 — Operador — fila, execução e ocorrências
-13:06 — Expedição — entregas e exceções
-14:12 — Fim da parte 3
-14:17 — Administração — usuários, setores e mapeamentos
-16:38 — Responsável Técnico — integração
-17:22 — Validações, permissões e responsividade
-18:14 — Encerramento e pendências
-18:54 — Banco de dados — estrutura e persistência
+13:05 — Expedição — entregas e exceções
+15:08 — Fim da parte 3
+15:12 — Administração — usuários, setores e mapeamentos
+17:33 — Responsável Técnico — integração
+18:17 — Validações, permissões e responsividade
+19:09 — Encerramento e pendências
+19:48 — Banco de dados — estrutura e persistência
 
 ## Cobertura por parte
 
@@ -131,39 +131,48 @@ Início: **00:05:46** · duração: **00:05:07**
 
 ## Parte 3 — Operador e Expedição
 
-Início: **00:10:53** · duração: **00:03:24**
+Início: **00:10:53** · duração: **00:04:19**
 
 | Tempo | Capítulo | Demonstração |
 | --- | --- | --- |
 | 00:00 | Operador — fila, execução e ocorrências | Capítulo 9 |
 | 00:06 | Operador — fila, execução e ocorrências | Acesso do Operador |
-| 00:24 | Operador — fila, execução e ocorrências | Fila de produção |
-| 00:31 | Operador — fila, execução e ocorrências | Cartões da fila |
-| 00:38 | Operador — fila, execução e ocorrências | Atividade divergente |
-| 00:42 | Operador — fila, execução e ocorrências | Divergência |
-| 00:53 | Operador — fila, execução e ocorrências | Abrindo uma atividade |
-| 00:57 | Operador — fila, execução e ocorrências | Execução da atividade |
-| 01:05 | Operador — fila, execução e ocorrências | Registrando produção |
-| 01:12 | Operador — fila, execução e ocorrências | Execução confirmada |
-| 01:17 | Operador — fila, execução e ocorrências | Registrar ocorrência |
-| 01:22 | Operador — fila, execução e ocorrências | Ocorrências do Operador |
-| 01:32 | Operador — fila, execução e ocorrências | Motivo obrigatório |
-| 01:43 | Operador — fila, execução e ocorrências | Gravando a ocorrência |
-| 01:49 | Operador — fila, execução e ocorrências | Ocorrência registrada |
-| 02:01 | Operador — fila, execução e ocorrências | Ordem de produção |
-| 02:08 | Operador — fila, execução e ocorrências | Impressão |
-| 02:13 | Expedição — entregas e exceções | Capítulo 10 |
-| 02:19 | Expedição — entregas e exceções | Acesso da Expedição |
-| 02:34 | Expedição — entregas e exceções | Entregas |
-| 02:45 | Expedição — entregas e exceções | Itens e situação |
-| 03:00 | Expedição — entregas e exceções | Acima do disponível |
-| 03:09 | Expedição — entregas e exceções | Validação de quantidade |
-| 03:13 | Expedição — entregas e exceções | Itens sem saldo |
-| 03:19 | Fim da parte 3 | Capítulo 10 |
+| 00:23 | Operador — fila, execução e ocorrências | Fila de produção |
+| 00:30 | Operador — fila, execução e ocorrências | Cartões da fila |
+| 00:37 | Operador — fila, execução e ocorrências | Atividade divergente |
+| 00:40 | Operador — fila, execução e ocorrências | Divergência |
+| 00:52 | Operador — fila, execução e ocorrências | Abrindo uma atividade |
+| 00:56 | Operador — fila, execução e ocorrências | Execução da atividade |
+| 01:04 | Operador — fila, execução e ocorrências | Registrando produção |
+| 01:11 | Operador — fila, execução e ocorrências | Execução confirmada |
+| 01:16 | Operador — fila, execução e ocorrências | Registrar ocorrência |
+| 01:21 | Operador — fila, execução e ocorrências | Ocorrências do Operador |
+| 01:30 | Operador — fila, execução e ocorrências | Motivo obrigatório |
+| 01:42 | Operador — fila, execução e ocorrências | Gravando a ocorrência |
+| 01:47 | Operador — fila, execução e ocorrências | Ocorrência registrada |
+| 02:00 | Operador — fila, execução e ocorrências | Ordem de produção |
+| 02:07 | Operador — fila, execução e ocorrências | Impressão |
+| 02:12 | Expedição — entregas e exceções | Capítulo 10 |
+| 02:18 | Expedição — entregas e exceções | Acesso da Expedição |
+| 02:32 | Expedição — entregas e exceções | Entregas |
+| 02:40 | Expedição — entregas e exceções | Buscando o pedido |
+| 02:44 | Expedição — entregas e exceções | Abrindo o pedido |
+| 02:51 | Expedição — entregas e exceções | Itens e situação |
+| 02:58 | Expedição — entregas e exceções | Histórico de entregas |
+| 03:05 | Expedição — entregas e exceções | Remessas |
+| 03:11 | Expedição — entregas e exceções | Entregar tudo |
+| 03:14 | Expedição — entregas e exceções | Confirmação |
+| 03:20 | Expedição — entregas e exceções | Confirmando a entrega |
+| 03:44 | Expedição — entregas e exceções | Entrega concluída |
+| 03:51 | Expedição — entregas e exceções | Acima do disponível |
+| 04:00 | Expedição — entregas e exceções | Validação de quantidade |
+| 04:05 | Expedição — entregas e exceções | Itens sem saldo |
+| 04:10 | Expedição — entregas e exceções | Voltando para a lista |
+| 04:15 | Fim da parte 3 | Capítulo 10 |
 
 ## Parte 4 — Administração, Técnico e responsividade
 
-Início: **00:14:17** · duração: **00:04:35**
+Início: **00:15:12** · duração: **00:04:35**
 
 | Tempo | Capítulo | Demonstração |
 | --- | --- | --- |
@@ -210,7 +219,7 @@ Início: **00:14:17** · duração: **00:04:35**
 
 ## Parte 5 — Banco de dados
 
-Início: **00:18:53** · duração: **00:02:54**
+Início: **00:19:47** · duração: **00:02:54**
 
 | Tempo | Capítulo | Demonstração |
 | --- | --- | --- |

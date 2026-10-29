@@ -4,121 +4,166 @@ Capítulo 9
 Operador — fila, execução e ocorrências
 
 2
-00:00:06,000 --> 00:00:24,000
+00:00:06,000 --> 00:00:23,000
 Acesso do Operador
 Entrando como Operador.
 
 3
-00:00:24,000 --> 00:00:31,000
+00:00:23,000 --> 00:00:30,000
 Fila de produção
 O Operador vê apenas as atividades dos setores aos quais pertence. A fila é ordenada por prioridade e, depois, pela data de criação.
 
 4
-00:00:31,000 --> 00:00:38,000
+00:00:30,000 --> 00:00:37,000
 Cartões da fila
 Cada cartão mostra pedido, item, setor, status e prioridade quando definida. O status “Divergente” indica produção acima do solicitado.
 
 5
-00:00:38,000 --> 00:00:42,000
+00:00:37,000 --> 00:00:40,000
 Atividade divergente
 A primeira atividade está divergente. Vamos abrir para entender o que aconteceu.
 
 6
-00:00:42,000 --> 00:00:53,000
+00:00:40,000 --> 00:00:52,000
 Divergência
 O sistema mostra o excedente e explica que a atividade ficou marcada como divergente. O registro fica preservado para análise.
 
 7
-00:00:53,000 --> 00:00:57,000
+00:00:52,000 --> 00:00:56,000
 Abrindo uma atividade
 Esta atividade está em andamento e será usada para registrar uma execução real.
 
 8
-00:00:57,000 --> 00:01:05,000
+00:00:56,000 --> 00:01:04,000
 Execução da atividade
 A tela mostra o progresso, os valores solicitado/executado/pendente, o setor e a previsão de entrega.
 
 9
-00:01:05,000 --> 00:01:12,000
+00:01:04,000 --> 00:01:11,000
 Registrando produção
 O Operador informa a quantidade na unidade da atividade. O registro atualiza o saldo e o status.
 
 10
-00:01:12,000 --> 00:01:17,000
+00:01:11,000 --> 00:01:16,000
 Execução confirmada
 A confirmação aparece na tela e o progresso é recalculado. Cada execução guarda usuário, data/hora e quantidade.
 
 11
-00:01:17,000 --> 00:01:22,000
+00:01:16,000 --> 00:01:21,000
 Registrar ocorrência
 A tela de ocorrências é separada da execução e já vem com a atividade pré-selecionada.
 
 12
-00:01:22,000 --> 00:01:32,000
+00:01:21,000 --> 00:01:30,000
 Ocorrências do Operador
 Aqui ficam perdas, refugos, indisponibilidades, pausas e paradas. À direita, o histórico das ocorrências já registradas.
 
 13
-00:01:32,000 --> 00:01:43,000
+00:01:30,000 --> 00:01:42,000
 Motivo obrigatório
 Perda exige um motivo da lista fechada. Motivos disponíveis nesta demonstração: Defeito de corte, Erro de dobra / medida incorreta, Material com problema.
 
 14
-00:01:43,000 --> 00:01:49,000
+00:01:42,000 --> 00:01:47,000
 Gravando a ocorrência
 A quantidade é opcional, mas quando informada precisa respeitar a unidade do item.
 
 15
-00:01:49,000 --> 00:02:01,000
+00:01:47,000 --> 00:02:00,000
 Ocorrência registrada
 O registro aparece no histórico com tipo, quantidade, motivo, responsável e data/hora. O Gerente vê a mesma ocorrência no painel.
 
 16
-00:02:01,000 --> 00:02:08,000
+00:02:00,000 --> 00:02:07,000
 Ordem de produção
 O documento mostra pedido, item, setor, previsão, unidade, quantidades e o responsável pela emissão.
 
 17
-00:02:08,000 --> 00:02:13,000
+00:02:07,000 --> 00:02:12,000
 Impressão
 No modo de impressão, o menu e os botões são removidos e o conteúdo cabe em uma página A4.
 
 18
-00:02:13,000 --> 00:02:19,000
+00:02:12,000 --> 00:02:18,000
 Capítulo 10
 Expedição — entregas e exceções
 
 19
-00:02:19,000 --> 00:02:34,000
+00:02:18,000 --> 00:02:32,000
 Acesso da Expedição
 Entrando como Expedição.
 
 20
-00:02:34,000 --> 00:02:45,000
+00:02:32,000 --> 00:02:40,000
 Entregas
-A Expedição seleciona o pedido, confere o disponível e registra a entrega por item.
+A Expedição usa a mesma lista de pedidos da Venda e da Gerência: busca por número e cliente, filtros e páginas. Selecione o pedido para abrir o detalhe.
 
 21
-00:02:45,000 --> 00:03:00,000
-Itens e situação
-Cada item mostra descrição, código, cliente, previsão e a situação real: disponível, aguardando produção ou totalmente entregue.
+00:02:40,000 --> 00:02:44,000
+Buscando o pedido
+A busca por número localiza o pedido e preserva o filtro para o retorno.
 
 22
-00:03:00,000 --> 00:03:09,000
+00:02:44,000 --> 00:02:51,000
+Abrindo o pedido
+O detalhe tem rota própria e o botão Voltar devolve a lista com a busca preservada.
+
+23
+00:02:51,000 --> 00:02:58,000
+Itens e situação
+Cada item mostra descrição, código, cliente, previsão, remessas programadas e a situação real: disponível, aguardando produção ou totalmente entregue.
+
+24
+00:02:58,000 --> 00:03:05,000
+Histórico de entregas
+O histórico mostra as entregas já registradas no item, com quantidade, responsável e data/hora. É somente leitura.
+
+25
+00:03:05,000 --> 00:03:11,000
+Remessas
+As remessas programadas aparecem no item, com número, data prevista e confirmação. A Expedição acompanha o que foi combinado.
+
+26
+00:03:11,000 --> 00:03:14,000
+Entregar tudo
+O botão preenche a quantidade com o saldo total disponível, evitando digitação.
+
+27
+00:03:14,000 --> 00:03:20,000
+Confirmação
+O diálogo mostra a quantidade, o saldo atual e quanto sobra depois da entrega. Nada é gravado antes de confirmar.
+
+28
+00:03:20,000 --> 00:03:44,000
+Confirmando a entrega
+A entrega é gravada e o saldo do item é atualizado.
+
+29
+00:03:44,000 --> 00:03:51,000
+Entrega concluída
+O item passa a “Totalmente entregue” ou reduz o saldo disponível.
+
+30
+00:03:51,000 --> 00:04:00,000
 Acima do disponível
 A Expedição não pode autorizar sozinha. O sistema avisa e orienta procurar o gerente; o botão de registrar fica bloqueado.
 
-23
-00:03:09,000 --> 00:03:13,000
+31
+00:04:00,000 --> 00:04:05,000
 Validação de quantidade
 Quantidade zero ou vazia é recusada antes de qualquer gravação.
 
-24
-00:03:13,000 --> 00:03:19,000
+32
+00:04:05,000 --> 00:04:10,000
 Itens sem saldo
 Itens sem produção aparecem como “Aguardando produção”. O formulário de entrega não é oferecido enquanto não houver saldo.
 
-25
-00:03:19,000 --> 00:03:24,000
+33
+00:04:10,000 --> 00:04:15,000
+Voltando para a lista
+A busca e a página são preservadas no retorno.
+
+34
+00:04:15,000 --> 00:04:20,000
 Capítulo 10
 Fim da parte 3

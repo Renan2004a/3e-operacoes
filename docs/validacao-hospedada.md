@@ -306,3 +306,12 @@ O `main` avançou de `2f0cbaf` para **`ed20d1c`**, integrando os PRs #18–#24 e
 | Importação em produção (82262) | **SUCCEEDED** |
 
 **Limitação**: o DBeaver desta máquina apresentou texto invisível na árvore e no editor. O capítulo de banco mostra a captura real da janela, declara a limitação e usa consultas SQL reais executadas no MySQL, com resultados e estrutura reais. Detalhes em `docs/video-demo-2026-10-29/relatorio-pendencias.md`.
+
+### Atualização 2026-10-29 — PRs #32–#34 (Expedição) e regravação
+
+- **PRs integrados**: #32 (histórico de entregas por item), #33 (lista de pedidos com busca e detalhe em rota própria) e #34 (remessas visíveis, quantidades em grade e ajuda no pedido).
+- **Gates**: **1185 testes** verdes + 47 ignorados; lint 0 erros; typecheck/build OK.
+- **Deploy**: concluído; `/api/health` 200; `validar-correcoes-ui` **15/15** e `validar-melhorias` **16/16** (novo check de histórico de entregas).
+- **Importação**: pedido 82262 em produção `SUCCEEDED` com o conector restaurado para o callback de produção.
+- **Vídeo atualizado**: a Parte 3 (Operador/Expedição) foi regravada com a nova lista, detalhe em rota própria, histórico e remessas. Vídeo final **22:41**, **181 legendas**, 5 partes.
+- **Roteiro**: a lista de entregas agora usa “Abrir pedido” (não há mais select de pedido); a validação automatizada foi ajustada.

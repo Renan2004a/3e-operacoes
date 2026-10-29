@@ -55,40 +55,40 @@ title=Fim da parte 2
 [CHAPTER]
 TIMEBASE=1/1000
 START=653000
-END=786000
+END=785000
 title=Operador — fila, execução e ocorrências
 [CHAPTER]
 TIMEBASE=1/1000
-START=786000
-END=852000
+START=785000
+END=908000
 title=Expedição — entregas e exceções
 [CHAPTER]
 TIMEBASE=1/1000
-START=852000
-END=857000
+START=908000
+END=912000
 title=Fim da parte 3
 [CHAPTER]
 TIMEBASE=1/1000
-START=857000
-END=998000
+START=912000
+END=1053000
 title=Administração — usuários, setores e mapeamentos
 [CHAPTER]
 TIMEBASE=1/1000
-START=998000
-END=1042000
+START=1053000
+END=1097000
 title=Responsável Técnico — integração
 [CHAPTER]
 TIMEBASE=1/1000
-START=1042000
-END=1094000
+START=1097000
+END=1149000
 title=Validações, permissões e responsividade
 [CHAPTER]
 TIMEBASE=1/1000
-START=1094000
-END=1134000
+START=1149000
+END=1188000
 title=Encerramento e pendências
 [CHAPTER]
 TIMEBASE=1/1000
-START=1134000
-END=1307000
+START=1188000
+END=1361000
 title=Banco de dados — estrutura e persistência

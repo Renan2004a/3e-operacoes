@@ -9,10 +9,10 @@
 09:17 — Gerente — entregas e exceções
 10:48 — Fim da parte 2
 10:53 — Operador — fila, execução e ocorrências
-13:06 — Expedição — entregas e exceções
-14:12 — Fim da parte 3
-14:17 — Administração — usuários, setores e mapeamentos
-16:38 — Responsável Técnico — integração
-17:22 — Validações, permissões e responsividade
-18:14 — Encerramento e pendências
-18:54 — Banco de dados — estrutura e persistência
+13:05 — Expedição — entregas e exceções
+15:08 — Fim da parte 3
+15:12 — Administração — usuários, setores e mapeamentos
+17:33 — Responsável Técnico — integração
+18:17 — Validações, permissões e responsividade
+19:09 — Encerramento e pendências
+19:48 — Banco de dados — estrutura e persistência
