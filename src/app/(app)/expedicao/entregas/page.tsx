@@ -9,6 +9,7 @@ import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog'
 import { Field } from '@/shared/ui/field'
+import { HistoricoEntregas } from '@/shared/ui/historico-entregas'
 import { Input } from '@/shared/ui/input'
 import { Metric } from '@/shared/ui/metric'
 import { PageHead } from '@/shared/ui/page-head'
@@ -514,6 +515,11 @@ export default function EntregasPage() {
                     onSaldoMudou={() => void carregarPedido(orderId)}
                   />
                 ) : null}
+                <HistoricoEntregas
+                  itemId={item.itemId}
+                  unidade={item.unit ?? null}
+                  atualizarQuando={String(item.entregue)}
+                />
               </CardContent>
             </Card>
             )
