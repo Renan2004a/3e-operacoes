@@ -1,5 +1,4 @@
 # Backlog de execução — 3E Operações (revisado)
-
 Roadmap de portfólio. Não é um `tasks.md` de feature: cada fase abaixo vira **uma feature** com seu próprio `spec → design → tasks → execute/verify` em `.specs/features/<slug>/`. As tasks atômicas nascem só na fase Tasks de cada feature.
 
 Base: `docs/decisoes.md`, `docs/requisitos.md`, `docs/regras-negocio.md`, `docs/arquitetura.md`, `docs/integracao-top-gerente.md`, `docs/perfis-permissoes.md`, `docs/testes.md`, `prisma/schema.prisma`, `connector-local/`, `.specs/STATE.md` e a verificação do banco AWS.
@@ -282,3 +281,28 @@ Itens deliberadamente fora da correção de prazos, aprovados para etapa futura.
 - **Rótulo “Atrasados no setor”:** renomear o grupo operacional do painel para explicitar o escopo; a lógica não muda (D10).
 - **Edição do prazo operacional na interface:** hoje somente leitura; definir perfil, local da ação e auditoria antes de implementar (D5).
 - **Data de entrega do Top Gerente:** investigar `orcamento.prazo_ent` (data ou prazo em dias?) e, se aprovado, definir precedência entre ERP e prazo local (D8).
+
+---
+
+## Marco Vendedor V01–V09 incorporados (2026-10-29)
+
+Atualização da rodada de integração (autoria `Marcelo Fiuza`; sem trabalho de terceiros neste marco). Os itens abaixo já estão na `main` (`6d0bf34`) e **não precisam ser reescalonados**; ficam registrados como incorporados, com links, para preservar a rastreabilidade:
+
+| Correção | PR (merge) | O que entrou |
+| --- | --- | --- |
+| V05 — categoria do item e autoria da sessão | [#17](https://github.com/Renan2004a/3e-operacoes/pull/17) (`84b25d6`) | `legacyCategory` e `userId` sempre do servidor; corpo não controla esses dados. |
+| V02 — classificação atômica | [#19](https://github.com/Renan2004a/3e-operacoes/pull/19) (`c192751`) | Árbitro de transição + `Activity` na mesma transação; uma vencedora por item. |
+| V01 — seleção efetiva | [#18](https://github.com/Renan2004a/3e-operacoes/pull/18) (`d833b76`) | Sugestão usada sem alterar seletor; escolha manual, inclusive vazia, prevalece. |
+| V03 — estado após conflito | [#20](https://github.com/Renan2004a/3e-operacoes/pull/20) (`79054a2`) | 409 reconcilia pelo estado persistido; sem falso sucesso nem POST repetido. |
+| V06 — unidade transacional do mapeamento | [#30](https://github.com/Renan2004a/3e-operacoes/pull/30) (`d0e8d34`) | Mapeamento + auditoria + classificação + atividade na mesma transação (AD-026). |
+| V09 — orientação de remessas | [#23](https://github.com/Renan2004a/3e-operacoes/pull/23) (`da5d7ef`) | Vendedor acompanha datas; gerência de remessas é Gerência/Expedição (AD-023). |
+| V08 — prazo transacional | [#21](https://github.com/Renan2004a/3e-operacoes/pull/21) (`761ac9f`) | Escrita de prazo + auditoria em uma transação com estado real anterior. |
+| V07 — consulta vigente | [#22](https://github.com/Renan2004a/3e-operacoes/pull/22) (`21abcf2`) | Respostas antigas não sobrescrevem lista, paginação nem erro. |
+| V04 — atraso comercial pela entrega | [#24](https://github.com/Renan2004a/3e-operacoes/pull/24) (`6d0bf34`) | `ATRASADO` por prazo vencido e `entregue < solicitado` (AD-025); alerta operacional permanece de prazo de atividade. |
+
+**Pendências vigentes que continuam abertas neste backlog** (explicitamente fora da rodada):
+
+- **T00.4** — significado de “pedido atendido” em Revenda com indisponibilidade (AD-012); enquanto não decidido, itens de Revenda podem permanecer atrasados.
+- **AD-010** — cancelamento lógico de item depende do indicador do conector; nada implementado.
+- **Validação no navegador/E2E do marco V01–V09** — não executada nesta rodada; aceite do usuário pendente.
+- demais itens D3–D10 do bloco de prazos acima, migração do banco (AD-024 / `docs/revisao-banco-professor.md`) e go-live (Fase 12).

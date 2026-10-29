@@ -346,3 +346,65 @@ Novos testes: `painel-ocorrencias.test.ts`, `api/producao/ocorrencias/route.test
 8. Painel do Gerente: “Atividades atrasadas” deve continuar reagindo ao prazo da atividade, não ao prazo de entrega do item.
 9. Revenda sem entrega e com indisponibilidade registrada: deve continuar atrasada; indisponibilidade não substitui entrega.
 10. Nova consulta (F5 ou reabrir o detalhe) recalcula o status; não há promessa de atualização automática à meia-noite.
+
+---
+
+## 13. Fechamento do marco Vendedor V01–V09 (2026-10-29)
+
+**Estado registrado:** as nove correções (V01–V09, PRs #17–#24 e #30) estão **implementadas e incorporadas** à `main` no commit `6d0bf3417da498e3dbce70d0096c6e138cbedab`. As evidências automatizadas abaixo correspondem a **este commit** (heads por PR e CI `verify` success: `5460ba3` #18, `79054a2` #20, `8011692` #30, `a5b02aa` #23, `322a49c` #21, `a0a97b9` #22, `2c7f2f7` #24): lint 0 erros, typecheck (app e conector) OK, `npm test` 1174 aprovados + 47 gated ignorados, build OK, integração MySQL 16/13/18 nos bancos de teste dedicados.
+
+**Diferenciação de dois tipos de verificação:**
+- **Somente leitura (pode ir no ambiente publicado):** login por perfil; visualização de listas/detalhe/painel; histórico de prazos de itens já alterados; badges (“Entrega atrasada”, “Sem prazo”); `/api/health` (200 confirma apenas **disponibilidade**, não a validade funcional dos fluxos nem o conteúdo de cada deploy).
+- **Criação/alteração de dados (usar banco de teste isolado, com pedidos de teste — nunca pedidos reais de produção):** desmembramento (inclusive concorrente), alteração de prazo (dispara auditoria), entrega, programação de remessa, correção de setor. Nenhum roteiro abaixo usa credenciais/tokens — as sessões de teste são as usuárias de demonstração já semeadas.
+
+**Pendências explícitas deste fechamento:** validação manual/navegador/E2E **desta rodada ainda não foi executada** (os roteiros §7–§12 e os do §13 continuam pendentes de execução com evidência registrada); aceite do usuário **não concedido**.
+
+### Roteiro do marco (Vendedor e Gerente conforme indicado)
+
+**V07 — consulta vigente (somente leitura)**
+1. Na lista, aplicar um filtro (ex.: cliente) e, sem esperar a resposta, mudar rapidamente para outro filtro — a lista final deve refletir **somente** a última consulta; nenhum dado/total/erro da consulta descartada.
+2. Voltar do detalhe conservando filtros/página (regressão do #7/#14).
+
+**V01 — setor sugerido (escrita: banco de teste)**
+3. Item pendente com sugestão válida e ativa: o seletor já mostra o setor sugerido **sem interação**; classificar direto → “Item desmembrado com sucesso.” + “Setor definido: <sugerido>”.
+4. Escolher manualmente **outro** setor ativo e classificar → Setor definido = **escolha manual**.
+5. Escolher explicitamente a opção vazia (“Selecione…”) e enviar → mensagem “Escolha o setor do item antes de desmembrar.” e **nenhum POST**. (O botão não é desabilitado para escolha vazia; a proteção é no envio. O botão fica desabilitado apenas **enquanto os setores carregam** ou em falha de carregamento — ver 7.)
+6. Sugestão **inválida/inativa**: seletor inicia vazio, sem a linha “Sugerido pelo produto…” e sem a opção inativa; o envio mostra a mensagem de escolha enquanto não houver seleção.
+7. Setores em carregamento/falha: botão desabilitado com “Carregando setores…” (role=status) ou “Não foi possível carregar os setores. Recarregue a página.”.
+
+**V03 — conflito de desmembramento (escrita: banco de teste, dois navegadores)**
+8. Dois navegadores classificam o **mesmo** item, setor distinto. O 1º enviou com sucesso; a 2ª recebe 409 `item_already_classified` e a interface **consulta automaticamente** o pedido (sem etapa manual): se o GET confirmar classificação, mostra “O item já havia sido desmembrado. Os dados foram atualizados.” e “Setor definido” com o **setor persistido**; a escolha local NÃO é confirmada; o POST **não se repete** (um POST no total).
+9. Se o GET automático falhar na reconciliação, aparece o alerta “Estado do item desatualizado” com o botão **“Atualizar dados”** — ele é a **recuperação**, não etapa obrigatória de todo conflito (nova consulta = 3º GET no total, POST permanece único).
+10. Resposta pendente/tardia de pedido anterior não confirma nada (proteção por identificador de requisição, coberta em teste automatizado; na interface o resultado observável é: nada é marcado “desmembrado” sem confirmação do GET vigente).
+
+**V05/V02/V06 — contratos invisíveis na UI (regressão automatizada)**
+11. O corpo do POST de classificação só contém `sectorId`; categoria vem do item persistido e a autoria da sessão (testes de rota); classificação é vencedora única por item com atividade/transição/mapeamento/auditoria atômicos (integração). **Não há verificação manual descontando isso.**
+
+**V08 — prazo transacional (escrita: banco de teste)**
+12. Gerente/Vendedor altera “Prazo de entrega (item)” → salvar; abrir “Histórico de prazos” **após cada abertura**: valor anterior real, novo valor, usuário e horário (a alteração feita depois da primeira consulta aparece ao reabrir).
+13. Item sem atividade (não desmembrado): prazo segue operando por item; prazos não-datados mostram “Sem prazo”.
+
+**V09 — orientação de remessas (leitura + escrita de remessa: banco de teste)**
+14. Vendedor: após desmembrar, a mensagem orientada é “Acompanhe abaixo as datas das remessas programadas pela Gerência/Expedição.”; sem botões de adicionar/remover/confirmar remessa.
+15. Gerente (ou usuário com `programar_remessa` — inclusive perfis cumulativos): “Você pode continuar com as remessas abaixo.”; programar/confirmar segue operante.
+16. Sessão carregando perfis ou consulta de perfis falhando: orientação neutra “Acompanhe abaixo…”, sem gestão (cobertura automatizada dos casos neutros).
+17. Página do Vendedor “Meus pedidos”: chamada da área atualizada (“define prazos e acompanha as datas das remessas”).
+
+**Correção de setor (regras vigentes — AD-006/AD-007; escrita: banco de teste)**
+18. **Vendedor (permissão `corrigir_setor`)** corrige **sem motivo** enquanto o item não tiver registros: sucesso com auditoria e 200; setor novo ativo.
+19. **Gerente (`PRODUCTION_MANAGER`) e responsável pelo sistema (`SYSTEM_RESPONSIBLE`)**: motivo **obrigatório** — sem motivo: **400 `reason_required`** (“Informe o motivo…”); motivo com mais de 500 pontos de código: **400 `reason_too_long`**; motivo válido → 200.
+20. **Bloqueios operacionais (ninguém passa, com ou sem motivo):** entrega registrada → “O item já possui entrega registrada.”; execução → “O item já possui execução registrada.”; ocorrência → “O item já possui ocorrência registrada.”; atividade com status ≠ `PENDING` → “A produção deste item já foi iniciada.” — todos respondem **409 `operational_records`** (“O item já possui registros operacionais e não podem mudar de setor.” na interface) e a página consulta o estado após o erro. **Remessas programadas NÃO bloqueiam** a correção. Informar motivo **não** contorna o bloqueio (checado no servidor depois da validação do motivo).
+21. **Item não desmembrado**: correção responde **422 `item_not_classified`** (“Use o desmembramento inicial.”).
+22. **Mesmo setor informado**: resposta de sucesso sem alteração (`alterado: false`), sem auditoria.
+23. **Corrida**: registro criado entre a leitura e a gravação → 409 com a mensagem de registro criado durante a correção (cobertura automatizada; manual não precisa reproduzir).
+24. Interface antecipa o bloqueio: a ação aparece desabilitada com o motivo quando o servidor reporta registros na leitura do detalhe.
+25. **Revenda (limite vigente, não parte do aceite):** item de Revenda com indisponibilidade pode permanecer “Entrega atrasada” até a decisão T00.4 (não é defeito desta rodada).
+
+**V04 — atraso comercial:** usar o roteiro **§12** (AD-025), que permanece **pendente de execução com evidência**; nada dele foi executado nesta rodada.
+
+### Pendências fora deste fechamento
+
+- **T00.4/AD-012** — decisão definitiva do “pedido atendido” na Revenda com indisponibilidade.
+- **AD-010** — cancelamento lógico de item (contrato do conector + campo); nada implementado.
+- Validação navegador/E2E do marco atual + aceite do usuário (situação acima).
+- D3–D10 (remoção de prazo, alerta comercial painel/lista + histórico de entrega tardia, edição do prazo operacional, data do ERP, rótulo “Atrasados no setor”, auditoria de prazos antigos), migrações do banco (AD-024) e go-live (Fase 12).
