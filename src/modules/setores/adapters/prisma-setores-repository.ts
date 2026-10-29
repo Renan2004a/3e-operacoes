@@ -129,3 +129,79 @@ export const prismaMapeamentoRepository: MapeamentoRepository = {
     })
   },
 }
+
+/**
+ * Implementação Prisma da porta `MapeamentoRepository` vinculada ao cliente
+ * transacional da classificação manual (V06). Reutiliza as mesmas regras de
+ * `criarMapeamento`/`garantirMapeamento` e escreve a auditoria no mesmo
+ * cliente, dentro da única transação da classificação.
+ *
+ * `findByCategory` aqui é leitura bloqueante (`SELECT ... FOR UPDATE`): consulta
+ * o estado atual da linha (não a releitura do snapshot) e serializa criação e
+ * reativação entre itens distintos da mesma categoria, preservando o
+ * mapeamento ativo vencedor. Os demais métodos da porta permanecem idênticos,
+ * apenas vinculados à transação; escopo administrativo (`/api/mapeamentos`)
+ * continua com o repositório global.
+ */
+export function criarMapeamentoEmTransacao(
+  cliente: Prisma.TransactionClient,
+): MapeamentoRepository {
+  async function findByCategory(legacyCategory: string): Promise<CategorySectorMapping | null> {
+    // Interpolação parametrizada no template; o bloqueio `FOR UPDATE` lê o
+    // estado comprometido mais recente da categoria.
+    const rows = await cliente.$queryRaw<MappingRow[]>`
+      SELECT id, legacyCategory, sectorId, status, createdAt, updatedAt
+      FROM \`mapeamentos_categoria_setor\`
+      WHERE legacyCategory = ${legacyCategory}
+      FOR UPDATE
+    `
+    const row = rows[0] ?? null
+    return row ? toMapping(row) : null
+  }
+
+  return {
+    findByCategory,
+    findById: async (id) => {
+      const row = await cliente.categorySectorMapping.findUnique({ where: { id } })
+      return row ? toMapping(row) : null
+    },
+    listAll: async () => {
+      const rows = await cliente.categorySectorMapping.findMany({
+        orderBy: { legacyCategory: 'asc' },
+      })
+      return rows.map(toMapping)
+    },
+    create: async ({ legacyCategory, sectorId }) => {
+      const row = await cliente.categorySectorMapping.create({
+        data: { legacyCategory, sectorId, status: 'ACTIVE' },
+      })
+      return toMapping(row)
+    },
+    update: async (id, { sectorId, status }) => {
+      const row = await cliente.categorySectorMapping.update({
+        where: { id },
+        data: { sectorId, status },
+      })
+      return toMapping(row)
+    },
+    deactivate: async (id) => {
+      const row = await cliente.categorySectorMapping.update({
+        where: { id },
+        data: { status: 'INACTIVE' },
+      })
+      return toMapping(row)
+    },
+    recordAudit: async (entry: MapeamentoAudit) => {
+      await cliente.auditLog.create({
+        data: {
+          action: entry.action,
+          entityType: entry.entityType,
+          entityId: entry.entityId,
+          userId: entry.userId ?? null,
+          ...(entry.beforeJson !== null ? { beforeJson: toJson(entry.beforeJson) } : {}),
+          ...(entry.afterJson !== null ? { afterJson: toJson(entry.afterJson) } : {}),
+        },
+      })
+    },
+  }
+}

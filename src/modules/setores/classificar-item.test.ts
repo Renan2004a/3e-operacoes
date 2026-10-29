@@ -3,12 +3,16 @@ import type { Sector } from './gerenciar-setores'
 import type { CategorySectorMapping, MapeamentoAudit, MapeamentoRepository } from './mapeamento'
 import {
   ItemJaClassificadoError,
+  ItemNaoEncontradoError,
   SetorInvalidoError,
   classificarItem,
   classificarPorMapeamento,
   type ActivityCriada,
+  type ClassificacaoEmTransacao,
   type ClassificacaoRepository,
   type ItemParaClassificar,
+  type ClassificacaoEscopoTransacional,
+  type UnidadeTrabalhoClassificacao,
 } from './classificar-item'
 
 const NOW = new Date('2026-10-07T12:00:00.000Z')
@@ -137,6 +141,102 @@ function createDeps(
   }
 }
 
+/**
+ * Unidade transacional em memória: entrega a classificação e o mapeamento do
+ * MESMO armazenamento, reproduzindo os contratos do escopo real (árbiter da
+ * transição, defesa de duplicidade, leituras autoritativas) sem transação.
+ */
+function createUnidadeManual(
+  seed: Parameters<typeof createDeps>[0] = {},
+): ReturnType<typeof createDeps> & { unidade: UnidadeTrabalhoClassificacao } {
+  const contexto = createDeps(seed)
+  const { itemStore, sectorStore, mappingStore, activities } = contexto
+  const mapeamentoTx: MapeamentoRepository = {
+    async findByCategory(legacyCategory) {
+      const found = mappingStore.find((candidate) => candidate.legacyCategory === legacyCategory)
+      return found ? { ...found } : null
+    },
+    async listAll() {
+      return mappingStore.map((mapping) => ({ ...mapping }))
+    },
+    async findById(id) {
+      const found = mappingStore.find((candidate) => candidate.id === id)
+      return found ? { ...found } : null
+    },
+    async create({ legacyCategory, sectorId }) {
+      const created = {
+        id: `map_${mappingStore.length + 1}`,
+        legacyCategory,
+        sectorId,
+        status: 'ACTIVE' as const,
+        createdAt: NOW,
+        updatedAt: NOW,
+      }
+      mappingStore.push(created)
+      return { ...created }
+    },
+    async update(id, input) {
+      const found = mappingStore.find((candidate) => candidate.id === id)
+      if (!found) throw new Error('mapeamento não encontrado')
+      found.sectorId = input.sectorId
+      found.status = input.status
+      return { ...found }
+    },
+    async deactivate(id) {
+      const found = mappingStore.find((candidate) => candidate.id === id)
+      if (!found) throw new Error('mapeamento não encontrado')
+      found.status = 'INACTIVE'
+      return { ...found }
+    },
+    async recordAudit(entry) {
+      contexto.audits.push(entry)
+    },
+  }
+
+  const classificacaoTx: ClassificacaoEmTransacao = {
+    async transicionarPendente(itemId) {
+      const found = itemStore.find((candidate) => candidate.id === itemId)
+      if (!found) throw new ItemNaoEncontradoError(itemId)
+      if (found.classificationStatus === 'CLASSIFIED') throw new ItemJaClassificadoError(itemId)
+    },
+    async findItemById(itemId) {
+      const found = itemStore.find((candidate) => candidate.id === itemId)
+      return found ? { ...found } : null
+    },
+    async findSectorById(sectorId) {
+      const found = sectorStore.find((candidate) => candidate.id === sectorId)
+      return found ? { ...found } : null
+    },
+    async criarAtividade(itemId, sectorId) {
+      const atividadeExistente = activities.find((activity) => activity.orderItemId === itemId)
+      if (atividadeExistente) throw new ItemJaClassificadoError(itemId)
+      const found = itemStore.find((candidate) => candidate.id === itemId)
+      if (!found) throw new ItemNaoEncontradoError(itemId)
+      found.classificationStatus = 'CLASSIFIED'
+      const activity: ActivityCriada = {
+        id: `act_${activities.length + 1}`,
+        orderItemId: itemId,
+        sectorId,
+      }
+      activities.push(activity)
+      return activity
+    },
+  }
+
+  return {
+    ...contexto,
+    unidade: {
+      async transacional(fn) {
+        const escopo: ClassificacaoEscopoTransacional = {
+          classificacao: classificacaoTx,
+          mapeamento: mapeamentoTx,
+        }
+        return fn(escopo)
+      },
+    },
+  }
+}
+
 describe('classificarPorMapeamento', () => {
   it('classifica o item no setor do mapeamento ativo e cria a atividade', async () => {
     const { deps, itemStore, activities } = createDeps({
@@ -205,29 +305,30 @@ describe('classificarPorMapeamento', () => {
 
 describe('classificarItem', () => {
   it('classifica manualmente no setor informado e cria a atividade', async () => {
-    const { deps, itemStore, activities } = createDeps({
+    const { unidade, itemStore, activities } = createUnidadeManual({
       items: [itemState({ id: 'item_1' })],
       sectors: [sector({ id: 'setor_telhas', active: true })],
     })
 
     const result = await classificarItem(
       { itemId: 'item_1', sectorId: 'setor_telhas', userId: 'user_1' },
-      deps,
+      { unidade },
     )
 
     expect(result.status).toBe('CLASSIFIED')
     expect(result.sectorId).toBe('setor_telhas')
+    expect(result.activityId).toBe('act_1')
     expect(itemStore[0].classificationStatus).toBe('CLASSIFIED')
     expect(activities).toEqual([{ id: 'act_1', orderItemId: 'item_1', sectorId: 'setor_telhas' }])
   })
 
   it('cria o mapeamento a partir da categoria persistida no item', async () => {
-    const { deps, mappingStore, audits } = createDeps({
+    const { unidade, mappingStore, audits } = createUnidadeManual({
       items: [itemState({ id: 'item_1', legacyCategory: 'Telhas' })],
       sectors: [sector({ id: 'setor_telhas', active: true })],
     })
 
-    await classificarItem({ itemId: 'item_1', sectorId: 'setor_telhas', userId: 'user_1' }, deps)
+    await classificarItem({ itemId: 'item_1', sectorId: 'setor_telhas', userId: 'user_1' }, { unidade })
 
     expect(mappingStore).toHaveLength(1)
     expect(mappingStore[0].legacyCategory).toBe('Telhas')
@@ -236,25 +337,25 @@ describe('classificarItem', () => {
   })
 
   it('não cria mapeamento quando o item não tem categoria', async () => {
-    const { deps, mappingStore, audits } = createDeps({
+    const { unidade, mappingStore, audits } = createUnidadeManual({
       items: [itemState({ id: 'item_1', legacyCategory: null })],
       sectors: [sector({ id: 'setor_telhas', active: true })],
     })
 
-    await classificarItem({ itemId: 'item_1', sectorId: 'setor_telhas', userId: 'user_1' }, deps)
+    await classificarItem({ itemId: 'item_1', sectorId: 'setor_telhas', userId: 'user_1' }, { unidade })
 
     expect(mappingStore).toHaveLength(0)
     expect(audits).toHaveLength(0)
   })
 
   it('reutiliza o mapeamento ativo sem trocar o setor', async () => {
-    const { deps, mappingStore, audits } = createDeps({
+    const { unidade, mappingStore, audits } = createUnidadeManual({
       items: [itemState({ id: 'item_1', legacyCategory: 'Telhas' })],
       sectors: [sector({ id: 'setor_telhas', active: true })],
       mappings: [mapping({ legacyCategory: 'Telhas', sectorId: 'setor_telhas' })],
     })
 
-    await classificarItem({ itemId: 'item_1', sectorId: 'setor_telhas', userId: 'user_1' }, deps)
+    await classificarItem({ itemId: 'item_1', sectorId: 'setor_telhas', userId: 'user_1' }, { unidade })
 
     expect(mappingStore).toHaveLength(1)
     expect(mappingStore[0].sectorId).toBe('setor_telhas')
@@ -262,7 +363,7 @@ describe('classificarItem', () => {
   })
 
   it('reativa o mapeamento inativo com o setor escolhido', async () => {
-    const { deps, mappingStore, audits } = createDeps({
+    const { unidade, mappingStore, audits } = createUnidadeManual({
       items: [itemState({ id: 'item_1', legacyCategory: 'Telhas' })],
       sectors: [sector({ id: 'setor_corte', active: true })],
       mappings: [
@@ -270,7 +371,7 @@ describe('classificarItem', () => {
       ],
     })
 
-    await classificarItem({ itemId: 'item_1', sectorId: 'setor_corte', userId: 'user_1' }, deps)
+    await classificarItem({ itemId: 'item_1', sectorId: 'setor_corte', userId: 'user_1' }, { unidade })
 
     expect(mappingStore[0]).toMatchObject({
       legacyCategory: 'Telhas',
@@ -286,33 +387,43 @@ describe('classificarItem', () => {
   })
 
   it('rejeita a classificação quando o setor está inativo', async () => {
-    const { deps, itemStore } = createDeps({
+    const { unidade, itemStore } = createUnidadeManual({
       items: [itemState({ id: 'item_1' })],
       sectors: [sector({ id: 'setor_telhas', active: false })],
     })
 
     await expect(
-      classificarItem({ itemId: 'item_1', sectorId: 'setor_telhas', userId: 'user_1' }, deps),
+      classificarItem({ itemId: 'item_1', sectorId: 'setor_telhas', userId: 'user_1' }, { unidade }),
     ).rejects.toBeInstanceOf(SetorInvalidoError)
     expect(itemStore[0].classificationStatus).toBe('PENDING_CLASSIFICATION')
   })
 
   it('rejeita a classificação quando o setor não existe', async () => {
-    const { deps } = createDeps({ items: [itemState({ id: 'item_1' })] })
+    const { unidade } = createUnidadeManual({ items: [itemState({ id: 'item_1' })] })
 
     await expect(
-      classificarItem({ itemId: 'item_1', sectorId: 'inexistente', userId: 'user_1' }, deps),
+      classificarItem({ itemId: 'item_1', sectorId: 'inexistente', userId: 'user_1' }, { unidade }),
     ).rejects.toBeInstanceOf(SetorInvalidoError)
   })
 
   it('rejeita com conflito quando o item já está classificado', async () => {
-    const { deps } = createDeps({
+    const { unidade } = createUnidadeManual({
       items: [itemState({ id: 'item_1', classificationStatus: 'CLASSIFIED' })],
       sectors: [sector({ id: 'setor_telhas', active: true })],
     })
 
     await expect(
-      classificarItem({ itemId: 'item_1', sectorId: 'setor_telhas', userId: 'user_1' }, deps),
+      classificarItem({ itemId: 'item_1', sectorId: 'setor_telhas', userId: 'user_1' }, { unidade }),
     ).rejects.toBeInstanceOf(ItemJaClassificadoError)
+  })
+
+  it('rejeita com não encontrado quando o item não existe', async () => {
+    const { unidade } = createUnidadeManual({
+      sectors: [sector({ id: 'setor_telhas', active: true })],
+    })
+
+    await expect(
+      classificarItem({ itemId: 'inexistente', sectorId: 'setor_telhas', userId: 'user_1' }, { unidade }),
+    ).rejects.toBeInstanceOf(ItemNaoEncontradoError)
   })
 })

@@ -4,8 +4,7 @@ import {
   SetorInvalidoError,
   classificarItem,
 } from '../../../../../../modules/setores/classificar-item'
-import { prismaClassificacaoRepository } from '../../../../../../modules/setores/adapters/prisma-classificacao-repository'
-import { prismaMapeamentoRepository } from '../../../../../../modules/setores/adapters/prisma-setores-repository'
+import { prismaUnidadeTrabalhoClassificacao } from '../../../../../../modules/setores/adapters/prisma-unidade-trabalho-classificacao'
 import { autorizar } from '../../../../../../shared/http/autorizacao'
 
 /** POST /api/pedidos/itens/[itemId]/classificar — classificação manual do item (AUTH-14). */
@@ -33,7 +32,7 @@ export async function POST(request: Request, context: { params: Promise<{ itemId
   try {
     const result = await classificarItem(
       { itemId, sectorId, userId: auth.usuario.userId },
-      { classificacao: prismaClassificacaoRepository, mapeamento: prismaMapeamentoRepository },
+      { unidade: prismaUnidadeTrabalhoClassificacao },
     )
     return Response.json(
       { status: result.status, sectorId: result.sectorId, activityId: result.activityId },

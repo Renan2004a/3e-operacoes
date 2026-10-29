@@ -95,33 +95,74 @@ export interface ClassificarItemInput {
   userId: string
 }
 
+export interface ClassificacaoEmTransacao {
+  /**
+   * Transição condicional do item pendente para `CLASSIFIED`. Árbitro de
+   * concorrência para o mesmo item: quem não vence recebe
+   * `ItemJaClassificadoError`, quem não encontra recebe `ItemNaoEncontradoError`.
+   */
+  transicionarPendente(itemId: string): Promise<void>
+  /** Leitura autoritativa do item dentro da transação (categoria persistida). */
+  findItemById(itemId: string): Promise<ItemParaClassificar | null>
+  /** Leitura do setor, ativo ou inativo, dentro da transação. */
+  findSectorById(sectorId: string): Promise<Sector | null>
+  /** Cria a atividade defendendo contra duplicidade dentro da transação. */
+  criarAtividade(itemId: string, sectorId: string): Promise<ActivityCriada>
+}
+
+export interface ClassificacaoEscopoTransacional {
+  classificacao: ClassificacaoEmTransacao
+  mapeamento: MapeamentoRepository
+}
+
+export interface UnidadeTrabalhoClassificacao {
+  /**
+   * Executa `fn` como uma única unidade transacional: os repositórios entregues
+   * ao `fn` estão vinculados ao mesmo cliente transacional, e qualquer falha
+   * desfaz todas as alterações do escopo. Uma nova tentativa, quando houver
+   * política de retry do adapter, repete a unidade completa com clientes novos.
+   */
+  transacional<T>(
+    fn: (escopo: ClassificacaoEscopoTransacional) => Promise<T>,
+  ): Promise<T>
+}
+
+export interface ClassificarItemDeps {
+  unidade: UnidadeTrabalhoClassificacao
+}
+
 /**
- * Classificação manual: valida o setor informado, garante o mapeamento a partir
- * da categoria persistida no item e marca o item como CLASSIFIED no setor
- * informado. A categoria e a autoria nunca vêm do corpo da requisição.
+ * Classificação manual como única unidade transacional: transição condicional
+ * do item pendente, leitura autoritativa da categoria persistida, criação,
+ * reativação ou reutilização do mapeamento com a auditoria correspondente,
+ * e criação da atividade. Uma falha em qualquer ponto desfaz toda a
+ * solicitação; a classificação vencedora é única por item e o vencedor da
+ * transição é o único autor das alterações.
+ *
+ * A categoria e a autoria nunca vêm do corpo da requisição.
  */
 export async function classificarItem(
   input: ClassificarItemInput,
-  deps: ClassificacaoDeps,
+  deps: ClassificarItemDeps,
 ): Promise<ClassificacaoResult> {
-  const item = await deps.classificacao.findItemById(input.itemId)
-  if (!item) throw new ItemNaoEncontradoError(input.itemId)
-  if (item.classificationStatus === 'CLASSIFIED') throw new ItemJaClassificadoError(input.itemId)
+  return deps.unidade.transacional(async ({ classificacao, mapeamento }) => {
+    await classificacao.transicionarPendente(input.itemId)
 
-  const sector = await deps.classificacao.findSectorById(input.sectorId)
-  if (!sector || !sector.active) throw new SetorInvalidoError(input.sectorId)
+    const item = await classificacao.findItemById(input.itemId)
+    if (!item) throw new ItemNaoEncontradoError(input.itemId)
 
-  const category = item.legacyCategory?.trim()
-  if (category) {
-    await garantirMapeamento(
-      { legacyCategory: category, sectorId: input.sectorId, userId: input.userId },
-      deps.mapeamento,
-    )
-  }
+    const sector = await classificacao.findSectorById(input.sectorId)
+    if (!sector || !sector.active) throw new SetorInvalidoError(input.sectorId)
 
-  const activity = await deps.classificacao.markClassified({
-    itemId: input.itemId,
-    sectorId: input.sectorId,
+    const category = item.legacyCategory?.trim()
+    if (category) {
+      await garantirMapeamento(
+        { legacyCategory: category, sectorId: input.sectorId, userId: input.userId },
+        mapeamento,
+      )
+    }
+
+    const activity = await classificacao.criarAtividade(input.itemId, input.sectorId)
+    return { status: 'CLASSIFIED', sectorId: input.sectorId, activityId: activity.id }
   })
-  return { status: 'CLASSIFIED', sectorId: input.sectorId, activityId: activity.id }
 }
