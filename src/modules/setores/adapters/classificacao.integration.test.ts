@@ -22,6 +22,7 @@ const CATEGORIA_PREFIXO = 'v02-cat-'
 let prisma: import('@/generated/prisma/client').PrismaClient
 let classificacao: import('../classificar-item').ClassificacaoRepository
 let mapeamento: import('../mapeamento').MapeamentoRepository
+let unidade: import('../classificar-item').UnidadeTrabalhoClassificacao
 let classificarItem: typeof import('../classificar-item').classificarItem
 let classificarPorMapeamento: typeof import('../classificar-item').classificarPorMapeamento
 let ItemJaClassificadoError: typeof import('../classificar-item').ItemJaClassificadoError
@@ -75,6 +76,8 @@ describe.skipIf(!ativo)('classificação atômica no MySQL (integração V02)', 
     classificacao = (await import('./prisma-classificacao-repository'))
       .prismaClassificacaoRepository
     mapeamento = (await import('./prisma-setores-repository')).prismaMapeamentoRepository
+    unidade = (await import('./prisma-unidade-trabalho-classificacao'))
+      .prismaUnidadeTrabalhoClassificacao
     const modulo = await import('../classificar-item')
     classificarItem = modulo.classificarItem
     classificarPorMapeamento = modulo.classificarPorMapeamento
@@ -210,7 +213,7 @@ describe.skipIf(!ativo)('classificação atômica no MySQL (integração V02)', 
 
     const deps = { classificacao, mapeamento }
     const resultados = await Promise.allSettled([
-      classificarItem({ itemId, sectorId: setorCorte, userId: 'user-v02' }, deps),
+      classificarItem({ itemId, sectorId: setorCorte, userId: 'user-v02' }, { unidade }),
       classificarPorMapeamento(itemId, deps),
     ])
 
