@@ -362,6 +362,75 @@ describe('EntregasPage', () => {
     expect(await screen.findByLabelText('Pedido')).toBeInTheDocument()
   })
 
+  function comQuantidades(solicitado: number, executado: number, entregue: number) {
+    const base = detalhe(5)
+    const quantidades = {
+      solicitado: String(solicitado),
+      executado: String(executado),
+      entregue: String(entregue),
+      disponivel: String(executado - entregue),
+      pendente: String(Math.max(solicitado - executado, 0)),
+    }
+    return {
+      ...base,
+      itens: [{ ...base.itens[0], ...quantidades }],
+      totaisPorUnidade: [{ ...base.totaisPorUnidade[0], ...quantidades }],
+    }
+  }
+
+  it('item com saldo e algo já entregue mostra Entrega parcial (H1)', async () => {
+    configurarApi([detalhe(5)], 'SHIPPING')
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+
+    expect(await screen.findByText('Entrega parcial')).toBeInTheDocument()
+    expect(screen.getByLabelText('Quantidade do item 1')).toBeInTheDocument()
+  })
+
+  it('item totalmente entregue mostra Entregue, não "Aguardando produção" (H10)', async () => {
+    configurarApi([comQuantidades(10, 10, 10)], 'SHIPPING')
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+
+    expect(await screen.findByText('Entregue')).toBeInTheDocument()
+    expect(screen.getByText('Item totalmente entregue')).toBeInTheDocument()
+    expect(screen.queryByText('Aguardando produção')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Quantidade do item 1')).not.toBeInTheDocument()
+  })
+
+  it('tudo o que foi produzido já foi entregue: avisa quanto falta produzir (H10)', async () => {
+    configurarApi([detalhe(0)], 'SHIPPING')
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+
+    expect(await screen.findAllByText('Aguardando produção')).toHaveLength(2)
+    expect(screen.getByText(/Tudo o que já foi produzido foi entregue/)).toBeInTheDocument()
+    expect(screen.getByText(/Faltam 2 a produzir/)).toBeInTheDocument()
+  })
+
+  it('nada produzido ainda mantém o aviso de que não há saldo (H10)', async () => {
+    configurarApi([comQuantidades(10, 0, 0)], 'SHIPPING')
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+
+    expect(await screen.findByText(/ainda não tem saldo disponível/)).toBeInTheDocument()
+    expect(screen.queryByLabelText('Quantidade do item 1')).not.toBeInTheDocument()
+  })
+
+  it('o gerente continua vendo o formulário num item entregue, para autorizar exceção', async () => {
+    configurarApi([comQuantidades(10, 10, 10)], 'PRODUCTION_MANAGER')
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+
+    expect(await screen.findByText('Item totalmente entregue')).toBeInTheDocument()
+    expect(screen.getByLabelText('Quantidade do item 1')).toBeInTheDocument()
+  })
+
   it('usa o cabeçalho de página com o título (VIS-09)', async () => {
     configurarApi([detalhe(5)])
     render(<EntregasPage />)
