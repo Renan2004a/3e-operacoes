@@ -41,7 +41,8 @@ export type CallbackOrder = z.infer<typeof callbackOrderSchema>
 
 export const callbackItemSchema = z.object({
   seq: z.number().int(),
-  productCode: z.string().min(1),
+  // Itens sem cadastro no legado vêm sem código; null é válido.
+  productCode: z.string().min(1).nullable(),
   description: z.string(),
   unit: z.string().min(1),
   requestedQuantity: decimalString,

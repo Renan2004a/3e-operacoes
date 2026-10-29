@@ -80,7 +80,8 @@ export const prismaProducaoRepository: ProducaoRepository = {
   async listarAtividadesPorSetores(sectorIds) {
     if (sectorIds.length === 0) return []
     const rows = await prisma.activity.findMany({
-      where: { sectorId: { in: sectorIds } },
+      // A fila é de atividades em aberto: concluídas ficam no histórico/painel.
+      where: { sectorId: { in: sectorIds }, status: { not: 'COMPLETED' } },
       orderBy: { createdAt: 'asc' },
       include: {
         sector: { select: { name: true } },

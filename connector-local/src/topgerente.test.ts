@@ -42,7 +42,7 @@ describe('consultarPedidoTopGerente', () => {
 
     expect(result.order.customerName).toBe('Maurício Marcomini')
     expect(result.order.items[0].description).toBe('Dobradiça 3 x 2.5/8')
-    expect(result.order.items[1].productCode).toBe('')
+    expect(result.order.items[1].productCode).toBeNull()
     expect(result.order.items[1].description).toBe('')
   })
 

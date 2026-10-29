@@ -6,7 +6,8 @@ export interface LegadoQueryable {
 
 export interface NormalizedItem {
   seq: number
-  productCode: string
+  /** Código do produto ou null quando o legado traz "0"/vazio. */
+  productCode: string | null
   description: string
   unit: string
   requestedQuantity: string
@@ -74,9 +75,9 @@ function descricaoLegivel(value: unknown): string {
 }
 
 /** Código de produto "0" (ou vazio) significa "não informado" no legado. */
-function codigoLegivel(value: unknown): string {
+function codigoLegivel(value: unknown): string | null {
   const texto = toStringOrNull(value)
-  if (!texto || texto === '0') return ''
+  if (!texto || texto === '0') return null
   return texto
 }
 
