@@ -148,3 +148,42 @@ Depois da importação, os itens chegam sem categoria utilizável, porque `cad_p
 - [ ] Um mapeamento categoria → setor classifica automaticamente os itens daquela categoria.
 - [ ] Item sem mapeamento permanece pendente.
 - [ ] Toda alteração de mapeamento tem registro em `AuditLog`.
+
+---
+
+## V06 — Atomicidade entre mapeamento, auditoria e classificação (2026-10-29)
+
+### Problem Statement
+
+Depois de V05 (#17) e V02 (#19), a classificação manual ainda executava `garantirMapeamento` e a auditoria **fora** da transação que classificava o item. Uma falha posterior (inclusive o conflito `409` do árbitro de concorrência) deixava um mapeamento criado ou reativado por uma operação que não se efetivou.
+
+### Acceptance Criteria
+
+1. WHEN a classificação manual conclui THEN o sistema SHALL ter aplicado, na mesma transação: a transição condicional do item pendente, o mapeamento (criar/reativar/reutilizar), a auditoria correspondente (quando houver alteração) e a criação da atividade.
+2. WHEN qualquer etapa falha THEN o sistema SHALL reverter todas as alterações da solicitação (item permanece pendente, sem mapeamento novo, sem auditoria, sem atividade).
+3. WHEN o mapeamento está ativo THEN o sistema SHALL reutilizá-lo sem trocar o setor e sem gerar auditoria fictícia.
+4. WHEN o mapeamento está inativo THEN o sistema SHALL reativá-lo com o setor escolhido, auditando antes/depois, ou restaurar tudo sob falha.
+5. WHEN o item não tem categoria THEN o sistema SHALL classificar sem criar mapeamento nem auditoria.
+6. WHEN itens distintos disputam uma categoria nova THEN o sistema SHALL resultar em um único mapeamento ativo, itens classificados nos setores escolhidos e sem erro não tratado.
+7. WHEN o mesmo item é classificado simultaneamente THEN o sistema SHALL efetivar apenas uma classificação e desfazer integramente a perdedora.
+8. WHEN a categoria é nova e concorrente THEN o sistema SHALL repetir a unidade transacional completa apenas em conflitos transatórios identificados (deadlock/conflito de escrita ou `P2002` da chave de categoria), com limite pequeno, e manter visíveis os erros permanentes.
+9. The system SHALL preservar a categoria obtida do item persistido, a autoria da sessão (`userId`) na auditoria, os contratos `200/400/404/409` e o comportamento administrativo de `/api/mapeamentos`.
+
+### Out of Scope (V06)
+
+| Feature | Reason |
+| --- | --- |
+| Interface, permissões, schema/migrations | Escopo exclusivo de consistência transacional; nenhum contrato HTTP alterado. |
+| Fluxo automático de importação | Porta/pré-condição e política de sucesso/skip do job preservadas. |
+| Reparo de dados antigos | Fora do escopo; nenhuma migração de dados. |
+| Merge/deploy | Etapas separadas, dependem da revisão do PR. |
+
+### Criterion → Test mapping (V06)
+
+| AC | Teste |
+| --- | --- |
+| 1, 3, 5, 9 (categoria nova/ativa/sem categoria) | `classificacao-transacional.integration.test.ts` (cenários 1, 5, 6) + testes de domínio |
+| 2, 4 (rollback total sob falhas) | cenários 2, 3 e 4 (falha após criar mapeamento, após reativação, na auditoria) |
+| 6, 7 (concorrência) | cenários 7, 8 e 9 (mesmo item; itens distintos categoria nova; reativação concorrente) |
+| 8 (retry transatório) | `prisma-unidade-trabalho-classificacao.test.ts` (8 casos) |
+| 9 (contratos e regressões V05/V02) | `route.test.ts`, `classificar-item.test.ts` e integração V02/consulta/prazos (31/31) |
