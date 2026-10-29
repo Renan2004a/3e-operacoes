@@ -138,3 +138,19 @@ Sem mudança de schema. Usa `Sector` (código único, ativo), `CategorySectorMap
 | Chave do mapeamento | `categoriaLegado` | Fonte oficial é a categoria do legado. |
 | Auditoria | `AuditLog` | Padrão do projeto. |
 | Auto-classificação | Porta injetada em `importarPedido` | Mantém o domínio sem banco. |
+
+---
+
+---
+
+## V06 — Unidade transacional da classificação manual (2026-10-29)
+
+### Arquitetura
+
+- **Fronteira transacional**: a porta `UnidadeTrabalhoClassificacao` (domínio) é implementada apenas no adapter Prisma, que abre a transação interativa e entrega os repositórios do escopo. O domínio não conhece Prisma e nenhuma chamada decisiva usa o `prisma` global dentro do escopo.
+- **Repositórios do escopo**: `ClassificacaoEmTransacao` (transição condicional, leituras autoritativas, criação da atividade) e `MapeamentoRepository` ligados ao mesmo `tx`; a implementação transacional do mapeamento reutiliza `garantirMapeamento`/`criarMapeamento`, mantendo o mesmo formato de auditoria.
+- **Ordem dentro da unidade**: transição condicional (árbitro do mesmo item), leitura autoritativa da categoria no item travado, validação atual do setor, garantia de mapeamento com auditoria, criação da atividade. Falha em qualquer ponto reverte toda a solicitação.
+- **Mapeamento bloqueante**: `findByCategory` do escopo usa `SELECT ... FOR UPDATE`, consultando o estado comprometido e serializando criação/reativação; mapeamento ativo vencedor é reutilizado sem auditoria.
+- **Concorrência de categoria nova**: pode produzir deadlock (gap lock) ou `P2002` na chave de `legacyCategory`; ambos são transatórios e a unidade COMPLETA é repetida (limite de 3 tentativas). Conflitos definitivos (`409`, `404`, `400`) e erros permanentes propagam sem repetição.
+- **Fluxo automático e administração**: `classificarPorMapeamento` e os endpoints de `/api/mapeamentos` seguem sem alterações de comportamento.
+- **Falhas controladas de teste**: existem apenas no arquivo de integração de V06 (wrapper com injeção de falha sobre os repositórios reais) — não há mecanismo de falha no código de produção.
