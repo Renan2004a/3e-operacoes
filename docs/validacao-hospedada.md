@@ -276,3 +276,33 @@ O `main` avançou de `2f0cbaf` para **`ed20d1c`**, integrando os PRs #18–#24 e
 - O primeiro despacho após a troca do túnel falhou porque o container antigo ainda estava servindo (`CONNECTOR_UNAVAILABLE`); um deploy completo resolveu e a importação seguinte concluiu.
 - O túnel rápido mudou de URL; a variável `LOCAL_CONNECTOR_BASE_URL` foi atualizada no Railway. Para religar: `scripts/conector-demo.ps1`.
 - **Conflito resolvido na integração**: mantivemos a data do drill-down no fuso `America/Sao_Paulo` (a branch usava `slice(0,10)`, que desloca o dia) e a prioridade 0 oculta na fila.
+
+---
+
+## 15. Demonstração completa em vídeo (29/10/2026)
+
+- **Vídeo**: `docs/video-demo-2026-10-29/demo-completa-2026-10-29.mp4` — **21:47**, 1920×1080, 30 fps, legendas queimadas e **capítulos embutidos**.
+- **Partes**: 5 MP4 separados (Vendedor, Gerente, Operador/Expedição, Administração/Técnico e Banco).
+- **Legendas**: SRT combinado + SRT por parte; transcrição JSON com 172 entradas.
+- **Relatórios**: `relatorio-cobertura.md`, `cobertura.csv`, `relatorio-pendencias.md`, `mapa-telas-banco.md` e `resumo-tecnico.md`.
+
+**Ambiente**: aplicação local (`next start`) com banco isolado `3e_operacoes_demo` (MySQL 8.4). Clientes anonimizados; nenhum dado real de cliente foi alterado. A importação usou o conector local contra o Top Gerente de teste.
+
+**O que foi executado de verdade**: login nos seis perfis; filtros e detalhe; prazo com histórico; desmembramento; correção de setor com justificativa; remessa criar/confirmar/remover; entrega com “Entregar tudo” e confirmação; exceção acima do saldo (cancelada); execução e ocorrência; importação e reimportação; criação/inativação/reativação de usuário; mapeamento de categoria; impressão; 404 e responsividade.
+
+**Correções feitas durante a preparação**
+- A fila do Operador passou a ocultar atividades concluídas (a tela diz “em aberto”).
+- O callback passou a aceitar `productCode: null` para itens sem código no legado; o pedido 82249, que falhava, foi reimportado com sucesso.
+- O roteiro passou a preencher campos `type=date` corretamente (o preenchimento caractere a caractere gerava data inválida).
+- O conector agora registra o status e o corpo quando o callback é recusado.
+
+**Gates e produção**
+| Item | Resultado |
+| --- | --- |
+| Testes | **1174** verdes + 47 ignorados |
+| Lint / typecheck / build | 0 erros / OK / OK |
+| Deploy Railway | OK, `/api/health` **200** |
+| `validar-correcoes-ui` / `validar-melhorias` | **15/15** / **15/15** |
+| Importação em produção (82262) | **SUCCEEDED** |
+
+**Limitação**: o DBeaver desta máquina apresentou texto invisível na árvore e no editor. O capítulo de banco mostra a captura real da janela, declara a limitação e usa consultas SQL reais executadas no MySQL, com resultados e estrutura reais. Detalhes em `docs/video-demo-2026-10-29/relatorio-pendencias.md`.

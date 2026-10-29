@@ -68,8 +68,16 @@ export async function handleImportOrder(
       },
       body: JSON.stringify({ jobId, order, items }),
     })
-    if (!response.ok) return { status: 502, body: { error: 'callback_failed' } }
-  } catch {
+    if (!response.ok) {
+      const detalhe = await response.text().catch(() => '')
+      console.error('[connector] callback recusado', {
+        status: response.status,
+        detalhe: detalhe.slice(0, 300),
+      })
+      return { status: 502, body: { error: 'callback_failed' } }
+    }
+  } catch (erro) {
+    console.error('[connector] falha no callback', erro instanceof Error ? erro.message : erro)
     return { status: 502, body: { error: 'callback_failed' } }
   }
 
