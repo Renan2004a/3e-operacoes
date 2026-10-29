@@ -24,6 +24,10 @@ export const prismaClassificacaoAutomatica: ClassificacaoAutomaticaPort = {
     for (const item of items) {
       const itemId = pendingByKey.get(item.legacyItemKey)
       if (!itemId) continue
+      // Se outro fluxo classificar o item durante a importação, a classificação
+      // automática propaga ItemJaClassificadoError. A política de tratar esse
+      // conflito como sucesso/skip do job ainda não foi decidida; o V02 mantém
+      // o comportamento atual da integração.
       await classificarPorMapeamento(itemId, {
         classificacao: prismaClassificacaoRepository,
         mapeamento: prismaMapeamentoRepository,

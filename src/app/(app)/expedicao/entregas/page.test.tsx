@@ -109,7 +109,7 @@ describe('EntregasPage', () => {
     expect(await screen.findByText('Disponível: 5')).toBeInTheDocument()
   })
 
-  it('entrega dentro do disponível registra e atualiza o saldo (FEP-06)', async () => {
+  it('entrega dentro do disponível pede confirmação, registra e atualiza o saldo (FEP-06)', async () => {
     configurarApi([detalhe(5), detalhe(2)])
     render(<EntregasPage />)
 
@@ -119,6 +119,9 @@ describe('EntregasPage', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: 'Registrar entrega do item 1' }))
 
+    expect(mocks.apiPost).not.toHaveBeenCalled()
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar entrega' }))
+
     await waitFor(() =>
       expect(mocks.apiPost).toHaveBeenCalledWith('/api/pedidos/itens/item_1/entregas', {
         quantidade: '3',
@@ -127,6 +130,71 @@ describe('EntregasPage', () => {
       }),
     )
     expect(await screen.findByText('Disponível: 2')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('a confirmação resume o item, a quantidade e o que sobra, entrega parcial (EXP-08)', async () => {
+    configurarApi([detalhe(5)])
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+    fireEvent.change(await screen.findByLabelText('Quantidade do item 1'), {
+      target: { value: '3' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar entrega do item 1' }))
+
+    const dialogo = await screen.findByRole('dialog', { name: 'Confirmar a entrega?' })
+    expect(dialogo).toHaveTextContent('Você vai entregar 3 do item 1.')
+    expect(dialogo).toHaveTextContent('Disponível agora: 5')
+    expect(dialogo).toHaveTextContent('Depois da entrega sobram 2 disponíveis.')
+    expect(dialogo).toHaveTextContent('O item continua com entrega parcial.')
+    expect(dialogo).toHaveTextContent('Não é possível desfazer')
+  })
+
+  it('a confirmação avisa quando a entrega conclui o item (EXP-09)', async () => {
+    configurarApi([detalhe(5)])
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+    fireEvent.change(await screen.findByLabelText('Quantidade do item 1'), {
+      target: { value: '5' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar entrega do item 1' }))
+
+    const dialogo = await screen.findByRole('dialog')
+    expect(dialogo).toHaveTextContent('Esta entrega conclui o item.')
+  })
+
+  it('cancelar a confirmação não registra e mantém o valor digitado', async () => {
+    configurarApi([detalhe(5)])
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+    fireEvent.change(await screen.findByLabelText('Quantidade do item 1'), {
+      target: { value: '3' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar entrega do item 1' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Cancelar' }))
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(mocks.apiPost).not.toHaveBeenCalled()
+    expect(screen.getByLabelText('Quantidade do item 1')).toHaveValue(3)
+  })
+
+  it('falha no registro fecha a confirmação e mostra o erro no formulário', async () => {
+    configurarApi([detalhe(5)])
+    mocks.apiPost.mockRejectedValue(new mocks.ApiError(500, 'erro'))
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+    fireEvent.change(await screen.findByLabelText('Quantidade do item 1'), {
+      target: { value: '3' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar entrega do item 1' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar entrega' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/não foi possível registrar/i)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
   it('bloqueia entrega acima do disponível sem autorização de gerente (FEP-07)', async () => {
@@ -159,7 +227,7 @@ describe('EntregasPage', () => {
     expect(mocks.apiPost).not.toHaveBeenCalled()
   })
 
-  it('exceção autorizada com motivo envia a entrega com o motivo (FEP-07)', async () => {
+  it('exceção autorizada com motivo só envia depois da confirmação reforçada (FEP-07)', async () => {
     configurarApi([detalhe(5)])
     render(<EntregasPage />)
 
@@ -173,6 +241,17 @@ describe('EntregasPage', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: 'Registrar entrega do item 1' }))
 
+    const dialogo = await screen.findByRole('dialog', {
+      name: 'Confirmar entrega acima do disponível?',
+    })
+    expect(dialogo).toHaveTextContent('9 do item 1')
+    expect(dialogo).toHaveTextContent('4 acima do disponível (5)')
+    expect(dialogo).toHaveTextContent('Motivo: Cliente pediu urgente')
+    expect(dialogo).toHaveTextContent('ficará registrada na auditoria')
+    expect(mocks.apiPost).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar entrega' }))
+
     await waitFor(() =>
       expect(mocks.apiPost).toHaveBeenCalledWith('/api/pedidos/itens/item_1/entregas', {
         quantidade: '9',
@@ -180,6 +259,84 @@ describe('EntregasPage', () => {
         motivoExcecao: 'Cliente pediu urgente',
       }),
     )
+  })
+
+  async function registrarComFalha(erro: Error, quantidade = '3') {
+    mocks.apiPost.mockRejectedValue(erro)
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+    fireEvent.change(await screen.findByLabelText('Quantidade do item 1'), {
+      target: { value: quantidade },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar entrega do item 1' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar entrega' }))
+    return screen.findByRole('alert')
+  }
+
+  it('quantidade inválida para a unidade explica a regra, não só "tente novamente" (H9)', async () => {
+    configurarApi([detalhe(5)])
+    const alerta = await registrarComFalha(new mocks.ApiError(400, 'invalid_quantity'))
+
+    expect(alerta).toHaveTextContent(/quantidade não é válida para esta unidade/i)
+    expect(alerta).toHaveTextContent(/número inteiro/i)
+    expect(alerta).not.toHaveTextContent(/tente novamente/i)
+  })
+
+  it('motivo ausente aponta o campo certo (H9)', async () => {
+    configurarApi([detalhe(5)])
+    const alerta = await registrarComFalha(new mocks.ApiError(400, 'override_reason_required'))
+
+    expect(alerta).toHaveTextContent(/informe o motivo da exceção/i)
+  })
+
+  it('saldo que mudou recarrega o item e orienta a conferir a quantidade (H9)', async () => {
+    configurarApi([detalhe(5), detalhe(1)])
+    const alerta = await registrarComFalha(new mocks.ApiError(409, 'above_available'))
+
+    expect(alerta).toHaveTextContent(/saldo disponível mudou/i)
+    expect(alerta).not.toHaveTextContent(/autorização de gerente/i)
+    expect(await screen.findByText('Disponível: 1')).toBeInTheDocument()
+  })
+
+  it('item inexistente pede para atualizar a página (H9)', async () => {
+    configurarApi([detalhe(5)])
+    const alerta = await registrarComFalha(new mocks.ApiError(404, 'item_not_found'))
+
+    expect(alerta).toHaveTextContent(/item não foi encontrado/i)
+  })
+
+  it('sem conexão avisa para conferir o saldo antes de repetir (H9)', async () => {
+    configurarApi([detalhe(5)])
+    const alerta = await registrarComFalha(new mocks.ApiError(0, 'network_error'))
+
+    expect(alerta).toHaveTextContent(/sem conexão/i)
+    expect(alerta).toHaveTextContent(/confira/i)
+  })
+
+  it('falha ao carregar o pedido oferece "Tentar de novo" (H9)', async () => {
+    let tentativas = 0
+    mocks.apiGet.mockImplementation((url: string) => {
+      if (url === '/api/auth/sessao') return Promise.resolve({ usuario: { roles: ['SHIPPING'] } })
+      if (url === '/api/pedidos') {
+        return Promise.resolve({ pedidos: [{ id: 'p1', numero: '100', cliente: 'Ana' }] })
+      }
+      if (url === '/api/pedidos/p1') {
+        tentativas += 1
+        return tentativas === 1
+          ? Promise.reject(new Error('falha'))
+          : Promise.resolve({ pedido: detalhe(5) })
+      }
+      return Promise.reject(new Error(`url inesperada: ${url}`))
+    })
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+    expect(await screen.findByRole('alert')).toHaveTextContent(/não foi possível carregar o pedido/i)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }))
+
+    expect(await screen.findByText('Disponível: 5')).toBeInTheDocument()
   })
 
   it('mostra erro acessível e permite tentar de novo quando a API falha (FEP-13)', async () => {
@@ -203,6 +360,158 @@ describe('EntregasPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }))
 
     expect(await screen.findByLabelText('Pedido')).toBeInTheDocument()
+  })
+
+  function comQuantidades(solicitado: number, executado: number, entregue: number) {
+    const base = detalhe(5)
+    const quantidades = {
+      solicitado: String(solicitado),
+      executado: String(executado),
+      entregue: String(entregue),
+      disponivel: String(executado - entregue),
+      pendente: String(Math.max(solicitado - executado, 0)),
+    }
+    return {
+      ...base,
+      itens: [{ ...base.itens[0], ...quantidades }],
+      totaisPorUnidade: [{ ...base.totaisPorUnidade[0], ...quantidades }],
+    }
+  }
+
+  it('item com saldo e algo já entregue mostra Entrega parcial (H1)', async () => {
+    configurarApi([detalhe(5)], 'SHIPPING')
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+
+    expect(await screen.findByText('Entrega parcial')).toBeInTheDocument()
+    expect(screen.getByLabelText('Quantidade do item 1')).toBeInTheDocument()
+  })
+
+  it('item totalmente entregue mostra Entregue, não "Aguardando produção" (H10)', async () => {
+    configurarApi([comQuantidades(10, 10, 10)], 'SHIPPING')
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+
+    expect(await screen.findByText('Entregue')).toBeInTheDocument()
+    expect(screen.getByText('Item totalmente entregue')).toBeInTheDocument()
+    expect(screen.queryByText('Aguardando produção')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Quantidade do item 1')).not.toBeInTheDocument()
+  })
+
+  it('tudo o que foi produzido já foi entregue: avisa quanto falta produzir (H10)', async () => {
+    configurarApi([detalhe(0)], 'SHIPPING')
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+
+    expect(await screen.findAllByText('Aguardando produção')).toHaveLength(2)
+    expect(screen.getByText(/Tudo o que já foi produzido foi entregue/)).toBeInTheDocument()
+    expect(screen.getByText(/Faltam 2 a produzir/)).toBeInTheDocument()
+  })
+
+  it('nada produzido ainda mantém o aviso de que não há saldo (H10)', async () => {
+    configurarApi([comQuantidades(10, 0, 0)], 'SHIPPING')
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+
+    expect(await screen.findByText(/ainda não tem saldo disponível/)).toBeInTheDocument()
+    expect(screen.queryByLabelText('Quantidade do item 1')).not.toBeInTheDocument()
+  })
+
+  it('o gerente continua vendo o formulário num item entregue, para autorizar exceção', async () => {
+    configurarApi([comQuantidades(10, 10, 10)], 'PRODUCTION_MANAGER')
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+
+    expect(await screen.findByText('Item totalmente entregue')).toBeInTheDocument()
+    expect(screen.getByLabelText('Quantidade do item 1')).toBeInTheDocument()
+  })
+
+  function comUnidade(unit: string, executado: string, entregue: string) {
+    const base = detalhe(5)
+    const disponivel = String(Number(executado) - Number(entregue))
+    const quantidades = { solicitado: executado, executado, entregue, disponivel, pendente: '0' }
+    return {
+      ...base,
+      itens: [{ ...base.itens[0], unit, ...quantidades }],
+      totaisPorUnidade: [{ ...base.totaisPorUnidade[0], unidade: unit, ...quantidades }],
+    }
+  }
+
+  it('o campo diz a unidade, o disponível e a regra de casas decimais da peça (H5)', async () => {
+    configurarApi([comUnidade('PC', '8', '3')], 'SHIPPING')
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+    const campo = await screen.findByLabelText('Quantidade do item 1')
+
+    expect(campo).toHaveAccessibleDescription(/Pode entregar até 5 PC\. Use número inteiro\./)
+    expect(campo).toHaveAttribute('step', '1')
+  })
+
+  it('para metro o campo aceita 2 casas e avisa (H5)', async () => {
+    configurarApi([comUnidade('M', '8.5', '3')], 'SHIPPING')
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+    const campo = await screen.findByLabelText('Quantidade do item 1')
+
+    expect(campo).toHaveAccessibleDescription(/Pode entregar até 5,50 M\. Até 2 casas decimais\./)
+    expect(campo).toHaveAttribute('step', '0.01')
+  })
+
+  it('"Entregar tudo" abre a confirmação com todo o disponível, sem digitar (H5, H7)', async () => {
+    configurarApi([comUnidade('PC', '8', '3')], 'SHIPPING')
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+    fireEvent.click(await screen.findByRole('button', { name: 'Entregar tudo (5) do item 1' }))
+
+    const dialogo = await screen.findByRole('dialog')
+    expect(dialogo).toHaveTextContent('Você vai entregar 5 do item 1.')
+    expect(dialogo).toHaveTextContent('Esta entrega conclui o item.')
+    expect(mocks.apiPost).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar entrega' }))
+
+    await waitFor(() =>
+      expect(mocks.apiPost).toHaveBeenCalledWith('/api/pedidos/itens/item_1/entregas', {
+        quantidade: '5',
+        excecao: false,
+        motivoExcecao: undefined,
+      }),
+    )
+  })
+
+  it('"Entregar tudo" em metro envia o valor decimal exato (H5)', async () => {
+    configurarApi([comUnidade('M', '8.5', '3')], 'SHIPPING')
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+    fireEvent.click(await screen.findByRole('button', { name: 'Entregar tudo (5,50) do item 1' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar entrega' }))
+
+    await waitFor(() =>
+      expect(mocks.apiPost).toHaveBeenCalledWith('/api/pedidos/itens/item_1/entregas', {
+        quantidade: '5.5',
+        excecao: false,
+        motivoExcecao: undefined,
+      }),
+    )
+  })
+
+  it('sem saldo não há "Entregar tudo" (H5)', async () => {
+    configurarApi([comUnidade('PC', '8', '8')], 'PRODUCTION_MANAGER')
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+    await screen.findByLabelText('Quantidade do item 1')
+
+    expect(screen.queryByRole('button', { name: /Entregar tudo/ })).not.toBeInTheDocument()
   })
 
   it('usa o cabeçalho de página com o título (VIS-09)', async () => {

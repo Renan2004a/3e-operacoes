@@ -221,21 +221,68 @@ describe('classificarItem', () => {
     expect(activities).toEqual([{ id: 'act_1', orderItemId: 'item_1', sectorId: 'setor_telhas' }])
   })
 
-  it('cria o mapeamento quando a classificação manual informa a categoria', async () => {
+  it('cria o mapeamento a partir da categoria persistida no item', async () => {
     const { deps, mappingStore, audits } = createDeps({
-      items: [itemState({ id: 'item_1' })],
+      items: [itemState({ id: 'item_1', legacyCategory: 'Telhas' })],
       sectors: [sector({ id: 'setor_telhas', active: true })],
     })
 
-    await classificarItem(
-      { itemId: 'item_1', sectorId: 'setor_telhas', legacyCategory: 'Telhas', userId: 'user_1' },
-      deps,
-    )
+    await classificarItem({ itemId: 'item_1', sectorId: 'setor_telhas', userId: 'user_1' }, deps)
 
     expect(mappingStore).toHaveLength(1)
     expect(mappingStore[0].legacyCategory).toBe('Telhas')
     expect(mappingStore[0].sectorId).toBe('setor_telhas')
-    expect(audits[0].action).toBe('CREATE')
+    expect(audits[0]).toMatchObject({ action: 'CREATE', userId: 'user_1' })
+  })
+
+  it('não cria mapeamento quando o item não tem categoria', async () => {
+    const { deps, mappingStore, audits } = createDeps({
+      items: [itemState({ id: 'item_1', legacyCategory: null })],
+      sectors: [sector({ id: 'setor_telhas', active: true })],
+    })
+
+    await classificarItem({ itemId: 'item_1', sectorId: 'setor_telhas', userId: 'user_1' }, deps)
+
+    expect(mappingStore).toHaveLength(0)
+    expect(audits).toHaveLength(0)
+  })
+
+  it('reutiliza o mapeamento ativo sem trocar o setor', async () => {
+    const { deps, mappingStore, audits } = createDeps({
+      items: [itemState({ id: 'item_1', legacyCategory: 'Telhas' })],
+      sectors: [sector({ id: 'setor_telhas', active: true })],
+      mappings: [mapping({ legacyCategory: 'Telhas', sectorId: 'setor_telhas' })],
+    })
+
+    await classificarItem({ itemId: 'item_1', sectorId: 'setor_telhas', userId: 'user_1' }, deps)
+
+    expect(mappingStore).toHaveLength(1)
+    expect(mappingStore[0].sectorId).toBe('setor_telhas')
+    expect(audits).toHaveLength(0)
+  })
+
+  it('reativa o mapeamento inativo com o setor escolhido', async () => {
+    const { deps, mappingStore, audits } = createDeps({
+      items: [itemState({ id: 'item_1', legacyCategory: 'Telhas' })],
+      sectors: [sector({ id: 'setor_corte', active: true })],
+      mappings: [
+        mapping({ legacyCategory: 'Telhas', sectorId: 'setor_telhas', status: 'INACTIVE' }),
+      ],
+    })
+
+    await classificarItem({ itemId: 'item_1', sectorId: 'setor_corte', userId: 'user_1' }, deps)
+
+    expect(mappingStore[0]).toMatchObject({
+      legacyCategory: 'Telhas',
+      sectorId: 'setor_corte',
+      status: 'ACTIVE',
+    })
+    expect(audits[0]).toMatchObject({
+      action: 'UPDATE',
+      userId: 'user_1',
+      beforeJson: { sectorId: 'setor_telhas', status: 'INACTIVE' },
+      afterJson: { sectorId: 'setor_corte', status: 'ACTIVE' },
+    })
   })
 
   it('rejeita a classificação quando o setor está inativo', async () => {
@@ -245,7 +292,7 @@ describe('classificarItem', () => {
     })
 
     await expect(
-      classificarItem({ itemId: 'item_1', sectorId: 'setor_telhas' }, deps),
+      classificarItem({ itemId: 'item_1', sectorId: 'setor_telhas', userId: 'user_1' }, deps),
     ).rejects.toBeInstanceOf(SetorInvalidoError)
     expect(itemStore[0].classificationStatus).toBe('PENDING_CLASSIFICATION')
   })
@@ -254,7 +301,7 @@ describe('classificarItem', () => {
     const { deps } = createDeps({ items: [itemState({ id: 'item_1' })] })
 
     await expect(
-      classificarItem({ itemId: 'item_1', sectorId: 'inexistente' }, deps),
+      classificarItem({ itemId: 'item_1', sectorId: 'inexistente', userId: 'user_1' }, deps),
     ).rejects.toBeInstanceOf(SetorInvalidoError)
   })
 
@@ -265,7 +312,7 @@ describe('classificarItem', () => {
     })
 
     await expect(
-      classificarItem({ itemId: 'item_1', sectorId: 'setor_telhas' }, deps),
+      classificarItem({ itemId: 'item_1', sectorId: 'setor_telhas', userId: 'user_1' }, deps),
     ).rejects.toBeInstanceOf(ItemJaClassificadoError)
   })
 })
