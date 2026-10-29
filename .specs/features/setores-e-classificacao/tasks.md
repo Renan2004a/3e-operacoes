@@ -517,3 +517,19 @@ Phase 4: T10 -> T13
 ## Task Verification Standards
 
 Every task follows `Done when` + `Tests` + `Gate`. Each `Done when` entry is specific, binary, and references the gate command. Test counts prevent silent deletions.
+
+---
+
+## V06 — Unidade transacional da classificação manual (2026-10-29)
+
+| Task | Done when | Gate |
+| --- | --- | --- |
+| T-V06.1 (domínio) | Portas `ClassificacaoEmTransacao` e `UnidadeTrabalhoClassificacao`; `classificarItem` executa transição → categoria autoritativa → setor → mapeamento/auditoria → atividade; contratos 404/409/400 preservados | `npx vitest run src/modules/setores/classificar-item.test.ts` (14 testes: 5 automáticos + 9 manuais) |
+| T-V06.2 (adapter classificação) | Helpers de escopo no mesmo `tx`; `markClassified` global preservado para o fluxo automático; tradução da atividade única mantida | `npx vitest run src/modules/setores/adapters/prisma-classificacao-repository.test.ts` (7 testes) |
+| T-V06.3 (adapter mapeamento) | `criarMapeamentoEmTransacao` com auditoria no `tx` e `findByCategory` bloqueante (`FOR UPDATE`); repositório global de `/api/mapeamentos` inalterado | typecheck + integração |
+| T-V06.4 (unidade + retry) | Transação interativa com repos ligados ao `tx`; repetição completa apenas para `P2034` e `P2002` de `legacyCategory`, limite 3 | `npx vitest run src/modules/setores/adapters/prisma-unidade-trabalho-classificacao.test.ts` (8 testes) |
+| T-V06.5 (rota) | `POST .../classificar` com `unidade` injetada; contratos 200/400/404/409/401/403 | `npx vitest run "src/app/api/pedidos/itens/[itemId]/classificar/route.test.ts"` (11 testes) |
+| T-V06.6 (integração MySQL) | Cenários 1–9 (categoria nova com auditoria; rollback total em 3 falhas controladas; ativo preservado; sem categoria; corridas de item/categoria/reativação) | `RUN_INTEGRATION_TESTS=1 DATABASE_URL=...v06_integration npx vitest run src/modules/setores/adapters/classificacao-transacional.integration.test.ts` (9 testes) |
+| T-V06.7 (regressões) | V02 + consulta-pedidos + prazos em integração 31/31; suíte padrão 1114 verdes; lint 0 erros; typecheck/build OK | gates da sessão |
+
+**Status (2026-10-29):** T-V06.1–T-V06.7 concluídas localmente; PR aberto contra `main`; sem merge/deploy.

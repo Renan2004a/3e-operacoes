@@ -6,9 +6,19 @@ import { SESSION_COOKIE } from '../../../../../../shared/http/auth-context'
 const mocks = vi.hoisted(() => {
   const itens = new Map<string, Date | null>()
   const perfis: Record<string, RoleCode[]> = {}
+  const chamadas: Array<{ itemId: string; prazo: Date; userId?: string | null }> = []
 
   const repo = {
-    definirPrazoItem: async ({ itemId, prazo }: { itemId: string; prazo: Date }) => {
+    definirPrazoItem: async ({
+      itemId,
+      prazo,
+      userId,
+    }: {
+      itemId: string
+      prazo: Date
+      userId?: string | null
+    }) => {
+      chamadas.push({ itemId, prazo, userId })
       if (!itens.has(itemId)) return null
       itens.set(itemId, prazo)
       return { id: itemId, deadlineAt: prazo }
@@ -17,9 +27,10 @@ const mocks = vi.hoisted(() => {
 
   function reset() {
     itens.clear()
+    chamadas.length = 0
   }
 
-  return { itens, perfis, repo, reset }
+  return { itens, perfis, chamadas, repo, reset }
 })
 
 vi.mock('../../../../../../modules/prazos/adapters/prisma-prazos-repository', () => ({
@@ -79,6 +90,22 @@ describe('PATCH /api/pedidos/itens/[itemId]/prazo', () => {
     expect(body.item.id).toBe('item_1')
     expect(body.item.deadlineAt).toBe(esperado.toISOString())
     expect(mocks.itens.get('item_1')).toEqual(esperado)
+  })
+
+  it('usa o usuário da sessão e ignora autoria enviada no corpo', async () => {
+    mocks.itens.set('item_1', null)
+
+    const response = await PATCH(
+      request({
+        prazo: '2026-10-15',
+        userId: 'user_forjado',
+        actorId: 'user_forjado',
+      }),
+      context('item_1'),
+    )
+
+    expect(response.status).toBe(200)
+    expect(mocks.chamadas.at(-1)?.userId).toBe('user_mgr')
   })
 
   it('aceita o perfil Vendedor no caminho feliz (PRAZO-03)', async () => {
