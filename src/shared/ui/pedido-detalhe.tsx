@@ -9,7 +9,7 @@ import {
   validarMotivoCorrecao,
   type ErroMotivoCorrecao,
 } from '@/modules/setores/motivo-correcao'
-import { calcularStatusPrazo } from '@/modules/prazos/atraso'
+import { calcularStatusPrazo, type StatusPrazo } from '@/modules/prazos/atraso'
 import { chaveUnidade } from '@/modules/producao/unidade-medida'
 import { pode } from '@/modules/usuarios/permissoes'
 import { ApiError, apiDelete, apiGet, apiPatch, apiPost } from '@/shared/http/api-client'
@@ -58,6 +58,8 @@ interface ItemSaldo {
   deadlineAt?: string | null
   /** Prazo operacional da atividade do setor, ou null quando não definido (AD-009). */
   activityDeadlineAt?: string | null
+  /** Status comercial derivado pelo servidor; não recalcular na interface (AD-025). */
+  statusPrazoEntrega: StatusPrazo
   classificationStatus: 'CLASSIFIED' | 'PENDING_CLASSIFICATION'
   /** Categoria do produto no legado; o desmembramento manual aprende o de/para. */
   legacyCategory?: string | null
@@ -209,9 +211,6 @@ export function PedidoDetalhe({
   const [pedido, setPedido] = useState<PedidoDetalhado | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState<'falha' | 'nao_encontrado' | null>(null)
-  // Relógio fixado na primeira renderização do detalhe. O conteúdo só existe
-  // depois da busca no cliente, então não há divergência de hidratação.
-  const [agora] = useState(() => Date.now())
 
   const [rascunhos, setRascunhos] = useState<Record<string, string>>({})
   const [salvando, setSalvando] = useState<string | null>(null)
@@ -1080,9 +1079,8 @@ export function PedidoDetalhe({
                     <Badge variant="success">
                       Prazo de entrega: {formatarDiaCivil(item.deadlineAt)}
                     </Badge>
-                    {numero(item.pendente) > 0 &&
-                    new Date(item.deadlineAt).getTime() < agora ? (
-                      <Badge variant="warning">Atrasado</Badge>
+                    {item.statusPrazoEntrega === 'ATRASADO' ? (
+                      <Badge variant="warning">Entrega atrasada</Badge>
                     ) : null}
                   </span>
                 ) : (

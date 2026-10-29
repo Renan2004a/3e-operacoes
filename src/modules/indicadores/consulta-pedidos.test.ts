@@ -634,6 +634,7 @@ function especificacao(
   itemId: string,
   unit: string,
   sectorName: string | null = null,
+  overrides: Partial<EspecificacaoItem> = {},
 ): EspecificacaoItem {
   return {
     itemId,
@@ -642,6 +643,7 @@ function especificacao(
     unit,
     classificationStatus: 'PENDING_CLASSIFICATION',
     sectorName,
+    ...overrides,
   }
 }
 
@@ -881,5 +883,185 @@ describe('detalharPedido — totais por unidade de medida (RN01–RN05)', () => 
     const detalhe = await detalharPedido('ped_1', repo)
 
     expect(detalhe.totaisPorUnidade).toEqual([])
+  })
+})
+
+describe('detalharPedido — atraso comercial do item (AD-025)', () => {
+  /** Fim do dia 01/02/2026 em America/Sao_Paulo. */
+  const PRAZO_VENCIDO = new Date('2026-02-02T02:59:59.999Z')
+  /** 23:00 de 01/02/2026 em America/Sao_Paulo: o prazo ainda vale. */
+  const DENTRO_DO_DIA = new Date('2026-02-02T02:00:00.000Z')
+  /** 00:00 de 02/02/2026 em America/Sao_Paulo: o prazo terminou. */
+  const DEPOIS_DO_DIA = new Date('2026-02-02T03:00:00.000Z')
+
+  function pedidoComPrazo(itens: ItemDoPedido[], especificacoes: EspecificacaoItem[]): PedidoSeed {
+    return pedido({
+      id: 'ped_1',
+      numero: '1001',
+      cliente: 'Construtora X',
+      itens,
+      especificacoes,
+    })
+  }
+
+  it('deriva o status por item usando o mesmo instante da consulta', async () => {
+    const repo = createRepo([
+      pedidoComPrazo(
+        [
+          item({
+            id: 'item_1',
+            solicitado: dec(10),
+            executado: dec(10),
+            entregue: dec(0),
+          }),
+          item({
+            id: 'item_2',
+            solicitado: dec(10),
+            executado: dec(10),
+            entregue: dec(10),
+          }),
+        ],
+        [
+          especificacao('item_1', 'peca', null, {
+            classificationStatus: 'CLASSIFIED',
+            deadlineAt: PRAZO_VENCIDO,
+          }),
+          especificacao('item_2', 'peca', null, {
+            classificationStatus: 'CLASSIFIED',
+            deadlineAt: PRAZO_VENCIDO,
+          }),
+        ],
+      ),
+    ])
+
+    const detalhe = await detalharPedido('ped_1', repo, DEPOIS_DO_DIA)
+
+    expect(detalhe.itens.map((item) => item.statusPrazoEntrega)).toEqual(['ATRASADO', 'EM_DIA'])
+  })
+
+  it('retorna SEM_PRAZO quando o item não tem prazo de entrega', async () => {
+    const repo = createRepo([
+      pedidoComPrazo(
+        [item({ id: 'item_1', solicitado: dec(10), entregue: dec(0) })],
+        [especificacao('item_1', 'peca')],
+      ),
+    ])
+
+    const detalhe = await detalharPedido('ped_1', repo, DEPOIS_DO_DIA)
+
+    expect(detalhe.itens[0].statusPrazoEntrega).toBe('SEM_PRAZO')
+  })
+
+  it('mantém a Revenda atrasada quando a indisponibilidade não gerou entrega (AD-012)', async () => {
+    const repo = createRepo([
+      pedidoComPrazo(
+        [
+          item({
+            id: 'item_1',
+            solicitado: dec(10),
+            // Revenda sem separação: a indisponibilidade não entra como
+            // executado nem como entregue e, por isso, não encerra o atraso.
+            executado: dec(0),
+            entregue: dec(0),
+          }),
+        ],
+        [
+          especificacao('item_1', 'un', 'Revenda', {
+            classificationStatus: 'CLASSIFIED',
+            sectorCode: 'REVENDA',
+            deadlineAt: PRAZO_VENCIDO,
+            activityStatus: 'COMPLETED',
+          }),
+        ],
+      ),
+    ])
+
+    const detalhe = await detalharPedido('ped_1', repo, DEPOIS_DO_DIA)
+
+    expect(detalhe.itens[0].statusPrazoEntrega).toBe('ATRASADO')
+  })
+
+  it('não usa o status operacional como substituto da entrega', async () => {
+    const repo = createRepo([
+      pedidoComPrazo(
+        [
+          item({
+            id: 'item_1',
+            solicitado: dec(10),
+            executado: dec(8),
+            entregue: dec(8),
+          }),
+          item({
+            id: 'item_2',
+            solicitado: dec(10),
+            executado: dec(8),
+            entregue: dec(10),
+          }),
+        ],
+        [
+          especificacao('item_1', 'peca', null, {
+            classificationStatus: 'CLASSIFIED',
+            deadlineAt: PRAZO_VENCIDO,
+            activityStatus: 'COMPLETED',
+          }),
+          especificacao('item_2', 'peca', null, {
+            classificationStatus: 'CLASSIFIED',
+            deadlineAt: PRAZO_VENCIDO,
+            activityStatus: 'PENDING',
+          }),
+        ],
+      ),
+    ])
+
+    const detalhe = await detalharPedido('ped_1', repo, DEPOIS_DO_DIA)
+
+    expect(detalhe.itens.map((item) => item.statusPrazoEntrega)).toEqual(['ATRASADO', 'EM_DIA'])
+  })
+
+  it('recalcula o status em uma nova consulta, sem prometer atualização automática', async () => {
+    const repo = createRepo([
+      pedidoComPrazo(
+        [item({ id: 'item_1', solicitado: dec(10), entregue: dec(0) })],
+        [
+          especificacao('item_1', 'peca', null, {
+            classificationStatus: 'CLASSIFIED',
+            deadlineAt: PRAZO_VENCIDO,
+          }),
+        ],
+      ),
+    ])
+
+    const dentroDoPrazo = await detalharPedido('ped_1', repo, DENTRO_DO_DIA)
+    const depoisDoPrazo = await detalharPedido('ped_1', repo, DEPOIS_DO_DIA)
+
+    expect(dentroDoPrazo.itens[0].statusPrazoEntrega).toBe('EM_DIA')
+    expect(depoisDoPrazo.itens[0].statusPrazoEntrega).toBe('ATRASADO')
+  })
+
+  it('acompanha a alteração do solicitado em uma nova leitura, sem tocar na integração', async () => {
+    const especificacoes = [
+      especificacao('item_1', 'peca', null, {
+        classificationStatus: 'CLASSIFIED',
+        deadlineAt: PRAZO_VENCIDO,
+      }),
+    ]
+    const comSolicitadoAnterior = createRepo([
+      pedidoComPrazo(
+        [item({ id: 'item_1', solicitado: dec(10), entregue: dec(10) })],
+        especificacoes,
+      ),
+    ])
+    const comSolicitadoAtualizado = createRepo([
+      pedidoComPrazo(
+        [item({ id: 'item_1', solicitado: dec(12), entregue: dec(10) })],
+        especificacoes,
+      ),
+    ])
+
+    const anterior = await detalharPedido('ped_1', comSolicitadoAnterior, DEPOIS_DO_DIA)
+    const atualizado = await detalharPedido('ped_1', comSolicitadoAtualizado, DEPOIS_DO_DIA)
+
+    expect(anterior.itens[0].statusPrazoEntrega).toBe('EM_DIA')
+    expect(atualizado.itens[0].statusPrazoEntrega).toBe('ATRASADO')
   })
 })

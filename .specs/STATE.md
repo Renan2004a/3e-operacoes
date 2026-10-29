@@ -129,7 +129,7 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 
 - **Decision**: Prazos em dois níveis, opcionais e independentes. Item (`OrderItem.deadlineAt`) é o prazo de atendimento/entrega ao cliente; atividade (`Activity.deadlineAt`) é o prazo operacional do setor. Sem herança automática entre os níveis. Alertas de atraso consideram cada nível no seu escopo. Sem prazo: `SEM_PRAZO`, nunca atrasado. Nenhum campo novo. O prazo é uma **data civil** no formato estrito `YYYY-MM-DD`, persistida como o **fim do dia em `America/Sao_Paulo`**; a leitura do detalhe devolve `deadlineAt` e `activityDeadlineAt`; a interface hidrata o prazo do item e exibe o do setor somente para leitura.
 - **Reason**: Preserva o design de `prazos-e-alertas` (item = entrega; atividade = setor) e `decisoes.md` (data distinta por item/setor), sem criar herança não aprovada. A correção de 2026-10-22 eliminou a causa do “prazo que desaparece”: o dado sempre esteve no banco, mas a API de detalhe não o devolvia e a interface usava apenas estado local.
-- **Trade-off**: Duas datas podem divergir; a interface indica qual prazo está em atraso. O alerta comercial do item continua dependente da AD-011. Prazos antigos gravados em meia-noite UTC não são convertidos automaticamente. Remoção de prazo, edição do prazo operacional e auditoria ficam para etapas próprias.
+- **Trade-off**: Duas datas podem divergir; a interface indica qual prazo está em atraso. O alerta comercial do item continua dependente da AD-011. Prazos antigos gravados em meia-noite UTC não são convertidos automaticamente. Remoção de prazo, edição do prazo operacional e auditoria ficam para etapas próprias. *Atualização 2026-10-28: o alerta comercial do detalhe foi implementado pela AD-025; esta decisão permanece válida nos demais pontos.*
 - **Scope**: prazos, leitura do detalhe, alertas operacionais (sem alteração de lógica), indicadores.
 - **Date**: 2026-10-22
 - **Status**: active (aprovada formalmente, implementada e validada localmente). Pendente: validação no navegador para Vendedor e Gerente.
@@ -268,9 +268,36 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Date**: 2026-10-27
 - **Status**: proposed (aguardando decisão/migração dedicada).
 
+### AD-025
+
+- **Decision**: O atraso comercial do item é derivado na leitura do detalhe. O item fica `ATRASADO` quando possui prazo de entrega (`OrderItem.deadlineAt`), o prazo já terminou e `entregue < solicitado`. Sem prazo, o status é `SEM_PRAZO`. Com atendimento integral (`entregue >= solicitado`), o status é `EM_DIA`, ainda que a entrega tenha ocorrido depois do prazo. O cálculo não usa `executado`, `pendente` nem `activityStatus`, não altera a RN004 e não cria campo persistido. O detalhe devolve `statusPrazoEntrega`, calculado no servidor com `Prisma.Decimal` e data civil em `America/Sao_Paulo` válida até o fim do dia. A interface apenas apresenta, com o rótulo “Entrega atrasada”. O alerta operacional do painel permanece baseado no prazo da atividade e não é substituído.
+- **Reason**: O badge anterior usava `pendente = solicitado − executado`, escondia atraso de item produzido e não entregue e mostrava atraso pelo motivo errado quando todo o executado já havia sido entregue. A regra preserva a distinção da AD-011 entre entrega concluída do executado e atendimento integral do solicitado.
+- **Trade-off**: O indicador representa apenas o estado atual; entrega tardia já concluída não é sinalizada e exigiria um indicador histórico separado. Em Revenda, a indisponibilidade não encerra o atendimento (AD-012); o item pode permanecer atrasado até a decisão T00.4. Itens cancelados já persistidos não podem ser excluídos até a AD-010. O status é congelado até nova consulta, sem polling.
+- **Scope**: detalhe do pedido (Vendedor/Gerente), `detalharPedido`, módulo de prazos, contrato de leitura do detalhe, testes e documentação. Permissões, prazos, saldos, RN004, painel, lista, filtros, remessas, banco e Top Gerente preservados.
+- **Date**: 2026-10-28
+- **Status**: active (implementada e validada localmente: 1085 testes, lint 0 erros, typecheck e build OK; validação no navegador não executada).
+
+## Handoff — V04 atraso comercial pela entrega (2026-10-28)
+
+- **Feature**: V04 — atraso comercial calculado pelo atendimento ao cliente (AD-025).
+- **Phase / Task**: implementação e validação local concluídas; PR #24 aberto com CI aprovado.
+- **Completed**:
+  - Função pura `calcularStatusPrazoEntrega` em `src/modules/prazos/status-prazo-entrega.ts`, delegando a `calcularStatusPrazo` com `concluido = entregue.gte(solicitado)`.
+  - `detalharPedido(orderId, repo, agora = new Date())` deriva `statusPrazoEntrega` por item com o mesmo instante; campo aditivo, sem persistência.
+  - Detalhe compartilhado Vendedor/Gerente exibe “Entrega atrasada” a partir do status do servidor; removido o relógio fixado no mount e a condição por `pendente`.
+  - Preservados RN004, `resolverStatusEntrega`, saldos, disponibilidade, status operacional, alerta do painel, lista, filtros, permissões, remessas e banco.
+  - Testes: 11 de domínio, 6 de `detalharPedido`, 1 de rota e 4 de componente (3 Vendedor + 1 Gerente); suíte com **1085 testes** aprovados e 24 ignorados.
+  - Gates: lint 0 erros (7 avisos preexistentes), typecheck OK, build OK com `DATABASE_URL` fictícia, `git diff --check` OK.
+- **In-progress**: nenhum.
+- **Next step**: revisar e mergear o PR #24 após aprovação; não houve merge nesta entrega.
+- **Blockers**: Revenda com indisponibilidade continua sujeita à T00.4; cancelamento depende da AD-010; validação no navegador não foi executada.
+- **Files changed**: `src/modules/prazos/status-prazo-entrega.ts`, `src/modules/prazos/status-prazo-entrega.test.ts`, `src/modules/indicadores/consulta-pedidos.ts`, `src/modules/indicadores/consulta-pedidos.test.ts`, `src/shared/ui/pedido-detalhe.tsx`, `src/app/(app)/vendedor/pedidos/[orderId]/page.test.tsx`, `src/app/(app)/gerente/pedidos/[orderId]/page.test.tsx`, `src/app/api/pedidos/[orderId]/route.test.ts`, `docs/decisoes.md`, `docs/regras-negocio.md`, `docs/requisitos.md`, `docs/backlog.md`, `docs/banco-de-dados.md`, `.specs/features/prazos-e-alertas/spec.md`, `.specs/features/prazos-e-alertas/design.md` e este arquivo.
+- **Branch**: `fix/v04-atraso-comercial-entrega`.
+- **PR**: #24 — https://github.com/Renan2004a/3e-operacoes/pull/24 (CI `verify` aprovado).
+
 ### AD-026
 
-*Nota de numeração: o AD-025 foi registrado na branch do PR #24 (V04, atraso comercial), ainda não mergeado. Para evitar colisão quando ele entrar, a próxima decisão nesta base é a AD-026.*
+*Nota de numeração: o AD-025 pertence ao PR #24 (V04, atraso comercial) e o AD-026 ao PR #30 (V06); ambos entraram na mesma rodada de integração, sem colisão.*
 
 - **Decision**: A classificação manual do item é uma **única unidade transacional** (V06). A transição condicional do item pendente, a leitura autoritativa da categoria persistida, a criação, reativação ou reutilização do mapeamento, a auditoria correspondente e a criação da atividade rodam na mesma transação MySQL; qualquer falha desfaz toda a solicitação. O domínio fica desacoplado de Prisma: a rota recebe uma **unidade de trabalho** (`UnidadeTrabalhoClassificacao`) que entrega portas de classificação e de mapeamento ligadas ao mesmo cliente transacional, sem transações aninhadas e sem operação decisiva no `prisma` global dentro do escopo. Dentro da transação, a garantia de mapeamento usa leitura bloqueante (`SELECT ... FOR UPDATE` por categoria) para consultar o estado atual e preservar o mapeamento ativo vencedor; mapeamento ativo é reutilizado sem auditoria, inativo é reativado com o setor escolhido (auditado como `UPDATE`), categoria nova cria o mapeamento (auditado como `CREATE`) e item sem categoria não cria mapeamento. Conflitos transatórios identificados — deadlock/conflito de escrita (`P2034`) e categoria nova disputada (`P2002` na chave única de `legacyCategory`) — repetem a **unidade completa** até um limite pequeno (máximo duas tentativas extras); `409`/`404`/`400` e demais erros propagam sem repetição. O fluxo automático (`classificarPorMapeamento`) e o comportamento administrativo de `/api/mapeamentos` não mudam. Nenhuma migração. Falhas controladas existem apenas no ambiente de teste de integração, não em produção.
 - **Reason**: Após os merges de V05 (#17) e V02 (#19), `garantirMapeamento` e sua auditoria rodavam fora da transação que classifica o item: uma falha posterior (inclusive o conflito `409` do árbitro) deixava mapeamento criado ou reativado por uma operação que não se efetivou.

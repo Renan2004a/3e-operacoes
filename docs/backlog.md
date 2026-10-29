@@ -277,8 +277,8 @@ Itens deliberadamente fora da correção de prazos, aprovados para etapa futura.
 
 - **Remoção de prazo:** permitir limpar um prazo já definido, com confirmação e o mesmo tratamento de data civil. Depende de decisão de contrato e auditoria (D3).
 - **Auditoria de alteração de prazo:** registrar usuário, valor anterior, valor novo e data/hora em `logs_auditoria`, na etapa de RFN006 (D7).
-- **Alerta comercial por prazo de entrega:** separar do alerta operacional e usar `OrderItem.deadlineAt` com o critério de atendimento integral da AD-011. Não usar quantidade executada como substituta da entregue (D4).
-- **Sinalização de atraso do prazo de entrega na interface:** hoje o badge do item exibe a data sem indicar atraso. Antes de implementar, definir o critério de conclusão do item (entregue = solicitado?) para não confundir com o prazo operacional nem usar a quantidade executada como substituta da entregue (AD-011). A lógica de cálculo (`calcularStatusPrazo`) já existe.
+- **Alerta comercial por prazo de entrega no detalhe (D4):** **implementado em 2026-10-28 (AD-025)**. O detalhe compartilhado por Vendedor/Gerente usa `OrderItem.deadlineAt` e `entregue < solicitado`, sem `executado`, `pendente` ou status da atividade. Atendimento integral encerra o atraso atual. Permanecem fora desta etapa: alerta comercial no painel, na lista e indicador histórico de entrega tardia.
+- **Alerta comercial no painel/lista e histórico de entrega tardia:** o painel continua com o alerta operacional por prazo de atividade; a lista não recebeu status comercial; “entregue depois do prazo” exigiria histórico próprio. Retomar somente após decisão específica.
 - **Rótulo “Atrasados no setor”:** renomear o grupo operacional do painel para explicitar o escopo; a lógica não muda (D10).
 - **Edição do prazo operacional na interface:** hoje somente leitura; definir perfil, local da ação e auditoria antes de implementar (D5).
 - **Data de entrega do Top Gerente:** investigar `orcamento.prazo_ent` (data ou prazo em dias?) e, se aprovado, definir precedência entre ERP e prazo local (D8).

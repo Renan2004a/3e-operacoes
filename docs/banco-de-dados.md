@@ -336,7 +336,7 @@ Nenhuma migração foi executada nem aplicada nesta etapa. Esta tabela registra 
 | Semântica do prazo (AD-009) | **Aprovada**, sem alteração de schema | Data civil `YYYY-MM-DD` persistida no fim do dia em `America/Sao_Paulo`. Nenhuma migração. |
 | Auditoria de alteração de prazo (item e atividade) | **Adiada (D7)**, não implementada | Fica para etapa própria de RFN006. Nenhuma auditoria existente foi removida. |
 | Remoção de prazo | **Adiada (D3)** | Registrar no backlog; não há contrato para limpar `deadlineAt`. |
-| Alerta comercial por prazo de entrega | **Adiado (D4)** | Depende do critério de atendimento integral da AD-011. Não usar quantidade executada como substituta da entregue. |
+| Alerta comercial por prazo de entrega | **Implementado como derivado (AD-025)**, sem alteração de schema | `statusPrazoEntrega` é calculado na leitura do detalhe com `entregue < solicitado`; não há campo persistido, migração ou index. O painel continua operacional, pelo prazo da atividade. |
 | Data de entrega do Top Gerente | **Não importada (D8)** | Conector e contrato inalterados; nenhuma regra de precedência criada. |
 | Normalização de prazos antigos | **Não executada (D6)** | Sem script e sem migration. Em ambiente de demonstração, re-salvar pela interface. Dados reais exigem autorização específica. |
 | Cancelamento lógico de item | **Pendente** | Conceito aprovado. Depende do contrato do conector e de decisão sobre o campo em `pedidos_itens`. Nenhum campo criado. |

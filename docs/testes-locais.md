@@ -324,3 +324,25 @@ Novos testes: `painel-ocorrencias.test.ts`, `api/producao/ocorrencias/route.test
 - O histórico usa `logs_auditoria` com a ação `DEADLINE_CHANGED`; não há tabela nova.
 - A reestruturação do banco (IDs inteiros, `perfis`, remoção de `remessas_programadas`, `apontamentos`) está planejada em `docs/revisao-banco-professor.md` e **não** foi executada.
 - A Expedição ainda não tem tela própria de remessas; a gestão permanece no detalhe do Gerente até a migração.
+
+## 12. Validação manual — V04 atraso comercial (AD-025, 2026-10-28)
+
+**Status:** roteiro ainda não executado nesta entrega; a cobertura automatizada está em domínio, consulta, rota e componente.
+
+### Preparação
+
+- Subir a aplicação com o banco de teste e importar um pedido com ao menos um item e prazo de entrega.
+- Repetir o roteiro com Vendedor e Gerente, pois usam o mesmo detalhe.
+
+### Roteiro
+
+1. Item **solicitado 10, executado 10, entregue 0**, prazo de ontem: o detalhe deve mostrar “Prazo de entrega” e **“Entrega atrasada”**.
+2. Registrar entrega de 10 e abrir o detalhe novamente: “Entrega atrasada” deve desaparecer; a entrega tardia não vira atraso atual.
+3. Item **solicitado 10, executado 8, entregue 8**, prazo vencido: deve continuar “Entrega atrasada” (atendimento 8 < 10), mesmo com o executado concluído.
+4. Item **solicitado 10, executado 8, entregue 10** por exceção gerencial, prazo vencido: **não** deve mostrar “Entrega atrasada”.
+5. Item sem prazo: deve mostrar “Sem prazo”, nunca “Entrega atrasada”.
+6. Item com prazo de hoje: não deve atrasar; salvar o prazo e conferir que o dia não desloca.
+7. Item com prazo operacional vencido e entrega integral: deve mostrar “Atrasado” apenas na linha do setor, sem “Entrega atrasada”.
+8. Painel do Gerente: “Atividades atrasadas” deve continuar reagindo ao prazo da atividade, não ao prazo de entrega do item.
+9. Revenda sem entrega e com indisponibilidade registrada: deve continuar atrasada; indisponibilidade não substitui entrega.
+10. Nova consulta (F5 ou reabrir o detalhe) recalcula o status; não há promessa de atualização automática à meia-noite.

@@ -151,6 +151,7 @@ describe('GET /api/pedidos/[orderId]', () => {
       unit: 'un',
       deadlineAt: null,
       activityDeadlineAt: null,
+      statusPrazoEntrega: 'SEM_PRAZO',
       classificationStatus: 'PENDING_CLASSIFICATION',
       legacyCategory: null,
       sectorId: null,
@@ -176,6 +177,20 @@ describe('GET /api/pedidos/[orderId]', () => {
     const body = await response.json()
     expect(body.pedido.itens[0].deadlineAt).toBe(prazoEntrega.toISOString())
     expect(body.pedido.itens[0].activityDeadlineAt).toBe(prazoSetor.toISOString())
+  })
+
+  it('devolve o status comercial do prazo de entrega (AD-025)', async () => {
+    seed('ped_1', '1001', 'Construtora X', [
+      {
+        ...item('item_1', 10, 10, 0),
+        deadlineAt: new Date('2020-01-01T02:59:59.999Z'),
+      },
+    ])
+
+    const response = await GET(request(), context('ped_1'))
+
+    expect(response.status).toBe(200)
+    expect((await response.json()).pedido.itens[0].statusPrazoEntrega).toBe('ATRASADO')
   })
 
   it('responde 200 com os totais por unidade de medida, sem somar unidades diferentes (RN02)', async () => {

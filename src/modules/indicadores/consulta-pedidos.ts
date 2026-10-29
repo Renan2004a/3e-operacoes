@@ -1,3 +1,5 @@
+import type { StatusPrazo } from '../prazos/atraso'
+import { calcularStatusPrazoEntrega } from '../prazos/status-prazo-entrega'
 import type { ActivityStatus } from '../producao/tipos'
 import { agruparPorUnidade, somarQuantidades } from '../producao/totais-por-unidade'
 import type { Quantidade } from '../producao/unidades'
@@ -152,6 +154,11 @@ export interface ItemDetalhado extends ItemSaldo {
   deadlineAt: Date | null
   /** Prazo operacional do setor, ou `null` quando não definido (AD-009, D5). */
   activityDeadlineAt: Date | null
+  /**
+   * Status comercial do prazo de entrega, derivado na leitura e sem
+   * persistência (AD-025). Não confundir com o prazo operacional da atividade.
+   */
+  statusPrazoEntrega: StatusPrazo
   classificationStatus: StatusClassificacaoItem
   /** Categoria do produto no legado (para aprender o de/para categoria→setor). */
   legacyCategory?: string | null
@@ -331,6 +338,7 @@ export function totalizarPorUnidade(itens: readonly ItemDetalhado[]): TotaisPorU
 export async function detalharPedido(
   orderId: string,
   repo: ConsultaPedidosRepository,
+  agora: Date = new Date(),
 ): Promise<PedidoDetalhado> {
   const itens = await saldoPedido(orderId, repo)
   const cabecalho = await repo.buscarCabecalhoPedido(orderId)
@@ -355,6 +363,12 @@ export async function detalharPedido(
       unit: especificacao?.unit ?? '',
       deadlineAt: especificacao?.deadlineAt ?? null,
       activityDeadlineAt: especificacao?.activityDeadlineAt ?? null,
+      statusPrazoEntrega: calcularStatusPrazoEntrega({
+        prazo: especificacao?.deadlineAt ?? null,
+        solicitado: item.solicitado,
+        entregue: item.entregue,
+        agora,
+      }),
       classificationStatus: especificacao?.classificationStatus ?? 'PENDING_CLASSIFICATION',
       legacyCategory: especificacao?.legacyCategory ?? null,
       sectorId: especificacao?.sectorId ?? null,
