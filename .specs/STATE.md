@@ -4,6 +4,8 @@
 
 Projeto em produção no Railway, com perfis de Vendedor, Gerente, Operador, Expedição e Administração. O perfil Operador foi revisado em 2026-10-26: telas separadas (Meus pedidos / Ocorrências / execução), feedback de ações e ocorrências visíveis no painel do Gerente (AD-021).
 
+Em 2026-10-29, o marco de correções do Vendedor **V01–V09** foi incorporado à `main` (PRs #17–#24, #30; detalhes no handoff do marco mais abaixo), mantendo os contratos existentes e as contribuições de Expedição. **Ainda não há aceite formal do usuário nem validação visual/E2E desta rodada** — ambos seguem pendentes e não foram declarados como concluídos.
+
 ## Decisões vigentes
 
 - OpenCode é o agente principal de desenvolvimento.
@@ -276,6 +278,40 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Scope**: detalhe do pedido (Vendedor/Gerente), `detalharPedido`, módulo de prazos, contrato de leitura do detalhe, testes e documentação. Permissões, prazos, saldos, RN004, painel, lista, filtros, remessas, banco e Top Gerente preservados.
 - **Date**: 2026-10-28
 - **Status**: active (implementada e validada localmente: 1085 testes, lint 0 erros, typecheck e build OK; validação no navegador não executada).
+
+## Marco — Vendedor V01–V09 incorporados à `main` (2026-10-29)
+
+- **Phase / Task**: rodada de revisão e integração concluída (autoria `Marcelo Fiuza`); **commit final da `main`: `6d0bf3417da498e3dbce70d0096c6e138cbedab`** (merge do PR #24; a integração da rodada não altera este número — nenhum terceiro avançou a `main` depois dele até o registro).
+- **Correções incorporadas (ordem de merge)**:
+
+| Correção | PR | Merge commit | Escopo consolidado |
+| --- | --- | --- | --- |
+| V05 — categoria do item + autoria da sessão na classificação | [PR #17](https://github.com/Renan2004a/3e-operacoes/pull/17) | `84b25d6` | Corpo não controla categoria nem autor; fonte é o item persistido e a sessão. |
+| V02 — classificação atômica por item | [PR #19](https://github.com/Renan2004a/3e-operacoes/pull/19) | `c192751` | Transição condicional + `Activity` na mesma transação; vencedor único. |
+| V01 — seleção efetiva no desmembramento sugerido | [PR #18](https://github.com/Renan2004a/3e-operacoes/pull/18) | `d833b76` | Sugestão usada sem alterar seletor; escolha manual prevalece, inclusive vazia. |
+| V03 — estado após conflito | [PR #20](https://github.com/Renan2004a/3e-operacoes/pull/20) | `79054a2` | 409 consulta o estado persistido; sem falso sucesso nem POST repetido. |
+| V06 — mapeamento/auditoria/classificação transacionais | [PR #30](https://github.com/Renan2004a/3e-operacoes/pull/30) | `d0e8d34` | Unidade transacional única (AD-026), rollback e concorrência no MySQL. |
+| V09 — orientação de remessas por permissão | [PR #23](https://github.com/Renan2004a/3e-operacoes/pull/23) | `da5d7ef` | Vendedor acompanha datas; gestão é Gerência/Expedição (AD-023). |
+| V08 — prazo e auditoria transacionais | [PR #21](https://github.com/Renan2004a/3e-operacoes/pull/21) | `761ac9f` | Escrita com `FOR UPDATE`; auditoria registra antes real por sessão. |
+| V07 — consulta vigente | [PR #22](https://github.com/Renan2004a/3e-operacoes/pull/22) | `21abcf2` | Respostas antigas não sobrescrevem lista/paginação/erro. |
+| V04 — atraso comercial pela entrega | [PR #24](https://github.com/Renan2004a/3e-operacoes/pull/24) | `6d0bf34` | Atraso por prazo vencido e `entregue < solicitado` (AD-025); rótulo “Entrega atrasada”; alerta operacional independente. |
+
+- **Executado nesta rodada (evidência real)**:
+  - Cada branch atualizada por **merge da `main`** (sem force push), gates locais na branch atualizada e CI `verify` **success** no head de cada merge (heads `5460ba3`, `ef1b3ed`, `8011692`, `a5b02aa`, `322a49c`, `a0a97b9`, `2c7f2f7`).
+  - Validação final do conjunto sobre `6d0bf34`: `npm run lint` 0 erros (6 avisos preexistentes), `npm run typecheck` OK, `npm run typecheck:connector` OK, `npm test` **1174 aprovados + 47 gated ignorados**, `npm run build` OK, `git diff --check` limpo.
+  - Integração MySQL real no container temporário exclusivo de teste (identidade confirmada: `@@hostname = 50929a814e23`, porta 33306): setores/classificação **16/16** (`v06_integration`), prazos **13/13** (`prazos_integration`), consulta A1 **18/18** (`a1_integration`). Rollbacks, corridas e `FOR UPDATE` comprovados nos testes; falhas controladas existem apenas no ambiente de teste.
+  - Publicação: os merges dispararam o **deploy automático no Railway (produção)**; `GET /api/health` em https://3e-operacoes-production.up.railway.app/api/health respondeu **HTTP 200 `status:ok`** após o último merge (2026-10-29T03:40Z).
+- **Pendente nesta rodada (não declarado como concluído)**:
+  - **Validação no navegador/E2E da rodada**: não executada. O Playwright 15/15 e a validação hospedada de 2026-10-27 antecedem estes merges e validam a rodada anterior; nada desta rodada foi verificado visualmente. Roteiro de verificação manual registrado no relatório da sessão.
+  - **Aceite do usuário**: não declarado; nenhum registro de aceite foi criado.
+  - **Prazos antigos em meia-noite UTC (AD-009/D6)**: sem verificação no banco real.
+- **Limitações vigentes (fora do escopo desta rodada, mantidas)**:
+  - **Revenda**: `indisponível` não encerra o atendimento; pedido pode permanecer atrasado até a decisão **T00.4** (AD-012; RN031 preservada).
+  - **Cancelamento lógico de item**: depende do campo/indicador do conector (**AD-010**) — nada implementado; itens cancelados persistidos não podem ser excluídos.
+  - Alerta comercial no painel/lista e indicador histórico de entrega tardia (AD-025/D4/D10); edição do prazo operacional na interface (D5); remoção de prazo (D3); data de entrega do Top Gerente (D8); auditoria consolidada de prazos antigos.
+  - Migrações de reestruturação do banco inscritas em `docs/revisao-banco-professor.md` (**AD-024**), não executadas. Nenhuma migration foi aplicada em decorrência desta rodada.
+- **Recursos preservados**: worktrees e evidências das sessões mantidos; bancos de teste (`v05v02_integration`, `v06_integration`, `v08_integration`, `a1_integration`, `prazos_integration`) e o container `3e-review-mysql` seguem disponíveis, sem uso em produção.
+- **PR documental desta rodada**: https://github.com/Renan2004a/3e-operacoes/pull/31 — exclusivamente documental, sem merge.
 
 ## Handoff — V04 atraso comercial pela entrega (2026-10-28)
 
