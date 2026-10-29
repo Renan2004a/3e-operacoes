@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { unidadeUsaCasasDecimais } from '@/modules/producao/unidade-medida'
 import { ApiError, apiGet, apiPost } from '@/shared/http/api-client'
 import { Alert } from '@/shared/ui/alert'
 import { Badge } from '@/shared/ui/badge'
@@ -157,6 +158,7 @@ function EntregaForm({ item, rotulo, podeAutorizar, onRegistrada, onSaldoMudou }
     }
   }
 
+  const casasDecimais = item.unit ? unidadeUsaCasasDecimais(item.unit) : false
   const valor = numero(quantidade)
   const exibir = (v: number) => formatarQuantidadeParaExibicao(item.unit ?? null, String(arredondar(v)))
   const concluiItem = numero(item.entregue) + valor >= numero(item.executado)
@@ -176,19 +178,45 @@ function EntregaForm({ item, rotulo, podeAutorizar, onRegistrada, onSaldoMudou }
         </Alert>
       ) : null}
 
-      <Field label={`Quantidade do ${rotulo}`} required>
+      <Field
+        label={`Quantidade do ${rotulo}`}
+        required
+        hint={
+          disponivel > 0
+            ? `Pode entregar até ${exibir(disponivel)}${item.unit ? ` ${item.unit}` : ''}. ${casasDecimais ? 'Até 2 casas decimais.' : 'Use número inteiro.'}`
+            : 'Sem saldo disponível: a entrega exige autorização do gerente.'
+        }
+      >
         {(props) => (
           <Input
             {...props}
             type="number"
-            inputMode="decimal"
+            inputMode={casasDecimais ? 'decimal' : 'numeric'}
             min="0"
-            step="any"
+            step={casasDecimais ? '0.01' : '1'}
             value={quantidade}
             onChange={(evento) => setQuantidade(evento.target.value)}
+            onWheel={(evento) => evento.currentTarget.blur()}
           />
         )}
       </Field>
+
+      {disponivel > 0 ? (
+        <Button
+          variant="outline"
+          disabled={enviando}
+          aria-label={`Entregar tudo (${exibir(disponivel)}) do ${rotulo}`}
+          onClick={() => {
+            setQuantidade(String(arredondar(disponivel)))
+            setExcecao(false)
+            setErro(null)
+            setSucesso(false)
+            setConfirmando(true)
+          }}
+        >
+          Entregar tudo ({exibir(disponivel)})
+        </Button>
+      ) : null}
 
       {excede ? (
         <div className="grid gap-3 rounded-lg border border-warning/40 bg-warning-bg p-3">
