@@ -30,6 +30,7 @@ src/generated/prisma/
 docs/video/raw*/
 docs/video/steps*/
 docs/video/*.webm
+docs/video-demo-*/tmp/
 
 # Intermediarios da gravacao (frames e partes do video)
 docs/video/frames/
