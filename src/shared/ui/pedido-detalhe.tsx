@@ -1132,8 +1132,10 @@ export function PedidoDetalhe({
                       </Alert>
                     ) : desmembrado ? (
                       <Alert variant="success" title="Item desmembrado">
-                        Setor definido: {item.sectorName ?? '—'}. Você pode continuar com as
-                        remessas abaixo.
+                        Setor definido: {item.sectorName ?? '—'}.{' '}
+                        {podeGerenciarRemessas
+                          ? 'Você pode continuar com as remessas abaixo.'
+                          : 'Acompanhe abaixo as datas das remessas programadas pela Gerência/Expedição.'}
                       </Alert>
                     ) : (
                       <form
