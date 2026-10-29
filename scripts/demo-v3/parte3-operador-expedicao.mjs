@@ -59,7 +59,7 @@ try {
   await p.getByRole('heading', { name: 'Fila de produção' }).waitFor({ timeout: 30000 })
   const cardExecucao = p
     .locator('li')
-    .filter({ hasText: /Em execução|A iniciar/ })
+    .filter({ hasText: /Em andamento|Em execução|A iniciar|Pendente/ })
     .first()
   await d.clicar(cardExecucao.getByRole('link', { name: /Abrir atividade/ }).first(), {
     espera: 1800,
@@ -151,23 +151,45 @@ try {
   )
   await login('expedicao@3e.local', 'expedicao123', 'Expedição', 'Acesso da Expedição')
   await p.getByRole('heading', { level: 1, name: 'Entregas' }).waitFor({ timeout: 30000 })
+  await p.getByRole('button', { name: /Abrir pedido/ }).first().waitFor({ timeout: 30000 })
   await d.narrar(
     'Entregas',
-    'A Expedição seleciona o pedido, confere o disponível e registra a entrega por item.',
-    5500,
+    'A Expedição usa a mesma lista de pedidos da Venda e da Gerência: busca por número e cliente, filtros e páginas. Selecione o pedido para abrir o detalhe.',
+    6500,
   )
 
-  const selectPedido = p.getByLabel('Pedido')
-  const opcoes = await selectPedido.locator('option').allTextContents()
-  const indice82270 = opcoes.findIndex((texto) => texto.includes('82270'))
-  await d.selecionar(selectPedido, { index: indice82270 > 0 ? indice82270 : 1 }, { espera: 2500 })
+  await d.preencher(p.getByLabel('Pesquisar por número'), '82268', { espera: 400 })
+  await d.clicar(p.getByRole('button', { name: 'Filtrar' }), {
+    espera: 1600,
+    titulo: 'Buscando o pedido',
+    texto: 'A busca por número localiza o pedido e preserva o filtro para o retorno.',
+  })
+  await d.clicar(p.getByRole('button', { name: 'Abrir pedido 82268' }), {
+    espera: 2200,
+    titulo: 'Abrindo o pedido',
+    texto: 'O detalhe tem rota própria e o botão Voltar devolve a lista com a busca preservada.',
+  })
   await p.getByText(/Disponível:|Aguardando produção|Totalmente entregue/).first().waitFor({ timeout: 30000 })
   await d.narrar(
     'Itens e situação',
-    'Cada item mostra descrição, código, cliente, previsão e a situação real: disponível, aguardando produção ou totalmente entregue.',
-    7000,
+    'Cada item mostra descrição, código, cliente, previsão, remessas programadas e a situação real: disponível, aguardando produção ou totalmente entregue.',
+    7500,
   )
 
+  await p.getByText('Histórico de entregas').first().scrollIntoViewIfNeeded().catch(() => undefined)
+  await d.narrar(
+    'Histórico de entregas',
+    'O histórico mostra as entregas já registradas no item, com quantidade, responsável e data/hora. É somente leitura.',
+    6500,
+  )
+  await p.getByText('Remessas programadas').first().scrollIntoViewIfNeeded().catch(() => undefined)
+  await d.narrar(
+    'Remessas',
+    'As remessas programadas aparecem no item, com número, data prevista e confirmação. A Expedição acompanha o que foi combinado.',
+    6000,
+  )
+
+  // Entregar tudo no primeiro item com saldo
   const botaoTudo = p.getByRole('button', { name: /Entregar tudo .* do item/ }).first()
   if ((await botaoTudo.count()) > 0) {
     await d.clicar(botaoTudo, {
@@ -190,15 +212,10 @@ try {
     await d.narrar('Entrega concluída', 'O item passa a “Totalmente entregue” ou reduz o saldo disponível.', 5000)
   }
 
-  // Saldo insuficiente e bloqueio (em outro pedido, com itens disponíveis)
-  const opcoes82268 = await selectPedido.locator('option').allTextContents()
-  const indice82268 = opcoes82268.findIndex((texto) => texto.includes('82268'))
-  if (indice82268 > 0) {
-    await d.selecionar(selectPedido, { index: indice82268 }, { espera: 2500 })
-    await p.getByText(/Disponível:/).first().waitFor({ timeout: 30000 })
-  }
+  // Acima do disponível: bloqueio para a Expedição
   const quantidade = p.getByLabel(/Quantidade do item \d+/).first()
   if ((await quantidade.count()) > 0) {
+    await quantidade.scrollIntoViewIfNeeded()
     await d.preencher(quantidade, '999', { espera: 600 })
     await d.narrar(
       'Acima do disponível',
@@ -219,6 +236,12 @@ try {
     'Itens sem produção aparecem como “Aguardando produção”. O formulário de entrega não é oferecido enquanto não houver saldo.',
     5500,
   )
+
+  await d.clicar(p.getByRole('link', { name: /Voltar para os pedidos/ }), {
+    espera: 1600,
+    titulo: 'Voltando para a lista',
+    texto: 'A busca e a página são preservadas no retorno.',
+  })
 
   await d.capitulo(
     '10',

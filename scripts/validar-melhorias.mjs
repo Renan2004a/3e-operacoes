@@ -68,20 +68,19 @@ try {
   await pagina.getByText('Alertas operacionais').waitFor({ timeout: 40000 })
   verificar('painel: rótulo "Atividades atrasadas"', await pagina.getByText('Atividades atrasadas').isVisible())
 
-  // 6. Expedição: identificação do item
+  // 6. Expedição: lista e identificação do item
   await entrar('expedicao@3e.local', 'expedicao123')
   await pagina.getByRole('heading', { level: 1, name: 'Entregas' }).waitFor({ timeout: 40000 })
-  verificar('expedição: instrução inicial', await pagina.getByText('Selecione um pedido').first().isVisible())
-  const select = pagina.getByLabel('Pedido')
-  const opcoes = await select.locator('option').count()
-  if (opcoes > 1) {
-    await select.selectOption({ index: opcoes - 1 })
-    await pagina.getByText(/Disponível:|Aguardando produção/).first().waitFor({ timeout: 30000 })
-    const texto = await pagina.locator('main').innerText()
-    verificar('expedição: item com descrição ou fallback', /Item \d+ sem descrição|Disponível:/.test(texto))
-    verificar('expedição: cliente no cartão', texto.includes('Cliente '))
-    await pagina.screenshot({ path: join(DIR, 'expedicao-itens.png'), fullPage: false })
-  }
+  await pagina.getByRole('button', { name: /Abrir pedido/ }).first().waitFor({ timeout: 40000 })
+  verificar('expedição: lista de pedidos', true)
+  await pagina.getByRole('button', { name: /Abrir pedido/ }).first().click()
+  await pagina.waitForURL(/\/expedicao\/entregas\/.+/, { timeout: 40000 })
+  await pagina.getByText(/Disponível:|Aguardando produção|Totalmente entregue/).first().waitFor({ timeout: 40000 })
+  const texto = await pagina.locator('main').innerText()
+  verificar('expedição: item com descrição ou fallback', /Item \d+ sem descrição|Disponível:/.test(texto))
+  verificar('expedição: cliente no cartão', texto.includes('Cliente '))
+  verificar('expedição: histórico de entregas disponível', texto.includes('Histórico de entregas'))
+  await pagina.screenshot({ path: join(DIR, 'expedicao-itens.png'), fullPage: false })
 
   // 7. Admin usuários no celular
   await entrar('admin@3e.local', 'admin123')
