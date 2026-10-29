@@ -431,6 +431,89 @@ describe('EntregasPage', () => {
     expect(screen.getByLabelText('Quantidade do item 1')).toBeInTheDocument()
   })
 
+  function comUnidade(unit: string, executado: string, entregue: string) {
+    const base = detalhe(5)
+    const disponivel = String(Number(executado) - Number(entregue))
+    const quantidades = { solicitado: executado, executado, entregue, disponivel, pendente: '0' }
+    return {
+      ...base,
+      itens: [{ ...base.itens[0], unit, ...quantidades }],
+      totaisPorUnidade: [{ ...base.totaisPorUnidade[0], unidade: unit, ...quantidades }],
+    }
+  }
+
+  it('o campo diz a unidade, o disponível e a regra de casas decimais da peça (H5)', async () => {
+    configurarApi([comUnidade('PC', '8', '3')], 'SHIPPING')
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+    const campo = await screen.findByLabelText('Quantidade do item 1')
+
+    expect(campo).toHaveAccessibleDescription(/Pode entregar até 5 PC\. Use número inteiro\./)
+    expect(campo).toHaveAttribute('step', '1')
+  })
+
+  it('para metro o campo aceita 2 casas e avisa (H5)', async () => {
+    configurarApi([comUnidade('M', '8.5', '3')], 'SHIPPING')
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+    const campo = await screen.findByLabelText('Quantidade do item 1')
+
+    expect(campo).toHaveAccessibleDescription(/Pode entregar até 5,50 M\. Até 2 casas decimais\./)
+    expect(campo).toHaveAttribute('step', '0.01')
+  })
+
+  it('"Entregar tudo" abre a confirmação com todo o disponível, sem digitar (H5, H7)', async () => {
+    configurarApi([comUnidade('PC', '8', '3')], 'SHIPPING')
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+    fireEvent.click(await screen.findByRole('button', { name: 'Entregar tudo (5) do item 1' }))
+
+    const dialogo = await screen.findByRole('dialog')
+    expect(dialogo).toHaveTextContent('Você vai entregar 5 do item 1.')
+    expect(dialogo).toHaveTextContent('Esta entrega conclui o item.')
+    expect(mocks.apiPost).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar entrega' }))
+
+    await waitFor(() =>
+      expect(mocks.apiPost).toHaveBeenCalledWith('/api/pedidos/itens/item_1/entregas', {
+        quantidade: '5',
+        excecao: false,
+        motivoExcecao: undefined,
+      }),
+    )
+  })
+
+  it('"Entregar tudo" em metro envia o valor decimal exato (H5)', async () => {
+    configurarApi([comUnidade('M', '8.5', '3')], 'SHIPPING')
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+    fireEvent.click(await screen.findByRole('button', { name: 'Entregar tudo (5,50) do item 1' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar entrega' }))
+
+    await waitFor(() =>
+      expect(mocks.apiPost).toHaveBeenCalledWith('/api/pedidos/itens/item_1/entregas', {
+        quantidade: '5.5',
+        excecao: false,
+        motivoExcecao: undefined,
+      }),
+    )
+  })
+
+  it('sem saldo não há "Entregar tudo" (H5)', async () => {
+    configurarApi([comUnidade('PC', '8', '8')], 'PRODUCTION_MANAGER')
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+    await screen.findByLabelText('Quantidade do item 1')
+
+    expect(screen.queryByRole('button', { name: /Entregar tudo/ })).not.toBeInTheDocument()
+  })
+
   it('usa o cabeçalho de página com o título (VIS-09)', async () => {
     configurarApi([detalhe(5)])
     render(<EntregasPage />)
