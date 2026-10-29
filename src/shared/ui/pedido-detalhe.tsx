@@ -403,14 +403,14 @@ export function PedidoDetalhe({
 
     setClassificando(itemId)
     try {
+      // V05: a categoria do de/para é lida pelo servidor a partir do item
+      // persistido; o corpo só informa o setor escolhido.
       const resposta = await apiPost<{ status: string; sectorId?: string; activityId?: string }>(
         `/api/pedidos/itens/${itemId}/classificar`,
-        {
-          sectorId,
-          // Ensina o de/para categoria→setor para as próximas importações.
-          legacyCategory: item?.legacyCategory ?? undefined,
-        },
+        { sectorId },
       )
+      // V01: a seleção efetiva capturada no início alimenta o estado; o setor
+      // que a ocorrência confirma vem da resposta do servidor.
       marcarClassificado(itemId, resposta?.sectorId || sectorId)
       setClassificados((atual) => ({ ...atual, [itemId]: true }))
       setSucesso('Item desmembrado com sucesso.')

@@ -1,11 +1,13 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { unidadeUsaCasasDecimais } from '@/modules/producao/unidade-medida'
 import { ApiError, apiGet, apiPost } from '@/shared/http/api-client'
 import { Alert } from '@/shared/ui/alert'
 import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
+import { ConfirmDialog } from '@/shared/ui/confirm-dialog'
 import { Field } from '@/shared/ui/field'
 import { Input } from '@/shared/ui/input'
 import { Metric } from '@/shared/ui/metric'
@@ -13,6 +15,7 @@ import { PageHead } from '@/shared/ui/page-head'
 import { Spinner } from '@/shared/ui/spinner'
 import { formatarDiaCivil } from '@/shared/time/dia-civil'
 import { formatarQuantidadeParaExibicao, valorPorUnidade, type TotalUnidadeView } from '@/shared/ui/totais-unidade'
+import { situacaoDoItem } from './situacao-item'
 
 interface ItemSaldo {
   itemId: string
@@ -50,6 +53,36 @@ function numero(valor: string | number): number {
   return Number(String(valor).replace(',', '.'))
 }
 
+/** Evita ruído de ponto flutuante (0,1 + 0,2) nos totais mostrados na confirmação. */
+function arredondar(valor: number): number {
+  return Number(valor.toFixed(2))
+}
+
+/**
+ * Mensagem por causa do erro, dizendo o que aconteceu e o que fazer (H9). O 409
+ * só ocorre aqui quando o saldo mudou depois de a tela abrir: a própria tela já
+ * barra o excedente sem autorização antes de enviar.
+ */
+function mensagemDeErro(error: unknown): string {
+  if (!(error instanceof ApiError)) {
+    return 'Não foi possível registrar a entrega. Tente novamente.'
+  }
+  if (error.status === 0) {
+    return 'Sem conexão com o servidor. Confira se a entrega já aparece no saldo antes de tentar de novo.'
+  }
+  if (error.status === 401) return 'Sua sessão expirou. Entre novamente.'
+  if (error.status === 403) return 'Apenas o gerente pode autorizar uma entrega acima do disponível.'
+  if (error.status === 404) return 'Este item não foi encontrado. Atualize a página e tente de novo.'
+  if (error.status === 409) {
+    return 'O saldo disponível mudou desde que a tela foi aberta. Atualizamos os valores: confira a quantidade e tente de novo.'
+  }
+  if (error.code === 'invalid_quantity') {
+    return 'A quantidade não é válida para esta unidade. Use número inteiro para peças e até 2 casas decimais para metros.'
+  }
+  if (error.code === 'override_reason_required') return 'Informe o motivo da exceção.'
+  return 'Não foi possível registrar a entrega. Tente novamente.'
+}
+
 interface EntregaFormProps {
   item: ItemSaldo
   /** Rótulo humano do item na tela (posição), no lugar do CUID. */
@@ -57,25 +90,30 @@ interface EntregaFormProps {
   /** O perfil atual pode autorizar entrega acima do disponível. */
   podeAutorizar: boolean
   onRegistrada: () => void
+  /** O servidor recusou por saldo diferente do exibido: recarrega o pedido. */
+  onSaldoMudou: () => void
 }
 
 /**
- * Formulário de entrega de um item (FEP-06, FEP-07). Dentro do disponível
- * registra direto; acima do disponível exige autorização de gerente com motivo.
+ * Formulário de entrega de um item (FEP-06, FEP-07). A entrega não pode ser
+ * desfeita, então o envio passa por uma janela de confirmação com o resumo.
+ * Acima do disponível exige autorização de gerente com motivo, e a janela vira
+ * um aviso reforçado de que a exceção será auditada.
  */
-function EntregaForm({ item, rotulo, podeAutorizar, onRegistrada }: EntregaFormProps) {
+function EntregaForm({ item, rotulo, podeAutorizar, onRegistrada, onSaldoMudou }: EntregaFormProps) {
   const [quantidade, setQuantidade] = useState('')
   const [excecao, setExcecao] = useState(false)
   const [motivo, setMotivo] = useState('')
   const [erro, setErro] = useState<string | null>(null)
   const [sucesso, setSucesso] = useState(false)
   const [enviando, setEnviando] = useState(false)
+  const [confirmando, setConfirmando] = useState(false)
 
   const disponivel = numero(item.disponivel)
   const excede =
     quantidade.trim() !== '' && !Number.isNaN(numero(quantidade)) && numero(quantidade) > disponivel
 
-  async function aoEnviar(evento: React.FormEvent<HTMLFormElement>) {
+  function aoEnviar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault()
     setErro(null)
     setSucesso(false)
@@ -94,6 +132,10 @@ function EntregaForm({ item, rotulo, podeAutorizar, onRegistrada }: EntregaFormP
       return
     }
 
+    setConfirmando(true)
+  }
+
+  async function aoConfirmar() {
     setEnviando(true)
     try {
       await apiPost(`/api/pedidos/itens/${item.itemId}/entregas`, {
@@ -101,25 +143,28 @@ function EntregaForm({ item, rotulo, podeAutorizar, onRegistrada }: EntregaFormP
         excecao,
         motivoExcecao: excecao ? motivo : undefined,
       })
+      setConfirmando(false)
       setSucesso(true)
       setQuantidade('')
       setExcecao(false)
       setMotivo('')
       onRegistrada()
     } catch (error) {
-      if (error instanceof ApiError && error.status === 409) {
-        setErro('Entrega acima do disponível exige autorização de gerente com motivo.')
-      } else if (error instanceof ApiError && error.status === 403) {
-        setErro('Apenas o gerente pode autorizar uma entrega acima do disponível.')
-      } else {
-        setErro('Não foi possível registrar a entrega. Tente novamente.')
-      }
+      setConfirmando(false)
+      setErro(mensagemDeErro(error))
+      if (error instanceof ApiError && error.status === 409) onSaldoMudou()
     } finally {
       setEnviando(false)
     }
   }
 
+  const casasDecimais = item.unit ? unidadeUsaCasasDecimais(item.unit) : false
+  const valor = numero(quantidade)
+  const exibir = (v: number) => formatarQuantidadeParaExibicao(item.unit ?? null, String(arredondar(v)))
+  const concluiItem = numero(item.entregue) + valor >= numero(item.executado)
+
   return (
+    <>
     <form className="grid gap-3" onSubmit={aoEnviar} noValidate>
       {sucesso ? (
         <Alert variant="success" title="Entrega registrada">
@@ -133,19 +178,45 @@ function EntregaForm({ item, rotulo, podeAutorizar, onRegistrada }: EntregaFormP
         </Alert>
       ) : null}
 
-      <Field label={`Quantidade do ${rotulo}`} required>
+      <Field
+        label={`Quantidade do ${rotulo}`}
+        required
+        hint={
+          disponivel > 0
+            ? `Pode entregar até ${exibir(disponivel)}${item.unit ? ` ${item.unit}` : ''}. ${casasDecimais ? 'Até 2 casas decimais.' : 'Use número inteiro.'}`
+            : 'Sem saldo disponível: a entrega exige autorização do gerente.'
+        }
+      >
         {(props) => (
           <Input
             {...props}
             type="number"
-            inputMode="decimal"
+            inputMode={casasDecimais ? 'decimal' : 'numeric'}
             min="0"
-            step="any"
+            step={casasDecimais ? '0.01' : '1'}
             value={quantidade}
             onChange={(evento) => setQuantidade(evento.target.value)}
+            onWheel={(evento) => evento.currentTarget.blur()}
           />
         )}
       </Field>
+
+      {disponivel > 0 ? (
+        <Button
+          variant="outline"
+          disabled={enviando}
+          aria-label={`Entregar tudo (${exibir(disponivel)}) do ${rotulo}`}
+          onClick={() => {
+            setQuantidade(String(arredondar(disponivel)))
+            setExcecao(false)
+            setErro(null)
+            setSucesso(false)
+            setConfirmando(true)
+          }}
+        >
+          Entregar tudo ({exibir(disponivel)})
+        </Button>
+      ) : null}
 
       {excede ? (
         <div className="grid gap-3 rounded-lg border border-warning/40 bg-warning-bg p-3">
@@ -189,6 +260,44 @@ function EntregaForm({ item, rotulo, podeAutorizar, onRegistrada }: EntregaFormP
         {enviando ? 'Registrando…' : 'Registrar entrega'}
       </Button>
     </form>
+
+    <ConfirmDialog
+      open={confirmando}
+      variant={excecao ? 'warning' : 'default'}
+      title={excecao ? 'Confirmar entrega acima do disponível?' : 'Confirmar a entrega?'}
+      confirmLabel="Confirmar entrega"
+      busy={enviando}
+      busyLabel="Registrando…"
+      onConfirm={() => void aoConfirmar()}
+      onCancel={() => setConfirmando(false)}
+    >
+      <p>
+        Você vai entregar <strong>{exibir(valor)}</strong> do {rotulo}.
+      </p>
+      {excecao ? (
+        <>
+          <p>
+            São {exibir(valor - disponivel)} acima do disponível ({exibir(disponivel)}).
+          </p>
+          <p>Motivo: {motivo.trim()}</p>
+          <p className="font-semibold text-warning">
+            Esta exceção ficará registrada na auditoria, com o seu usuário, o valor e a data.
+          </p>
+        </>
+      ) : (
+        <>
+          <p>Disponível agora: {exibir(disponivel)}</p>
+          <p>
+            {disponivel - valor > 0
+              ? `Depois da entrega sobram ${exibir(disponivel - valor)} disponíveis.`
+              : 'Depois da entrega não sobra nada disponível.'}
+          </p>
+          <p>{concluiItem ? 'Esta entrega conclui o item.' : 'O item continua com entrega parcial.'}</p>
+        </>
+      )}
+      <p className="text-muted">Não é possível desfazer uma entrega registrada.</p>
+    </ConfirmDialog>
+    </>
   )
 }
 
@@ -308,7 +417,20 @@ export default function EntregasPage() {
       ) : null}
 
       {erroPedido ? (
-        <Alert variant="error" title="Não foi possível carregar o pedido">
+        <Alert
+          variant="error"
+          title="Não foi possível carregar o pedido"
+          action={
+            <Button
+              onClick={() => {
+                setCarregandoPedido(true)
+                void carregarPedido(orderId)
+              }}
+            >
+              Tentar de novo
+            </Button>
+          }
+        >
           Verifique sua conexão e tente novamente.
         </Alert>
       ) : null}
@@ -330,7 +452,15 @@ export default function EntregasPage() {
             />
           </div>
 
-          {pedido.itens.map((item, indice) => (
+          {pedido.itens.map((item, indice) => {
+            const situacao = situacaoDoItem({
+              solicitado: numero(item.solicitado),
+              disponivel: numero(item.disponivel),
+              entregue: numero(item.entregue),
+              pendente: numero(item.pendente),
+            })
+            const semSaldo = numero(item.disponivel) <= 0
+            return (
             <Card key={item.itemId}>
               <CardHeader>
                 <div className="min-w-0">
@@ -350,9 +480,7 @@ export default function EntregasPage() {
                     {item.deadlineAt ? formatarDiaCivil(item.deadlineAt) : 'Sem previsão'}
                   </p>
                 </div>
-                <Badge variant={numero(item.disponivel) > 0 ? 'success' : 'neutral'}>
-                  {numero(item.disponivel) > 0 ? 'Disponível' : 'Sem saldo'}
-                </Badge>
+                <Badge variant={situacao.variante}>{situacao.rotulo}</Badge>
               </CardHeader>
               <CardContent className="grid gap-4">
                 <p className="text-sm text-muted">
@@ -361,23 +489,35 @@ export default function EntregasPage() {
                   {formatarQuantidadeParaExibicao(item.unit ?? null, item.entregue)} · Pendente:{' '}
                   {formatarQuantidadeParaExibicao(item.unit ?? null, item.pendente)}
                 </p>
-                {numero(item.disponivel) <= 0 && !podeAutorizar ? (
-                  <Alert variant="info" title="Aguardando produção">
-                    Este item ainda não tem saldo disponível para entrega. A Expedição poderá
-                    registrar assim que a produção avançar; acima do disponível, apenas o gerente
-                    autoriza.
+                {semSaldo ? (
+                  <Alert
+                    variant="info"
+                    title={
+                      situacao.codigo === 'ENTREGUE'
+                        ? 'Item totalmente entregue'
+                        : 'Aguardando produção'
+                    }
+                  >
+                    {situacao.codigo === 'ENTREGUE'
+                      ? `Todo o solicitado (${formatarQuantidadeParaExibicao(item.unit ?? null, item.solicitado)}) já foi entregue. Não há mais nada para registrar.`
+                      : numero(item.entregue) > 0
+                        ? `Tudo o que já foi produzido foi entregue. Faltam ${formatarQuantidadeParaExibicao(item.unit ?? null, item.pendente)} a produzir.`
+                        : `Este item ainda não tem saldo disponível para entrega. A entrega poderá ser registrada quando a produção avançar.${podeAutorizar ? '' : ' Acima do disponível, apenas o gerente autoriza.'}`}
                   </Alert>
-                ) : (
+                ) : null}
+                {!semSaldo || podeAutorizar ? (
                   <EntregaForm
                     item={item}
                     rotulo={`item ${indice + 1}`}
                     podeAutorizar={podeAutorizar}
                     onRegistrada={() => void carregarPedido(orderId)}
+                    onSaldoMudou={() => void carregarPedido(orderId)}
                   />
-                )}
+                ) : null}
               </CardContent>
             </Card>
-          ))}
+            )
+          })}
         </>
       ) : null}
     </section>

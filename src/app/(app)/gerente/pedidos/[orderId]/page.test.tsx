@@ -73,6 +73,7 @@ function pedido(
         description: 'Chapa dobrada',
         productCode: 'PRD-77',
         unit: 'peca',
+        legacyCategory: 'Chapa',
         deadlineAt: null as string | null,
         activityDeadlineAt: null as string | null,
         classificationStatus,
