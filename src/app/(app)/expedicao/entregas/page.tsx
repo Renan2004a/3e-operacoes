@@ -14,6 +14,7 @@ import { PageHead } from '@/shared/ui/page-head'
 import { Spinner } from '@/shared/ui/spinner'
 import { formatarDiaCivil } from '@/shared/time/dia-civil'
 import { formatarQuantidadeParaExibicao, valorPorUnidade, type TotalUnidadeView } from '@/shared/ui/totais-unidade'
+import { situacaoDoItem } from './situacao-item'
 
 interface ItemSaldo {
   itemId: string
@@ -423,7 +424,15 @@ export default function EntregasPage() {
             />
           </div>
 
-          {pedido.itens.map((item, indice) => (
+          {pedido.itens.map((item, indice) => {
+            const situacao = situacaoDoItem({
+              solicitado: numero(item.solicitado),
+              disponivel: numero(item.disponivel),
+              entregue: numero(item.entregue),
+              pendente: numero(item.pendente),
+            })
+            const semSaldo = numero(item.disponivel) <= 0
+            return (
             <Card key={item.itemId}>
               <CardHeader>
                 <div className="min-w-0">
@@ -443,9 +452,7 @@ export default function EntregasPage() {
                     {item.deadlineAt ? formatarDiaCivil(item.deadlineAt) : 'Sem previsão'}
                   </p>
                 </div>
-                <Badge variant={numero(item.disponivel) > 0 ? 'success' : 'neutral'}>
-                  {numero(item.disponivel) > 0 ? 'Disponível' : 'Sem saldo'}
-                </Badge>
+                <Badge variant={situacao.variante}>{situacao.rotulo}</Badge>
               </CardHeader>
               <CardContent className="grid gap-4">
                 <p className="text-sm text-muted">
@@ -454,13 +461,23 @@ export default function EntregasPage() {
                   {formatarQuantidadeParaExibicao(item.unit ?? null, item.entregue)} · Pendente:{' '}
                   {formatarQuantidadeParaExibicao(item.unit ?? null, item.pendente)}
                 </p>
-                {numero(item.disponivel) <= 0 && !podeAutorizar ? (
-                  <Alert variant="info" title="Aguardando produção">
-                    Este item ainda não tem saldo disponível para entrega. A Expedição poderá
-                    registrar assim que a produção avançar; acima do disponível, apenas o gerente
-                    autoriza.
+                {semSaldo ? (
+                  <Alert
+                    variant="info"
+                    title={
+                      situacao.codigo === 'ENTREGUE'
+                        ? 'Item totalmente entregue'
+                        : 'Aguardando produção'
+                    }
+                  >
+                    {situacao.codigo === 'ENTREGUE'
+                      ? `Todo o solicitado (${formatarQuantidadeParaExibicao(item.unit ?? null, item.solicitado)}) já foi entregue. Não há mais nada para registrar.`
+                      : numero(item.entregue) > 0
+                        ? `Tudo o que já foi produzido foi entregue. Faltam ${formatarQuantidadeParaExibicao(item.unit ?? null, item.pendente)} a produzir.`
+                        : `Este item ainda não tem saldo disponível para entrega. A entrega poderá ser registrada quando a produção avançar.${podeAutorizar ? '' : ' Acima do disponível, apenas o gerente autoriza.'}`}
                   </Alert>
-                ) : (
+                ) : null}
+                {!semSaldo || podeAutorizar ? (
                   <EntregaForm
                     item={item}
                     rotulo={`item ${indice + 1}`}
@@ -468,10 +485,11 @@ export default function EntregasPage() {
                     onRegistrada={() => void carregarPedido(orderId)}
                     onSaldoMudou={() => void carregarPedido(orderId)}
                   />
-                )}
+                ) : null}
               </CardContent>
             </Card>
-          ))}
+            )
+          })}
         </>
       ) : null}
     </section>
