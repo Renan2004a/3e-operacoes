@@ -168,7 +168,7 @@ Fluxo sob demanda:
 ### Destaques da #16 (mais recente)
 
 - **Alertas operacionais** (`IND-11/12`): atrasados, **parados** (sem execução há `ALERTA_PARADO_DIAS`, padrão 5) e **não encaminhados**; `GET /api/indicadores/alertas` + card no painel.
-- **Remessas** (`ENT-01..05`): entrega programada por item (número + data prevista + confirmação) via `ScheduledDelivery`; permissão `programar_remessa` (gerente/vendedor).
+- **Remessas** (`ENT-01..05`): entrega programada por item (número + data prevista + confirmação) via `ScheduledDelivery`; permissão `programar_remessa` (Gerência/Expedição). O Vendedor acompanha as datas, conforme a AD-023.
 - **Sugestão de setor** (`LAC-14/15`): regras `ProductSectorRule` (produto→setor) semeadas, pré-selecionadas no desmembramento.
 - Correção de fuso: data "somente dia" ancorada ao meio-dia de São Paulo (`interpretarDataPrevista`).
 
@@ -178,10 +178,10 @@ Fluxo sob demanda:
 
 | Perfil | Fluxo principal |
 | --- | --- |
-| **Vendedor** | Puxa o pedido do Top Gerente → vê o **setor sugerido** → **desmembra** (classifica itens) → define prazo → programa/confirma **remessa**. Somente leitura na produção. |
+| **Vendedor** | Puxa o pedido do Top Gerente → vê o **setor sugerido** → **desmembra** (classifica itens) → define prazo → acompanha as datas das **remessas** (gestão pela Gerência/Expedição). Somente leitura na produção. |
 | **Operador** | **Fila** dos seus setores → registra **execução** → registra **ocorrência** (perda/refugo/indisponibilidade) → imprime **ordem de produção**. |
 | **Gerente de Produção** | **Painel** com indicadores e **alertas** → consulta pedidos → altera status/prioridade/prazo → autoriza exceções de entrega. |
-| **Expedição** | Registra **entregas** totais/parciais respeitando o disponível. |
+| **Expedição** | Registra **entregas** totais/parciais respeitando o disponível e gerencia **remessas** programadas. |
 | **Responsável de Sistema** | Administra **usuários**, **setores** e **mapeamento categoria→setor**. |
 | **Responsável Técnico** | Acompanha **jobs** de integração e seus **eventos**. |
 
@@ -208,8 +208,8 @@ Matriz implementada em `src/modules/usuarios/permissoes.ts` e aplicada **no serv
 
 - Operador: setores aos quais pertence; execução/ocorrências.
 - Gerente: status, prioridade, prazo, exceções, entregas e remessas.
-- Vendedor: consulta todos; prazo, desmembramento e remessas (demais ações negadas).
-- Expedição: entregas.
+- Vendedor: consulta todos; prazo, desmembramento e acompanhamento de remessas (sem gestão); demais ações negadas.
+- Expedição: entregas e remessas programadas.
 - Responsável pelo Sistema: cadastros.
 - Responsável Técnico: integração/logs.
 

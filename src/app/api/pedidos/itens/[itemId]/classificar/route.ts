@@ -4,8 +4,7 @@ import {
   SetorInvalidoError,
   classificarItem,
 } from '../../../../../../modules/setores/classificar-item'
-import { prismaClassificacaoRepository } from '../../../../../../modules/setores/adapters/prisma-classificacao-repository'
-import { prismaMapeamentoRepository } from '../../../../../../modules/setores/adapters/prisma-setores-repository'
+import { prismaUnidadeTrabalhoClassificacao } from '../../../../../../modules/setores/adapters/prisma-unidade-trabalho-classificacao'
 import { autorizar } from '../../../../../../shared/http/autorizacao'
 
 /** POST /api/pedidos/itens/[itemId]/classificar — classificação manual do item (AUTH-14). */
@@ -30,16 +29,10 @@ export async function POST(request: Request, context: { params: Promise<{ itemId
     return Response.json({ error: 'invalid_body' }, { status: 400 })
   }
 
-  const rawCategory =
-    typeof body === 'object' && body !== null && 'legacyCategory' in body
-      ? (body as { legacyCategory?: unknown }).legacyCategory
-      : undefined
-  const legacyCategory = typeof rawCategory === 'string' ? rawCategory : null
-
   try {
     const result = await classificarItem(
-      { itemId, sectorId, legacyCategory },
-      { classificacao: prismaClassificacaoRepository, mapeamento: prismaMapeamentoRepository },
+      { itemId, sectorId, userId: auth.usuario.userId },
+      { unidade: prismaUnidadeTrabalhoClassificacao },
     )
     return Response.json(
       { status: result.status, sectorId: result.sectorId, activityId: result.activityId },

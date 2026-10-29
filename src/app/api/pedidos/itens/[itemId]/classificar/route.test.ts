@@ -28,83 +28,113 @@ const mocks = vi.hoisted(() => {
     updatedAt: Date
   }> = []
   const audits: Array<Record<string, unknown>> = []
-  let actSeq = 0
-
-  const classificacao = {
-    findItemById: async (id: string) => {
-      const found = items.find((item) => item.id === id)
-      return found ? { ...found } : null
-    },
-    findSectorById: async (id: string) => {
-      const found = sectors.find((sector) => sector.id === id)
-      return found ? { ...found } : null
-    },
-    markClassified: async ({ itemId, sectorId }: { itemId: string; sectorId: string }) => {
-      const found = items.find((item) => item.id === itemId)
-      if (!found) throw new Error('item não encontrado')
-      found.classificationStatus = 'CLASSIFIED'
-      actSeq += 1
-      return { id: `act_${actSeq}`, orderItemId: itemId, sectorId }
-    },
-  }
-
-  const mapeamento = {
-    findByCategory: async (legacyCategory: string) => {
-      const found = mappings.find((mapping) => mapping.legacyCategory === legacyCategory)
-      return found ? { ...found } : null
-    },
-    findById: async (id: string) => {
-      const found = mappings.find((mapping) => mapping.id === id)
-      return found ? { ...found } : null
-    },
-    create: async ({ legacyCategory, sectorId }: { legacyCategory: string; sectorId: string }) => {
-      const created = {
-        id: `map_${mappings.length + 1}`,
-        legacyCategory,
-        sectorId,
-        status: 'ACTIVE' as const,
-        createdAt: NOW,
-        updatedAt: NOW,
-      }
-      mappings.push(created)
-      return { ...created }
-    },
-    update: async (id: string, { sectorId, status }: { sectorId: string; status: 'ACTIVE' | 'INACTIVE' }) => {
-      const found = mappings.find((mapping) => mapping.id === id)
-      if (!found) throw new Error('mapeamento não encontrado')
-      found.sectorId = sectorId
-      found.status = status
-      return { ...found }
-    },
-    deactivate: async (id: string) => {
-      const found = mappings.find((mapping) => mapping.id === id)
-      if (!found) throw new Error('mapeamento não encontrado')
-      found.status = 'INACTIVE'
-      return { ...found }
-    },
-    recordAudit: async (entry: Record<string, unknown>) => {
-      audits.push(entry)
-    },
-  }
+  const activities: Array<{ id: string; orderItemId: string; sectorId: string }> = []
+  const contador = { actSeq: 0 }
 
   function reset() {
     items.length = 0
     sectors.length = 0
     mappings.length = 0
     audits.length = 0
-    actSeq = 0
+    activities.length = 0
+    contador.actSeq = 0
   }
 
-  return { items, sectors, mappings, audits, classificacao, mapeamento, perfis, reset }
+  return { items, sectors, mappings, audits, activities, contador, now: NOW, perfis, reset }
 })
 
-vi.mock('../../../../../../modules/setores/adapters/prisma-classificacao-repository', () => ({
-  prismaClassificacaoRepository: mocks.classificacao,
-}))
+vi.mock(
+  '../../../../../../modules/setores/adapters/prisma-unidade-trabalho-classificacao',
+  async () => {
+    const domain = await import('../../../../../../modules/setores/classificar-item')
 
-vi.mock('../../../../../../modules/setores/adapters/prisma-setores-repository', () => ({
-  prismaMapeamentoRepository: mocks.mapeamento,
-}))
+    const prismaUnidadeTrabalhoClassificacao = {
+      async transacional(
+        fn: (escopo: {
+          classificacao: unknown
+          mapeamento: unknown
+        }) => Promise<unknown>,
+      ) {
+        const classificacao = {
+          async transicionarPendente(itemId: string) {
+            const found = mocks.items.find((item) => item.id === itemId)
+            if (!found) throw new domain.ItemNaoEncontradoError(itemId)
+            if (found.classificationStatus === 'CLASSIFIED') {
+              throw new domain.ItemJaClassificadoError(itemId)
+            }
+          },
+          async findItemById(itemId: string) {
+            const found = mocks.items.find((item) => item.id === itemId)
+            return found ? { ...found } : null
+          },
+          async findSectorById(sectorId: string) {
+            const found = mocks.sectors.find((sector) => sector.id === sectorId)
+            return found ? { ...found } : null
+          },
+          async criarAtividade(itemId: string, sectorId: string) {
+            const atividadeExistente = mocks.activities.find(
+              (activity) => activity.orderItemId === itemId,
+            )
+            if (atividadeExistente) throw new domain.ItemJaClassificadoError(itemId)
+            const found = mocks.items.find((item) => item.id === itemId)
+            if (!found) throw new domain.ItemNaoEncontradoError(itemId)
+            found.classificationStatus = 'CLASSIFIED'
+            mocks.contador.actSeq += 1
+            const activity = { id: `act_${mocks.contador.actSeq}`, orderItemId: itemId, sectorId }
+            mocks.activities.push(activity)
+            return activity
+          },
+        }
+
+        const mapeamento = {
+          async findByCategory(legacyCategory: string) {
+            const found = mocks.mappings.find((mapping) => mapping.legacyCategory === legacyCategory)
+            return found ? { ...found } : null
+          },
+          async findById(id: string) {
+            const found = mocks.mappings.find((mapping) => mapping.id === id)
+            return found ? { ...found } : null
+          },
+          async create(input: { legacyCategory: string; sectorId: string }) {
+            const created = {
+              id: `map_${mocks.mappings.length + 1}`,
+              legacyCategory: input.legacyCategory,
+              sectorId: input.sectorId,
+              status: 'ACTIVE' as const,
+              createdAt: mocks.now,
+              updatedAt: mocks.now,
+            }
+            mocks.mappings.push(created)
+            return { ...created }
+          },
+          async update(
+            id: string,
+            input: { sectorId: string; status: 'ACTIVE' | 'INACTIVE' },
+          ) {
+            const found = mocks.mappings.find((mapping) => mapping.id === id)
+            if (!found) throw new Error('mapeamento não encontrado')
+            found.sectorId = input.sectorId
+            found.status = input.status
+            return { ...found }
+          },
+          async deactivate(id: string) {
+            const found = mocks.mappings.find((mapping) => mapping.id === id)
+            if (!found) throw new Error('mapeamento não encontrado')
+            found.status = 'INACTIVE'
+            return { ...found }
+          },
+          async recordAudit(entry: Record<string, unknown>) {
+            mocks.audits.push(entry)
+          },
+        }
+
+        return fn({ classificacao, mapeamento })
+      },
+    }
+
+    return { prismaUnidadeTrabalhoClassificacao }
+  },
+)
 
 vi.mock('@/modules/usuarios/adapters/prisma-usuarios-repository', () => ({
   prismaUsuariosRepository: {
@@ -125,7 +155,7 @@ function seedItem(
 ) {
   mocks.items.push({
     id: overrides.id ?? 'item_1',
-    legacyCategory: overrides.legacyCategory ?? 'Telhas',
+    legacyCategory: overrides.legacyCategory !== undefined ? overrides.legacyCategory : 'Telhas',
     classificationStatus: overrides.classificationStatus ?? 'PENDING_CLASSIFICATION',
   })
 }
@@ -195,8 +225,41 @@ describe('POST /api/pedidos/itens/[itemId]/classificar', () => {
     expect(mocks.items[0].classificationStatus).toBe('CLASSIFIED')
   })
 
-  it('responde 200 e cria o mapeamento quando a categoria é informada', async () => {
+  it('usa a categoria persistida no item e ignora a categoria e a autoria do corpo', async () => {
     seedItem()
+    seedSector()
+
+    const response = await POST(
+      request('item_1', {
+        sectorId: 'setor_telhas',
+        legacyCategory: 'Nova Categoria',
+        userId: 'user_forjado',
+        actorId: 'user_forjado',
+      }),
+      context('item_1'),
+    )
+
+    expect(response.status).toBe(200)
+    expect(mocks.mappings).toHaveLength(1)
+    expect(mocks.mappings[0]).toMatchObject({
+      legacyCategory: 'Telhas',
+      sectorId: 'setor_telhas',
+      status: 'ACTIVE',
+    })
+    expect(mocks.audits[0]).toMatchObject({
+      action: 'CREATE',
+      entityType: 'CategorySectorMapping',
+      userId: 'user_mgr',
+      afterJson: {
+        legacyCategory: 'Telhas',
+        sectorId: 'setor_telhas',
+        status: 'ACTIVE',
+      },
+    })
+  })
+
+  it('não cria mapeamento quando o item não tem categoria, mesmo com categoria no corpo', async () => {
+    seedItem({ legacyCategory: null })
     seedSector()
 
     const response = await POST(
@@ -205,13 +268,49 @@ describe('POST /api/pedidos/itens/[itemId]/classificar', () => {
     )
 
     expect(response.status).toBe(200)
+    expect(mocks.mappings).toHaveLength(0)
+    expect(mocks.audits).toHaveLength(0)
+  })
+
+  it('reutiliza o mapeamento ativo sem alterar o setor', async () => {
+    seedItem()
+    seedSector()
+    seedSector({ id: 'setor_corte' })
+    mocks.mappings.push({
+      id: 'map_1',
+      legacyCategory: 'Telhas',
+      sectorId: 'setor_telhas',
+      status: 'ACTIVE',
+      createdAt: NOW,
+      updatedAt: NOW,
+    })
+
+    const response = await POST(
+      request('item_1', { sectorId: 'setor_corte' }),
+      context('item_1'),
+    )
+
+    expect(response.status).toBe(200)
     expect(mocks.mappings).toHaveLength(1)
     expect(mocks.mappings[0]).toMatchObject({
-      legacyCategory: 'Nova Categoria',
+      legacyCategory: 'Telhas',
       sectorId: 'setor_telhas',
       status: 'ACTIVE',
     })
-    expect(mocks.audits[0]).toMatchObject({ action: 'CREATE', entityType: 'CategorySectorMapping' })
+    expect(mocks.audits).toHaveLength(0)
+  })
+
+  it('responde 404 quando o item não existe e não cria mapeamento', async () => {
+    seedSector()
+
+    const response = await POST(
+      request('item_inexistente', { sectorId: 'setor_telhas' }),
+      context('item_inexistente'),
+    )
+
+    expect(response.status).toBe(404)
+    expect(await response.json()).toEqual({ error: 'item_not_found' })
+    expect(mocks.mappings).toHaveLength(0)
   })
 
   it('responde 409 quando o item já está classificado', async () => {

@@ -261,13 +261,41 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Status**: active (implementada; **1037 testes**, lint 0 erros, typecheck/build OK; Playwright **15/15** de UI; deploy `365f143` validado em produção; vídeo completo em `docs/video/demo-completa-2026-10-27.mp4`).
 
 ### AD-024
-
 - **Decision**: A reestruturação do banco apontada pelo professor **não** foi executada nesta rodada. O diagnóstico e o plano estão em `docs/revisao-banco-professor.md`: padronizar nomes físicos em **português**, trocar CUID por **BIGINT**, criar `perfis` + `usuarios_perfis`, substituir `remessas_programadas` por previsões/entregas, remodelar `execucoes` como `apontamentos` e renomear `managerOverride`/`regra_produto_setor`, além de detalhar as regras de negócio.
 - **Reason**: A mudança altera PKs/FKs, URLs, DTOs, repositórios, dados e testes; o professor sugeriu desenhar o banco manualmente e gerar o SQL antes de mexer no código. Fazer isso junto com correções de UI colocaria a demonstração em risco.
 - **Trade-off**: O banco continua com nomes mistos e IDs string até a migração aprovada; a dívida está documentada. O histórico de prazos já foi resolvido sem schema novo.
 - **Scope**: banco, Prisma, ETL, contratos e documentação. Fora do escopo desta rodada.
 - **Date**: 2026-10-27
 - **Status**: proposed (aguardando decisão/migração dedicada).
+
+### AD-026
+
+*Nota de numeração: o AD-025 foi registrado na branch do PR #24 (V04, atraso comercial), ainda não mergeado. Para evitar colisão quando ele entrar, a próxima decisão nesta base é a AD-026.*
+
+- **Decision**: A classificação manual do item é uma **única unidade transacional** (V06). A transição condicional do item pendente, a leitura autoritativa da categoria persistida, a criação, reativação ou reutilização do mapeamento, a auditoria correspondente e a criação da atividade rodam na mesma transação MySQL; qualquer falha desfaz toda a solicitação. O domínio fica desacoplado de Prisma: a rota recebe uma **unidade de trabalho** (`UnidadeTrabalhoClassificacao`) que entrega portas de classificação e de mapeamento ligadas ao mesmo cliente transacional, sem transações aninhadas e sem operação decisiva no `prisma` global dentro do escopo. Dentro da transação, a garantia de mapeamento usa leitura bloqueante (`SELECT ... FOR UPDATE` por categoria) para consultar o estado atual e preservar o mapeamento ativo vencedor; mapeamento ativo é reutilizado sem auditoria, inativo é reativado com o setor escolhido (auditado como `UPDATE`), categoria nova cria o mapeamento (auditado como `CREATE`) e item sem categoria não cria mapeamento. Conflitos transatórios identificados — deadlock/conflito de escrita (`P2034`) e categoria nova disputada (`P2002` na chave única de `legacyCategory`) — repetem a **unidade completa** até um limite pequeno (máximo duas tentativas extras); `409`/`404`/`400` e demais erros propagam sem repetição. O fluxo automático (`classificarPorMapeamento`) e o comportamento administrativo de `/api/mapeamentos` não mudam. Nenhuma migração. Falhas controladas existem apenas no ambiente de teste de integração, não em produção.
+- **Reason**: Após os merges de V05 (#17) e V02 (#19), `garantirMapeamento` e sua auditoria rodavam fora da transação que classifica o item: uma falha posterior (inclusive o conflito `409` do árbitro) deixava mapeamento criado ou reativado por uma operação que não se efetivou.
+- **Trade-off**: A transação fica mais larga (item + mapeamento + auditoria + atividade) e cada chamada abre transação interativa própria. Corridas de criação da mesma categoria nova podem gerar deadlock/`P2002`, resolvidos pela repetição da unidade (comprovado em integração). A leitura bloqueante serializa os concorrentes da mesma categoria (espera na linha), protegendo a política de permanência do mapeamento ativo vencedor. Nenhum campo novo; nenhum contrato HTTP alterado (`200`, `400`, `404`, `409` preservados).
+- **Scope**: `classificar-item.ts`, adapters Prisma de classificação/mapeamento, nova unidade transacional Prisma, rota `POST /api/pedidos/itens/[itemId]/classificar`, testes de domínio/adapter/integração e documentação. Permissões (`classificar_item`), autoria da sessão, importação automática, `/api/mapeamentos`, interface, saldos e prazos preservados. Sem migração, sem deploy nesta etapa.
+- **Date**: 2026-10-29
+- **Status**: active (implementada e validada localmente: integração MySQL V06 9/9 e regressões 31/31 no banco `v06_integration`; 1114 testes na suíte padrão, lint 0 erros, typecheck/build OK; PR aberto, sem merge).
+
+## Handoff — V06 atomicidade entre mapeamento, auditoria e classificação (2026-10-29)
+
+- **Feature**: V06 — unidade transacional da classificação manual (AD-026).
+- **Phase / Task**: implementação, testes e gates locais concluídos; PR #30 aberto contra `main` (sem merge).
+- **Completed**:
+  - `classificar-item.ts`: portas `ClassificacaoEmTransacao` e `UnidadeTrabalhoClassificacao`; `classificarItem` executa a unidade completa (transição → categoria autoritativa → setor → mapeamento/auditoria → atividade).
+  - `prisma-classificacao-repository.ts`: helpers de escopo (`transicionarPendenteNoEscopo`, `criarAtividadeNoEscopo`) reutilizados pelo `markClassified` global (fluxo automático preservado) e pela implementação transacional; tradução do `P2002` da atividade única mantida.
+  - `prisma-setores-repository.ts`: `criarMapeamentoEmTransacao(tx)` reutiliza `garantirMapeamento`/`criarMapeamento` com auditoria na mesma transação e `findByCategory` bloqueante (`FOR UPDATE`) no cliente transacional; repositório global de `/api/mapeamentos` inalterado.
+  - `prisma-unidade-trabalho-classificacao.ts` (novo): abre a transação interativa, entrega os dois repositórios ligados ao `tx` e repete a unidade completa nos conflitos transatórios (`P2034`; `P2002` de `legacyCategory`), limite de 3 tentativas.
+  - Rota de classificação com `401/403/400/404/409/200` preservados (AUTH-14); categoria do item persistido e autor da sessão (V05) intactos.
+  - Testes: 8 de adapter (política de retry), 9 de integração V06 (cenários 1–9; o cenário 10 é o conjunto de regressões V02/V05 executado em integração) e suíte padrão com **1114** testes aprovados + 40 gated ignorados.
+- **PR**: #30 — https://github.com/Renan2004a/3e-operacoes/pull/30 (base `main`; draft não usado — gates completos no local).
+- **In-progress**: nenhum.
+- **Next step**: revisão e merge do PR #30; acompanhar CI `verify`.
+- **Blockers**: nenhum para o PR. O banco de integração é exclusivo de V06 (`v06_integration`) no container temporário `3e-review-mysql` (127.0.0.1:33306) — não é o banco da aplicação.
+- **Files changed**: `src/modules/setores/classificar-item.ts` (+ `classificar-item.test.ts`), `src/modules/setores/adapters/prisma-classificacao-repository.ts`, `prisma-setores-repository.ts`, `prisma-unidade-trabalho-classificacao.ts` (+ teste), `classificacao-transacional.integration.test.ts` (novo), `classificacao.integration.test.ts` (ajuste do chamado manual), `src/app/api/pedidos/itens/[itemId]/classificar/route.ts` (+ `route.test.ts`), `.specs/features/setores-e-classificacao/{spec,design,tasks}.md` e este arquivo.
+- **Branch**: `fix/v06-classificacao-mapeamento-transacional` (base `origin/main` @ `a72c79c`, que contém V05 #17 e V02 #19, incluindo o `c192751` confirmado).
 
 ## Handoff — correções de UI, vídeo e deploy (2026-10-27)
 
