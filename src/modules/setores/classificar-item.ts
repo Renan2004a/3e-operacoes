@@ -91,13 +91,14 @@ export async function classificarPorMapeamento(
 export interface ClassificarItemInput {
   itemId: string
   sectorId: string
-  legacyCategory?: string | null
-  userId?: string | null
+  /** Usuário autenticado que executa a classificação manual. */
+  userId: string
 }
 
 /**
- * Classificação manual: valida o setor informado, garante o mapeamento quando
- * há categoria e marca o item como CLASSIFIED no setor informado.
+ * Classificação manual: valida o setor informado, garante o mapeamento a partir
+ * da categoria persistida no item e marca o item como CLASSIFIED no setor
+ * informado. A categoria e a autoria nunca vêm do corpo da requisição.
  */
 export async function classificarItem(
   input: ClassificarItemInput,
@@ -110,9 +111,10 @@ export async function classificarItem(
   const sector = await deps.classificacao.findSectorById(input.sectorId)
   if (!sector || !sector.active) throw new SetorInvalidoError(input.sectorId)
 
-  if (input.legacyCategory) {
+  const category = item.legacyCategory?.trim()
+  if (category) {
     await garantirMapeamento(
-      { legacyCategory: input.legacyCategory, sectorId: input.sectorId, userId: input.userId },
+      { legacyCategory: category, sectorId: input.sectorId, userId: input.userId },
       deps.mapeamento,
     )
   }
