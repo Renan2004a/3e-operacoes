@@ -281,7 +281,7 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 ## Handoff — V04 atraso comercial pela entrega (2026-10-28)
 
 - **Feature**: V04 — atraso comercial calculado pelo atendimento ao cliente (AD-025).
-- **Phase / Task**: implementação e validação local concluídas; PR a abrir.
+- **Phase / Task**: implementação e validação local concluídas; PR #24 aberto com CI aprovado.
 - **Completed**:
   - Função pura `calcularStatusPrazoEntrega` em `src/modules/prazos/status-prazo-entrega.ts`, delegando a `calcularStatusPrazo` com `concluido = entregue.gte(solicitado)`.
   - `detalharPedido(orderId, repo, agora = new Date())` deriva `statusPrazoEntrega` por item com o mesmo instante; campo aditivo, sem persistência.
@@ -290,10 +290,11 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
   - Testes: 11 de domínio, 6 de `detalharPedido`, 1 de rota e 4 de componente (3 Vendedor + 1 Gerente); suíte com **1085 testes** aprovados e 24 ignorados.
   - Gates: lint 0 erros (7 avisos preexistentes), typecheck OK, build OK com `DATABASE_URL` fictícia, `git diff --check` OK.
 - **In-progress**: nenhum.
-- **Next step**: abrir o PR contra `main`, acompanhar o CI e revisar.
+- **Next step**: revisar e mergear o PR #24 após aprovação; não houve merge nesta entrega.
 - **Blockers**: Revenda com indisponibilidade continua sujeita à T00.4; cancelamento depende da AD-010; validação no navegador não foi executada.
 - **Files changed**: `src/modules/prazos/status-prazo-entrega.ts`, `src/modules/prazos/status-prazo-entrega.test.ts`, `src/modules/indicadores/consulta-pedidos.ts`, `src/modules/indicadores/consulta-pedidos.test.ts`, `src/shared/ui/pedido-detalhe.tsx`, `src/app/(app)/vendedor/pedidos/[orderId]/page.test.tsx`, `src/app/(app)/gerente/pedidos/[orderId]/page.test.tsx`, `src/app/api/pedidos/[orderId]/route.test.ts`, `docs/decisoes.md`, `docs/regras-negocio.md`, `docs/requisitos.md`, `docs/backlog.md`, `docs/banco-de-dados.md`, `.specs/features/prazos-e-alertas/spec.md`, `.specs/features/prazos-e-alertas/design.md` e este arquivo.
 - **Branch**: `fix/v04-atraso-comercial-entrega`.
+- **PR**: #24 — https://github.com/Renan2004a/3e-operacoes/pull/24 (CI `verify` aprovado).
 
 ## Handoff — correções de UI, vídeo e deploy (2026-10-27)
 

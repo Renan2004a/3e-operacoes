@@ -264,6 +264,7 @@ O banco, a migration, a permissão `definir_prazo` e a sincronização foram ver
 | Typecheck | `npm run typecheck` | OK |
 | Build | `DATABASE_URL` fictícia + `npm run build` | OK; nenhuma operação de banco |
 | Diff | `git diff --check` | OK |
+| CI do PR | GitHub Actions `verify` | Concluído com sucesso (PR #24) |
 
 ### Limitações
 
