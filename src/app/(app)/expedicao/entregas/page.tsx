@@ -56,6 +56,31 @@ function arredondar(valor: number): number {
   return Number(valor.toFixed(2))
 }
 
+/**
+ * Mensagem por causa do erro, dizendo o que aconteceu e o que fazer (H9). O 409
+ * só ocorre aqui quando o saldo mudou depois de a tela abrir: a própria tela já
+ * barra o excedente sem autorização antes de enviar.
+ */
+function mensagemDeErro(error: unknown): string {
+  if (!(error instanceof ApiError)) {
+    return 'Não foi possível registrar a entrega. Tente novamente.'
+  }
+  if (error.status === 0) {
+    return 'Sem conexão com o servidor. Confira se a entrega já aparece no saldo antes de tentar de novo.'
+  }
+  if (error.status === 401) return 'Sua sessão expirou. Entre novamente.'
+  if (error.status === 403) return 'Apenas o gerente pode autorizar uma entrega acima do disponível.'
+  if (error.status === 404) return 'Este item não foi encontrado. Atualize a página e tente de novo.'
+  if (error.status === 409) {
+    return 'O saldo disponível mudou desde que a tela foi aberta. Atualizamos os valores: confira a quantidade e tente de novo.'
+  }
+  if (error.code === 'invalid_quantity') {
+    return 'A quantidade não é válida para esta unidade. Use número inteiro para peças e até 2 casas decimais para metros.'
+  }
+  if (error.code === 'override_reason_required') return 'Informe o motivo da exceção.'
+  return 'Não foi possível registrar a entrega. Tente novamente.'
+}
+
 interface EntregaFormProps {
   item: ItemSaldo
   /** Rótulo humano do item na tela (posição), no lugar do CUID. */
@@ -63,6 +88,8 @@ interface EntregaFormProps {
   /** O perfil atual pode autorizar entrega acima do disponível. */
   podeAutorizar: boolean
   onRegistrada: () => void
+  /** O servidor recusou por saldo diferente do exibido: recarrega o pedido. */
+  onSaldoMudou: () => void
 }
 
 /**
@@ -71,7 +98,7 @@ interface EntregaFormProps {
  * Acima do disponível exige autorização de gerente com motivo, e a janela vira
  * um aviso reforçado de que a exceção será auditada.
  */
-function EntregaForm({ item, rotulo, podeAutorizar, onRegistrada }: EntregaFormProps) {
+function EntregaForm({ item, rotulo, podeAutorizar, onRegistrada, onSaldoMudou }: EntregaFormProps) {
   const [quantidade, setQuantidade] = useState('')
   const [excecao, setExcecao] = useState(false)
   const [motivo, setMotivo] = useState('')
@@ -122,13 +149,8 @@ function EntregaForm({ item, rotulo, podeAutorizar, onRegistrada }: EntregaFormP
       onRegistrada()
     } catch (error) {
       setConfirmando(false)
-      if (error instanceof ApiError && error.status === 409) {
-        setErro('Entrega acima do disponível exige autorização de gerente com motivo.')
-      } else if (error instanceof ApiError && error.status === 403) {
-        setErro('Apenas o gerente pode autorizar uma entrega acima do disponível.')
-      } else {
-        setErro('Não foi possível registrar a entrega. Tente novamente.')
-      }
+      setErro(mensagemDeErro(error))
+      if (error instanceof ApiError && error.status === 409) onSaldoMudou()
     } finally {
       setEnviando(false)
     }
@@ -366,7 +388,20 @@ export default function EntregasPage() {
       ) : null}
 
       {erroPedido ? (
-        <Alert variant="error" title="Não foi possível carregar o pedido">
+        <Alert
+          variant="error"
+          title="Não foi possível carregar o pedido"
+          action={
+            <Button
+              onClick={() => {
+                setCarregandoPedido(true)
+                void carregarPedido(orderId)
+              }}
+            >
+              Tentar de novo
+            </Button>
+          }
+        >
           Verifique sua conexão e tente novamente.
         </Alert>
       ) : null}
@@ -431,6 +466,7 @@ export default function EntregasPage() {
                     rotulo={`item ${indice + 1}`}
                     podeAutorizar={podeAutorizar}
                     onRegistrada={() => void carregarPedido(orderId)}
+                    onSaldoMudou={() => void carregarPedido(orderId)}
                   />
                 )}
               </CardContent>

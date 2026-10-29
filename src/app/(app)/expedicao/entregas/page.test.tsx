@@ -261,6 +261,84 @@ describe('EntregasPage', () => {
     )
   })
 
+  async function registrarComFalha(erro: Error, quantidade = '3') {
+    mocks.apiPost.mockRejectedValue(erro)
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+    fireEvent.change(await screen.findByLabelText('Quantidade do item 1'), {
+      target: { value: quantidade },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar entrega do item 1' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar entrega' }))
+    return screen.findByRole('alert')
+  }
+
+  it('quantidade inválida para a unidade explica a regra, não só "tente novamente" (H9)', async () => {
+    configurarApi([detalhe(5)])
+    const alerta = await registrarComFalha(new mocks.ApiError(400, 'invalid_quantity'))
+
+    expect(alerta).toHaveTextContent(/quantidade não é válida para esta unidade/i)
+    expect(alerta).toHaveTextContent(/número inteiro/i)
+    expect(alerta).not.toHaveTextContent(/tente novamente/i)
+  })
+
+  it('motivo ausente aponta o campo certo (H9)', async () => {
+    configurarApi([detalhe(5)])
+    const alerta = await registrarComFalha(new mocks.ApiError(400, 'override_reason_required'))
+
+    expect(alerta).toHaveTextContent(/informe o motivo da exceção/i)
+  })
+
+  it('saldo que mudou recarrega o item e orienta a conferir a quantidade (H9)', async () => {
+    configurarApi([detalhe(5), detalhe(1)])
+    const alerta = await registrarComFalha(new mocks.ApiError(409, 'above_available'))
+
+    expect(alerta).toHaveTextContent(/saldo disponível mudou/i)
+    expect(alerta).not.toHaveTextContent(/autorização de gerente/i)
+    expect(await screen.findByText('Disponível: 1')).toBeInTheDocument()
+  })
+
+  it('item inexistente pede para atualizar a página (H9)', async () => {
+    configurarApi([detalhe(5)])
+    const alerta = await registrarComFalha(new mocks.ApiError(404, 'item_not_found'))
+
+    expect(alerta).toHaveTextContent(/item não foi encontrado/i)
+  })
+
+  it('sem conexão avisa para conferir o saldo antes de repetir (H9)', async () => {
+    configurarApi([detalhe(5)])
+    const alerta = await registrarComFalha(new mocks.ApiError(0, 'network_error'))
+
+    expect(alerta).toHaveTextContent(/sem conexão/i)
+    expect(alerta).toHaveTextContent(/confira/i)
+  })
+
+  it('falha ao carregar o pedido oferece "Tentar de novo" (H9)', async () => {
+    let tentativas = 0
+    mocks.apiGet.mockImplementation((url: string) => {
+      if (url === '/api/auth/sessao') return Promise.resolve({ usuario: { roles: ['SHIPPING'] } })
+      if (url === '/api/pedidos') {
+        return Promise.resolve({ pedidos: [{ id: 'p1', numero: '100', cliente: 'Ana' }] })
+      }
+      if (url === '/api/pedidos/p1') {
+        tentativas += 1
+        return tentativas === 1
+          ? Promise.reject(new Error('falha'))
+          : Promise.resolve({ pedido: detalhe(5) })
+      }
+      return Promise.reject(new Error(`url inesperada: ${url}`))
+    })
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+    expect(await screen.findByRole('alert')).toHaveTextContent(/não foi possível carregar o pedido/i)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }))
+
+    expect(await screen.findByText('Disponível: 5')).toBeInTheDocument()
+  })
+
   it('mostra erro acessível e permite tentar de novo quando a API falha (FEP-13)', async () => {
     let primeiraLista = true
     mocks.apiGet.mockImplementation((url: string) => {
