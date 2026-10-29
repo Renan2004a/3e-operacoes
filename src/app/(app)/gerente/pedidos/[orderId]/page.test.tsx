@@ -337,6 +337,32 @@ describe('PedidoGerentePage', () => {
     )
   })
 
+  it('aceita o setor sugerido sem alterar o seletor (LAC-04)', async () => {
+    const comSugestao = {
+      ...pedido(),
+      itens: [{ ...pedido().itens[0], suggestedSectorId: 'setor_telhas' }],
+    }
+    configurarApi(comSugestao)
+    mocks.apiPost.mockResolvedValue({
+      status: 'CLASSIFIED',
+      sectorId: 'setor_telhas',
+      activityId: 'act_1',
+    })
+    render(<PedidoGerentePage />)
+
+    const seletor = await screen.findByLabelText('Setor do item 1')
+    expect(seletor).toHaveValue('setor_telhas')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Classificar item 1' }))
+
+    await waitFor(() =>
+      expect(mocks.apiPost).toHaveBeenCalledWith('/api/pedidos/itens/item_1/classificar', {
+        sectorId: 'setor_telhas',
+      }),
+    )
+    expect(await screen.findByText('Item desmembrado')).toBeInTheDocument()
+  })
+
   it('reflete o item classificado após a ação (LAC-06)', async () => {
     configurarApi()
     mocks.apiPost.mockResolvedValue({

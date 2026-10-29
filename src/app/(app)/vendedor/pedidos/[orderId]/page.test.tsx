@@ -2,7 +2,7 @@
 import '@testing-library/jest-dom/vitest'
 import type { AnchorHTMLAttributes, ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
 const mocks = vi.hoisted(() => ({
   apiGet: vi.fn(),
@@ -368,6 +368,199 @@ describe('PedidoVendedorPage', () => {
       }),
     )
     expect(await screen.findByText('Item desmembrado com sucesso.')).toBeInTheDocument()
+  })
+
+  it('aceita o setor sugerido sem alterar o seletor e exibe o setor persistido', async () => {
+    configurarApi()
+    mocks.apiPost.mockResolvedValue({
+      status: 'CLASSIFIED',
+      sectorId: 'setor_telhas',
+      activityId: 'act_1',
+    })
+    render(<PedidoVendedorPage />)
+
+    const seletor = await screen.findByLabelText('Setor do item 1')
+    expect(seletor).toHaveValue('setor_telhas')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Classificar item 1' }))
+
+    await waitFor(() =>
+      expect(mocks.apiPost).toHaveBeenCalledWith('/api/pedidos/itens/item_1/classificar', {
+        sectorId: 'setor_telhas',
+      }),
+    )
+    expect(await screen.findByText('Item desmembrado com sucesso.')).toBeInTheDocument()
+    expect(screen.getByText(/Setor definido: Telhas/)).toBeInTheDocument()
+    expect(screen.queryByText(/Setor definido: —/)).not.toBeInTheDocument()
+  })
+
+  it('faz a escolha manual prevalecer sobre o setor sugerido', async () => {
+    configurarApi()
+    mocks.apiPost.mockResolvedValue({
+      status: 'CLASSIFIED',
+      sectorId: 'setor_corte',
+      activityId: 'act_1',
+    })
+    render(<PedidoVendedorPage />)
+
+    const seletor = await screen.findByLabelText('Setor do item 1')
+    await screen.findByRole('option', { name: 'Corte e Dobra' })
+    fireEvent.change(seletor, { target: { value: 'setor_corte' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Classificar item 1' }))
+
+    await waitFor(() =>
+      expect(mocks.apiPost).toHaveBeenCalledWith(
+        '/api/pedidos/itens/item_1/classificar',
+        expect.objectContaining({ sectorId: 'setor_corte' }),
+      ),
+    )
+    expect(await screen.findByText(/Setor definido: Corte e Dobra/)).toBeInTheDocument()
+  })
+
+  it('mantém a escolha explícita vazia e bloqueia o envio mesmo com sugestão', async () => {
+    configurarApi()
+    render(<PedidoVendedorPage />)
+
+    const seletor = await screen.findByLabelText('Setor do item 1')
+    await screen.findByRole('option', { name: 'Telhas' })
+    fireEvent.change(seletor, { target: { value: '' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Classificar item 1' }))
+
+    expect(
+      await screen.findByText('Escolha o setor do item antes de desmembrar.'),
+    ).toBeInTheDocument()
+    expect(mocks.apiPost).not.toHaveBeenCalled()
+  })
+
+  it('bloqueia o envio quando não há sugestão nem escolha manual', async () => {
+    configurarApiCom({
+      ...detalhe(),
+      itens: [itemDetalhe({ suggestedSectorId: null })],
+    })
+    render(<PedidoVendedorPage />)
+
+    const seletor = await screen.findByLabelText('Setor do item 1')
+    await screen.findByRole('option', { name: 'Telhas' })
+    expect(seletor).toHaveValue('')
+    fireEvent.click(screen.getByRole('button', { name: 'Classificar item 1' }))
+
+    expect(
+      await screen.findByText('Escolha o setor do item antes de desmembrar.'),
+    ).toBeInTheDocument()
+    expect(mocks.apiPost).not.toHaveBeenCalled()
+  })
+
+  it('não seleciona nem envia sugestão para setor inativo ou ausente da lista', async () => {
+    configurarApiCom({
+      ...detalhe(),
+      itens: [itemDetalhe({ suggestedSectorId: 'setor_inativo' })],
+    })
+    render(<PedidoVendedorPage />)
+
+    const seletor = await screen.findByLabelText('Setor do item 1')
+    await screen.findByRole('option', { name: 'Telhas' })
+    expect(seletor).toHaveValue('')
+    expect(screen.queryByText(/Sugerido pelo produto/)).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Classificar item 1' }))
+
+    expect(
+      await screen.findByText('Escolha o setor do item antes de desmembrar.'),
+    ).toBeInTheDocument()
+    expect(mocks.apiPost).not.toHaveBeenCalled()
+  })
+
+  it('ignora sugestão para setor inativo presente na resposta', async () => {
+    const pedidoComSugestao = {
+      ...detalhe(),
+      itens: [itemDetalhe({ suggestedSectorId: 'setor_inativo' })],
+    }
+    mocks.apiGet.mockImplementation((url: string) => {
+      if (url === '/api/pedidos/p1') return Promise.resolve({ pedido: pedidoComSugestao })
+      if (url === '/api/setores') {
+        return Promise.resolve({
+          sectors: [
+            ...SETORES,
+            { id: 'setor_inativo', code: 'TELHAS', name: 'Setor inativo', active: false },
+          ],
+        })
+      }
+      return Promise.reject(new Error(`url inesperada: ${url}`))
+    })
+    render(<PedidoVendedorPage />)
+
+    const seletor = await screen.findByLabelText('Setor do item 1')
+    await screen.findByRole('option', { name: 'Telhas' })
+    expect(seletor).toHaveValue('')
+    expect(screen.queryByRole('option', { name: 'Setor inativo' })).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Classificar item 1' }))
+
+    expect(
+      await screen.findByText('Escolha o setor do item antes de desmembrar.'),
+    ).toBeInTheDocument()
+    expect(mocks.apiPost).not.toHaveBeenCalled()
+  })
+
+  it('não envia enquanto os setores ainda estão carregando', async () => {
+    const setores = promessaAdiada<{ sectors: typeof SETORES }>()
+    mocks.apiGet.mockImplementation((url: string) => {
+      if (url === '/api/pedidos/p1') return Promise.resolve({ pedido: detalhe() })
+      if (url === '/api/setores') return setores.promessa
+      return Promise.reject(new Error(`url inesperada: ${url}`))
+    })
+    render(<PedidoVendedorPage />)
+
+    const botao = await screen.findByRole('button', { name: 'Classificar item 1' })
+    expect(screen.getByText('Carregando setores…')).toBeInTheDocument()
+    expect(botao).toBeDisabled()
+
+    fireEvent.click(botao)
+    expect(mocks.apiPost).not.toHaveBeenCalled()
+  })
+
+  it('mostra falha ao carregar setores e impede o envio', async () => {
+    mocks.apiGet.mockImplementation((url: string) => {
+      if (url === '/api/pedidos/p1') return Promise.resolve({ pedido: detalhe() })
+      if (url === '/api/setores') return Promise.reject(new Error('falha'))
+      return Promise.reject(new Error(`url inesperada: ${url}`))
+    })
+    render(<PedidoVendedorPage />)
+
+    expect(await screen.findByText('Não foi possível carregar os setores.')).toBeInTheDocument()
+    expect(
+      screen.getByText('Não foi possível carregar os setores. Recarregue a página.'),
+    ).toBeInTheDocument()
+    const botao = screen.getByRole('button', { name: 'Classificar item 1' })
+    expect(botao).toBeDisabled()
+
+    fireEvent.click(botao)
+    expect(mocks.apiPost).not.toHaveBeenCalled()
+  })
+
+  it('mantém o sucesso associado ao setor capturado na solicitação', async () => {
+    configurarApi()
+    const resposta = promessaAdiada<{
+      status: string
+      sectorId: string
+      activityId: string
+    }>()
+    mocks.apiPost.mockReturnValue(resposta.promessa)
+    render(<PedidoVendedorPage />)
+
+    const seletor = await screen.findByLabelText('Setor do item 1')
+    await screen.findByRole('option', { name: 'Corte e Dobra' })
+    fireEvent.click(screen.getByRole('button', { name: 'Classificar item 1' }))
+
+    // A seleção muda enquanto a requisição está em andamento.
+    fireEvent.change(seletor, { target: { value: 'setor_corte' } })
+
+    await act(async () => {
+      resposta.resolver({ status: 'CLASSIFIED', sectorId: 'setor_telhas', activityId: 'act_1' })
+    })
+
+    expect(await screen.findByText(/Setor definido: Telhas/)).toBeInTheDocument()
+    expect(screen.queryByText(/Setor definido: Corte e Dobra/)).not.toBeInTheDocument()
   })
 
   it('mostra a remessa programada, mas não oferece ações de expedição ao Vendedor', async () => {
