@@ -1,0 +1,859 @@
+1
+00:00:00,000 --> 00:00:07,000
+Capítulo 1
+Apresentação do sistema
+
+2
+00:00:07,000 --> 00:00:14,000
+3E Operações
+Sistema de gestão operacional da 3E Ferro e Aço: recebe os pedidos do Top Gerente, organiza a produção por setor, registra execuções, ocorrências e entregas, e mantém a auditoria das alterações.
+
+3
+00:00:14,000 --> 00:00:20,000
+Ambiente da demonstração
+Esta gravação usa um banco isolado de demonstração. Todos os clientes e operações são identificados como dados de teste; nenhum dado real de cliente é alterado.
+
+4
+00:00:20,000 --> 00:00:25,000
+Tela de acesso
+O acesso é único para todos os perfis. O sistema identifica o perfil do usuário e abre a tela inicial correspondente.
+
+5
+00:00:25,000 --> 00:00:31,000
+Perfis disponíveis
+Vendedor, Gerente de Produção, Operador, Expedição, Responsável pelo Sistema e Responsável Técnico. Cada perfil enxerga apenas as ações permitidas.
+
+6
+00:00:31,000 --> 00:00:36,000
+Capítulo 2
+Acesso e autenticação
+
+7
+00:00:36,000 --> 00:00:38,000
+Validação de campos obrigatórios
+Com os campos vazios, o sistema orienta o preenchimento antes de enviar a requisição.
+
+8
+00:00:38,000 --> 00:00:47,000
+Mensagem de validação
+A mensagem “Dados incompletos” aparece no próprio formulário, sem chamar o servidor.
+
+9
+00:00:47,000 --> 00:00:50,000
+Credenciais inválidas
+Com a senha errada, o sistema responde de forma genérica, sem revelar se o e-mail existe.
+
+10
+00:00:50,000 --> 00:00:57,000
+Segurança do login
+A mesma mensagem é usada para senha incorreta, e-mail inexistente e usuário inativo. O limite de tentativas protege contra força bruta.
+
+11
+00:00:57,000 --> 00:01:03,000
+Entrando como Vendedor
+Login válido: o sistema cria a sessão e direciona para a tela inicial do perfil.
+
+12
+00:01:03,000 --> 00:01:07,000
+Capítulo 3
+Vendedor — consulta, prazos e desmembramento
+
+13
+00:01:07,000 --> 00:01:13,000
+Vendas
+A tela de Vendas concentra a importação do Top Gerente, as instruções de uso e a consulta dos pedidos. O Vendedor acompanha todos os pedidos.
+
+14
+00:01:13,000 --> 00:01:19,000
+Indicadores da lista
+Cada linha mostra número do pedido, cliente, previsão de entrega e status. A previsão é o maior prazo entre os itens do pedido.
+
+15
+00:01:19,000 --> 00:01:23,000
+Filtro por setor
+Selecionando o setor Telhas e clicando em Filtrar. A URL, o total e a lista acompanham o filtro.
+
+16
+00:01:23,000 --> 00:01:27,000
+Resultado do filtro
+Somente pedidos com itens do setor escolhido permanecem na lista. O botão “Limpar filtros” fica disponível.
+
+17
+00:01:27,000 --> 00:01:33,000
+Limpando filtros
+O botão Limpar filtros devolve a lista completa.
+
+18
+00:01:33,000 --> 00:01:36,000
+Pesquisa por número
+A busca aceita um trecho do número comercial do pedido.
+
+19
+00:01:36,000 --> 00:01:42,000
+Pesquisa parcial
+O resultado mostra os pedidos cujo número contém “822”. A pesquisa não diferencia maiúsculas de minúsculas nos campos de texto.
+
+20
+00:01:42,000 --> 00:01:49,000
+Abrindo o pedido 82268
+O botão Abrir pedido leva ao detalhe completo, preservando filtros e página para o retorno.
+
+21
+00:01:49,000 --> 00:01:56,000
+Detalhe do pedido
+Cabeçalho com número, cliente e status. Abaixo, o resumo por unidade e por setor, as pendências de desmembramento e de produção e a lista de itens.
+
+22
+00:01:56,000 --> 00:01:59,000
+Abrir todos os itens
+O primeiro item já abre por padrão. “Abrir todos” expande os 20 itens do pedido.
+
+23
+00:01:59,000 --> 00:02:03,000
+Recolher todos os itens
+“Recolher todos” compacta a página; o percentual de cada item continua visível no cabeçalho.
+
+24
+00:02:03,000 --> 00:02:09,000
+Resumo por unidade
+Unidades diferentes nunca são somadas: cada linha mostra solicitado, executado, disponível, entregue e pendente na sua unidade.
+
+25
+00:02:09,000 --> 00:02:16,000
+Pendências
+O sistema separa itens ainda não desmembrados dos itens já encaminhados à produção. Isso mostra o que falta para o pedido entrar na fábrica.
+
+26
+00:02:16,000 --> 00:02:21,000
+Definindo o prazo de entrega
+O prazo do item é editável pelo Vendedor e pelo Gerente. O prazo operacional do setor aparece apenas para leitura.
+
+27
+00:02:21,000 --> 00:02:24,000
+Confirmação
+O sistema confirma a gravação do prazo e mantém a data no campo.
+
+28
+00:02:24,000 --> 00:02:29,000
+Histórico de prazos
+O histórico é alimentado pela auditoria: mostra quem alterou, quando e os valores anterior e novo.
+
+29
+00:02:29,000 --> 00:02:38,000
+Auditoria do prazo
+A primeira alteração registra “Definido para 20/11/2026”, com usuário e data/hora.
+
+30
+00:02:38,000 --> 00:02:43,000
+Segunda alteração
+Alterando o prazo para 27/11. Ao reabrir o histórico, as duas alterações aparecem em ordem, com antes e depois.
+
+31
+00:02:43,000 --> 00:02:49,000
+Rastreabilidade
+O histórico preserva as duas linhas; o valor atual do item é o último “depois”.
+
+32
+00:02:49,000 --> 00:02:54,000
+Desmembrando um item
+O Vendedor associa o item ao setor responsável. A escolha fica registrada e o item passa a aparecer na fila da produção.
+
+33
+00:02:54,000 --> 00:02:58,000
+Item desmembrado
+O item agora está classificado; a tela mostra o setor definido e libera o acompanhamento das remessas.
+
+34
+00:02:58,000 --> 00:03:04,000
+Remessas — somente leitura
+As remessas são programadas pela Gerência e pela Expedição. O Vendedor acompanha as datas e as confirmações, sem criar, confirmar ou remover.
+
+35
+00:03:04,000 --> 00:03:07,000
+Permissão respeitada
+Nenhum botão de gestão de remessa é oferecido ao Vendedor — a permissão é aplicada também no servidor.
+
+36
+00:03:07,000 --> 00:03:12,000
+Voltando para a lista
+O link de retorno preserva filtros, página e ordenação aplicados antes de abrir o pedido.
+
+37
+00:03:12,000 --> 00:03:19,000
+Capítulo 4
+Vendedor — importação do Top Gerente
+
+38
+00:03:19,000 --> 00:03:27,000
+Importação de pedido
+A importação consulta o Top Gerente pelo conector local, cria ou atualiza o pedido no 3E e mantém o histórico operacional.
+
+39
+00:03:27,000 --> 00:03:30,000
+Validação do número
+O campo aceita apenas dígitos. Números inválidos são recusados antes de consultar o legado.
+
+40
+00:03:30,000 --> 00:03:36,000
+Erro de validação
+A mensagem orienta a corrigir o número; nenhum job é criado.
+
+41
+00:03:36,000 --> 00:03:55,000
+Importando o pedido 82262
+O sistema cria um job idempotente e acompanha o processamento no conector.
+
+42
+00:03:55,000 --> 00:04:04,000
+Resultado da importação
+O pedido foi localizado no Top Gerente, gravado no 3E e já aparece na lista. O job registra cada etapa: solicitado, despachado e concluído.
+
+43
+00:04:04,000 --> 00:05:38,000
+Reimportação
+Repetir o mesmo número não duplica o pedido: o sistema atualiza os dados comerciais e preserva o histórico operacional.
+
+44
+00:05:38,000 --> 00:05:42,000
+Reimportação
+Mesmo quando a consulta é repetida, o sistema reaproveita o job e não cria pedidos duplicados.
+
+45
+00:05:42,000 --> 00:05:46,000
+Capítulo 4
+Fim da parte 1
+
+46
+00:05:46,000 --> 00:05:52,000
+Capítulo 5
+Gerente — painel e alertas
+
+47
+00:05:52,000 --> 00:06:10,000
+Acesso do Gerente
+Entrando como Gerente de Produção. O sistema abre o painel inicial do perfil e libera as ações de gestão.
+
+48
+00:06:10,000 --> 00:06:16,000
+Painel do Gerente
+O painel reúne a situação da fábrica: atividades pendentes, em execução, concluídas e o cumprimento de prazo.
+
+49
+00:06:16,000 --> 00:06:23,000
+Indicadores
+Cada cartão é clicável e abre a lista correspondente em nova aba. O percentual de prazo só aparece quando há atividades concluídas com prazo.
+
+50
+00:06:23,000 --> 00:06:36,000
+Drill-down por status
+O cartão abre uma aba com a lista de atividades pendentes, já filtrada. O botão Voltar retorna ao painel.
+
+51
+00:06:36,000 --> 00:06:47,000
+Lista de atividades
+A lista mostra pedido, item, setor, prazo e status. É a mesma visão usada para cobrar a produção por etapa.
+
+52
+00:06:47,000 --> 00:07:01,000
+Atividades divergentes
+A atividade com produção acima do solicitado aparece destacada. O gerente consegue abrir o pedido e verificar o item e o setor.
+
+53
+00:07:01,000 --> 00:07:08,000
+Alertas operacionais
+Três grupos: atividades atrasadas, paradas há vários dias e itens ainda não encaminhados para a produção. O contador fica no título.
+
+54
+00:07:08,000 --> 00:07:11,000
+Expandindo a lista
+O “+N outros” abre os demais itens do grupo, sem sair do painel.
+
+55
+00:07:11,000 --> 00:07:19,000
+Ocorrências recentes
+O painel também consolida as ocorrências registradas pelos Operadores: tipo, pedido, item, setor, motivo, data e o responsável com o perfil.
+
+56
+00:07:19,000 --> 00:07:23,000
+Atualizando o painel
+O botão Atualizar recarrega os blocos de forma independente; uma falha em um bloco não derruba os outros.
+
+57
+00:07:23,000 --> 00:07:33,000
+Capítulo 6
+Gerente — pedidos, prazos, setor e remessas
+
+58
+00:07:33,000 --> 00:07:41,000
+Pedidos do Gerente
+A mesma consulta do Vendedor, com filtros por número, cliente, setor, status e período. O Gerente pode abrir o detalhe e corrigir o setor.
+
+59
+00:07:41,000 --> 00:07:44,000
+Filtrando por setor
+Aplicando o filtro de Telhas para localizar os pedidos com esse setor.
+
+60
+00:07:44,000 --> 00:07:51,000
+Abrindo o pedido 70435
+O detalhe mostra prazos, saldos, desmembramento e as ações permitidas ao Gerente.
+
+61
+00:07:51,000 --> 00:07:59,000
+Detalhe do pedido
+O Gerente enxerga a mesma estrutura do pedido e pode agir sobre prazo, setor e remessas.
+
+62
+00:07:59,000 --> 00:08:09,000
+Definindo um prazo vencido
+Para demonstrar o alerta comercial, o prazo do item será definido no passado.
+
+63
+00:08:09,000 --> 00:08:15,000
+Atraso comercial
+O servidor calcula o status do prazo pela quantidade entregue. O selo “Entrega atrasada” aparece ao lado da data.
+
+64
+00:08:15,000 --> 00:08:21,000
+Capítulo 7
+Gerente — correção de setor e remessas
+
+65
+00:08:21,000 --> 00:08:32,000
+Corrigindo o setor
+O item estava em Revenda. A correção exige justificativa quando o item já tem histórico.
+
+66
+00:08:32,000 --> 00:08:38,000
+Confirmando a correção
+O motivo é gravado na auditoria, junto com o setor anterior e o novo.
+
+67
+00:08:38,000 --> 00:08:45,000
+Auditoria da correção
+A alteração preserva o histórico: quem corrigiu, quando, o motivo e os setores anterior e novo.
+
+68
+00:08:45,000 --> 00:08:49,000
+Programando uma remessa
+O número da remessa é automático; o usuário informa apenas a data prevista.
+
+69
+00:08:49,000 --> 00:08:54,000
+Gravando a remessa
+A remessa é criada com o próximo número disponível para o item.
+
+70
+00:08:54,000 --> 00:08:58,000
+Remessa criada
+A lista mostra a data prevista e o botão Confirmar. A remessa ainda não é uma entrega.
+
+71
+00:08:58,000 --> 00:09:02,000
+Confirmando a remessa
+Confirmar registra a data em que a remessa foi combinada/confirmada. Entregas e saldos não mudam.
+
+72
+00:09:02,000 --> 00:09:06,000
+Remessa confirmada
+A tela mostra “Confirmada em” e mantém a data prevista.
+
+73
+00:09:06,000 --> 00:09:09,000
+Removendo a remessa
+A remoção pede confirmação e avisa que entregas e saldos não serão alterados.
+
+74
+00:09:09,000 --> 00:09:13,000
+Confirmando a exclusão
+A remessa de teste é removida.
+
+75
+00:09:13,000 --> 00:09:17,000
+Remoção concluída
+O item volta ao estado anterior, sem resíduo para a demonstração.
+
+76
+00:09:17,000 --> 00:09:27,000
+Capítulo 8
+Gerente — entregas e exceções
+
+77
+00:09:27,000 --> 00:09:38,000
+Entregas
+A Expedição e o Gerente registram entregas. O Gerente também pode autorizar acima do disponível, com motivo.
+
+78
+00:09:38,000 --> 00:09:45,000
+Itens do pedido
+Cada cartão mostra descrição, código, cliente, disponível, previsão e a situação real do item.
+
+79
+00:09:45,000 --> 00:09:48,000
+Entregar tudo
+O botão preenche a quantidade com todo o saldo disponível do item.
+
+80
+00:09:48,000 --> 00:09:53,000
+Confirmação da entrega
+Antes de gravar, o sistema mostra a quantidade, o disponível e quanto sobra depois da entrega.
+
+81
+00:09:53,000 --> 00:09:58,000
+Confirmando
+A entrega é registrada e o saldo é atualizado na hora.
+
+82
+00:09:58,000 --> 00:10:04,000
+Entrega registrada
+O item passa a mostrar o novo saldo e a situação atualizada.
+
+83
+00:10:04,000 --> 00:10:15,000
+Acima do disponível
+Ao digitar uma quantidade maior que o saldo, o sistema avisa que é necessária autorização do gerente e um motivo.
+
+84
+00:10:15,000 --> 00:10:22,000
+Autorização com motivo
+Somente o Gerente vê esta opção. O motivo e a quantidade acima do saldo ficam registrados na auditoria.
+
+85
+00:10:22,000 --> 00:10:36,000
+Cancelando a exceção
+A exceção é apenas demonstrada; o cancelamento evita alterar o saldo nesta gravação.
+
+86
+00:10:36,000 --> 00:10:43,000
+Ordem de produção
+Documento de produção com pedido, item, setor, previsão, unidade, solicitado, executado e pendente.
+
+87
+00:10:43,000 --> 00:10:48,000
+Impressão
+Na impressão, o menu e os botões são removidos e o documento cabe em uma página A4.
+
+88
+00:10:48,000 --> 00:10:53,000
+Capítulo 8
+Fim da parte 2
+
+89
+00:10:53,000 --> 00:10:59,000
+Capítulo 9
+Operador — fila, execução e ocorrências
+
+90
+00:10:59,000 --> 00:11:17,000
+Acesso do Operador
+Entrando como Operador.
+
+91
+00:11:17,000 --> 00:11:24,000
+Fila de produção
+O Operador vê apenas as atividades dos setores aos quais pertence. A fila é ordenada por prioridade e, depois, pela data de criação.
+
+92
+00:11:24,000 --> 00:11:31,000
+Cartões da fila
+Cada cartão mostra pedido, item, setor, status e prioridade quando definida. O status “Divergente” indica produção acima do solicitado.
+
+93
+00:11:31,000 --> 00:11:35,000
+Atividade divergente
+A primeira atividade está divergente. Vamos abrir para entender o que aconteceu.
+
+94
+00:11:35,000 --> 00:11:46,000
+Divergência
+O sistema mostra o excedente e explica que a atividade ficou marcada como divergente. O registro fica preservado para análise.
+
+95
+00:11:46,000 --> 00:11:50,000
+Abrindo uma atividade
+Esta atividade está em andamento e será usada para registrar uma execução real.
+
+96
+00:11:50,000 --> 00:11:58,000
+Execução da atividade
+A tela mostra o progresso, os valores solicitado/executado/pendente, o setor e a previsão de entrega.
+
+97
+00:11:58,000 --> 00:12:05,000
+Registrando produção
+O Operador informa a quantidade na unidade da atividade. O registro atualiza o saldo e o status.
+
+98
+00:12:05,000 --> 00:12:10,000
+Execução confirmada
+A confirmação aparece na tela e o progresso é recalculado. Cada execução guarda usuário, data/hora e quantidade.
+
+99
+00:12:10,000 --> 00:12:15,000
+Registrar ocorrência
+A tela de ocorrências é separada da execução e já vem com a atividade pré-selecionada.
+
+100
+00:12:15,000 --> 00:12:25,000
+Ocorrências do Operador
+Aqui ficam perdas, refugos, indisponibilidades, pausas e paradas. À direita, o histórico das ocorrências já registradas.
+
+101
+00:12:25,000 --> 00:12:36,000
+Motivo obrigatório
+Perda exige um motivo da lista fechada. Motivos disponíveis nesta demonstração: Defeito de corte, Erro de dobra / medida incorreta, Material com problema.
+
+102
+00:12:36,000 --> 00:12:42,000
+Gravando a ocorrência
+A quantidade é opcional, mas quando informada precisa respeitar a unidade do item.
+
+103
+00:12:42,000 --> 00:12:54,000
+Ocorrência registrada
+O registro aparece no histórico com tipo, quantidade, motivo, responsável e data/hora. O Gerente vê a mesma ocorrência no painel.
+
+104
+00:12:54,000 --> 00:13:01,000
+Ordem de produção
+O documento mostra pedido, item, setor, previsão, unidade, quantidades e o responsável pela emissão.
+
+105
+00:13:01,000 --> 00:13:06,000
+Impressão
+No modo de impressão, o menu e os botões são removidos e o conteúdo cabe em uma página A4.
+
+106
+00:13:06,000 --> 00:13:12,000
+Capítulo 10
+Expedição — entregas e exceções
+
+107
+00:13:12,000 --> 00:13:27,000
+Acesso da Expedição
+Entrando como Expedição.
+
+108
+00:13:27,000 --> 00:13:38,000
+Entregas
+A Expedição seleciona o pedido, confere o disponível e registra a entrega por item.
+
+109
+00:13:38,000 --> 00:13:53,000
+Itens e situação
+Cada item mostra descrição, código, cliente, previsão e a situação real: disponível, aguardando produção ou totalmente entregue.
+
+110
+00:13:53,000 --> 00:14:02,000
+Acima do disponível
+A Expedição não pode autorizar sozinha. O sistema avisa e orienta procurar o gerente; o botão de registrar fica bloqueado.
+
+111
+00:14:02,000 --> 00:14:06,000
+Validação de quantidade
+Quantidade zero ou vazia é recusada antes de qualquer gravação.
+
+112
+00:14:06,000 --> 00:14:12,000
+Itens sem saldo
+Itens sem produção aparecem como “Aguardando produção”. O formulário de entrega não é oferecido enquanto não houver saldo.
+
+113
+00:14:12,000 --> 00:14:17,000
+Capítulo 10
+Fim da parte 3
+
+114
+00:14:17,000 --> 00:14:23,000
+Capítulo 11
+Administração — usuários, setores e mapeamentos
+
+115
+00:14:23,000 --> 00:14:40,000
+Acesso do Responsável pelo Sistema
+Preenchendo as credenciais e entrando no sistema.
+
+116
+00:14:40,000 --> 00:14:48,000
+Administração de usuários
+O responsável cadastra usuários, associa perfis e setores e controla o acesso. Usuários não são excluídos: são inativados para preservar o histórico.
+
+117
+00:14:48,000 --> 00:15:01,000
+Perfis e setores
+Cada usuário pode ter mais de um perfil e mais de um setor. O Operador só vê a fila dos setores aos quais pertence.
+
+118
+00:15:01,000 --> 00:15:04,000
+Política de senha
+A senha precisa ter pelo menos 8 caracteres. A validação aparece antes de criar o usuário.
+
+119
+00:15:04,000 --> 00:15:10,000
+Senha curta
+A mensagem explica o mínimo exigido e o formulário preserva os dados já preenchidos.
+
+120
+00:15:10,000 --> 00:15:12,000
+Perfil do usuário
+Selecionando o perfil Responsável Técnico.
+
+121
+00:15:12,000 --> 00:15:17,000
+Criando o usuário
+O usuário é criado com a senha protegida por hash e já aparece na lista.
+
+122
+00:15:17,000 --> 00:15:22,000
+Usuário criado
+A lista mostra nome, e-mail, perfil e situação. O novo usuário já pode acessar o sistema.
+
+123
+00:15:22,000 --> 00:15:25,000
+Inativando o usuário
+A inativação bloqueia o acesso imediatamente e preserva pedidos, execuções e auditoria.
+
+124
+00:15:25,000 --> 00:15:29,000
+Confirmação em linha
+O sistema pede confirmação com Confirmar e Cancelar, sem modal bloqueante.
+
+125
+00:15:29,000 --> 00:15:35,000
+Confirmando a inativação
+O status muda para Inativo e o login desse usuário passa a ser recusado.
+
+126
+00:15:35,000 --> 00:15:39,000
+Usuário inativo
+A conta continua vinculada ao histórico; para liberar novamente, basta ativar.
+
+127
+00:15:39,000 --> 00:15:46,000
+Reativando
+A reativação é uma nova ação e também pede confirmação.
+
+128
+00:15:46,000 --> 00:15:54,000
+Usuário ativo
+O acesso é restabelecido sem perder o vínculo com os registros anteriores.
+
+129
+00:15:54,000 --> 00:16:01,000
+Setores e mapeamentos
+A categoria vem do Top Gerente. O mapeamento categoria→setor define para onde o item vai na importação e no desmembramento.
+
+130
+00:16:01,000 --> 00:16:10,000
+Regras produto→setor
+Além da categoria, regras por código ou descrição do produto sugerem o setor. A prioridade decide qual regra vale quando mais de uma casa.
+
+131
+00:16:10,000 --> 00:16:14,000
+Consultando a categoria
+A busca mostra o setor atual da categoria ou informa que ainda não há mapeamento.
+
+132
+00:16:14,000 --> 00:16:20,000
+Categoria sem mapeamento
+Como a categoria de demonstração ainda não existe, o formulário libera a escolha do setor.
+
+133
+00:16:20,000 --> 00:16:23,000
+Criando o mapeamento
+Ao salvar, a categoria passa a apontar para Telhas nas próximas importações.
+
+134
+00:16:23,000 --> 00:16:30,000
+Mapeamento salvo
+A tabela de mapeamentos é atualizada e passa a listar CATEGORIA_DEMO → Telhas.
+
+135
+00:16:30,000 --> 00:16:33,000
+Atualizando o mapeamento
+Salvar novamente atualiza o setor da mesma categoria, sem duplicar a linha.
+
+136
+00:16:33,000 --> 00:16:38,000
+De/para atualizado
+O mapeamento é único por categoria; a alteração fica registrada para as próximas importações.
+
+137
+00:16:38,000 --> 00:16:43,000
+Capítulo 12
+Responsável Técnico — integração
+
+138
+00:16:43,000 --> 00:16:58,000
+Acesso do Responsável Técnico
+Preenchendo as credenciais e entrando no sistema.
+
+139
+00:16:58,000 --> 00:17:05,000
+Integração
+O responsável técnico acompanha os jobs de importação: status, tentativas, código de erro e eventos.
+
+140
+00:17:05,000 --> 00:17:09,000
+Abrindo um job
+Ao selecionar o job, o painel mostra a linha do tempo: solicitado, despachado, tentativas e conclusão ou falha.
+
+141
+00:17:09,000 --> 00:17:17,000
+Eventos do job
+Esses eventos ajudam a diagnosticar falhas do conector sem expor senhas ou o payload comercial.
+
+142
+00:17:17,000 --> 00:17:22,000
+Importação pelo Técnico
+O perfil técnico também pode solicitar uma importação e acompanhar o andamento pelo mesmo fluxo.
+
+143
+00:17:22,000 --> 00:17:29,000
+Capítulo 13
+Validações, permissões e responsividade
+
+144
+00:17:29,000 --> 00:17:37,000
+Página não encontrada
+Endereços inválidos mostram uma página amigável em português, com caminho de volta, em vez da tela padrão do servidor.
+
+145
+00:17:37,000 --> 00:17:45,000
+Permissões no servidor
+O Responsável Técnico não gerencia usuários: a API responde 403 e a tela informa que não foi possível carregar. O menu também não oferece a área.
+
+146
+00:17:45,000 --> 00:17:58,000
+Responsividade — Vendedor
+Preenchendo as credenciais e entrando no sistema.
+
+147
+00:17:58,000 --> 00:18:04,000
+Celular — lista
+Em 390 px, a tabela vira cartões: pedido, cliente, previsão, status e ação ficam empilhados e legíveis.
+
+148
+00:18:04,000 --> 00:18:09,000
+Celular — detalhe
+No detalhe, os valores e os itens continuam acessíveis; o menu vira o botão lateral.
+
+149
+00:18:09,000 --> 00:18:14,000
+Toque e leitura
+Os alvos de toque são grandes e o texto quebra linha sem rolagem horizontal da página.
+
+150
+00:18:14,000 --> 00:18:19,000
+Capítulo 14
+Encerramento e pendências
+
+151
+00:18:19,000 --> 00:18:27,000
+Resumo
+Foram demonstrados os seis perfis, a consulta e o detalhe dos pedidos, prazos com auditoria, desmembramento, produção, ocorrências, remessas, entregas, exceções, administração, integração e impressão.
+
+152
+00:18:27,000 --> 00:18:36,000
+Pendências funcionais
+Ainda dependem de decisão: cancelamento lógico de item, regra de Revenda com indisponibilidade, quem confirma remessas e como tratar divergências. A tela de histórico de entregas ainda não existe, embora a API esteja disponível.
+
+153
+00:18:36,000 --> 00:18:54,000
+Próximo capítulo
+No capítulo seguinte, o banco de dados no DBeaver: conexão, tabelas, relacionamentos, consultas e a conferência dos registros criados nesta demonstração.
+
+154
+00:18:54,000 --> 00:19:00,000
+Capítulo 15
+Banco de dados — estrutura e persistência
+
+155
+00:19:00,000 --> 00:19:09,000
+Capítulo de banco
+Agora o banco por dentro: o MySQL do aplicativo, as 18 tabelas, os relacionamentos e os registros que a demonstração produziu. As consultas são reais e somente leitura.
+
+156
+00:19:09,000 --> 00:19:19,000
+DBeaver e as duas conexões
+O DBeaver tem a conexão topgerente, somente leitura, e a conexão do banco do aplicativo. Nesta sessão, a árvore e o editor do DBeaver não renderizaram texto; por isso as consultas foram executadas diretamente no MySQL e a captura real da janela é mostrada aqui.
+
+157
+00:19:19,000 --> 00:19:28,000
+Inventário
+O banco de demonstração tem 7 pedidos, 27 itens, 14 atividades e registros de execução, ocorrência, entrega, remessa e auditoria. O caminho do dado é pedido → item → atividade → execução.
+
+158
+00:19:28,000 --> 00:19:36,000
+Pedidos e previsão
+A consulta agrega pedidos e itens. A previsão do pedido é o maior prazo entre os itens; pendentes mostram o que ainda não foi desmembrado.
+
+159
+00:19:36,000 --> 00:19:45,000
+Itens, execução e entrega
+O saldo nasce do item (solicitado), passa pelas execuções (produzido) e pelas entregas (entregue). Unidades diferentes não são somadas na interface.
+
+160
+00:19:45,000 --> 00:19:54,000
+Atividades e fila
+Cada item desmembrado gera uma atividade no setor. A fila do Operador filtra por setor, ignora concluídas e ordena por prioridade.
+
+161
+00:19:54,000 --> 00:20:02,000
+Execuções
+Cada apontamento grava usuário, quantidade e data/hora. O status da atividade e o saldo são recalculados na mesma transação.
+
+162
+00:20:02,000 --> 00:20:11,000
+Ocorrências
+Perdas, refugos, indisponibilidades, pausas e paradas ficam ligados à atividade, ao motivo e ao responsável. O painel do Gerente lê esta tabela.
+
+163
+00:20:11,000 --> 00:20:19,000
+Entregas e remessas
+A entrega baixa o disponível e registra quem entregou, a quantidade e a exceção. A remessa é apenas a previsão combinada e não altera saldo.
+
+164
+00:20:19,000 --> 00:20:29,000
+Auditoria de prazos
+As alterações de prazo da demonstração estão aqui: 20/11 e 27/11 no item 3 do pedido 82268, com antes, depois, usuário e horário. É a fonte do histórico exibido na tela.
+
+165
+00:20:29,000 --> 00:20:37,000
+Usuários, perfis e setores
+A autenticação lê usuarios; a autorização combina usuarios_perfis e usuarios_setores. As senhas são hash scrypt, nunca texto.
+
+166
+00:20:37,000 --> 00:20:46,000
+Integração e mapeamentos
+Os jobs registram cada tentativa de importação e os erros. O mapeamento categoria→setor é o que faz o item cair no setor certo.
+
+167
+00:20:46,000 --> 00:20:57,000
+Estrutura das tabelas
+Cada tabela traz colunas, tipos, nulos, chave primária, chaves estrangeiras e índices, lidos do information_schema. As chaves estrangeiras mostram o relacionamento entre pedidos, itens, atividades, execuções, ocorrências e entregas.
+
+168
+00:20:57,000 --> 00:21:05,000
+Chaves e relações
+pedidos_itens aponta para pedidos; atividades aponta para itens e setores; execuções, ocorrências e entregas apontam para as atividades ou itens.
+
+169
+00:21:05,000 --> 00:21:13,000
+Amostras de registros
+As primeiras linhas de cada tabela. Os nomes de clientes foram anonimizados para a gravação; nenhum dado pessoal real é exibido.
+
+170
+00:21:13,000 --> 00:21:21,000
+Rastro da operação
+A auditoria mostra o antes e o depois de cada alteração. É o elo entre a ação na tela e o registro persistido.
+
+171
+00:21:21,000 --> 00:21:30,000
+Da tela para a tabela
+Este mapa liga cada área da interface às tabelas que ela lê e grava: pedidos, prazos, fila, ocorrências, entregas, administração e integração.
+
+172
+00:21:30,000 --> 00:21:36,000
+Conclusão
+O banco guarda o ciclo completo e a auditoria. As consultas foram executadas no banco de demonstração e conferem com o que foi criado na interface. Encerramos a demonstração.

@@ -1,0 +1,242 @@
+[
+  {
+    "segundo": 0,
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Capítulo 11",
+    "texto": "Administração — usuários, setores e mapeamentos"
+  },
+  {
+    "segundo": 6,
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Acesso do Responsável pelo Sistema",
+    "texto": "Preenchendo as credenciais e entrando no sistema."
+  },
+  {
+    "segundo": 23,
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Administração de usuários",
+    "texto": "O responsável cadastra usuários, associa perfis e setores e controla o acesso. Usuários não são excluídos: são inativados para preservar o histórico."
+  },
+  {
+    "segundo": 31,
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Perfis e setores",
+    "texto": "Cada usuário pode ter mais de um perfil e mais de um setor. O Operador só vê a fila dos setores aos quais pertence."
+  },
+  {
+    "segundo": 44,
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Política de senha",
+    "texto": "A senha precisa ter pelo menos 8 caracteres. A validação aparece antes de criar o usuário."
+  },
+  {
+    "segundo": 47,
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Senha curta",
+    "texto": "A mensagem explica o mínimo exigido e o formulário preserva os dados já preenchidos."
+  },
+  {
+    "segundo": 53,
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Perfil do usuário",
+    "texto": "Selecionando o perfil Responsável Técnico."
+  },
+  {
+    "segundo": 55,
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Criando o usuário",
+    "texto": "O usuário é criado com a senha protegida por hash e já aparece na lista."
+  },
+  {
+    "segundo": 60,
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Usuário criado",
+    "texto": "A lista mostra nome, e-mail, perfil e situação. O novo usuário já pode acessar o sistema."
+  },
+  {
+    "segundo": 65,
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Inativando o usuário",
+    "texto": "A inativação bloqueia o acesso imediatamente e preserva pedidos, execuções e auditoria."
+  },
+  {
+    "segundo": 68,
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Confirmação em linha",
+    "texto": "O sistema pede confirmação com Confirmar e Cancelar, sem modal bloqueante."
+  },
+  {
+    "segundo": 72,
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Confirmando a inativação",
+    "texto": "O status muda para Inativo e o login desse usuário passa a ser recusado."
+  },
+  {
+    "segundo": 78,
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Usuário inativo",
+    "texto": "A conta continua vinculada ao histórico; para liberar novamente, basta ativar."
+  },
+  {
+    "segundo": 82,
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Reativando",
+    "texto": "A reativação é uma nova ação e também pede confirmação."
+  },
+  {
+    "segundo": 89,
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Usuário ativo",
+    "texto": "O acesso é restabelecido sem perder o vínculo com os registros anteriores."
+  },
+  {
+    "segundo": 97,
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Setores e mapeamentos",
+    "texto": "A categoria vem do Top Gerente. O mapeamento categoria→setor define para onde o item vai na importação e no desmembramento."
+  },
+  {
+    "segundo": 104,
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Regras produto→setor",
+    "texto": "Além da categoria, regras por código ou descrição do produto sugerem o setor. A prioridade decide qual regra vale quando mais de uma casa."
+  },
+  {
+    "segundo": 113,
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Consultando a categoria",
+    "texto": "A busca mostra o setor atual da categoria ou informa que ainda não há mapeamento."
+  },
+  {
+    "segundo": 117,
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Categoria sem mapeamento",
+    "texto": "Como a categoria de demonstração ainda não existe, o formulário libera a escolha do setor."
+  },
+  {
+    "segundo": 123,
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Criando o mapeamento",
+    "texto": "Ao salvar, a categoria passa a apontar para Telhas nas próximas importações."
+  },
+  {
+    "segundo": 126,
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Mapeamento salvo",
+    "texto": "A tabela de mapeamentos é atualizada e passa a listar CATEGORIA_DEMO → Telhas."
+  },
+  {
+    "segundo": 133,
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Atualizando o mapeamento",
+    "texto": "Salvar novamente atualiza o setor da mesma categoria, sem duplicar a linha."
+  },
+  {
+    "segundo": 136,
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "De/para atualizado",
+    "texto": "O mapeamento é único por categoria; a alteração fica registrada para as próximas importações."
+  },
+  {
+    "segundo": 141,
+    "capitulo": "Responsável Técnico — integração",
+    "titulo": "Capítulo 12",
+    "texto": "Responsável Técnico — integração"
+  },
+  {
+    "segundo": 146,
+    "capitulo": "Responsável Técnico — integração",
+    "titulo": "Acesso do Responsável Técnico",
+    "texto": "Preenchendo as credenciais e entrando no sistema."
+  },
+  {
+    "segundo": 161,
+    "capitulo": "Responsável Técnico — integração",
+    "titulo": "Integração",
+    "texto": "O responsável técnico acompanha os jobs de importação: status, tentativas, código de erro e eventos."
+  },
+  {
+    "segundo": 168,
+    "capitulo": "Responsável Técnico — integração",
+    "titulo": "Abrindo um job",
+    "texto": "Ao selecionar o job, o painel mostra a linha do tempo: solicitado, despachado, tentativas e conclusão ou falha."
+  },
+  {
+    "segundo": 172,
+    "capitulo": "Responsável Técnico — integração",
+    "titulo": "Eventos do job",
+    "texto": "Esses eventos ajudam a diagnosticar falhas do conector sem expor senhas ou o payload comercial."
+  },
+  {
+    "segundo": 180,
+    "capitulo": "Responsável Técnico — integração",
+    "titulo": "Importação pelo Técnico",
+    "texto": "O perfil técnico também pode solicitar uma importação e acompanhar o andamento pelo mesmo fluxo."
+  },
+  {
+    "segundo": 185,
+    "capitulo": "Validações, permissões e responsividade",
+    "titulo": "Capítulo 13",
+    "texto": "Validações, permissões e responsividade"
+  },
+  {
+    "segundo": 192,
+    "capitulo": "Validações, permissões e responsividade",
+    "titulo": "Página não encontrada",
+    "texto": "Endereços inválidos mostram uma página amigável em português, com caminho de volta, em vez da tela padrão do servidor."
+  },
+  {
+    "segundo": 200,
+    "capitulo": "Validações, permissões e responsividade",
+    "titulo": "Permissões no servidor",
+    "texto": "O Responsável Técnico não gerencia usuários: a API responde 403 e a tela informa que não foi possível carregar. O menu também não oferece a área."
+  },
+  {
+    "segundo": 208,
+    "capitulo": "Validações, permissões e responsividade",
+    "titulo": "Responsividade — Vendedor",
+    "texto": "Preenchendo as credenciais e entrando no sistema."
+  },
+  {
+    "segundo": 221,
+    "capitulo": "Validações, permissões e responsividade",
+    "titulo": "Celular — lista",
+    "texto": "Em 390 px, a tabela vira cartões: pedido, cliente, previsão, status e ação ficam empilhados e legíveis."
+  },
+  {
+    "segundo": 227,
+    "capitulo": "Validações, permissões e responsividade",
+    "titulo": "Celular — detalhe",
+    "texto": "No detalhe, os valores e os itens continuam acessíveis; o menu vira o botão lateral."
+  },
+  {
+    "segundo": 232,
+    "capitulo": "Validações, permissões e responsividade",
+    "titulo": "Toque e leitura",
+    "texto": "Os alvos de toque são grandes e o texto quebra linha sem rolagem horizontal da página."
+  },
+  {
+    "segundo": 237,
+    "capitulo": "Encerramento e pendências",
+    "titulo": "Capítulo 14",
+    "texto": "Encerramento e pendências"
+  },
+  {
+    "segundo": 242,
+    "capitulo": "Encerramento e pendências",
+    "titulo": "Resumo",
+    "texto": "Foram demonstrados os seis perfis, a consulta e o detalhe dos pedidos, prazos com auditoria, desmembramento, produção, ocorrências, remessas, entregas, exceções, administração, integração e impressão."
+  },
+  {
+    "segundo": 250,
+    "capitulo": "Encerramento e pendências",
+    "titulo": "Pendências funcionais",
+    "texto": "Ainda dependem de decisão: cancelamento lógico de item, regra de Revenda com indisponibilidade, quem confirma remessas e como tratar divergências. A tela de histórico de entregas ainda não existe, embora a API esteja disponível."
+  },
+  {
+    "segundo": 259,
+    "capitulo": "Encerramento e pendências",
+    "titulo": "Próximo capítulo",
+    "texto": "No capítulo seguinte, o banco de dados no DBeaver: conexão, tabelas, relacionamentos, consultas e a conferência dos registros criados nesta demonstração."
+  }
+]

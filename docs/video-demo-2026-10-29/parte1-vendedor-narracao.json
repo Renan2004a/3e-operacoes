@@ -1,0 +1,272 @@
+[
+  {
+    "segundo": 0,
+    "capitulo": "Apresentação do sistema",
+    "titulo": "Capítulo 1",
+    "texto": "Apresentação do sistema"
+  },
+  {
+    "segundo": 7,
+    "capitulo": "Apresentação do sistema",
+    "titulo": "3E Operações",
+    "texto": "Sistema de gestão operacional da 3E Ferro e Aço: recebe os pedidos do Top Gerente, organiza a produção por setor, registra execuções, ocorrências e entregas, e mantém a auditoria das alterações."
+  },
+  {
+    "segundo": 14,
+    "capitulo": "Apresentação do sistema",
+    "titulo": "Ambiente da demonstração",
+    "texto": "Esta gravação usa um banco isolado de demonstração. Todos os clientes e operações são identificados como dados de teste; nenhum dado real de cliente é alterado."
+  },
+  {
+    "segundo": 20,
+    "capitulo": "Apresentação do sistema",
+    "titulo": "Tela de acesso",
+    "texto": "O acesso é único para todos os perfis. O sistema identifica o perfil do usuário e abre a tela inicial correspondente."
+  },
+  {
+    "segundo": 25,
+    "capitulo": "Apresentação do sistema",
+    "titulo": "Perfis disponíveis",
+    "texto": "Vendedor, Gerente de Produção, Operador, Expedição, Responsável pelo Sistema e Responsável Técnico. Cada perfil enxerga apenas as ações permitidas."
+  },
+  {
+    "segundo": 31,
+    "capitulo": "Acesso e autenticação",
+    "titulo": "Capítulo 2",
+    "texto": "Acesso e autenticação"
+  },
+  {
+    "segundo": 36,
+    "capitulo": "Acesso e autenticação",
+    "titulo": "Validação de campos obrigatórios",
+    "texto": "Com os campos vazios, o sistema orienta o preenchimento antes de enviar a requisição."
+  },
+  {
+    "segundo": 38,
+    "capitulo": "Acesso e autenticação",
+    "titulo": "Mensagem de validação",
+    "texto": "A mensagem “Dados incompletos” aparece no próprio formulário, sem chamar o servidor."
+  },
+  {
+    "segundo": 47,
+    "capitulo": "Acesso e autenticação",
+    "titulo": "Credenciais inválidas",
+    "texto": "Com a senha errada, o sistema responde de forma genérica, sem revelar se o e-mail existe."
+  },
+  {
+    "segundo": 50,
+    "capitulo": "Acesso e autenticação",
+    "titulo": "Segurança do login",
+    "texto": "A mesma mensagem é usada para senha incorreta, e-mail inexistente e usuário inativo. O limite de tentativas protege contra força bruta."
+  },
+  {
+    "segundo": 57,
+    "capitulo": "Acesso e autenticação",
+    "titulo": "Entrando como Vendedor",
+    "texto": "Login válido: o sistema cria a sessão e direciona para a tela inicial do perfil."
+  },
+  {
+    "segundo": 63,
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Capítulo 3",
+    "texto": "Vendedor — consulta, prazos e desmembramento"
+  },
+  {
+    "segundo": 67,
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Vendas",
+    "texto": "A tela de Vendas concentra a importação do Top Gerente, as instruções de uso e a consulta dos pedidos. O Vendedor acompanha todos os pedidos."
+  },
+  {
+    "segundo": 73,
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Indicadores da lista",
+    "texto": "Cada linha mostra número do pedido, cliente, previsão de entrega e status. A previsão é o maior prazo entre os itens do pedido."
+  },
+  {
+    "segundo": 79,
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Filtro por setor",
+    "texto": "Selecionando o setor Telhas e clicando em Filtrar. A URL, o total e a lista acompanham o filtro."
+  },
+  {
+    "segundo": 83,
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Resultado do filtro",
+    "texto": "Somente pedidos com itens do setor escolhido permanecem na lista. O botão “Limpar filtros” fica disponível."
+  },
+  {
+    "segundo": 87,
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Limpando filtros",
+    "texto": "O botão Limpar filtros devolve a lista completa."
+  },
+  {
+    "segundo": 93,
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Pesquisa por número",
+    "texto": "A busca aceita um trecho do número comercial do pedido."
+  },
+  {
+    "segundo": 96,
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Pesquisa parcial",
+    "texto": "O resultado mostra os pedidos cujo número contém “822”. A pesquisa não diferencia maiúsculas de minúsculas nos campos de texto."
+  },
+  {
+    "segundo": 102,
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Abrindo o pedido 82268",
+    "texto": "O botão Abrir pedido leva ao detalhe completo, preservando filtros e página para o retorno."
+  },
+  {
+    "segundo": 109,
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Detalhe do pedido",
+    "texto": "Cabeçalho com número, cliente e status. Abaixo, o resumo por unidade e por setor, as pendências de desmembramento e de produção e a lista de itens."
+  },
+  {
+    "segundo": 116,
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Abrir todos os itens",
+    "texto": "O primeiro item já abre por padrão. “Abrir todos” expande os 20 itens do pedido."
+  },
+  {
+    "segundo": 119,
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Recolher todos os itens",
+    "texto": "“Recolher todos” compacta a página; o percentual de cada item continua visível no cabeçalho."
+  },
+  {
+    "segundo": 123,
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Resumo por unidade",
+    "texto": "Unidades diferentes nunca são somadas: cada linha mostra solicitado, executado, disponível, entregue e pendente na sua unidade."
+  },
+  {
+    "segundo": 129,
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Pendências",
+    "texto": "O sistema separa itens ainda não desmembrados dos itens já encaminhados à produção. Isso mostra o que falta para o pedido entrar na fábrica."
+  },
+  {
+    "segundo": 136,
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Definindo o prazo de entrega",
+    "texto": "O prazo do item é editável pelo Vendedor e pelo Gerente. O prazo operacional do setor aparece apenas para leitura."
+  },
+  {
+    "segundo": 141,
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Confirmação",
+    "texto": "O sistema confirma a gravação do prazo e mantém a data no campo."
+  },
+  {
+    "segundo": 144,
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Histórico de prazos",
+    "texto": "O histórico é alimentado pela auditoria: mostra quem alterou, quando e os valores anterior e novo."
+  },
+  {
+    "segundo": 149,
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Auditoria do prazo",
+    "texto": "A primeira alteração registra “Definido para 20/11/2026”, com usuário e data/hora."
+  },
+  {
+    "segundo": 158,
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Segunda alteração",
+    "texto": "Alterando o prazo para 27/11. Ao reabrir o histórico, as duas alterações aparecem em ordem, com antes e depois."
+  },
+  {
+    "segundo": 163,
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Rastreabilidade",
+    "texto": "O histórico preserva as duas linhas; o valor atual do item é o último “depois”."
+  },
+  {
+    "segundo": 169,
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Desmembrando um item",
+    "texto": "O Vendedor associa o item ao setor responsável. A escolha fica registrada e o item passa a aparecer na fila da produção."
+  },
+  {
+    "segundo": 174,
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Item desmembrado",
+    "texto": "O item agora está classificado; a tela mostra o setor definido e libera o acompanhamento das remessas."
+  },
+  {
+    "segundo": 178,
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Remessas — somente leitura",
+    "texto": "As remessas são programadas pela Gerência e pela Expedição. O Vendedor acompanha as datas e as confirmações, sem criar, confirmar ou remover."
+  },
+  {
+    "segundo": 184,
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Permissão respeitada",
+    "texto": "Nenhum botão de gestão de remessa é oferecido ao Vendedor — a permissão é aplicada também no servidor."
+  },
+  {
+    "segundo": 187,
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Voltando para a lista",
+    "texto": "O link de retorno preserva filtros, página e ordenação aplicados antes de abrir o pedido."
+  },
+  {
+    "segundo": 192,
+    "capitulo": "Vendedor — importação do Top Gerente",
+    "titulo": "Capítulo 4",
+    "texto": "Vendedor — importação do Top Gerente"
+  },
+  {
+    "segundo": 199,
+    "capitulo": "Vendedor — importação do Top Gerente",
+    "titulo": "Importação de pedido",
+    "texto": "A importação consulta o Top Gerente pelo conector local, cria ou atualiza o pedido no 3E e mantém o histórico operacional."
+  },
+  {
+    "segundo": 207,
+    "capitulo": "Vendedor — importação do Top Gerente",
+    "titulo": "Validação do número",
+    "texto": "O campo aceita apenas dígitos. Números inválidos são recusados antes de consultar o legado."
+  },
+  {
+    "segundo": 210,
+    "capitulo": "Vendedor — importação do Top Gerente",
+    "titulo": "Erro de validação",
+    "texto": "A mensagem orienta a corrigir o número; nenhum job é criado."
+  },
+  {
+    "segundo": 216,
+    "capitulo": "Vendedor — importação do Top Gerente",
+    "titulo": "Importando o pedido 82262",
+    "texto": "O sistema cria um job idempotente e acompanha o processamento no conector."
+  },
+  {
+    "segundo": 235,
+    "capitulo": "Vendedor — importação do Top Gerente",
+    "titulo": "Resultado da importação",
+    "texto": "O pedido foi localizado no Top Gerente, gravado no 3E e já aparece na lista. O job registra cada etapa: solicitado, despachado e concluído."
+  },
+  {
+    "segundo": 244,
+    "capitulo": "Vendedor — importação do Top Gerente",
+    "titulo": "Reimportação",
+    "texto": "Repetir o mesmo número não duplica o pedido: o sistema atualiza os dados comerciais e preserva o histórico operacional."
+  },
+  {
+    "segundo": 338,
+    "capitulo": "Vendedor — importação do Top Gerente",
+    "titulo": "Reimportação",
+    "texto": "Mesmo quando a consulta é repetida, o sistema reaproveita o job e não cria pedidos duplicados."
+  },
+  {
+    "segundo": 342,
+    "capitulo": "Fim da parte 1",
+    "titulo": "Capítulo 4",
+    "texto": "Fim da parte 1"
+  }
+]

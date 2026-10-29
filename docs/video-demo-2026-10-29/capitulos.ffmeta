@@ -1,0 +1,94 @@
+;FFMETADATA1
+title=3E Operações — demonstração completa
+artist=3E Ferro e Aço
+comment=Demonstração funcional com dados de teste (29/10/2026)
+[CHAPTER]
+TIMEBASE=1/1000
+START=0
+END=31000
+title=Apresentação do sistema
+[CHAPTER]
+TIMEBASE=1/1000
+START=31000
+END=63000
+title=Acesso e autenticação
+[CHAPTER]
+TIMEBASE=1/1000
+START=63000
+END=192000
+title=Vendedor — consulta, prazos e desmembramento
+[CHAPTER]
+TIMEBASE=1/1000
+START=192000
+END=342000
+title=Vendedor — importação do Top Gerente
+[CHAPTER]
+TIMEBASE=1/1000
+START=342000
+END=346000
+title=Fim da parte 1
+[CHAPTER]
+TIMEBASE=1/1000
+START=346000
+END=443000
+title=Gerente — painel e alertas
+[CHAPTER]
+TIMEBASE=1/1000
+START=443000
+END=495000
+title=Gerente — pedidos, prazos, setor e remessas
+[CHAPTER]
+TIMEBASE=1/1000
+START=495000
+END=557000
+title=Gerente — correção de setor e remessas
+[CHAPTER]
+TIMEBASE=1/1000
+START=557000
+END=648000
+title=Gerente — entregas e exceções
+[CHAPTER]
+TIMEBASE=1/1000
+START=648000
+END=653000
+title=Fim da parte 2
+[CHAPTER]
+TIMEBASE=1/1000
+START=653000
+END=786000
+title=Operador — fila, execução e ocorrências
+[CHAPTER]
+TIMEBASE=1/1000
+START=786000
+END=852000
+title=Expedição — entregas e exceções
+[CHAPTER]
+TIMEBASE=1/1000
+START=852000
+END=857000
+title=Fim da parte 3
+[CHAPTER]
+TIMEBASE=1/1000
+START=857000
+END=998000
+title=Administração — usuários, setores e mapeamentos
+[CHAPTER]
+TIMEBASE=1/1000
+START=998000
+END=1042000
+title=Responsável Técnico — integração
+[CHAPTER]
+TIMEBASE=1/1000
+START=1042000
+END=1094000
+title=Validações, permissões e responsividade
+[CHAPTER]
+TIMEBASE=1/1000
+START=1094000
+END=1134000
+title=Encerramento e pendências
+[CHAPTER]
+TIMEBASE=1/1000
+START=1134000
+END=1307000
+title=Banco de dados — estrutura e persistência

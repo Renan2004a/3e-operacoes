@@ -1,0 +1,116 @@
+[
+  {
+    "segundo": 1,
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Capítulo 15",
+    "texto": "Banco de dados — estrutura e persistência"
+  },
+  {
+    "segundo": 7,
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Capítulo de banco",
+    "texto": "Agora o banco por dentro: o MySQL do aplicativo, as 18 tabelas, os relacionamentos e os registros que a demonstração produziu. As consultas são reais e somente leitura."
+  },
+  {
+    "segundo": 16,
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "DBeaver e as duas conexões",
+    "texto": "O DBeaver tem a conexão topgerente, somente leitura, e a conexão do banco do aplicativo. Nesta sessão, a árvore e o editor do DBeaver não renderizaram texto; por isso as consultas foram executadas diretamente no MySQL e a captura real da janela é mostrada aqui."
+  },
+  {
+    "segundo": 26,
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Inventário",
+    "texto": "O banco de demonstração tem 7 pedidos, 27 itens, 14 atividades e registros de execução, ocorrência, entrega, remessa e auditoria. O caminho do dado é pedido → item → atividade → execução."
+  },
+  {
+    "segundo": 35,
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Pedidos e previsão",
+    "texto": "A consulta agrega pedidos e itens. A previsão do pedido é o maior prazo entre os itens; pendentes mostram o que ainda não foi desmembrado."
+  },
+  {
+    "segundo": 43,
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Itens, execução e entrega",
+    "texto": "O saldo nasce do item (solicitado), passa pelas execuções (produzido) e pelas entregas (entregue). Unidades diferentes não são somadas na interface."
+  },
+  {
+    "segundo": 52,
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Atividades e fila",
+    "texto": "Cada item desmembrado gera uma atividade no setor. A fila do Operador filtra por setor, ignora concluídas e ordena por prioridade."
+  },
+  {
+    "segundo": 61,
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Execuções",
+    "texto": "Cada apontamento grava usuário, quantidade e data/hora. O status da atividade e o saldo são recalculados na mesma transação."
+  },
+  {
+    "segundo": 69,
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Ocorrências",
+    "texto": "Perdas, refugos, indisponibilidades, pausas e paradas ficam ligados à atividade, ao motivo e ao responsável. O painel do Gerente lê esta tabela."
+  },
+  {
+    "segundo": 78,
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Entregas e remessas",
+    "texto": "A entrega baixa o disponível e registra quem entregou, a quantidade e a exceção. A remessa é apenas a previsão combinada e não altera saldo."
+  },
+  {
+    "segundo": 86,
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Auditoria de prazos",
+    "texto": "As alterações de prazo da demonstração estão aqui: 20/11 e 27/11 no item 3 do pedido 82268, com antes, depois, usuário e horário. É a fonte do histórico exibido na tela."
+  },
+  {
+    "segundo": 96,
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Usuários, perfis e setores",
+    "texto": "A autenticação lê usuarios; a autorização combina usuarios_perfis e usuarios_setores. As senhas são hash scrypt, nunca texto."
+  },
+  {
+    "segundo": 104,
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Integração e mapeamentos",
+    "texto": "Os jobs registram cada tentativa de importação e os erros. O mapeamento categoria→setor é o que faz o item cair no setor certo."
+  },
+  {
+    "segundo": 113,
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Estrutura das tabelas",
+    "texto": "Cada tabela traz colunas, tipos, nulos, chave primária, chaves estrangeiras e índices, lidos do information_schema. As chaves estrangeiras mostram o relacionamento entre pedidos, itens, atividades, execuções, ocorrências e entregas."
+  },
+  {
+    "segundo": 124,
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Chaves e relações",
+    "texto": "pedidos_itens aponta para pedidos; atividades aponta para itens e setores; execuções, ocorrências e entregas apontam para as atividades ou itens."
+  },
+  {
+    "segundo": 132,
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Amostras de registros",
+    "texto": "As primeiras linhas de cada tabela. Os nomes de clientes foram anonimizados para a gravação; nenhum dado pessoal real é exibido."
+  },
+  {
+    "segundo": 140,
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Rastro da operação",
+    "texto": "A auditoria mostra o antes e o depois de cada alteração. É o elo entre a ação na tela e o registro persistido."
+  },
+  {
+    "segundo": 148,
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Da tela para a tabela",
+    "texto": "Este mapa liga cada área da interface às tabelas que ela lê e grava: pedidos, prazos, fila, ocorrências, entregas, administração e integração."
+  },
+  {
+    "segundo": 157,
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Conclusão",
+    "texto": "O banco guarda o ciclo completo e a auditoria. As consultas foram executadas no banco de demonstração e conferem com o que foi criado na interface. Encerramos a demonstração."
+  }
+]

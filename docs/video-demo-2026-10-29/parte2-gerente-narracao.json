@@ -1,0 +1,260 @@
+[
+  {
+    "segundo": 0,
+    "capitulo": "Gerente — painel e alertas",
+    "titulo": "Capítulo 5",
+    "texto": "Gerente — painel e alertas"
+  },
+  {
+    "segundo": 6,
+    "capitulo": "Gerente — painel e alertas",
+    "titulo": "Acesso do Gerente",
+    "texto": "Entrando como Gerente de Produção. O sistema abre o painel inicial do perfil e libera as ações de gestão."
+  },
+  {
+    "segundo": 24,
+    "capitulo": "Gerente — painel e alertas",
+    "titulo": "Painel do Gerente",
+    "texto": "O painel reúne a situação da fábrica: atividades pendentes, em execução, concluídas e o cumprimento de prazo."
+  },
+  {
+    "segundo": 30,
+    "capitulo": "Gerente — painel e alertas",
+    "titulo": "Indicadores",
+    "texto": "Cada cartão é clicável e abre a lista correspondente em nova aba. O percentual de prazo só aparece quando há atividades concluídas com prazo."
+  },
+  {
+    "segundo": 37,
+    "capitulo": "Gerente — painel e alertas",
+    "titulo": "Drill-down por status",
+    "texto": "O cartão abre uma aba com a lista de atividades pendentes, já filtrada. O botão Voltar retorna ao painel."
+  },
+  {
+    "segundo": 50,
+    "capitulo": "Gerente — painel e alertas",
+    "titulo": "Lista de atividades",
+    "texto": "A lista mostra pedido, item, setor, prazo e status. É a mesma visão usada para cobrar a produção por etapa."
+  },
+  {
+    "segundo": 61,
+    "capitulo": "Gerente — painel e alertas",
+    "titulo": "Atividades divergentes",
+    "texto": "A atividade com produção acima do solicitado aparece destacada. O gerente consegue abrir o pedido e verificar o item e o setor."
+  },
+  {
+    "segundo": 75,
+    "capitulo": "Gerente — painel e alertas",
+    "titulo": "Alertas operacionais",
+    "texto": "Três grupos: atividades atrasadas, paradas há vários dias e itens ainda não encaminhados para a produção. O contador fica no título."
+  },
+  {
+    "segundo": 82,
+    "capitulo": "Gerente — painel e alertas",
+    "titulo": "Expandindo a lista",
+    "texto": "O “+N outros” abre os demais itens do grupo, sem sair do painel."
+  },
+  {
+    "segundo": 85,
+    "capitulo": "Gerente — painel e alertas",
+    "titulo": "Ocorrências recentes",
+    "texto": "O painel também consolida as ocorrências registradas pelos Operadores: tipo, pedido, item, setor, motivo, data e o responsável com o perfil."
+  },
+  {
+    "segundo": 93,
+    "capitulo": "Gerente — painel e alertas",
+    "titulo": "Atualizando o painel",
+    "texto": "O botão Atualizar recarrega os blocos de forma independente; uma falha em um bloco não derruba os outros."
+  },
+  {
+    "segundo": 97,
+    "capitulo": "Gerente — pedidos, prazos, setor e remessas",
+    "titulo": "Capítulo 6",
+    "texto": "Gerente — pedidos, prazos, setor e remessas"
+  },
+  {
+    "segundo": 107,
+    "capitulo": "Gerente — pedidos, prazos, setor e remessas",
+    "titulo": "Pedidos do Gerente",
+    "texto": "A mesma consulta do Vendedor, com filtros por número, cliente, setor, status e período. O Gerente pode abrir o detalhe e corrigir o setor."
+  },
+  {
+    "segundo": 115,
+    "capitulo": "Gerente — pedidos, prazos, setor e remessas",
+    "titulo": "Filtrando por setor",
+    "texto": "Aplicando o filtro de Telhas para localizar os pedidos com esse setor."
+  },
+  {
+    "segundo": 118,
+    "capitulo": "Gerente — pedidos, prazos, setor e remessas",
+    "titulo": "Abrindo o pedido 70435",
+    "texto": "O detalhe mostra prazos, saldos, desmembramento e as ações permitidas ao Gerente."
+  },
+  {
+    "segundo": 125,
+    "capitulo": "Gerente — pedidos, prazos, setor e remessas",
+    "titulo": "Detalhe do pedido",
+    "texto": "O Gerente enxerga a mesma estrutura do pedido e pode agir sobre prazo, setor e remessas."
+  },
+  {
+    "segundo": 133,
+    "capitulo": "Gerente — pedidos, prazos, setor e remessas",
+    "titulo": "Definindo um prazo vencido",
+    "texto": "Para demonstrar o alerta comercial, o prazo do item será definido no passado."
+  },
+  {
+    "segundo": 143,
+    "capitulo": "Gerente — pedidos, prazos, setor e remessas",
+    "titulo": "Atraso comercial",
+    "texto": "O servidor calcula o status do prazo pela quantidade entregue. O selo “Entrega atrasada” aparece ao lado da data."
+  },
+  {
+    "segundo": 149,
+    "capitulo": "Gerente — correção de setor e remessas",
+    "titulo": "Capítulo 7",
+    "texto": "Gerente — correção de setor e remessas"
+  },
+  {
+    "segundo": 155,
+    "capitulo": "Gerente — correção de setor e remessas",
+    "titulo": "Corrigindo o setor",
+    "texto": "O item estava em Revenda. A correção exige justificativa quando o item já tem histórico."
+  },
+  {
+    "segundo": 166,
+    "capitulo": "Gerente — correção de setor e remessas",
+    "titulo": "Confirmando a correção",
+    "texto": "O motivo é gravado na auditoria, junto com o setor anterior e o novo."
+  },
+  {
+    "segundo": 172,
+    "capitulo": "Gerente — correção de setor e remessas",
+    "titulo": "Auditoria da correção",
+    "texto": "A alteração preserva o histórico: quem corrigiu, quando, o motivo e os setores anterior e novo."
+  },
+  {
+    "segundo": 179,
+    "capitulo": "Gerente — correção de setor e remessas",
+    "titulo": "Programando uma remessa",
+    "texto": "O número da remessa é automático; o usuário informa apenas a data prevista."
+  },
+  {
+    "segundo": 183,
+    "capitulo": "Gerente — correção de setor e remessas",
+    "titulo": "Gravando a remessa",
+    "texto": "A remessa é criada com o próximo número disponível para o item."
+  },
+  {
+    "segundo": 188,
+    "capitulo": "Gerente — correção de setor e remessas",
+    "titulo": "Remessa criada",
+    "texto": "A lista mostra a data prevista e o botão Confirmar. A remessa ainda não é uma entrega."
+  },
+  {
+    "segundo": 192,
+    "capitulo": "Gerente — correção de setor e remessas",
+    "titulo": "Confirmando a remessa",
+    "texto": "Confirmar registra a data em que a remessa foi combinada/confirmada. Entregas e saldos não mudam."
+  },
+  {
+    "segundo": 196,
+    "capitulo": "Gerente — correção de setor e remessas",
+    "titulo": "Remessa confirmada",
+    "texto": "A tela mostra “Confirmada em” e mantém a data prevista."
+  },
+  {
+    "segundo": 200,
+    "capitulo": "Gerente — correção de setor e remessas",
+    "titulo": "Removendo a remessa",
+    "texto": "A remoção pede confirmação e avisa que entregas e saldos não serão alterados."
+  },
+  {
+    "segundo": 203,
+    "capitulo": "Gerente — correção de setor e remessas",
+    "titulo": "Confirmando a exclusão",
+    "texto": "A remessa de teste é removida."
+  },
+  {
+    "segundo": 207,
+    "capitulo": "Gerente — correção de setor e remessas",
+    "titulo": "Remoção concluída",
+    "texto": "O item volta ao estado anterior, sem resíduo para a demonstração."
+  },
+  {
+    "segundo": 211,
+    "capitulo": "Gerente — entregas e exceções",
+    "titulo": "Capítulo 8",
+    "texto": "Gerente — entregas e exceções"
+  },
+  {
+    "segundo": 221,
+    "capitulo": "Gerente — entregas e exceções",
+    "titulo": "Entregas",
+    "texto": "A Expedição e o Gerente registram entregas. O Gerente também pode autorizar acima do disponível, com motivo."
+  },
+  {
+    "segundo": 232,
+    "capitulo": "Gerente — entregas e exceções",
+    "titulo": "Itens do pedido",
+    "texto": "Cada cartão mostra descrição, código, cliente, disponível, previsão e a situação real do item."
+  },
+  {
+    "segundo": 239,
+    "capitulo": "Gerente — entregas e exceções",
+    "titulo": "Entregar tudo",
+    "texto": "O botão preenche a quantidade com todo o saldo disponível do item."
+  },
+  {
+    "segundo": 242,
+    "capitulo": "Gerente — entregas e exceções",
+    "titulo": "Confirmação da entrega",
+    "texto": "Antes de gravar, o sistema mostra a quantidade, o disponível e quanto sobra depois da entrega."
+  },
+  {
+    "segundo": 247,
+    "capitulo": "Gerente — entregas e exceções",
+    "titulo": "Confirmando",
+    "texto": "A entrega é registrada e o saldo é atualizado na hora."
+  },
+  {
+    "segundo": 252,
+    "capitulo": "Gerente — entregas e exceções",
+    "titulo": "Entrega registrada",
+    "texto": "O item passa a mostrar o novo saldo e a situação atualizada."
+  },
+  {
+    "segundo": 258,
+    "capitulo": "Gerente — entregas e exceções",
+    "titulo": "Acima do disponível",
+    "texto": "Ao digitar uma quantidade maior que o saldo, o sistema avisa que é necessária autorização do gerente e um motivo."
+  },
+  {
+    "segundo": 269,
+    "capitulo": "Gerente — entregas e exceções",
+    "titulo": "Autorização com motivo",
+    "texto": "Somente o Gerente vê esta opção. O motivo e a quantidade acima do saldo ficam registrados na auditoria."
+  },
+  {
+    "segundo": 276,
+    "capitulo": "Gerente — entregas e exceções",
+    "titulo": "Cancelando a exceção",
+    "texto": "A exceção é apenas demonstrada; o cancelamento evita alterar o saldo nesta gravação."
+  },
+  {
+    "segundo": 290,
+    "capitulo": "Gerente — entregas e exceções",
+    "titulo": "Ordem de produção",
+    "texto": "Documento de produção com pedido, item, setor, previsão, unidade, solicitado, executado e pendente."
+  },
+  {
+    "segundo": 297,
+    "capitulo": "Gerente — entregas e exceções",
+    "titulo": "Impressão",
+    "texto": "Na impressão, o menu e os botões são removidos e o documento cabe em uma página A4."
+  },
+  {
+    "segundo": 302,
+    "capitulo": "Fim da parte 2",
+    "titulo": "Capítulo 8",
+    "texto": "Fim da parte 2"
+  }
+]

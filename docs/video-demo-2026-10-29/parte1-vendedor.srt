@@ -1,0 +1,224 @@
+1
+00:00:00,000 --> 00:00:07,000
+Capítulo 1
+Apresentação do sistema
+
+2
+00:00:07,000 --> 00:00:14,000
+3E Operações
+Sistema de gestão operacional da 3E Ferro e Aço: recebe os pedidos do Top Gerente, organiza a produção por setor, registra execuções, ocorrências e entregas, e mantém a auditoria das alterações.
+
+3
+00:00:14,000 --> 00:00:20,000
+Ambiente da demonstração
+Esta gravação usa um banco isolado de demonstração. Todos os clientes e operações são identificados como dados de teste; nenhum dado real de cliente é alterado.
+
+4
+00:00:20,000 --> 00:00:25,000
+Tela de acesso
+O acesso é único para todos os perfis. O sistema identifica o perfil do usuário e abre a tela inicial correspondente.
+
+5
+00:00:25,000 --> 00:00:31,000
+Perfis disponíveis
+Vendedor, Gerente de Produção, Operador, Expedição, Responsável pelo Sistema e Responsável Técnico. Cada perfil enxerga apenas as ações permitidas.
+
+6
+00:00:31,000 --> 00:00:36,000
+Capítulo 2
+Acesso e autenticação
+
+7
+00:00:36,000 --> 00:00:38,000
+Validação de campos obrigatórios
+Com os campos vazios, o sistema orienta o preenchimento antes de enviar a requisição.
+
+8
+00:00:38,000 --> 00:00:47,000
+Mensagem de validação
+A mensagem “Dados incompletos” aparece no próprio formulário, sem chamar o servidor.
+
+9
+00:00:47,000 --> 00:00:50,000
+Credenciais inválidas
+Com a senha errada, o sistema responde de forma genérica, sem revelar se o e-mail existe.
+
+10
+00:00:50,000 --> 00:00:57,000
+Segurança do login
+A mesma mensagem é usada para senha incorreta, e-mail inexistente e usuário inativo. O limite de tentativas protege contra força bruta.
+
+11
+00:00:57,000 --> 00:01:03,000
+Entrando como Vendedor
+Login válido: o sistema cria a sessão e direciona para a tela inicial do perfil.
+
+12
+00:01:03,000 --> 00:01:07,000
+Capítulo 3
+Vendedor — consulta, prazos e desmembramento
+
+13
+00:01:07,000 --> 00:01:13,000
+Vendas
+A tela de Vendas concentra a importação do Top Gerente, as instruções de uso e a consulta dos pedidos. O Vendedor acompanha todos os pedidos.
+
+14
+00:01:13,000 --> 00:01:19,000
+Indicadores da lista
+Cada linha mostra número do pedido, cliente, previsão de entrega e status. A previsão é o maior prazo entre os itens do pedido.
+
+15
+00:01:19,000 --> 00:01:23,000
+Filtro por setor
+Selecionando o setor Telhas e clicando em Filtrar. A URL, o total e a lista acompanham o filtro.
+
+16
+00:01:23,000 --> 00:01:27,000
+Resultado do filtro
+Somente pedidos com itens do setor escolhido permanecem na lista. O botão “Limpar filtros” fica disponível.
+
+17
+00:01:27,000 --> 00:01:33,000
+Limpando filtros
+O botão Limpar filtros devolve a lista completa.
+
+18
+00:01:33,000 --> 00:01:36,000
+Pesquisa por número
+A busca aceita um trecho do número comercial do pedido.
+
+19
+00:01:36,000 --> 00:01:42,000
+Pesquisa parcial
+O resultado mostra os pedidos cujo número contém “822”. A pesquisa não diferencia maiúsculas de minúsculas nos campos de texto.
+
+20
+00:01:42,000 --> 00:01:49,000
+Abrindo o pedido 82268
+O botão Abrir pedido leva ao detalhe completo, preservando filtros e página para o retorno.
+
+21
+00:01:49,000 --> 00:01:56,000
+Detalhe do pedido
+Cabeçalho com número, cliente e status. Abaixo, o resumo por unidade e por setor, as pendências de desmembramento e de produção e a lista de itens.
+
+22
+00:01:56,000 --> 00:01:59,000
+Abrir todos os itens
+O primeiro item já abre por padrão. “Abrir todos” expande os 20 itens do pedido.
+
+23
+00:01:59,000 --> 00:02:03,000
+Recolher todos os itens
+“Recolher todos” compacta a página; o percentual de cada item continua visível no cabeçalho.
+
+24
+00:02:03,000 --> 00:02:09,000
+Resumo por unidade
+Unidades diferentes nunca são somadas: cada linha mostra solicitado, executado, disponível, entregue e pendente na sua unidade.
+
+25
+00:02:09,000 --> 00:02:16,000
+Pendências
+O sistema separa itens ainda não desmembrados dos itens já encaminhados à produção. Isso mostra o que falta para o pedido entrar na fábrica.
+
+26
+00:02:16,000 --> 00:02:21,000
+Definindo o prazo de entrega
+O prazo do item é editável pelo Vendedor e pelo Gerente. O prazo operacional do setor aparece apenas para leitura.
+
+27
+00:02:21,000 --> 00:02:24,000
+Confirmação
+O sistema confirma a gravação do prazo e mantém a data no campo.
+
+28
+00:02:24,000 --> 00:02:29,000
+Histórico de prazos
+O histórico é alimentado pela auditoria: mostra quem alterou, quando e os valores anterior e novo.
+
+29
+00:02:29,000 --> 00:02:38,000
+Auditoria do prazo
+A primeira alteração registra “Definido para 20/11/2026”, com usuário e data/hora.
+
+30
+00:02:38,000 --> 00:02:43,000
+Segunda alteração
+Alterando o prazo para 27/11. Ao reabrir o histórico, as duas alterações aparecem em ordem, com antes e depois.
+
+31
+00:02:43,000 --> 00:02:49,000
+Rastreabilidade
+O histórico preserva as duas linhas; o valor atual do item é o último “depois”.
+
+32
+00:02:49,000 --> 00:02:54,000
+Desmembrando um item
+O Vendedor associa o item ao setor responsável. A escolha fica registrada e o item passa a aparecer na fila da produção.
+
+33
+00:02:54,000 --> 00:02:58,000
+Item desmembrado
+O item agora está classificado; a tela mostra o setor definido e libera o acompanhamento das remessas.
+
+34
+00:02:58,000 --> 00:03:04,000
+Remessas — somente leitura
+As remessas são programadas pela Gerência e pela Expedição. O Vendedor acompanha as datas e as confirmações, sem criar, confirmar ou remover.
+
+35
+00:03:04,000 --> 00:03:07,000
+Permissão respeitada
+Nenhum botão de gestão de remessa é oferecido ao Vendedor — a permissão é aplicada também no servidor.
+
+36
+00:03:07,000 --> 00:03:12,000
+Voltando para a lista
+O link de retorno preserva filtros, página e ordenação aplicados antes de abrir o pedido.
+
+37
+00:03:12,000 --> 00:03:19,000
+Capítulo 4
+Vendedor — importação do Top Gerente
+
+38
+00:03:19,000 --> 00:03:27,000
+Importação de pedido
+A importação consulta o Top Gerente pelo conector local, cria ou atualiza o pedido no 3E e mantém o histórico operacional.
+
+39
+00:03:27,000 --> 00:03:30,000
+Validação do número
+O campo aceita apenas dígitos. Números inválidos são recusados antes de consultar o legado.
+
+40
+00:03:30,000 --> 00:03:36,000
+Erro de validação
+A mensagem orienta a corrigir o número; nenhum job é criado.
+
+41
+00:03:36,000 --> 00:03:55,000
+Importando o pedido 82262
+O sistema cria um job idempotente e acompanha o processamento no conector.
+
+42
+00:03:55,000 --> 00:04:04,000
+Resultado da importação
+O pedido foi localizado no Top Gerente, gravado no 3E e já aparece na lista. O job registra cada etapa: solicitado, despachado e concluído.
+
+43
+00:04:04,000 --> 00:05:38,000
+Reimportação
+Repetir o mesmo número não duplica o pedido: o sistema atualiza os dados comerciais e preserva o histórico operacional.
+
+44
+00:05:38,000 --> 00:05:42,000
+Reimportação
+Mesmo quando a consulta é repetida, o sistema reaproveita o job e não cria pedidos duplicados.
+
+45
+00:05:42,000 --> 00:05:47,000
+Capítulo 4
+Fim da parte 1

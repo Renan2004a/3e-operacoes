@@ -1,0 +1,214 @@
+1
+00:00:00,000 --> 00:00:06,000
+Capítulo 5
+Gerente — painel e alertas
+
+2
+00:00:06,000 --> 00:00:24,000
+Acesso do Gerente
+Entrando como Gerente de Produção. O sistema abre o painel inicial do perfil e libera as ações de gestão.
+
+3
+00:00:24,000 --> 00:00:30,000
+Painel do Gerente
+O painel reúne a situação da fábrica: atividades pendentes, em execução, concluídas e o cumprimento de prazo.
+
+4
+00:00:30,000 --> 00:00:37,000
+Indicadores
+Cada cartão é clicável e abre a lista correspondente em nova aba. O percentual de prazo só aparece quando há atividades concluídas com prazo.
+
+5
+00:00:37,000 --> 00:00:50,000
+Drill-down por status
+O cartão abre uma aba com a lista de atividades pendentes, já filtrada. O botão Voltar retorna ao painel.
+
+6
+00:00:50,000 --> 00:01:01,000
+Lista de atividades
+A lista mostra pedido, item, setor, prazo e status. É a mesma visão usada para cobrar a produção por etapa.
+
+7
+00:01:01,000 --> 00:01:15,000
+Atividades divergentes
+A atividade com produção acima do solicitado aparece destacada. O gerente consegue abrir o pedido e verificar o item e o setor.
+
+8
+00:01:15,000 --> 00:01:22,000
+Alertas operacionais
+Três grupos: atividades atrasadas, paradas há vários dias e itens ainda não encaminhados para a produção. O contador fica no título.
+
+9
+00:01:22,000 --> 00:01:25,000
+Expandindo a lista
+O “+N outros” abre os demais itens do grupo, sem sair do painel.
+
+10
+00:01:25,000 --> 00:01:33,000
+Ocorrências recentes
+O painel também consolida as ocorrências registradas pelos Operadores: tipo, pedido, item, setor, motivo, data e o responsável com o perfil.
+
+11
+00:01:33,000 --> 00:01:37,000
+Atualizando o painel
+O botão Atualizar recarrega os blocos de forma independente; uma falha em um bloco não derruba os outros.
+
+12
+00:01:37,000 --> 00:01:47,000
+Capítulo 6
+Gerente — pedidos, prazos, setor e remessas
+
+13
+00:01:47,000 --> 00:01:55,000
+Pedidos do Gerente
+A mesma consulta do Vendedor, com filtros por número, cliente, setor, status e período. O Gerente pode abrir o detalhe e corrigir o setor.
+
+14
+00:01:55,000 --> 00:01:58,000
+Filtrando por setor
+Aplicando o filtro de Telhas para localizar os pedidos com esse setor.
+
+15
+00:01:58,000 --> 00:02:05,000
+Abrindo o pedido 70435
+O detalhe mostra prazos, saldos, desmembramento e as ações permitidas ao Gerente.
+
+16
+00:02:05,000 --> 00:02:13,000
+Detalhe do pedido
+O Gerente enxerga a mesma estrutura do pedido e pode agir sobre prazo, setor e remessas.
+
+17
+00:02:13,000 --> 00:02:23,000
+Definindo um prazo vencido
+Para demonstrar o alerta comercial, o prazo do item será definido no passado.
+
+18
+00:02:23,000 --> 00:02:29,000
+Atraso comercial
+O servidor calcula o status do prazo pela quantidade entregue. O selo “Entrega atrasada” aparece ao lado da data.
+
+19
+00:02:29,000 --> 00:02:35,000
+Capítulo 7
+Gerente — correção de setor e remessas
+
+20
+00:02:35,000 --> 00:02:46,000
+Corrigindo o setor
+O item estava em Revenda. A correção exige justificativa quando o item já tem histórico.
+
+21
+00:02:46,000 --> 00:02:52,000
+Confirmando a correção
+O motivo é gravado na auditoria, junto com o setor anterior e o novo.
+
+22
+00:02:52,000 --> 00:02:59,000
+Auditoria da correção
+A alteração preserva o histórico: quem corrigiu, quando, o motivo e os setores anterior e novo.
+
+23
+00:02:59,000 --> 00:03:03,000
+Programando uma remessa
+O número da remessa é automático; o usuário informa apenas a data prevista.
+
+24
+00:03:03,000 --> 00:03:08,000
+Gravando a remessa
+A remessa é criada com o próximo número disponível para o item.
+
+25
+00:03:08,000 --> 00:03:12,000
+Remessa criada
+A lista mostra a data prevista e o botão Confirmar. A remessa ainda não é uma entrega.
+
+26
+00:03:12,000 --> 00:03:16,000
+Confirmando a remessa
+Confirmar registra a data em que a remessa foi combinada/confirmada. Entregas e saldos não mudam.
+
+27
+00:03:16,000 --> 00:03:20,000
+Remessa confirmada
+A tela mostra “Confirmada em” e mantém a data prevista.
+
+28
+00:03:20,000 --> 00:03:23,000
+Removendo a remessa
+A remoção pede confirmação e avisa que entregas e saldos não serão alterados.
+
+29
+00:03:23,000 --> 00:03:27,000
+Confirmando a exclusão
+A remessa de teste é removida.
+
+30
+00:03:27,000 --> 00:03:31,000
+Remoção concluída
+O item volta ao estado anterior, sem resíduo para a demonstração.
+
+31
+00:03:31,000 --> 00:03:41,000
+Capítulo 8
+Gerente — entregas e exceções
+
+32
+00:03:41,000 --> 00:03:52,000
+Entregas
+A Expedição e o Gerente registram entregas. O Gerente também pode autorizar acima do disponível, com motivo.
+
+33
+00:03:52,000 --> 00:03:59,000
+Itens do pedido
+Cada cartão mostra descrição, código, cliente, disponível, previsão e a situação real do item.
+
+34
+00:03:59,000 --> 00:04:02,000
+Entregar tudo
+O botão preenche a quantidade com todo o saldo disponível do item.
+
+35
+00:04:02,000 --> 00:04:07,000
+Confirmação da entrega
+Antes de gravar, o sistema mostra a quantidade, o disponível e quanto sobra depois da entrega.
+
+36
+00:04:07,000 --> 00:04:12,000
+Confirmando
+A entrega é registrada e o saldo é atualizado na hora.
+
+37
+00:04:12,000 --> 00:04:18,000
+Entrega registrada
+O item passa a mostrar o novo saldo e a situação atualizada.
+
+38
+00:04:18,000 --> 00:04:29,000
+Acima do disponível
+Ao digitar uma quantidade maior que o saldo, o sistema avisa que é necessária autorização do gerente e um motivo.
+
+39
+00:04:29,000 --> 00:04:36,000
+Autorização com motivo
+Somente o Gerente vê esta opção. O motivo e a quantidade acima do saldo ficam registrados na auditoria.
+
+40
+00:04:36,000 --> 00:04:50,000
+Cancelando a exceção
+A exceção é apenas demonstrada; o cancelamento evita alterar o saldo nesta gravação.
+
+41
+00:04:50,000 --> 00:04:57,000
+Ordem de produção
+Documento de produção com pedido, item, setor, previsão, unidade, solicitado, executado e pendente.
+
+42
+00:04:57,000 --> 00:05:02,000
+Impressão
+Na impressão, o menu e os botões são removidos e o documento cabe em uma página A4.
+
+43
+00:05:02,000 --> 00:05:07,000
+Capítulo 8
+Fim da parte 2

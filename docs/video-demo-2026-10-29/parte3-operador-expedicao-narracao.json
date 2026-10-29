@@ -1,0 +1,152 @@
+[
+  {
+    "segundo": 0,
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Capítulo 9",
+    "texto": "Operador — fila, execução e ocorrências"
+  },
+  {
+    "segundo": 6,
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Acesso do Operador",
+    "texto": "Entrando como Operador."
+  },
+  {
+    "segundo": 24,
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Fila de produção",
+    "texto": "O Operador vê apenas as atividades dos setores aos quais pertence. A fila é ordenada por prioridade e, depois, pela data de criação."
+  },
+  {
+    "segundo": 31,
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Cartões da fila",
+    "texto": "Cada cartão mostra pedido, item, setor, status e prioridade quando definida. O status “Divergente” indica produção acima do solicitado."
+  },
+  {
+    "segundo": 38,
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Atividade divergente",
+    "texto": "A primeira atividade está divergente. Vamos abrir para entender o que aconteceu."
+  },
+  {
+    "segundo": 42,
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Divergência",
+    "texto": "O sistema mostra o excedente e explica que a atividade ficou marcada como divergente. O registro fica preservado para análise."
+  },
+  {
+    "segundo": 53,
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Abrindo uma atividade",
+    "texto": "Esta atividade está em andamento e será usada para registrar uma execução real."
+  },
+  {
+    "segundo": 57,
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Execução da atividade",
+    "texto": "A tela mostra o progresso, os valores solicitado/executado/pendente, o setor e a previsão de entrega."
+  },
+  {
+    "segundo": 65,
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Registrando produção",
+    "texto": "O Operador informa a quantidade na unidade da atividade. O registro atualiza o saldo e o status."
+  },
+  {
+    "segundo": 72,
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Execução confirmada",
+    "texto": "A confirmação aparece na tela e o progresso é recalculado. Cada execução guarda usuário, data/hora e quantidade."
+  },
+  {
+    "segundo": 77,
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Registrar ocorrência",
+    "texto": "A tela de ocorrências é separada da execução e já vem com a atividade pré-selecionada."
+  },
+  {
+    "segundo": 82,
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Ocorrências do Operador",
+    "texto": "Aqui ficam perdas, refugos, indisponibilidades, pausas e paradas. À direita, o histórico das ocorrências já registradas."
+  },
+  {
+    "segundo": 92,
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Motivo obrigatório",
+    "texto": "Perda exige um motivo da lista fechada. Motivos disponíveis nesta demonstração: Defeito de corte, Erro de dobra / medida incorreta, Material com problema."
+  },
+  {
+    "segundo": 103,
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Gravando a ocorrência",
+    "texto": "A quantidade é opcional, mas quando informada precisa respeitar a unidade do item."
+  },
+  {
+    "segundo": 109,
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Ocorrência registrada",
+    "texto": "O registro aparece no histórico com tipo, quantidade, motivo, responsável e data/hora. O Gerente vê a mesma ocorrência no painel."
+  },
+  {
+    "segundo": 121,
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Ordem de produção",
+    "texto": "O documento mostra pedido, item, setor, previsão, unidade, quantidades e o responsável pela emissão."
+  },
+  {
+    "segundo": 128,
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Impressão",
+    "texto": "No modo de impressão, o menu e os botões são removidos e o conteúdo cabe em uma página A4."
+  },
+  {
+    "segundo": 133,
+    "capitulo": "Expedição — entregas e exceções",
+    "titulo": "Capítulo 10",
+    "texto": "Expedição — entregas e exceções"
+  },
+  {
+    "segundo": 139,
+    "capitulo": "Expedição — entregas e exceções",
+    "titulo": "Acesso da Expedição",
+    "texto": "Entrando como Expedição."
+  },
+  {
+    "segundo": 154,
+    "capitulo": "Expedição — entregas e exceções",
+    "titulo": "Entregas",
+    "texto": "A Expedição seleciona o pedido, confere o disponível e registra a entrega por item."
+  },
+  {
+    "segundo": 165,
+    "capitulo": "Expedição — entregas e exceções",
+    "titulo": "Itens e situação",
+    "texto": "Cada item mostra descrição, código, cliente, previsão e a situação real: disponível, aguardando produção ou totalmente entregue."
+  },
+  {
+    "segundo": 180,
+    "capitulo": "Expedição — entregas e exceções",
+    "titulo": "Acima do disponível",
+    "texto": "A Expedição não pode autorizar sozinha. O sistema avisa e orienta procurar o gerente; o botão de registrar fica bloqueado."
+  },
+  {
+    "segundo": 189,
+    "capitulo": "Expedição — entregas e exceções",
+    "titulo": "Validação de quantidade",
+    "texto": "Quantidade zero ou vazia é recusada antes de qualquer gravação."
+  },
+  {
+    "segundo": 193,
+    "capitulo": "Expedição — entregas e exceções",
+    "titulo": "Itens sem saldo",
+    "texto": "Itens sem produção aparecem como “Aguardando produção”. O formulário de entrega não é oferecido enquanto não houver saldo."
+  },
+  {
+    "segundo": 199,
+    "capitulo": "Fim da parte 3",
+    "titulo": "Capítulo 10",
+    "texto": "Fim da parte 3"
+  }
+]

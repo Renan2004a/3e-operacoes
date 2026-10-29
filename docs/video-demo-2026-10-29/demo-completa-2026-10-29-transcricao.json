@@ -1,0 +1,1206 @@
+[
+  {
+    "segundo": 0,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Apresentação do sistema",
+    "titulo": "Capítulo 1",
+    "texto": "Apresentação do sistema"
+  },
+  {
+    "segundo": 7,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Apresentação do sistema",
+    "titulo": "3E Operações",
+    "texto": "Sistema de gestão operacional da 3E Ferro e Aço: recebe os pedidos do Top Gerente, organiza a produção por setor, registra execuções, ocorrências e entregas, e mantém a auditoria das alterações."
+  },
+  {
+    "segundo": 14,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Apresentação do sistema",
+    "titulo": "Ambiente da demonstração",
+    "texto": "Esta gravação usa um banco isolado de demonstração. Todos os clientes e operações são identificados como dados de teste; nenhum dado real de cliente é alterado."
+  },
+  {
+    "segundo": 20,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Apresentação do sistema",
+    "titulo": "Tela de acesso",
+    "texto": "O acesso é único para todos os perfis. O sistema identifica o perfil do usuário e abre a tela inicial correspondente."
+  },
+  {
+    "segundo": 25,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Apresentação do sistema",
+    "titulo": "Perfis disponíveis",
+    "texto": "Vendedor, Gerente de Produção, Operador, Expedição, Responsável pelo Sistema e Responsável Técnico. Cada perfil enxerga apenas as ações permitidas."
+  },
+  {
+    "segundo": 31,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Acesso e autenticação",
+    "titulo": "Capítulo 2",
+    "texto": "Acesso e autenticação"
+  },
+  {
+    "segundo": 36,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Acesso e autenticação",
+    "titulo": "Validação de campos obrigatórios",
+    "texto": "Com os campos vazios, o sistema orienta o preenchimento antes de enviar a requisição."
+  },
+  {
+    "segundo": 38,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Acesso e autenticação",
+    "titulo": "Mensagem de validação",
+    "texto": "A mensagem “Dados incompletos” aparece no próprio formulário, sem chamar o servidor."
+  },
+  {
+    "segundo": 47,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Acesso e autenticação",
+    "titulo": "Credenciais inválidas",
+    "texto": "Com a senha errada, o sistema responde de forma genérica, sem revelar se o e-mail existe."
+  },
+  {
+    "segundo": 50,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Acesso e autenticação",
+    "titulo": "Segurança do login",
+    "texto": "A mesma mensagem é usada para senha incorreta, e-mail inexistente e usuário inativo. O limite de tentativas protege contra força bruta."
+  },
+  {
+    "segundo": 57,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Acesso e autenticação",
+    "titulo": "Entrando como Vendedor",
+    "texto": "Login válido: o sistema cria a sessão e direciona para a tela inicial do perfil."
+  },
+  {
+    "segundo": 63,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Capítulo 3",
+    "texto": "Vendedor — consulta, prazos e desmembramento"
+  },
+  {
+    "segundo": 67,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Vendas",
+    "texto": "A tela de Vendas concentra a importação do Top Gerente, as instruções de uso e a consulta dos pedidos. O Vendedor acompanha todos os pedidos."
+  },
+  {
+    "segundo": 73,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Indicadores da lista",
+    "texto": "Cada linha mostra número do pedido, cliente, previsão de entrega e status. A previsão é o maior prazo entre os itens do pedido."
+  },
+  {
+    "segundo": 79,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Filtro por setor",
+    "texto": "Selecionando o setor Telhas e clicando em Filtrar. A URL, o total e a lista acompanham o filtro."
+  },
+  {
+    "segundo": 83,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Resultado do filtro",
+    "texto": "Somente pedidos com itens do setor escolhido permanecem na lista. O botão “Limpar filtros” fica disponível."
+  },
+  {
+    "segundo": 87,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Limpando filtros",
+    "texto": "O botão Limpar filtros devolve a lista completa."
+  },
+  {
+    "segundo": 93,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Pesquisa por número",
+    "texto": "A busca aceita um trecho do número comercial do pedido."
+  },
+  {
+    "segundo": 96,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Pesquisa parcial",
+    "texto": "O resultado mostra os pedidos cujo número contém “822”. A pesquisa não diferencia maiúsculas de minúsculas nos campos de texto."
+  },
+  {
+    "segundo": 102,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Abrindo o pedido 82268",
+    "texto": "O botão Abrir pedido leva ao detalhe completo, preservando filtros e página para o retorno."
+  },
+  {
+    "segundo": 109,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Detalhe do pedido",
+    "texto": "Cabeçalho com número, cliente e status. Abaixo, o resumo por unidade e por setor, as pendências de desmembramento e de produção e a lista de itens."
+  },
+  {
+    "segundo": 116,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Abrir todos os itens",
+    "texto": "O primeiro item já abre por padrão. “Abrir todos” expande os 20 itens do pedido."
+  },
+  {
+    "segundo": 119,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Recolher todos os itens",
+    "texto": "“Recolher todos” compacta a página; o percentual de cada item continua visível no cabeçalho."
+  },
+  {
+    "segundo": 123,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Resumo por unidade",
+    "texto": "Unidades diferentes nunca são somadas: cada linha mostra solicitado, executado, disponível, entregue e pendente na sua unidade."
+  },
+  {
+    "segundo": 129,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Pendências",
+    "texto": "O sistema separa itens ainda não desmembrados dos itens já encaminhados à produção. Isso mostra o que falta para o pedido entrar na fábrica."
+  },
+  {
+    "segundo": 136,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Definindo o prazo de entrega",
+    "texto": "O prazo do item é editável pelo Vendedor e pelo Gerente. O prazo operacional do setor aparece apenas para leitura."
+  },
+  {
+    "segundo": 141,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Confirmação",
+    "texto": "O sistema confirma a gravação do prazo e mantém a data no campo."
+  },
+  {
+    "segundo": 144,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Histórico de prazos",
+    "texto": "O histórico é alimentado pela auditoria: mostra quem alterou, quando e os valores anterior e novo."
+  },
+  {
+    "segundo": 149,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Auditoria do prazo",
+    "texto": "A primeira alteração registra “Definido para 20/11/2026”, com usuário e data/hora."
+  },
+  {
+    "segundo": 158,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Segunda alteração",
+    "texto": "Alterando o prazo para 27/11. Ao reabrir o histórico, as duas alterações aparecem em ordem, com antes e depois."
+  },
+  {
+    "segundo": 163,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Rastreabilidade",
+    "texto": "O histórico preserva as duas linhas; o valor atual do item é o último “depois”."
+  },
+  {
+    "segundo": 169,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Desmembrando um item",
+    "texto": "O Vendedor associa o item ao setor responsável. A escolha fica registrada e o item passa a aparecer na fila da produção."
+  },
+  {
+    "segundo": 174,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Item desmembrado",
+    "texto": "O item agora está classificado; a tela mostra o setor definido e libera o acompanhamento das remessas."
+  },
+  {
+    "segundo": 178,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Remessas — somente leitura",
+    "texto": "As remessas são programadas pela Gerência e pela Expedição. O Vendedor acompanha as datas e as confirmações, sem criar, confirmar ou remover."
+  },
+  {
+    "segundo": 184,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Permissão respeitada",
+    "texto": "Nenhum botão de gestão de remessa é oferecido ao Vendedor — a permissão é aplicada também no servidor."
+  },
+  {
+    "segundo": 187,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — consulta, prazos e desmembramento",
+    "titulo": "Voltando para a lista",
+    "texto": "O link de retorno preserva filtros, página e ordenação aplicados antes de abrir o pedido."
+  },
+  {
+    "segundo": 192,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — importação do Top Gerente",
+    "titulo": "Capítulo 4",
+    "texto": "Vendedor — importação do Top Gerente"
+  },
+  {
+    "segundo": 199,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — importação do Top Gerente",
+    "titulo": "Importação de pedido",
+    "texto": "A importação consulta o Top Gerente pelo conector local, cria ou atualiza o pedido no 3E e mantém o histórico operacional."
+  },
+  {
+    "segundo": 207,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — importação do Top Gerente",
+    "titulo": "Validação do número",
+    "texto": "O campo aceita apenas dígitos. Números inválidos são recusados antes de consultar o legado."
+  },
+  {
+    "segundo": 210,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — importação do Top Gerente",
+    "titulo": "Erro de validação",
+    "texto": "A mensagem orienta a corrigir o número; nenhum job é criado."
+  },
+  {
+    "segundo": 216,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — importação do Top Gerente",
+    "titulo": "Importando o pedido 82262",
+    "texto": "O sistema cria um job idempotente e acompanha o processamento no conector."
+  },
+  {
+    "segundo": 235,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — importação do Top Gerente",
+    "titulo": "Resultado da importação",
+    "texto": "O pedido foi localizado no Top Gerente, gravado no 3E e já aparece na lista. O job registra cada etapa: solicitado, despachado e concluído."
+  },
+  {
+    "segundo": 244,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — importação do Top Gerente",
+    "titulo": "Reimportação",
+    "texto": "Repetir o mesmo número não duplica o pedido: o sistema atualiza os dados comerciais e preserva o histórico operacional."
+  },
+  {
+    "segundo": 338,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Vendedor — importação do Top Gerente",
+    "titulo": "Reimportação",
+    "texto": "Mesmo quando a consulta é repetida, o sistema reaproveita o job e não cria pedidos duplicados."
+  },
+  {
+    "segundo": 342,
+    "parte": "Parte 1 — Apresentação, acesso e Vendedor",
+    "capitulo": "Fim da parte 1",
+    "titulo": "Capítulo 4",
+    "texto": "Fim da parte 1"
+  },
+  {
+    "segundo": 346,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — painel e alertas",
+    "titulo": "Capítulo 5",
+    "texto": "Gerente — painel e alertas"
+  },
+  {
+    "segundo": 352,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — painel e alertas",
+    "titulo": "Acesso do Gerente",
+    "texto": "Entrando como Gerente de Produção. O sistema abre o painel inicial do perfil e libera as ações de gestão."
+  },
+  {
+    "segundo": 370,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — painel e alertas",
+    "titulo": "Painel do Gerente",
+    "texto": "O painel reúne a situação da fábrica: atividades pendentes, em execução, concluídas e o cumprimento de prazo."
+  },
+  {
+    "segundo": 376,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — painel e alertas",
+    "titulo": "Indicadores",
+    "texto": "Cada cartão é clicável e abre a lista correspondente em nova aba. O percentual de prazo só aparece quando há atividades concluídas com prazo."
+  },
+  {
+    "segundo": 383,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — painel e alertas",
+    "titulo": "Drill-down por status",
+    "texto": "O cartão abre uma aba com a lista de atividades pendentes, já filtrada. O botão Voltar retorna ao painel."
+  },
+  {
+    "segundo": 396,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — painel e alertas",
+    "titulo": "Lista de atividades",
+    "texto": "A lista mostra pedido, item, setor, prazo e status. É a mesma visão usada para cobrar a produção por etapa."
+  },
+  {
+    "segundo": 407,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — painel e alertas",
+    "titulo": "Atividades divergentes",
+    "texto": "A atividade com produção acima do solicitado aparece destacada. O gerente consegue abrir o pedido e verificar o item e o setor."
+  },
+  {
+    "segundo": 421,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — painel e alertas",
+    "titulo": "Alertas operacionais",
+    "texto": "Três grupos: atividades atrasadas, paradas há vários dias e itens ainda não encaminhados para a produção. O contador fica no título."
+  },
+  {
+    "segundo": 428,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — painel e alertas",
+    "titulo": "Expandindo a lista",
+    "texto": "O “+N outros” abre os demais itens do grupo, sem sair do painel."
+  },
+  {
+    "segundo": 431,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — painel e alertas",
+    "titulo": "Ocorrências recentes",
+    "texto": "O painel também consolida as ocorrências registradas pelos Operadores: tipo, pedido, item, setor, motivo, data e o responsável com o perfil."
+  },
+  {
+    "segundo": 439,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — painel e alertas",
+    "titulo": "Atualizando o painel",
+    "texto": "O botão Atualizar recarrega os blocos de forma independente; uma falha em um bloco não derruba os outros."
+  },
+  {
+    "segundo": 443,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — pedidos, prazos, setor e remessas",
+    "titulo": "Capítulo 6",
+    "texto": "Gerente — pedidos, prazos, setor e remessas"
+  },
+  {
+    "segundo": 453,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — pedidos, prazos, setor e remessas",
+    "titulo": "Pedidos do Gerente",
+    "texto": "A mesma consulta do Vendedor, com filtros por número, cliente, setor, status e período. O Gerente pode abrir o detalhe e corrigir o setor."
+  },
+  {
+    "segundo": 461,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — pedidos, prazos, setor e remessas",
+    "titulo": "Filtrando por setor",
+    "texto": "Aplicando o filtro de Telhas para localizar os pedidos com esse setor."
+  },
+  {
+    "segundo": 464,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — pedidos, prazos, setor e remessas",
+    "titulo": "Abrindo o pedido 70435",
+    "texto": "O detalhe mostra prazos, saldos, desmembramento e as ações permitidas ao Gerente."
+  },
+  {
+    "segundo": 471,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — pedidos, prazos, setor e remessas",
+    "titulo": "Detalhe do pedido",
+    "texto": "O Gerente enxerga a mesma estrutura do pedido e pode agir sobre prazo, setor e remessas."
+  },
+  {
+    "segundo": 479,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — pedidos, prazos, setor e remessas",
+    "titulo": "Definindo um prazo vencido",
+    "texto": "Para demonstrar o alerta comercial, o prazo do item será definido no passado."
+  },
+  {
+    "segundo": 489,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — pedidos, prazos, setor e remessas",
+    "titulo": "Atraso comercial",
+    "texto": "O servidor calcula o status do prazo pela quantidade entregue. O selo “Entrega atrasada” aparece ao lado da data."
+  },
+  {
+    "segundo": 495,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — correção de setor e remessas",
+    "titulo": "Capítulo 7",
+    "texto": "Gerente — correção de setor e remessas"
+  },
+  {
+    "segundo": 501,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — correção de setor e remessas",
+    "titulo": "Corrigindo o setor",
+    "texto": "O item estava em Revenda. A correção exige justificativa quando o item já tem histórico."
+  },
+  {
+    "segundo": 512,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — correção de setor e remessas",
+    "titulo": "Confirmando a correção",
+    "texto": "O motivo é gravado na auditoria, junto com o setor anterior e o novo."
+  },
+  {
+    "segundo": 518,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — correção de setor e remessas",
+    "titulo": "Auditoria da correção",
+    "texto": "A alteração preserva o histórico: quem corrigiu, quando, o motivo e os setores anterior e novo."
+  },
+  {
+    "segundo": 525,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — correção de setor e remessas",
+    "titulo": "Programando uma remessa",
+    "texto": "O número da remessa é automático; o usuário informa apenas a data prevista."
+  },
+  {
+    "segundo": 529,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — correção de setor e remessas",
+    "titulo": "Gravando a remessa",
+    "texto": "A remessa é criada com o próximo número disponível para o item."
+  },
+  {
+    "segundo": 534,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — correção de setor e remessas",
+    "titulo": "Remessa criada",
+    "texto": "A lista mostra a data prevista e o botão Confirmar. A remessa ainda não é uma entrega."
+  },
+  {
+    "segundo": 538,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — correção de setor e remessas",
+    "titulo": "Confirmando a remessa",
+    "texto": "Confirmar registra a data em que a remessa foi combinada/confirmada. Entregas e saldos não mudam."
+  },
+  {
+    "segundo": 542,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — correção de setor e remessas",
+    "titulo": "Remessa confirmada",
+    "texto": "A tela mostra “Confirmada em” e mantém a data prevista."
+  },
+  {
+    "segundo": 546,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — correção de setor e remessas",
+    "titulo": "Removendo a remessa",
+    "texto": "A remoção pede confirmação e avisa que entregas e saldos não serão alterados."
+  },
+  {
+    "segundo": 549,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — correção de setor e remessas",
+    "titulo": "Confirmando a exclusão",
+    "texto": "A remessa de teste é removida."
+  },
+  {
+    "segundo": 553,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — correção de setor e remessas",
+    "titulo": "Remoção concluída",
+    "texto": "O item volta ao estado anterior, sem resíduo para a demonstração."
+  },
+  {
+    "segundo": 557,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — entregas e exceções",
+    "titulo": "Capítulo 8",
+    "texto": "Gerente — entregas e exceções"
+  },
+  {
+    "segundo": 567,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — entregas e exceções",
+    "titulo": "Entregas",
+    "texto": "A Expedição e o Gerente registram entregas. O Gerente também pode autorizar acima do disponível, com motivo."
+  },
+  {
+    "segundo": 578,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — entregas e exceções",
+    "titulo": "Itens do pedido",
+    "texto": "Cada cartão mostra descrição, código, cliente, disponível, previsão e a situação real do item."
+  },
+  {
+    "segundo": 585,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — entregas e exceções",
+    "titulo": "Entregar tudo",
+    "texto": "O botão preenche a quantidade com todo o saldo disponível do item."
+  },
+  {
+    "segundo": 588,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — entregas e exceções",
+    "titulo": "Confirmação da entrega",
+    "texto": "Antes de gravar, o sistema mostra a quantidade, o disponível e quanto sobra depois da entrega."
+  },
+  {
+    "segundo": 593,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — entregas e exceções",
+    "titulo": "Confirmando",
+    "texto": "A entrega é registrada e o saldo é atualizado na hora."
+  },
+  {
+    "segundo": 598,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — entregas e exceções",
+    "titulo": "Entrega registrada",
+    "texto": "O item passa a mostrar o novo saldo e a situação atualizada."
+  },
+  {
+    "segundo": 604,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — entregas e exceções",
+    "titulo": "Acima do disponível",
+    "texto": "Ao digitar uma quantidade maior que o saldo, o sistema avisa que é necessária autorização do gerente e um motivo."
+  },
+  {
+    "segundo": 615,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — entregas e exceções",
+    "titulo": "Autorização com motivo",
+    "texto": "Somente o Gerente vê esta opção. O motivo e a quantidade acima do saldo ficam registrados na auditoria."
+  },
+  {
+    "segundo": 622,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — entregas e exceções",
+    "titulo": "Cancelando a exceção",
+    "texto": "A exceção é apenas demonstrada; o cancelamento evita alterar o saldo nesta gravação."
+  },
+  {
+    "segundo": 636,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — entregas e exceções",
+    "titulo": "Ordem de produção",
+    "texto": "Documento de produção com pedido, item, setor, previsão, unidade, solicitado, executado e pendente."
+  },
+  {
+    "segundo": 643,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Gerente — entregas e exceções",
+    "titulo": "Impressão",
+    "texto": "Na impressão, o menu e os botões são removidos e o documento cabe em uma página A4."
+  },
+  {
+    "segundo": 648,
+    "parte": "Parte 2 — Gerente de Produção",
+    "capitulo": "Fim da parte 2",
+    "titulo": "Capítulo 8",
+    "texto": "Fim da parte 2"
+  },
+  {
+    "segundo": 653,
+    "parte": "Parte 3 — Operador e Expedição",
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Capítulo 9",
+    "texto": "Operador — fila, execução e ocorrências"
+  },
+  {
+    "segundo": 659,
+    "parte": "Parte 3 — Operador e Expedição",
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Acesso do Operador",
+    "texto": "Entrando como Operador."
+  },
+  {
+    "segundo": 677,
+    "parte": "Parte 3 — Operador e Expedição",
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Fila de produção",
+    "texto": "O Operador vê apenas as atividades dos setores aos quais pertence. A fila é ordenada por prioridade e, depois, pela data de criação."
+  },
+  {
+    "segundo": 684,
+    "parte": "Parte 3 — Operador e Expedição",
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Cartões da fila",
+    "texto": "Cada cartão mostra pedido, item, setor, status e prioridade quando definida. O status “Divergente” indica produção acima do solicitado."
+  },
+  {
+    "segundo": 691,
+    "parte": "Parte 3 — Operador e Expedição",
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Atividade divergente",
+    "texto": "A primeira atividade está divergente. Vamos abrir para entender o que aconteceu."
+  },
+  {
+    "segundo": 695,
+    "parte": "Parte 3 — Operador e Expedição",
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Divergência",
+    "texto": "O sistema mostra o excedente e explica que a atividade ficou marcada como divergente. O registro fica preservado para análise."
+  },
+  {
+    "segundo": 706,
+    "parte": "Parte 3 — Operador e Expedição",
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Abrindo uma atividade",
+    "texto": "Esta atividade está em andamento e será usada para registrar uma execução real."
+  },
+  {
+    "segundo": 710,
+    "parte": "Parte 3 — Operador e Expedição",
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Execução da atividade",
+    "texto": "A tela mostra o progresso, os valores solicitado/executado/pendente, o setor e a previsão de entrega."
+  },
+  {
+    "segundo": 718,
+    "parte": "Parte 3 — Operador e Expedição",
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Registrando produção",
+    "texto": "O Operador informa a quantidade na unidade da atividade. O registro atualiza o saldo e o status."
+  },
+  {
+    "segundo": 725,
+    "parte": "Parte 3 — Operador e Expedição",
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Execução confirmada",
+    "texto": "A confirmação aparece na tela e o progresso é recalculado. Cada execução guarda usuário, data/hora e quantidade."
+  },
+  {
+    "segundo": 730,
+    "parte": "Parte 3 — Operador e Expedição",
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Registrar ocorrência",
+    "texto": "A tela de ocorrências é separada da execução e já vem com a atividade pré-selecionada."
+  },
+  {
+    "segundo": 735,
+    "parte": "Parte 3 — Operador e Expedição",
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Ocorrências do Operador",
+    "texto": "Aqui ficam perdas, refugos, indisponibilidades, pausas e paradas. À direita, o histórico das ocorrências já registradas."
+  },
+  {
+    "segundo": 745,
+    "parte": "Parte 3 — Operador e Expedição",
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Motivo obrigatório",
+    "texto": "Perda exige um motivo da lista fechada. Motivos disponíveis nesta demonstração: Defeito de corte, Erro de dobra / medida incorreta, Material com problema."
+  },
+  {
+    "segundo": 756,
+    "parte": "Parte 3 — Operador e Expedição",
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Gravando a ocorrência",
+    "texto": "A quantidade é opcional, mas quando informada precisa respeitar a unidade do item."
+  },
+  {
+    "segundo": 762,
+    "parte": "Parte 3 — Operador e Expedição",
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Ocorrência registrada",
+    "texto": "O registro aparece no histórico com tipo, quantidade, motivo, responsável e data/hora. O Gerente vê a mesma ocorrência no painel."
+  },
+  {
+    "segundo": 774,
+    "parte": "Parte 3 — Operador e Expedição",
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Ordem de produção",
+    "texto": "O documento mostra pedido, item, setor, previsão, unidade, quantidades e o responsável pela emissão."
+  },
+  {
+    "segundo": 781,
+    "parte": "Parte 3 — Operador e Expedição",
+    "capitulo": "Operador — fila, execução e ocorrências",
+    "titulo": "Impressão",
+    "texto": "No modo de impressão, o menu e os botões são removidos e o conteúdo cabe em uma página A4."
+  },
+  {
+    "segundo": 786,
+    "parte": "Parte 3 — Operador e Expedição",
+    "capitulo": "Expedição — entregas e exceções",
+    "titulo": "Capítulo 10",
+    "texto": "Expedição — entregas e exceções"
+  },
+  {
+    "segundo": 792,
+    "parte": "Parte 3 — Operador e Expedição",
+    "capitulo": "Expedição — entregas e exceções",
+    "titulo": "Acesso da Expedição",
+    "texto": "Entrando como Expedição."
+  },
+  {
+    "segundo": 807,
+    "parte": "Parte 3 — Operador e Expedição",
+    "capitulo": "Expedição — entregas e exceções",
+    "titulo": "Entregas",
+    "texto": "A Expedição seleciona o pedido, confere o disponível e registra a entrega por item."
+  },
+  {
+    "segundo": 818,
+    "parte": "Parte 3 — Operador e Expedição",
+    "capitulo": "Expedição — entregas e exceções",
+    "titulo": "Itens e situação",
+    "texto": "Cada item mostra descrição, código, cliente, previsão e a situação real: disponível, aguardando produção ou totalmente entregue."
+  },
+  {
+    "segundo": 833,
+    "parte": "Parte 3 — Operador e Expedição",
+    "capitulo": "Expedição — entregas e exceções",
+    "titulo": "Acima do disponível",
+    "texto": "A Expedição não pode autorizar sozinha. O sistema avisa e orienta procurar o gerente; o botão de registrar fica bloqueado."
+  },
+  {
+    "segundo": 842,
+    "parte": "Parte 3 — Operador e Expedição",
+    "capitulo": "Expedição — entregas e exceções",
+    "titulo": "Validação de quantidade",
+    "texto": "Quantidade zero ou vazia é recusada antes de qualquer gravação."
+  },
+  {
+    "segundo": 846,
+    "parte": "Parte 3 — Operador e Expedição",
+    "capitulo": "Expedição — entregas e exceções",
+    "titulo": "Itens sem saldo",
+    "texto": "Itens sem produção aparecem como “Aguardando produção”. O formulário de entrega não é oferecido enquanto não houver saldo."
+  },
+  {
+    "segundo": 852,
+    "parte": "Parte 3 — Operador e Expedição",
+    "capitulo": "Fim da parte 3",
+    "titulo": "Capítulo 10",
+    "texto": "Fim da parte 3"
+  },
+  {
+    "segundo": 857,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Capítulo 11",
+    "texto": "Administração — usuários, setores e mapeamentos"
+  },
+  {
+    "segundo": 863,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Acesso do Responsável pelo Sistema",
+    "texto": "Preenchendo as credenciais e entrando no sistema."
+  },
+  {
+    "segundo": 880,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Administração de usuários",
+    "texto": "O responsável cadastra usuários, associa perfis e setores e controla o acesso. Usuários não são excluídos: são inativados para preservar o histórico."
+  },
+  {
+    "segundo": 888,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Perfis e setores",
+    "texto": "Cada usuário pode ter mais de um perfil e mais de um setor. O Operador só vê a fila dos setores aos quais pertence."
+  },
+  {
+    "segundo": 901,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Política de senha",
+    "texto": "A senha precisa ter pelo menos 8 caracteres. A validação aparece antes de criar o usuário."
+  },
+  {
+    "segundo": 904,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Senha curta",
+    "texto": "A mensagem explica o mínimo exigido e o formulário preserva os dados já preenchidos."
+  },
+  {
+    "segundo": 910,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Perfil do usuário",
+    "texto": "Selecionando o perfil Responsável Técnico."
+  },
+  {
+    "segundo": 912,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Criando o usuário",
+    "texto": "O usuário é criado com a senha protegida por hash e já aparece na lista."
+  },
+  {
+    "segundo": 917,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Usuário criado",
+    "texto": "A lista mostra nome, e-mail, perfil e situação. O novo usuário já pode acessar o sistema."
+  },
+  {
+    "segundo": 922,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Inativando o usuário",
+    "texto": "A inativação bloqueia o acesso imediatamente e preserva pedidos, execuções e auditoria."
+  },
+  {
+    "segundo": 925,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Confirmação em linha",
+    "texto": "O sistema pede confirmação com Confirmar e Cancelar, sem modal bloqueante."
+  },
+  {
+    "segundo": 929,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Confirmando a inativação",
+    "texto": "O status muda para Inativo e o login desse usuário passa a ser recusado."
+  },
+  {
+    "segundo": 935,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Usuário inativo",
+    "texto": "A conta continua vinculada ao histórico; para liberar novamente, basta ativar."
+  },
+  {
+    "segundo": 939,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Reativando",
+    "texto": "A reativação é uma nova ação e também pede confirmação."
+  },
+  {
+    "segundo": 946,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Usuário ativo",
+    "texto": "O acesso é restabelecido sem perder o vínculo com os registros anteriores."
+  },
+  {
+    "segundo": 954,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Setores e mapeamentos",
+    "texto": "A categoria vem do Top Gerente. O mapeamento categoria→setor define para onde o item vai na importação e no desmembramento."
+  },
+  {
+    "segundo": 961,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Regras produto→setor",
+    "texto": "Além da categoria, regras por código ou descrição do produto sugerem o setor. A prioridade decide qual regra vale quando mais de uma casa."
+  },
+  {
+    "segundo": 970,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Consultando a categoria",
+    "texto": "A busca mostra o setor atual da categoria ou informa que ainda não há mapeamento."
+  },
+  {
+    "segundo": 974,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Categoria sem mapeamento",
+    "texto": "Como a categoria de demonstração ainda não existe, o formulário libera a escolha do setor."
+  },
+  {
+    "segundo": 980,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Criando o mapeamento",
+    "texto": "Ao salvar, a categoria passa a apontar para Telhas nas próximas importações."
+  },
+  {
+    "segundo": 983,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Mapeamento salvo",
+    "texto": "A tabela de mapeamentos é atualizada e passa a listar CATEGORIA_DEMO → Telhas."
+  },
+  {
+    "segundo": 990,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "Atualizando o mapeamento",
+    "texto": "Salvar novamente atualiza o setor da mesma categoria, sem duplicar a linha."
+  },
+  {
+    "segundo": 993,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Administração — usuários, setores e mapeamentos",
+    "titulo": "De/para atualizado",
+    "texto": "O mapeamento é único por categoria; a alteração fica registrada para as próximas importações."
+  },
+  {
+    "segundo": 998,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Responsável Técnico — integração",
+    "titulo": "Capítulo 12",
+    "texto": "Responsável Técnico — integração"
+  },
+  {
+    "segundo": 1003,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Responsável Técnico — integração",
+    "titulo": "Acesso do Responsável Técnico",
+    "texto": "Preenchendo as credenciais e entrando no sistema."
+  },
+  {
+    "segundo": 1018,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Responsável Técnico — integração",
+    "titulo": "Integração",
+    "texto": "O responsável técnico acompanha os jobs de importação: status, tentativas, código de erro e eventos."
+  },
+  {
+    "segundo": 1025,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Responsável Técnico — integração",
+    "titulo": "Abrindo um job",
+    "texto": "Ao selecionar o job, o painel mostra a linha do tempo: solicitado, despachado, tentativas e conclusão ou falha."
+  },
+  {
+    "segundo": 1029,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Responsável Técnico — integração",
+    "titulo": "Eventos do job",
+    "texto": "Esses eventos ajudam a diagnosticar falhas do conector sem expor senhas ou o payload comercial."
+  },
+  {
+    "segundo": 1037,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Responsável Técnico — integração",
+    "titulo": "Importação pelo Técnico",
+    "texto": "O perfil técnico também pode solicitar uma importação e acompanhar o andamento pelo mesmo fluxo."
+  },
+  {
+    "segundo": 1042,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Validações, permissões e responsividade",
+    "titulo": "Capítulo 13",
+    "texto": "Validações, permissões e responsividade"
+  },
+  {
+    "segundo": 1049,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Validações, permissões e responsividade",
+    "titulo": "Página não encontrada",
+    "texto": "Endereços inválidos mostram uma página amigável em português, com caminho de volta, em vez da tela padrão do servidor."
+  },
+  {
+    "segundo": 1057,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Validações, permissões e responsividade",
+    "titulo": "Permissões no servidor",
+    "texto": "O Responsável Técnico não gerencia usuários: a API responde 403 e a tela informa que não foi possível carregar. O menu também não oferece a área."
+  },
+  {
+    "segundo": 1065,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Validações, permissões e responsividade",
+    "titulo": "Responsividade — Vendedor",
+    "texto": "Preenchendo as credenciais e entrando no sistema."
+  },
+  {
+    "segundo": 1078,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Validações, permissões e responsividade",
+    "titulo": "Celular — lista",
+    "texto": "Em 390 px, a tabela vira cartões: pedido, cliente, previsão, status e ação ficam empilhados e legíveis."
+  },
+  {
+    "segundo": 1084,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Validações, permissões e responsividade",
+    "titulo": "Celular — detalhe",
+    "texto": "No detalhe, os valores e os itens continuam acessíveis; o menu vira o botão lateral."
+  },
+  {
+    "segundo": 1089,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Validações, permissões e responsividade",
+    "titulo": "Toque e leitura",
+    "texto": "Os alvos de toque são grandes e o texto quebra linha sem rolagem horizontal da página."
+  },
+  {
+    "segundo": 1094,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Encerramento e pendências",
+    "titulo": "Capítulo 14",
+    "texto": "Encerramento e pendências"
+  },
+  {
+    "segundo": 1099,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Encerramento e pendências",
+    "titulo": "Resumo",
+    "texto": "Foram demonstrados os seis perfis, a consulta e o detalhe dos pedidos, prazos com auditoria, desmembramento, produção, ocorrências, remessas, entregas, exceções, administração, integração e impressão."
+  },
+  {
+    "segundo": 1107,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Encerramento e pendências",
+    "titulo": "Pendências funcionais",
+    "texto": "Ainda dependem de decisão: cancelamento lógico de item, regra de Revenda com indisponibilidade, quem confirma remessas e como tratar divergências. A tela de histórico de entregas ainda não existe, embora a API esteja disponível."
+  },
+  {
+    "segundo": 1116,
+    "parte": "Parte 4 — Administração, Técnico e responsividade",
+    "capitulo": "Encerramento e pendências",
+    "titulo": "Próximo capítulo",
+    "texto": "No capítulo seguinte, o banco de dados no DBeaver: conexão, tabelas, relacionamentos, consultas e a conferência dos registros criados nesta demonstração."
+  },
+  {
+    "segundo": 1134,
+    "parte": "Parte 5 — Banco de dados",
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Capítulo 15",
+    "texto": "Banco de dados — estrutura e persistência"
+  },
+  {
+    "segundo": 1140,
+    "parte": "Parte 5 — Banco de dados",
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Capítulo de banco",
+    "texto": "Agora o banco por dentro: o MySQL do aplicativo, as 18 tabelas, os relacionamentos e os registros que a demonstração produziu. As consultas são reais e somente leitura."
+  },
+  {
+    "segundo": 1149,
+    "parte": "Parte 5 — Banco de dados",
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "DBeaver e as duas conexões",
+    "texto": "O DBeaver tem a conexão topgerente, somente leitura, e a conexão do banco do aplicativo. Nesta sessão, a árvore e o editor do DBeaver não renderizaram texto; por isso as consultas foram executadas diretamente no MySQL e a captura real da janela é mostrada aqui."
+  },
+  {
+    "segundo": 1159,
+    "parte": "Parte 5 — Banco de dados",
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Inventário",
+    "texto": "O banco de demonstração tem 7 pedidos, 27 itens, 14 atividades e registros de execução, ocorrência, entrega, remessa e auditoria. O caminho do dado é pedido → item → atividade → execução."
+  },
+  {
+    "segundo": 1168,
+    "parte": "Parte 5 — Banco de dados",
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Pedidos e previsão",
+    "texto": "A consulta agrega pedidos e itens. A previsão do pedido é o maior prazo entre os itens; pendentes mostram o que ainda não foi desmembrado."
+  },
+  {
+    "segundo": 1176,
+    "parte": "Parte 5 — Banco de dados",
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Itens, execução e entrega",
+    "texto": "O saldo nasce do item (solicitado), passa pelas execuções (produzido) e pelas entregas (entregue). Unidades diferentes não são somadas na interface."
+  },
+  {
+    "segundo": 1185,
+    "parte": "Parte 5 — Banco de dados",
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Atividades e fila",
+    "texto": "Cada item desmembrado gera uma atividade no setor. A fila do Operador filtra por setor, ignora concluídas e ordena por prioridade."
+  },
+  {
+    "segundo": 1194,
+    "parte": "Parte 5 — Banco de dados",
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Execuções",
+    "texto": "Cada apontamento grava usuário, quantidade e data/hora. O status da atividade e o saldo são recalculados na mesma transação."
+  },
+  {
+    "segundo": 1202,
+    "parte": "Parte 5 — Banco de dados",
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Ocorrências",
+    "texto": "Perdas, refugos, indisponibilidades, pausas e paradas ficam ligados à atividade, ao motivo e ao responsável. O painel do Gerente lê esta tabela."
+  },
+  {
+    "segundo": 1211,
+    "parte": "Parte 5 — Banco de dados",
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Entregas e remessas",
+    "texto": "A entrega baixa o disponível e registra quem entregou, a quantidade e a exceção. A remessa é apenas a previsão combinada e não altera saldo."
+  },
+  {
+    "segundo": 1219,
+    "parte": "Parte 5 — Banco de dados",
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Auditoria de prazos",
+    "texto": "As alterações de prazo da demonstração estão aqui: 20/11 e 27/11 no item 3 do pedido 82268, com antes, depois, usuário e horário. É a fonte do histórico exibido na tela."
+  },
+  {
+    "segundo": 1229,
+    "parte": "Parte 5 — Banco de dados",
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Usuários, perfis e setores",
+    "texto": "A autenticação lê usuarios; a autorização combina usuarios_perfis e usuarios_setores. As senhas são hash scrypt, nunca texto."
+  },
+  {
+    "segundo": 1237,
+    "parte": "Parte 5 — Banco de dados",
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Integração e mapeamentos",
+    "texto": "Os jobs registram cada tentativa de importação e os erros. O mapeamento categoria→setor é o que faz o item cair no setor certo."
+  },
+  {
+    "segundo": 1246,
+    "parte": "Parte 5 — Banco de dados",
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Estrutura das tabelas",
+    "texto": "Cada tabela traz colunas, tipos, nulos, chave primária, chaves estrangeiras e índices, lidos do information_schema. As chaves estrangeiras mostram o relacionamento entre pedidos, itens, atividades, execuções, ocorrências e entregas."
+  },
+  {
+    "segundo": 1257,
+    "parte": "Parte 5 — Banco de dados",
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Chaves e relações",
+    "texto": "pedidos_itens aponta para pedidos; atividades aponta para itens e setores; execuções, ocorrências e entregas apontam para as atividades ou itens."
+  },
+  {
+    "segundo": 1265,
+    "parte": "Parte 5 — Banco de dados",
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Amostras de registros",
+    "texto": "As primeiras linhas de cada tabela. Os nomes de clientes foram anonimizados para a gravação; nenhum dado pessoal real é exibido."
+  },
+  {
+    "segundo": 1273,
+    "parte": "Parte 5 — Banco de dados",
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Rastro da operação",
+    "texto": "A auditoria mostra o antes e o depois de cada alteração. É o elo entre a ação na tela e o registro persistido."
+  },
+  {
+    "segundo": 1281,
+    "parte": "Parte 5 — Banco de dados",
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Da tela para a tabela",
+    "texto": "Este mapa liga cada área da interface às tabelas que ela lê e grava: pedidos, prazos, fila, ocorrências, entregas, administração e integração."
+  },
+  {
+    "segundo": 1290,
+    "parte": "Parte 5 — Banco de dados",
+    "capitulo": "Banco de dados — estrutura e persistência",
+    "titulo": "Conclusão",
+    "texto": "O banco guarda o ciclo completo e a auditoria. As consultas foram executadas no banco de demonstração e conferem com o que foi criado na interface. Encerramos a demonstração."
+  }
+]

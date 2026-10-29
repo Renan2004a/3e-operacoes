@@ -1,0 +1,18 @@
+00:00 — Apresentação do sistema
+00:31 — Acesso e autenticação
+01:03 — Vendedor — consulta, prazos e desmembramento
+03:12 — Vendedor — importação do Top Gerente
+05:42 — Fim da parte 1
+05:46 — Gerente — painel e alertas
+07:23 — Gerente — pedidos, prazos, setor e remessas
+08:15 — Gerente — correção de setor e remessas
+09:17 — Gerente — entregas e exceções
+10:48 — Fim da parte 2
+10:53 — Operador — fila, execução e ocorrências
+13:06 — Expedição — entregas e exceções
+14:12 — Fim da parte 3
+14:17 — Administração — usuários, setores e mapeamentos
+16:38 — Responsável Técnico — integração
+17:22 — Validações, permissões e responsividade
+18:14 — Encerramento e pendências
+18:54 — Banco de dados — estrutura e persistência

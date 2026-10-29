@@ -1,0 +1,199 @@
+1
+00:00:00,000 --> 00:00:06,000
+Capítulo 11
+Administração — usuários, setores e mapeamentos
+
+2
+00:00:06,000 --> 00:00:23,000
+Acesso do Responsável pelo Sistema
+Preenchendo as credenciais e entrando no sistema.
+
+3
+00:00:23,000 --> 00:00:31,000
+Administração de usuários
+O responsável cadastra usuários, associa perfis e setores e controla o acesso. Usuários não são excluídos: são inativados para preservar o histórico.
+
+4
+00:00:31,000 --> 00:00:44,000
+Perfis e setores
+Cada usuário pode ter mais de um perfil e mais de um setor. O Operador só vê a fila dos setores aos quais pertence.
+
+5
+00:00:44,000 --> 00:00:47,000
+Política de senha
+A senha precisa ter pelo menos 8 caracteres. A validação aparece antes de criar o usuário.
+
+6
+00:00:47,000 --> 00:00:53,000
+Senha curta
+A mensagem explica o mínimo exigido e o formulário preserva os dados já preenchidos.
+
+7
+00:00:53,000 --> 00:00:55,000
+Perfil do usuário
+Selecionando o perfil Responsável Técnico.
+
+8
+00:00:55,000 --> 00:01:00,000
+Criando o usuário
+O usuário é criado com a senha protegida por hash e já aparece na lista.
+
+9
+00:01:00,000 --> 00:01:05,000
+Usuário criado
+A lista mostra nome, e-mail, perfil e situação. O novo usuário já pode acessar o sistema.
+
+10
+00:01:05,000 --> 00:01:08,000
+Inativando o usuário
+A inativação bloqueia o acesso imediatamente e preserva pedidos, execuções e auditoria.
+
+11
+00:01:08,000 --> 00:01:12,000
+Confirmação em linha
+O sistema pede confirmação com Confirmar e Cancelar, sem modal bloqueante.
+
+12
+00:01:12,000 --> 00:01:18,000
+Confirmando a inativação
+O status muda para Inativo e o login desse usuário passa a ser recusado.
+
+13
+00:01:18,000 --> 00:01:22,000
+Usuário inativo
+A conta continua vinculada ao histórico; para liberar novamente, basta ativar.
+
+14
+00:01:22,000 --> 00:01:29,000
+Reativando
+A reativação é uma nova ação e também pede confirmação.
+
+15
+00:01:29,000 --> 00:01:37,000
+Usuário ativo
+O acesso é restabelecido sem perder o vínculo com os registros anteriores.
+
+16
+00:01:37,000 --> 00:01:44,000
+Setores e mapeamentos
+A categoria vem do Top Gerente. O mapeamento categoria→setor define para onde o item vai na importação e no desmembramento.
+
+17
+00:01:44,000 --> 00:01:53,000
+Regras produto→setor
+Além da categoria, regras por código ou descrição do produto sugerem o setor. A prioridade decide qual regra vale quando mais de uma casa.
+
+18
+00:01:53,000 --> 00:01:57,000
+Consultando a categoria
+A busca mostra o setor atual da categoria ou informa que ainda não há mapeamento.
+
+19
+00:01:57,000 --> 00:02:03,000
+Categoria sem mapeamento
+Como a categoria de demonstração ainda não existe, o formulário libera a escolha do setor.
+
+20
+00:02:03,000 --> 00:02:06,000
+Criando o mapeamento
+Ao salvar, a categoria passa a apontar para Telhas nas próximas importações.
+
+21
+00:02:06,000 --> 00:02:13,000
+Mapeamento salvo
+A tabela de mapeamentos é atualizada e passa a listar CATEGORIA_DEMO → Telhas.
+
+22
+00:02:13,000 --> 00:02:16,000
+Atualizando o mapeamento
+Salvar novamente atualiza o setor da mesma categoria, sem duplicar a linha.
+
+23
+00:02:16,000 --> 00:02:21,000
+De/para atualizado
+O mapeamento é único por categoria; a alteração fica registrada para as próximas importações.
+
+24
+00:02:21,000 --> 00:02:26,000
+Capítulo 12
+Responsável Técnico — integração
+
+25
+00:02:26,000 --> 00:02:41,000
+Acesso do Responsável Técnico
+Preenchendo as credenciais e entrando no sistema.
+
+26
+00:02:41,000 --> 00:02:48,000
+Integração
+O responsável técnico acompanha os jobs de importação: status, tentativas, código de erro e eventos.
+
+27
+00:02:48,000 --> 00:02:52,000
+Abrindo um job
+Ao selecionar o job, o painel mostra a linha do tempo: solicitado, despachado, tentativas e conclusão ou falha.
+
+28
+00:02:52,000 --> 00:03:00,000
+Eventos do job
+Esses eventos ajudam a diagnosticar falhas do conector sem expor senhas ou o payload comercial.
+
+29
+00:03:00,000 --> 00:03:05,000
+Importação pelo Técnico
+O perfil técnico também pode solicitar uma importação e acompanhar o andamento pelo mesmo fluxo.
+
+30
+00:03:05,000 --> 00:03:12,000
+Capítulo 13
+Validações, permissões e responsividade
+
+31
+00:03:12,000 --> 00:03:20,000
+Página não encontrada
+Endereços inválidos mostram uma página amigável em português, com caminho de volta, em vez da tela padrão do servidor.
+
+32
+00:03:20,000 --> 00:03:28,000
+Permissões no servidor
+O Responsável Técnico não gerencia usuários: a API responde 403 e a tela informa que não foi possível carregar. O menu também não oferece a área.
+
+33
+00:03:28,000 --> 00:03:41,000
+Responsividade — Vendedor
+Preenchendo as credenciais e entrando no sistema.
+
+34
+00:03:41,000 --> 00:03:47,000
+Celular — lista
+Em 390 px, a tabela vira cartões: pedido, cliente, previsão, status e ação ficam empilhados e legíveis.
+
+35
+00:03:47,000 --> 00:03:52,000
+Celular — detalhe
+No detalhe, os valores e os itens continuam acessíveis; o menu vira o botão lateral.
+
+36
+00:03:52,000 --> 00:03:57,000
+Toque e leitura
+Os alvos de toque são grandes e o texto quebra linha sem rolagem horizontal da página.
+
+37
+00:03:57,000 --> 00:04:02,000
+Capítulo 14
+Encerramento e pendências
+
+38
+00:04:02,000 --> 00:04:10,000
+Resumo
+Foram demonstrados os seis perfis, a consulta e o detalhe dos pedidos, prazos com auditoria, desmembramento, produção, ocorrências, remessas, entregas, exceções, administração, integração e impressão.
+
+39
+00:04:10,000 --> 00:04:19,000
+Pendências funcionais
+Ainda dependem de decisão: cancelamento lógico de item, regra de Revenda com indisponibilidade, quem confirma remessas e como tratar divergências. A tela de histórico de entregas ainda não existe, embora a API esteja disponível.
+
+40
+00:04:19,000 --> 00:04:24,000
+Próximo capítulo
+No capítulo seguinte, o banco de dados no DBeaver: conexão, tabelas, relacionamentos, consultas e a conferência dos registros criados nesta demonstração.
