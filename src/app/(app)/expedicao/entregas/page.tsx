@@ -6,6 +6,7 @@ import { Alert } from '@/shared/ui/alert'
 import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
+import { ConfirmDialog } from '@/shared/ui/confirm-dialog'
 import { Field } from '@/shared/ui/field'
 import { Input } from '@/shared/ui/input'
 import { Metric } from '@/shared/ui/metric'
@@ -50,6 +51,11 @@ function numero(valor: string | number): number {
   return Number(String(valor).replace(',', '.'))
 }
 
+/** Evita ruído de ponto flutuante (0,1 + 0,2) nos totais mostrados na confirmação. */
+function arredondar(valor: number): number {
+  return Number(valor.toFixed(2))
+}
+
 interface EntregaFormProps {
   item: ItemSaldo
   /** Rótulo humano do item na tela (posição), no lugar do CUID. */
@@ -60,8 +66,10 @@ interface EntregaFormProps {
 }
 
 /**
- * Formulário de entrega de um item (FEP-06, FEP-07). Dentro do disponível
- * registra direto; acima do disponível exige autorização de gerente com motivo.
+ * Formulário de entrega de um item (FEP-06, FEP-07). A entrega não pode ser
+ * desfeita, então o envio passa por uma janela de confirmação com o resumo.
+ * Acima do disponível exige autorização de gerente com motivo, e a janela vira
+ * um aviso reforçado de que a exceção será auditada.
  */
 function EntregaForm({ item, rotulo, podeAutorizar, onRegistrada }: EntregaFormProps) {
   const [quantidade, setQuantidade] = useState('')
@@ -70,12 +78,13 @@ function EntregaForm({ item, rotulo, podeAutorizar, onRegistrada }: EntregaFormP
   const [erro, setErro] = useState<string | null>(null)
   const [sucesso, setSucesso] = useState(false)
   const [enviando, setEnviando] = useState(false)
+  const [confirmando, setConfirmando] = useState(false)
 
   const disponivel = numero(item.disponivel)
   const excede =
     quantidade.trim() !== '' && !Number.isNaN(numero(quantidade)) && numero(quantidade) > disponivel
 
-  async function aoEnviar(evento: React.FormEvent<HTMLFormElement>) {
+  function aoEnviar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault()
     setErro(null)
     setSucesso(false)
@@ -94,6 +103,10 @@ function EntregaForm({ item, rotulo, podeAutorizar, onRegistrada }: EntregaFormP
       return
     }
 
+    setConfirmando(true)
+  }
+
+  async function aoConfirmar() {
     setEnviando(true)
     try {
       await apiPost(`/api/pedidos/itens/${item.itemId}/entregas`, {
@@ -101,12 +114,14 @@ function EntregaForm({ item, rotulo, podeAutorizar, onRegistrada }: EntregaFormP
         excecao,
         motivoExcecao: excecao ? motivo : undefined,
       })
+      setConfirmando(false)
       setSucesso(true)
       setQuantidade('')
       setExcecao(false)
       setMotivo('')
       onRegistrada()
     } catch (error) {
+      setConfirmando(false)
       if (error instanceof ApiError && error.status === 409) {
         setErro('Entrega acima do disponível exige autorização de gerente com motivo.')
       } else if (error instanceof ApiError && error.status === 403) {
@@ -119,7 +134,12 @@ function EntregaForm({ item, rotulo, podeAutorizar, onRegistrada }: EntregaFormP
     }
   }
 
+  const valor = numero(quantidade)
+  const exibir = (v: number) => formatarQuantidadeParaExibicao(item.unit ?? null, String(arredondar(v)))
+  const concluiItem = numero(item.entregue) + valor >= numero(item.executado)
+
   return (
+    <>
     <form className="grid gap-3" onSubmit={aoEnviar} noValidate>
       {sucesso ? (
         <Alert variant="success" title="Entrega registrada">
@@ -189,6 +209,44 @@ function EntregaForm({ item, rotulo, podeAutorizar, onRegistrada }: EntregaFormP
         {enviando ? 'Registrando…' : 'Registrar entrega'}
       </Button>
     </form>
+
+    <ConfirmDialog
+      open={confirmando}
+      variant={excecao ? 'warning' : 'default'}
+      title={excecao ? 'Confirmar entrega acima do disponível?' : 'Confirmar a entrega?'}
+      confirmLabel="Confirmar entrega"
+      busy={enviando}
+      busyLabel="Registrando…"
+      onConfirm={() => void aoConfirmar()}
+      onCancel={() => setConfirmando(false)}
+    >
+      <p>
+        Você vai entregar <strong>{exibir(valor)}</strong> do {rotulo}.
+      </p>
+      {excecao ? (
+        <>
+          <p>
+            São {exibir(valor - disponivel)} acima do disponível ({exibir(disponivel)}).
+          </p>
+          <p>Motivo: {motivo.trim()}</p>
+          <p className="font-semibold text-warning">
+            Esta exceção ficará registrada na auditoria, com o seu usuário, o valor e a data.
+          </p>
+        </>
+      ) : (
+        <>
+          <p>Disponível agora: {exibir(disponivel)}</p>
+          <p>
+            {disponivel - valor > 0
+              ? `Depois da entrega sobram ${exibir(disponivel - valor)} disponíveis.`
+              : 'Depois da entrega não sobra nada disponível.'}
+          </p>
+          <p>{concluiItem ? 'Esta entrega conclui o item.' : 'O item continua com entrega parcial.'}</p>
+        </>
+      )}
+      <p className="text-muted">Não é possível desfazer uma entrega registrada.</p>
+    </ConfirmDialog>
+    </>
   )
 }
 

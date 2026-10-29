@@ -109,7 +109,7 @@ describe('EntregasPage', () => {
     expect(await screen.findByText('Disponível: 5')).toBeInTheDocument()
   })
 
-  it('entrega dentro do disponível registra e atualiza o saldo (FEP-06)', async () => {
+  it('entrega dentro do disponível pede confirmação, registra e atualiza o saldo (FEP-06)', async () => {
     configurarApi([detalhe(5), detalhe(2)])
     render(<EntregasPage />)
 
@@ -119,6 +119,9 @@ describe('EntregasPage', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: 'Registrar entrega do item 1' }))
 
+    expect(mocks.apiPost).not.toHaveBeenCalled()
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar entrega' }))
+
     await waitFor(() =>
       expect(mocks.apiPost).toHaveBeenCalledWith('/api/pedidos/itens/item_1/entregas', {
         quantidade: '3',
@@ -127,6 +130,71 @@ describe('EntregasPage', () => {
       }),
     )
     expect(await screen.findByText('Disponível: 2')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('a confirmação resume o item, a quantidade e o que sobra, entrega parcial (EXP-08)', async () => {
+    configurarApi([detalhe(5)])
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+    fireEvent.change(await screen.findByLabelText('Quantidade do item 1'), {
+      target: { value: '3' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar entrega do item 1' }))
+
+    const dialogo = await screen.findByRole('dialog', { name: 'Confirmar a entrega?' })
+    expect(dialogo).toHaveTextContent('Você vai entregar 3 do item 1.')
+    expect(dialogo).toHaveTextContent('Disponível agora: 5')
+    expect(dialogo).toHaveTextContent('Depois da entrega sobram 2 disponíveis.')
+    expect(dialogo).toHaveTextContent('O item continua com entrega parcial.')
+    expect(dialogo).toHaveTextContent('Não é possível desfazer')
+  })
+
+  it('a confirmação avisa quando a entrega conclui o item (EXP-09)', async () => {
+    configurarApi([detalhe(5)])
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+    fireEvent.change(await screen.findByLabelText('Quantidade do item 1'), {
+      target: { value: '5' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar entrega do item 1' }))
+
+    const dialogo = await screen.findByRole('dialog')
+    expect(dialogo).toHaveTextContent('Esta entrega conclui o item.')
+  })
+
+  it('cancelar a confirmação não registra e mantém o valor digitado', async () => {
+    configurarApi([detalhe(5)])
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+    fireEvent.change(await screen.findByLabelText('Quantidade do item 1'), {
+      target: { value: '3' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar entrega do item 1' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Cancelar' }))
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(mocks.apiPost).not.toHaveBeenCalled()
+    expect(screen.getByLabelText('Quantidade do item 1')).toHaveValue(3)
+  })
+
+  it('falha no registro fecha a confirmação e mostra o erro no formulário', async () => {
+    configurarApi([detalhe(5)])
+    mocks.apiPost.mockRejectedValue(new mocks.ApiError(500, 'erro'))
+    render(<EntregasPage />)
+
+    await selecionarPedido()
+    fireEvent.change(await screen.findByLabelText('Quantidade do item 1'), {
+      target: { value: '3' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar entrega do item 1' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar entrega' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/não foi possível registrar/i)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
   it('bloqueia entrega acima do disponível sem autorização de gerente (FEP-07)', async () => {
@@ -159,7 +227,7 @@ describe('EntregasPage', () => {
     expect(mocks.apiPost).not.toHaveBeenCalled()
   })
 
-  it('exceção autorizada com motivo envia a entrega com o motivo (FEP-07)', async () => {
+  it('exceção autorizada com motivo só envia depois da confirmação reforçada (FEP-07)', async () => {
     configurarApi([detalhe(5)])
     render(<EntregasPage />)
 
@@ -172,6 +240,17 @@ describe('EntregasPage', () => {
       target: { value: 'Cliente pediu urgente' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Registrar entrega do item 1' }))
+
+    const dialogo = await screen.findByRole('dialog', {
+      name: 'Confirmar entrega acima do disponível?',
+    })
+    expect(dialogo).toHaveTextContent('9 do item 1')
+    expect(dialogo).toHaveTextContent('4 acima do disponível (5)')
+    expect(dialogo).toHaveTextContent('Motivo: Cliente pediu urgente')
+    expect(dialogo).toHaveTextContent('ficará registrada na auditoria')
+    expect(mocks.apiPost).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar entrega' }))
 
     await waitFor(() =>
       expect(mocks.apiPost).toHaveBeenCalledWith('/api/pedidos/itens/item_1/entregas', {
