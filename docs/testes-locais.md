@@ -277,7 +277,7 @@ Novos testes: `painel-ocorrencias.test.ts`, `api/producao/ocorrencias/route.test
 | `npm run lint` | 0 erros (4 avisos) |
 | `npm run typecheck` | OK |
 | `npm run build` | OK |
-| Playwright — novos fluxos (`scripts/validar-prs-14-15.mjs`) | **15/15** |
+| Playwright — novos fluxos (script da rodada, removido na limpeza) | **15/15** |
 | Playwright — responsivo/impressão | **11/11** |
 | Playwright — Operador | **9/9** |
 

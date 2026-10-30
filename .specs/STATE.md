@@ -260,7 +260,7 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Trade-off**: O histórico usa a auditoria genérica (não uma tabela específica de prazos); a consulta é sob demanda. O Vendedor deixa de confirmar/remover remessas (API 403); a Expedição ainda não tem uma tela dedicada de remessas — a gestão continua no detalhe pelo Gerente até a migração do banco. A previsão da lista usa o **maior** prazo entre os itens (pedido completo), não o próximo prazo.
 - **Scope**: lista/detalhe do Vendedor e Gerente, atividade/ordem do Operador, Entregas, Administração (setores/usuários), imports de formatação, prazos, remessas, testes e documentação. Sem migração de banco.
 - **Date**: 2026-10-27
-- **Status**: active (implementada; **1037 testes**, lint 0 erros, typecheck/build OK; Playwright **15/15** de UI; deploy `365f143` validado em produção; vídeo completo em `docs/video/demo-completa-2026-10-27.mp4`).
+- **Status**: active (implementada; **1037 testes**, lint 0 erros, typecheck/build OK; Playwright **15/15** de UI; deploy `365f143` validado em produção; vídeo atual em `docs/video-demo-2026-10-29/demo-completa-2026-10-29.mp4`).
 
 ### AD-024
 - **Decision**: A reestruturação do banco apontada pelo professor **não** foi executada nesta rodada. O diagnóstico e o plano estão em `docs/revisao-banco-professor.md`: padronizar nomes físicos em **português**, trocar CUID por **BIGINT**, criar `perfis` + `usuarios_perfis`, substituir `remessas_programadas` por previsões/entregas, remodelar `execucoes` como `apontamentos` e renomear `managerOverride`/`regra_produto_setor`, além de detalhar as regras de negócio.
@@ -367,8 +367,8 @@ Executar uma primeira feature pelo `tlc-spec-driven`: **importar um pedido por n
 - **Completed**:
   - Correções de UI: vírgula/decimais, previsão em todas as telas, histórico de prazos, remessa automática, Vendedor sem remessas, explicações de mapeamento e de inativação.
   - `fix` posterior ao `ce4fbd5`: o histórico recarrega **a cada abertura** (`historico-prazos.tsx`), mostrando alteração feita depois da primeira consulta.
-  - Vídeo `docs/video/demo-completa-2026-10-27.mp4` (8m43s, legendas queimadas): fluxo do app, alteração/restauração de prazo no pedido 82249 e capítulo de banco (DBeaver + consultas reais). Transcrição em `docs/video/demo-completa-2026-10-27-transcricao.json`.
-  - Scripts de reprodução: `scripts/gravar-demo-completa-2026-10-27.mjs`, `scripts/gravar-demo-prazo.mjs`, `scripts/gerar-capitulo-banco.mjs`, `scripts/gravar-capitulo-banco.mjs`.
+  - Vídeo **daquela rodada** (substituído em 29/10 pelo novo `docs/video-demo-2026-10-29/demo-completa-2026-10-29.mp4`): fluxo do app, alteração/restauração de prazo no pedido 82249 e capítulo de banco (DBeaver + consultas reais). O arquivo antigo foi removido na limpeza de 30/10.
+  - Scripts de reprodução da rodada antiga removidos na limpeza; os atuais estão em `scripts/demo-v3/`.
   - Gates: **1037 testes** verdes + 24 ignorados; lint 0 erros (7 avisos); typecheck e build OK.
   - Publicação: commits `6205dc3` (fix), `c0ec7e5` (scripts), `fd1f2e4` (vídeo) e `365f143` (docs/evidências); deploy Railway validado com `/api/health` 200, `/login` 200 e Playwright **15/15** contra a produção.
   - Auditoria de prazos em produção: 4 linhas de `DEADLINE_CHANGED` no item 1 do pedido 82249 (duas gravações da demonstração); o vídeo mostra as duas primeiras e o valor atual é 06/12/2026.

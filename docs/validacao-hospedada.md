@@ -199,9 +199,9 @@ Deploy do commit `ce4fbd5` (correções de UI) com o ajuste final de recarga do 
 | Playwright — Operador | **9/9** | **9/9** |
 | `/api/health` / `/login` | — | **200 / 200** |
 
-- **Vídeo**: `docs/video/demo-completa-2026-10-27.mp4` (8m43s, legendas queimadas), com capítulo de app, alteração/restauração de prazo e capítulo de banco (DBeaver + consultas reais).
+- **Vídeo daquela rodada**: substituído pelo material atual em `docs/video-demo-2026-10-29/` (seção 15). O arquivo antigo foi removido na limpeza de 30/10.
 - **Banco**: a demonstração criou linhas de `DEADLINE_CHANGED` no item 1 do pedido 82249 (06/12 → 13/12 e 13/12 → 06/12; gravações repetidas deixaram quatro linhas no total). O valor atual do item foi restaurado e nenhum outro dado operacional foi alterado na gravação. A remessa criada foi removida.
-- **Vídeo**: `docs/video/demo-completa-2026-10-27.mp4` (8m43s) publicado em `main` no commit `fd1f2e4`; deploy validado no commit `365f143`.
+- **Vídeo**: o arquivo antigo (`docs/video/demo-completa-2026-10-27.mp4`, 8m43s) foi removido na limpeza de 30/10; o material vigente é o da seção 15.
 - **Reestruturação do banco**: planejada em `docs/revisao-banco-professor.md`; não executada.
 - **Ressalva**: token de projeto do Railway ainda ativo; rotacionar/revogar.
 
