@@ -21,12 +21,12 @@ export const prismaPrazosRepository: PrazosRepository = {
     return prisma.$transaction(async (tx) => {
       // Bloqueia a linha antes de ler o valor anterior: duas alterações
       // simultâneas não podem registrar o mesmo "antes".
-      const rows = await tx.$queryRaw<Array<{ deadlineAt: Date | string | null }>>`
-        SELECT deadlineAt FROM pedidos_itens WHERE id = ${itemId} FOR UPDATE
+      const rows = await tx.$queryRaw<Array<{ prazo_entrega: Date | string | null }>>`
+        SELECT prazo_entrega FROM pedidos_itens WHERE id = ${itemId} FOR UPDATE
       `
       if (rows.length === 0) return null
 
-      const anterior = dataDoBanco(rows[0]?.deadlineAt)
+      const anterior = dataDoBanco(rows[0]?.prazo_entrega)
       const row = await tx.orderItem.update({
         where: { id: itemId },
         data: { deadlineAt: prazo },
@@ -49,16 +49,16 @@ export const prismaPrazosRepository: PrazosRepository = {
 
   async definirPrazoAtividade({ atividadeId, prazo, userId }): Promise<PrazoDefinido | null> {
     return prisma.$transaction(async (tx) => {
-      // Mesmo bloqueio para o prazo operacional da atividade.
-      const rows = await tx.$queryRaw<Array<{ deadlineAt: Date | string | null }>>`
-        SELECT deadlineAt FROM atividades WHERE id = ${atividadeId} FOR UPDATE
+      // Mesmo bloqueio para o prazo operacional do item.
+      const rows = await tx.$queryRaw<Array<{ prazo_operacional: Date | string | null }>>`
+        SELECT prazo_operacional FROM pedidos_itens WHERE id = ${atividadeId} FOR UPDATE
       `
       if (rows.length === 0) return null
 
-      const anterior = dataDoBanco(rows[0]?.deadlineAt)
-      const row = await tx.activity.update({
+      const anterior = dataDoBanco(rows[0]?.prazo_operacional)
+      const row = await tx.orderItem.update({
         where: { id: atividadeId },
-        data: { deadlineAt: prazo },
+        data: { operationalDeadlineAt: prazo },
         select: { id: true },
       })
       await tx.auditLog.create({
@@ -77,16 +77,21 @@ export const prismaPrazosRepository: PrazosRepository = {
   },
 
   async listarAtividadesComPrazo(): Promise<AtividadeComPrazo[]> {
-    const rows = await prisma.activity.findMany({
-      where: { deadlineAt: { not: null } },
-      select: { id: true, orderItemId: true, sectorId: true, status: true, deadlineAt: true },
+    const rows = await prisma.orderItem.findMany({
+      where: { operationalDeadlineAt: { not: null }, sectorId: { not: null } },
+      select: {
+        id: true,
+        sectorId: true,
+        status: true,
+        operationalDeadlineAt: true,
+      },
     })
     return rows.map((row) => ({
       id: row.id,
-      orderItemId: row.orderItemId,
-      sectorId: row.sectorId,
+      orderItemId: row.id,
+      sectorId: row.sectorId ?? '',
       status: row.status,
-      deadlineAt: row.deadlineAt,
+      deadlineAt: row.operationalDeadlineAt,
     }))
   },
 }

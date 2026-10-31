@@ -123,7 +123,10 @@ function itemExistente(overrides: Record<string, unknown> = {}) {
     description: 'TELHA',
     unit: 'UN',
     requestedQuantity: '5.000',
-    activities: [{ status: 'PENDING', _count: { executions: 0, occurrences: 0 } }],
+    sectorId: 'sector_1',
+    status: 'PENDING',
+    executions: [],
+    occurrences: [],
     _count: { deliveries: 0, scheduledDeliveries: 0 },
     ...overrides,
   }
@@ -146,7 +149,7 @@ describe('prismaPedidosRepository', () => {
         legacyItemKey: '1',
         unit: 'UN',
         requestedQuantity: '5.000',
-        classificationStatus: 'PENDING_CLASSIFICATION',
+        status: 'PENDING',
       },
     })
     expect(
@@ -191,7 +194,9 @@ describe('prismaPedidosRepository', () => {
         unit: 'UN',
         deliveries: { none: {} },
         scheduledDeliveries: { none: {} },
-        activities: { none: { OR: expect.any(Array) } },
+        executions: { none: {} },
+        occurrences: { none: {} },
+        OR: [{ sectorId: null }, { status: 'PENDING' }],
       },
       data: { unit: 'M', requestedQuantity: '7.000' },
     })
@@ -201,7 +206,9 @@ describe('prismaPedidosRepository', () => {
   it('bloqueia mudança de unidade com execução e preserva o item', async () => {
     state.definirExistentes([
       itemExistente({
-        activities: [{ status: 'IN_PROGRESS', _count: { executions: 1, occurrences: 0 } }],
+        status: 'IN_PROGRESS',
+        executions: [{}],
+        occurrences: [],
       }),
     ])
 
@@ -245,7 +252,9 @@ describe('prismaPedidosRepository', () => {
   it('bloqueia mudança de unidade com ocorrência', async () => {
     state.definirExistentes([
       itemExistente({
-        activities: [{ status: 'PENDING', _count: { executions: 0, occurrences: 1 } }],
+        status: 'PENDING',
+        executions: [],
+        occurrences: [{}],
       }),
     ])
 
@@ -259,7 +268,9 @@ describe('prismaPedidosRepository', () => {
   it('bloqueia mudança de unidade com atividade já iniciada', async () => {
     state.definirExistentes([
       itemExistente({
-        activities: [{ status: 'IN_PROGRESS', _count: { executions: 0, occurrences: 0 } }],
+        status: 'IN_PROGRESS',
+        executions: [],
+        occurrences: [],
       }),
     ])
 

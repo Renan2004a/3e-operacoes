@@ -13,11 +13,11 @@ export const prismaClassificacaoAutomatica: ClassificacaoAutomaticaPort = {
   async classificarItens({ orderId, items }) {
     const orderItems = await prisma.orderItem.findMany({
       where: { orderId },
-      select: { id: true, legacyItemKey: true, classificationStatus: true },
+      select: { id: true, legacyItemKey: true, sectorId: true },
     })
     const pendingByKey = new Map(
       orderItems
-        .filter((item) => item.classificationStatus === 'PENDING_CLASSIFICATION')
+        .filter((item) => item.sectorId === null)
         .map((item) => [item.legacyItemKey, item.id]),
     )
 

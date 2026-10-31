@@ -13,14 +13,14 @@ function codigoDoErro(erro: unknown): string | null {
 export const prismaRemessaRepository: RemessaRepository = {
   async listarPorItem(orderItemId) {
     return prisma.scheduledDelivery.findMany({
-      where: { orderItemId },
+      where: { orderItemId, cancelledAt: null },
       orderBy: { remessa: 'asc' },
     })
   },
 
   async listarPorPedido(orderId) {
     return prisma.scheduledDelivery.findMany({
-      where: { orderItem: { orderId } },
+      where: { orderItem: { orderId }, cancelledAt: null },
       orderBy: [{ scheduledAt: 'asc' }, { remessa: 'asc' }],
     })
   },
@@ -37,32 +37,45 @@ export const prismaRemessaRepository: RemessaRepository = {
 
   async criar(input) {
     try {
-      return await prisma.scheduledDelivery.create({ data: input })
+      return await prisma.scheduledDelivery.create({
+        data: {
+          orderItemId: input.orderItemId,
+          remessa: input.remessa,
+          scheduledAt: input.scheduledAt,
+          note: input.note,
+          createdByUserId: input.createdByUserId ?? null,
+        },
+      })
     } catch (erro) {
       // Duas pessoas programando ao mesmo tempo calculam o mesmo próximo
       // número; a violação da chave única vira erro de domínio (409 na API).
       if (codigoDoErro(erro) === 'P2002') throw new RemessaDuplicadaError(input.remessa)
-      if (codigoDoErro(erro) === 'P2003') {
-        throw new RemessaInvalidaError('Item do pedido não encontrado')
-      }
+      if (codigoDoErro(erro) === 'P2003') throw new RemessaInvalidaError('Item do pedido não encontrado')
       throw erro
     }
   },
 
-  async confirmar(id, now) {
+  async confirmar(id, now, userId) {
     try {
       return await prisma.scheduledDelivery.update({
         where: { id },
-        data: { confirmedAt: now },
+        data: { confirmedAt: now, confirmedByUserId: userId ?? null },
       })
     } catch {
       return null
     }
   },
 
-  async remover(id) {
+  async remover(id, input) {
     try {
-      await prisma.scheduledDelivery.delete({ where: { id } })
+      await prisma.scheduledDelivery.update({
+        where: { id },
+        data: {
+          cancelledAt: new Date(),
+          cancelledByUserId: input?.userId ?? null,
+          cancellationReason: input?.motivo?.trim() || 'Removida pelo usuário',
+        },
+      })
       return true
     } catch {
       return false

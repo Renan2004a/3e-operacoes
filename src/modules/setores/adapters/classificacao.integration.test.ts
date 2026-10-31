@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 /**
- * Testes de integração da classificação atômica contra MySQL real (V02).
+ * Testes de integração da classificação atômica contra MySQL real.
  * Só executam com `RUN_INTEGRATION_TESTS=1` e um banco cujo nome contenha
- * `integration` ou `test`, seguindo o padrão dos demais testes de integração.
+ * `integration` ou `test`.
  */
 const url = process.env.DATABASE_URL
 const bancoSeguro = (() => {
@@ -33,7 +33,7 @@ let setorCorte: string
 let sequencia = 0
 
 async function criarItem(overrides: {
-  classificationStatus?: 'PENDING_CLASSIFICATION' | 'CLASSIFIED'
+  sectorId?: string | null
   legacyCategory?: string | null
 } = {}) {
   sequencia += 1
@@ -52,7 +52,9 @@ async function criarItem(overrides: {
       unit: 'UN',
       requestedQuantity: 1,
       legacyCategory: overrides.legacyCategory ?? null,
-      classificationStatus: overrides.classificationStatus ?? 'PENDING_CLASSIFICATION',
+      ...(overrides.sectorId
+        ? { sectorId: overrides.sectorId, classifiedAt: new Date() }
+        : {}),
     },
   })
   return { orderId: order.id, itemId: item.id }
@@ -70,7 +72,7 @@ function perdedores<T>(resultados: PromiseSettledResult<T>[]): PromiseRejectedRe
   )
 }
 
-describe.skipIf(!ativo)('classificação atômica no MySQL (integração V02)', () => {
+describe.skipIf(!ativo)('classificação atômica no MySQL (integração)', () => {
   beforeAll(async () => {
     prisma = (await import('@/shared/db/prisma')).prisma
     classificacao = (await import('./prisma-classificacao-repository'))
@@ -78,6 +80,11 @@ describe.skipIf(!ativo)('classificação atômica no MySQL (integração V02)', 
     mapeamento = (await import('./prisma-setores-repository')).prismaMapeamentoRepository
     unidade = (await import('./prisma-unidade-trabalho-classificacao'))
       .prismaUnidadeTrabalhoClassificacao
+    await prisma.user.upsert({
+      where: { id: 'user-v02' },
+      update: {},
+      create: { id: 'user-v02', name: 'user-v02', email: 'user-v02@teste.local', passwordHash: 'x' },
+    })
     const modulo = await import('../classificar-item')
     classificarItem = modulo.classificarItem
     classificarPorMapeamento = modulo.classificarPorMapeamento
@@ -101,19 +108,19 @@ describe.skipIf(!ativo)('classificação atômica no MySQL (integração V02)', 
   beforeEach(async () => {
     sequencia = 0
     await prisma.order.deleteMany({ where: { id: { startsWith: PREFIXO } } })
-    await prisma.categorySectorMapping.deleteMany({
-      where: { legacyCategory: { startsWith: CATEGORIA_PREFIXO } },
+    await prisma.classificationRule.deleteMany({
+      where: { value: { startsWith: CATEGORIA_PREFIXO } },
     })
   })
 
   afterAll(async () => {
     await prisma.order.deleteMany({ where: { id: { startsWith: PREFIXO } } })
-    await prisma.categorySectorMapping.deleteMany({
-      where: { legacyCategory: { startsWith: CATEGORIA_PREFIXO } },
+    await prisma.classificationRule.deleteMany({
+      where: { value: { startsWith: CATEGORIA_PREFIXO } },
     })
   })
 
-  it('duas classificações simultâneas em setores diferentes: uma vence e só há uma atividade', async () => {
+  it('duas classificações simultâneas em setores diferentes: uma vence', async () => {
     const { itemId } = await criarItem()
 
     const resultados = await Promise.allSettled([
@@ -128,14 +135,11 @@ describe.skipIf(!ativo)('classificação atômica no MySQL (integração V02)', 
     expect(falhas[0].reason).toBeInstanceOf(ItemJaClassificadoError)
 
     const item = await prisma.orderItem.findUnique({ where: { id: itemId } })
-    expect(item?.classificationStatus).toBe('CLASSIFIED')
-
-    const atividades = await prisma.activity.findMany({ where: { orderItemId: itemId } })
-    expect(atividades).toHaveLength(1)
-    expect(atividades[0].sectorId).toBe(ok[0].value.sectorId)
+    expect(item?.sectorId).toBe(ok[0].value.sectorId)
+    expect(item?.classifiedAt).not.toBeNull()
   })
 
-  it('duas classificações simultâneas no mesmo setor: uma vence, sem duplicação nem erro de unicidade', async () => {
+  it('duas classificações simultâneas no mesmo setor: uma vence', async () => {
     const { itemId } = await criarItem()
 
     const resultados = await Promise.allSettled([
@@ -148,11 +152,11 @@ describe.skipIf(!ativo)('classificação atômica no MySQL (integração V02)', 
     expect(falhas).toHaveLength(1)
     expect(falhas[0].reason).toBeInstanceOf(ItemJaClassificadoError)
 
-    const atividades = await prisma.activity.findMany({ where: { orderItemId: itemId } })
-    expect(atividades).toHaveLength(1)
+    const item = await prisma.orderItem.findUnique({ where: { id: itemId } })
+    expect(item?.sectorId).toBe(setorTelhas)
   })
 
-  it('falha na criação da atividade desfaz a classificação do item', async () => {
+  it('falha ao gravar o setor desfaz a classificação do item', async () => {
     const { itemId } = await criarItem()
 
     await expect(
@@ -160,55 +164,36 @@ describe.skipIf(!ativo)('classificação atômica no MySQL (integração V02)', 
     ).rejects.toBeTruthy()
 
     const item = await prisma.orderItem.findUnique({ where: { id: itemId } })
-    expect(item?.classificationStatus).toBe('PENDING_CLASSIFICATION')
-    const atividades = await prisma.activity.findMany({ where: { orderItemId: itemId } })
-    expect(atividades).toHaveLength(0)
+    expect(item?.sectorId).toBeNull()
   })
 
-  it('item já classificado retorna conflito sem criar outra atividade', async () => {
-    const { itemId } = await criarItem({ classificationStatus: 'CLASSIFIED' })
-    await prisma.activity.create({ data: { orderItemId: itemId, sectorId: setorTelhas } })
-
-    await expect(
-      classificacao.markClassified({ itemId, sectorId: setorCorte }),
-    ).rejects.toBeInstanceOf(ItemJaClassificadoError)
-
-    const atividades = await prisma.activity.findMany({ where: { orderItemId: itemId } })
-    expect(atividades).toHaveLength(1)
-    expect(atividades[0].sectorId).toBe(setorTelhas)
-  })
-
-  it('item inexistente retorna não encontrado sem criar atividade', async () => {
-    await expect(
-      classificacao.markClassified({ itemId: 'item-inexistente-v02', sectorId: setorTelhas }),
-    ).rejects.toBeInstanceOf(ItemNaoEncontradoError)
-
-    const atividades = await prisma.activity.findMany({
-      where: { orderItemId: 'item-inexistente-v02' },
-    })
-    expect(atividades).toHaveLength(0)
-  })
-
-  it('item pendente com atividade preexistente não ganha segunda atividade', async () => {
-    const { itemId } = await criarItem()
-    await prisma.activity.create({ data: { orderItemId: itemId, sectorId: setorTelhas } })
+  it('item já classificado retorna conflito e preserva o setor', async () => {
+    const { itemId } = await criarItem({ sectorId: setorTelhas })
 
     await expect(
       classificacao.markClassified({ itemId, sectorId: setorCorte }),
     ).rejects.toBeInstanceOf(ItemJaClassificadoError)
 
     const item = await prisma.orderItem.findUnique({ where: { id: itemId } })
-    expect(item?.classificationStatus).toBe('PENDING_CLASSIFICATION')
-    const atividades = await prisma.activity.findMany({ where: { orderItemId: itemId } })
-    expect(atividades).toHaveLength(1)
-    expect(atividades[0].sectorId).toBe(setorTelhas)
+    expect(item?.sectorId).toBe(setorTelhas)
+  })
+
+  it('item inexistente retorna não encontrado', async () => {
+    await expect(
+      classificacao.markClassified({ itemId: 'item-inexistente-v02', sectorId: setorTelhas }),
+    ).rejects.toBeInstanceOf(ItemNaoEncontradoError)
   })
 
   it('classificação manual concorrendo com a automática efetiva apenas uma classificação', async () => {
     const categoria = `${CATEGORIA_PREFIXO}manual-auto`
     const { itemId } = await criarItem({ legacyCategory: categoria })
-    await prisma.categorySectorMapping.create({
-      data: { legacyCategory: categoria, sectorId: setorTelhas },
+    await prisma.classificationRule.create({
+      data: {
+        matchType: 'CATEGORIA',
+        operator: 'IGUAL',
+        value: categoria,
+        sectorId: setorTelhas,
+      },
     })
 
     const deps = { classificacao, mapeamento }
@@ -222,9 +207,8 @@ describe.skipIf(!ativo)('classificação atômica no MySQL (integração V02)', 
     expect(falhas).toHaveLength(1)
     expect(falhas[0].reason).toBeInstanceOf(ItemJaClassificadoError)
 
-    const atividades = await prisma.activity.findMany({ where: { orderItemId: itemId } })
-    expect(atividades).toHaveLength(1)
     const item = await prisma.orderItem.findUnique({ where: { id: itemId } })
-    expect(item?.classificationStatus).toBe('CLASSIFIED')
+    expect(item?.sectorId).not.toBeNull()
+    expect([setorTelhas, setorCorte]).toContain(item?.sectorId)
   })
 })

@@ -1,3 +1,8 @@
+// Banco operacional do 3E, evolução do schema atual.
+// Todos os nomes físicos (tabelas, colunas, índices e constraints) estão em
+// português. Os modelos e campos do Prisma continuam em inglês para preservar
+// o domínio, as APIs e os testes; o mapeamento é feito com @@map/@map.
+
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -27,16 +32,6 @@ enum SectorCode {
   REVENDA
 }
 
-enum MappingStatus {
-  ACTIVE
-  INACTIVE
-}
-
-enum ItemClassificationStatus {
-  CLASSIFIED
-  PENDING_CLASSIFICATION
-}
-
 enum ActivityStatus {
   PENDING
   IN_PROGRESS
@@ -53,270 +48,311 @@ enum IntegrationJobStatus {
   FAILED
 }
 
-
 model User {
-  id        String      @id @default(cuid())
-  name      String
-  email     String      @unique
-  passwordHash String
-  status    UserStatus  @default(ACTIVE)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  roles              UserRole[]
-  sectors            UserSector[]
-  executions         Execution[]
-  occurrences        Occurrence[]
-  deliveriesRecorded Delivery[] @relation("DeliveryRecordedBy")
-  deliveriesApproved Delivery[] @relation("DeliveryAuthorizedBy")
+  id           String     @id @default(cuid())
+  name         String     @map("nome")
+  email        String     @unique
+  passwordHash String     @map("senha_hash")
+  status       UserStatus @default(ACTIVE) @map("situacao")
+  createdAt    DateTime   @default(now()) @map("criado_em")
+  updatedAt    DateTime   @updatedAt @map("atualizado_em")
+
+  roles                UserRole[]
+  sectors              UserSector[]
+  executions           Execution[]         @relation("ExecutionUser")
+  executionsCancelled  Execution[]         @relation("ExecutionCancelledBy")
+  occurrences          Occurrence[]        @relation("OccurrenceUser")
+  occurrencesCancelled Occurrence[]        @relation("OccurrenceCancelledBy")
+  deliveriesRecorded   Delivery[]          @relation("DeliveryRecordedBy")
+  deliveriesApproved   Delivery[]          @relation("DeliveryAuthorizedBy")
+  deliveriesCancelled  Delivery[]          @relation("DeliveryCancelledBy")
+  classifiedItems      OrderItem[]         @relation("ClassifiedBy")
+  scheduledCreated     ScheduledDelivery[] @relation("ScheduledCreatedBy")
+  scheduledConfirmed   ScheduledDelivery[] @relation("ScheduledConfirmedBy")
+  scheduledCancelled   ScheduledDelivery[] @relation("ScheduledCancelledBy")
+  jobsRequested        IntegrationJob[]    @relation("JobRequestedBy")
+  auditLogs            AuditLog[]
 
   @@map("usuarios")
 }
 
 model UserRole {
-  userId String
-  role   RoleCode
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  @@id([userId, role])
+  userId String   @map("usuario_id")
+  role   RoleCode @map("perfil")
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@id([userId, role])
   @@map("usuarios_perfis")
 }
 
 model Sector {
   id        String     @id @default(cuid())
-  code      SectorCode @unique
-  name      String
-  active    Boolean    @default(true)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  users     UserSector[]
-  categoryMappings CategorySectorMapping[]
-  productRules ProductSectorRule[]
-  activities Activity[]
+  code      SectorCode @unique @map("codigo")
+  name      String     @map("nome")
+  active    Boolean    @default(true) @map("ativo")
+  createdAt DateTime   @default(now()) @map("criado_em")
+  updatedAt DateTime   @updatedAt @map("atualizado_em")
+
+  users               UserSector[]
+  items               OrderItem[]
+  classificationRules ClassificationRule[]
 
   @@map("setores")
 }
 
 model UserSector {
-  userId   String
-  sectorId String
+  userId   String @map("usuario_id")
+  sectorId String @map("setor_id")
   user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   sector   Sector @relation(fields: [sectorId], references: [id], onDelete: Cascade)
-  @@id([userId, sectorId])
 
+  @@id([userId, sectorId])
   @@map("usuarios_setores")
 }
 
-model CategorySectorMapping {
-  id             String        @id @default(cuid())
-  legacyCategory String
-  sectorId       String
-  status         MappingStatus @default(ACTIVE)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  sector         Sector        @relation(fields: [sectorId], references: [id])
-  @@unique([legacyCategory])
+/// Regra de classificação: categoria, código de produto ou descrição.
+/// Substitui `mapeamentos_categoria_setor` + `regras_produto_setor`.
+model ClassificationRule {
+  id        String    @id @default(cuid())
+  matchType String    @map("tipo_correspondencia") // CATEGORIA | CODIGO_PRODUTO | DESCRICAO
+  operator  String    @map("operador") // IGUAL | CONTEM | PREFIXO
+  value     String    @map("valor")
+  sectorId  String    @map("setor_id")
+  priority  Int       @default(0) @map("prioridade")
+  active    Boolean   @default(true) @map("ativo")
+  validFrom DateTime? @map("vigente_de") @db.Date
+  validTo   DateTime? @map("vigente_ate") @db.Date
+  createdAt DateTime  @default(now()) @map("criado_em")
+  updatedAt DateTime  @updatedAt @map("atualizado_em")
 
-  @@map("mapeamentos_categoria_setor")
-}
+  sector Sector @relation(fields: [sectorId], references: [id])
 
-/// Regra de sugestão de setor a partir do produto (código/descrição) do legado.
-model ProductSectorRule {
-  id         String   @id @default(cuid())
-  matchType  String   @default("CONTAINS") // CONTAINS | PREFIX
-  matchValue String
-  sectorId   String
-  priority   Int      @default(0)
-  active     Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  sector     Sector   @relation(fields: [sectorId], references: [id])
-  @@index([matchType, matchValue])
-
-  @@map("regras_produto_setor")
+  @@unique([matchType, operator, value])
+  @@index([active, priority])
+  @@index([sectorId])
+  @@map("regras_classificacao")
 }
 
 model Order {
-  id             String   @id @default(cuid())
-  legacyOrderKey String   @unique
-  legacyNumber   String
-  customerName   String?
-  sellerName     String?
-  sellerLegacyCode String?
-  sourceUpdatedAt DateTime?
-  lastSyncedAt   DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  items          OrderItem[]
-  integrationJobs IntegrationJob[]
-  @@index([legacyNumber])
+  id               String    @id @default(cuid())
+  legacyOrderKey   String    @unique @map("chave_legado")
+  legacyNumber     String    @map("numero_legado")
+  customerName     String?   @map("cliente_nome")
+  sellerLegacyCode String?   @map("vendedor_codigo")
+  sourceUpdatedAt  DateTime? @map("data_origem")
+  lastSyncedAt     DateTime? @map("sincronizado_em")
+  createdAt        DateTime  @default(now()) @map("criado_em")
+  updatedAt        DateTime  @updatedAt @map("atualizado_em")
 
+  items           OrderItem[]
+  integrationJobs IntegrationJob[]
+
+  @@index([legacyNumber])
   @@map("pedidos")
 }
 
+/// Item comercial + atributos operacionais. O item é também a unidade da fila:
+/// a antiga tabela `atividades` foi absorvida aqui (relação 1:1).
 model OrderItem {
-  id                   String   @id @default(cuid())
-  orderId              String
-  legacyItemKey        String
-  productCode          String?
-  description          String?
-  legacyCategory       String?
-  unit                 String
-  requestedQuantity    Decimal  @db.Decimal(18, 3)
-  classificationStatus ItemClassificationStatus @default(PENDING_CLASSIFICATION)
-  deadlineAt           DateTime?
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-  order                Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  activities           Activity[]
-  deliveries           Delivery[]
-  scheduledDeliveries  ScheduledDelivery[]
-  @@unique([orderId, legacyItemKey])
+  id                    String         @id @default(cuid())
+  orderId               String         @map("pedido_id")
+  legacyItemKey         String         @map("chave_item_legado")
+  productCode           String?        @map("codigo_produto")
+  description           String?        @map("descricao")
+  legacyCategory        String?        @map("categoria_legado")
+  unit                  String         @map("unidade")
+  requestedQuantity     Decimal        @map("quantidade_solicitada") @db.Decimal(18, 3)
+  deadlineAt            DateTime?      @map("prazo_entrega")
+  sectorId              String?        @map("setor_id")
+  status                ActivityStatus @default(PENDING) @map("situacao")
+  priority              Int            @default(0) @map("prioridade")
+  operationalDeadlineAt DateTime?      @map("prazo_operacional")
+  classifiedAt          DateTime?      @map("classificado_em")
+  classifiedByUserId    String?        @map("classificado_por")
+  createdAt             DateTime       @default(now()) @map("criado_em")
+  updatedAt             DateTime       @updatedAt @map("atualizado_em")
 
+  order               Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  sector              Sector?             @relation(fields: [sectorId], references: [id], onDelete: Restrict)
+  classifiedBy        User?               @relation("ClassifiedBy", fields: [classifiedByUserId], references: [id])
+  executions          Execution[]
+  occurrences         Occurrence[]
+  deliveries          Delivery[]
+  scheduledDeliveries ScheduledDelivery[]
+
+  @@unique([orderId, legacyItemKey])
+  @@index([sectorId, status, priority])
+  @@index([deadlineAt])
   @@map("pedidos_itens")
 }
 
-model Activity {
-  id          String         @id @default(cuid())
-  orderItemId String
-  sectorId    String
-  status      ActivityStatus @default(PENDING)
-  priority    Int            @default(0)
-  deadlineAt  DateTime?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  orderItem   OrderItem      @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
-  sector      Sector         @relation(fields: [sectorId], references: [id])
-  executions  Execution[]
-  occurrences Occurrence[]
-  @@unique([orderItemId, sectorId])
-
-  @@map("atividades")
-}
-
+/// Apontamento de produção/separação. A quantidade é um incremento, nunca um
+/// total acumulado. A coluna física é `item_id`; o campo `activityId` do
+/// domínio é preservado para não quebrar o código existente.
 model Execution {
-  id          String   @id @default(cuid())
-  activityId  String
-  userId      String
-  quantity    Decimal  @db.Decimal(18, 3)
-  occurredAt  DateTime @default(now())
-  activity    Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  user        User     @relation(fields: [userId], references: [id])
-  @@index([activityId, occurredAt])
+  id                 String    @id @default(cuid())
+  activityId         String    @map("item_id")
+  userId             String    @map("usuario_id")
+  quantity           Decimal   @map("quantidade") @db.Decimal(18, 3)
+  occurredAt         DateTime  @default(now()) @map("registrado_em")
+  startedAt          DateTime? @map("iniciado_em")
+  finishedAt         DateTime? @map("finalizado_em")
+  note               String?   @map("observacao")
+  status             String    @default("CONCLUIDO") @map("situacao")
+  idempotencyKey     String?   @unique @map("chave_idempotencia")
+  cancelledAt        DateTime? @map("anulado_em")
+  cancelledByUserId  String?   @map("anulado_por")
+  cancellationReason String?   @map("motivo_anulacao")
+  createdAt          DateTime  @default(now()) @map("criado_em")
 
-  @@map("execucoes")
+  activity    OrderItem    @relation(fields: [activityId], references: [id])
+  user        User         @relation("ExecutionUser", fields: [userId], references: [id])
+  cancelledBy User?        @relation("ExecutionCancelledBy", fields: [cancelledByUserId], references: [id])
+  occurrences Occurrence[]
+
+  @@index([activityId, occurredAt])
+  @@index([userId])
+  @@map("apontamentos")
 }
 
 model Occurrence {
-  id          String   @id @default(cuid())
-  activityId  String
-  userId      String
-  type        String
-  quantity    Decimal? @db.Decimal(18, 3)
-  durationMin Int?
-  motivoId    String?
-  note        String?
-  occurredAt  DateTime @default(now())
-  activity    Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  user        User     @relation(fields: [userId], references: [id])
+  id                 String    @id @default(cuid())
+  activityId         String    @map("item_id")
+  userId             String    @map("usuario_id")
+  type               String    @map("tipo")
+  quantity           Decimal?  @map("quantidade") @db.Decimal(18, 3)
+  durationMin        Int?      @map("duracao_minutos")
+  motivoId           String?   @map("motivo_id")
+  note               String?   @map("observacao")
+  occurredAt         DateTime  @default(now()) @map("ocorrido_em")
+  apontamentoId      String?   @map("apontamento_id")
+  idempotencyKey     String?   @unique @map("chave_idempotencia")
+  cancelledAt        DateTime? @map("anulado_em")
+  cancelledByUserId  String?   @map("anulado_por")
+  cancellationReason String?   @map("motivo_anulacao")
+  createdAt          DateTime  @default(now()) @map("criado_em")
+
+  activity    OrderItem         @relation(fields: [activityId], references: [id])
+  user        User              @relation("OccurrenceUser", fields: [userId], references: [id])
   motivo      MotivoOcorrencia? @relation(fields: [motivoId], references: [id])
+  apontamento Execution?        @relation(fields: [apontamentoId], references: [id])
+  cancelledBy User?             @relation("OccurrenceCancelledBy", fields: [cancelledByUserId], references: [id])
+
   @@index([activityId, occurredAt])
   @@index([motivoId])
-
+  @@index([apontamentoId])
   @@map("ocorrencias")
 }
 
 model MotivoOcorrencia {
-  id          String   @id @default(cuid())
-  tipo        String
-  codigo      String
-  descricao   String
-  ativo       Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  occurrences Occurrence[]
-  @@unique([tipo, codigo])
+  id        String   @id @default(cuid())
+  tipo      String
+  codigo    String
+  descricao String
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("criado_em")
+  updatedAt DateTime @updatedAt @map("atualizado_em")
 
+  occurrences Occurrence[]
+
+  @@unique([tipo, codigo])
   @@map("motivos_ocorrencia")
 }
 
 model Delivery {
-  id                    String   @id @default(cuid())
-  orderItemId           String
-  userId                String
-  quantity              Decimal  @db.Decimal(18, 3)
-  managerOverride       Boolean  @default(false)
-  overrideReason        String?
-  authorizedByUserId    String?
-  availableBefore       Decimal? @db.Decimal(18, 3)
-  occurredAt            DateTime @default(now())
-  orderItem             OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
-  recordedBy            User      @relation("DeliveryRecordedBy", fields: [userId], references: [id])
-  authorizedBy          User?     @relation("DeliveryAuthorizedBy", fields: [authorizedByUserId], references: [id])
+  id                 String    @id @default(cuid())
+  orderItemId        String    @map("item_id")
+  userId             String    @map("usuario_id")
+  quantity           Decimal   @map("quantidade") @db.Decimal(18, 3)
+  managerOverride    Boolean   @default(false) @map("excecao_autorizada")
+  overrideReason     String?   @map("motivo_excecao")
+  authorizedByUserId String?   @map("autorizado_por")
+  availableBefore    Decimal?  @map("disponivel_antes") @db.Decimal(18, 3)
+  occurredAt         DateTime  @default(now()) @map("entregue_em")
+  idempotencyKey     String?   @unique @map("chave_idempotencia")
+  cancelledAt        DateTime? @map("anulado_em")
+  cancelledByUserId  String?   @map("anulado_por")
+  cancellationReason String?   @map("motivo_anulacao")
+  createdAt          DateTime  @default(now()) @map("criado_em")
+
+  orderItem    OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  recordedBy   User      @relation("DeliveryRecordedBy", fields: [userId], references: [id])
+  authorizedBy User?     @relation("DeliveryAuthorizedBy", fields: [authorizedByUserId], references: [id], onDelete: Restrict)
+  cancelledBy  User?     @relation("DeliveryCancelledBy", fields: [cancelledByUserId], references: [id])
+
   @@index([orderItemId, occurredAt])
   @@index([authorizedByUserId])
-
   @@map("entregas")
 }
 
-/// Entrega programada (remessa) de um item: data prevista e confirmação.
+/// Previsão de entrega (a "remessa" do sistema antigo). Não baixa saldo.
 model ScheduledDelivery {
-  id          String    @id @default(cuid())
-  orderItemId String
-  remessa     Int
-  scheduledAt DateTime
-  confirmedAt DateTime?
-  note        String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id                 String    @id @default(cuid())
+  orderItemId        String    @map("item_id")
+  remessa            Int       @map("numero_remessa")
+  scheduledAt        DateTime  @map("data_prevista")
+  quantity           Decimal?  @map("quantidade_prevista") @db.Decimal(18, 3)
+  confirmedAt        DateTime? @map("confirmada_em")
+  confirmedByUserId  String?   @map("confirmada_por")
+  createdByUserId    String?   @map("criado_por")
+  note               String?   @map("observacao")
+  cancelledAt        DateTime? @map("anulada_em")
+  cancelledByUserId  String?   @map("anulada_por")
+  cancellationReason String?   @map("motivo_anulacao")
+  createdAt          DateTime  @default(now()) @map("criado_em")
+  updatedAt          DateTime  @updatedAt @map("atualizado_em")
+
   orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  createdBy   User?     @relation("ScheduledCreatedBy", fields: [createdByUserId], references: [id])
+  confirmedBy User?     @relation("ScheduledConfirmedBy", fields: [confirmedByUserId], references: [id])
+  cancelledBy User?     @relation("ScheduledCancelledBy", fields: [cancelledByUserId], references: [id])
+
   @@unique([orderItemId, remessa])
   @@index([orderItemId, scheduledAt])
-
-  @@map("remessas_programadas")
+  @@map("entregas_previstas")
 }
 
 model IntegrationJob {
-  id             String               @id @default(cuid())
-  orderId         String?
-  legacyOrderNumber String
-  idempotencyKey  String               @unique
-  status          IntegrationJobStatus @default(PENDING)
-  attemptCount    Int                  @default(0)
-  errorCode       String?
-  errorMessage    String?
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
-  completedAt     DateTime?
-  order           Order?               @relation(fields: [orderId], references: [id])
-  events          IntegrationJobEvent[]
+  id                String               @id @default(cuid())
+  orderId           String?              @map("pedido_id")
+  legacyOrderNumber String               @map("numero_legado")
+  empresaOrigem     String               @default("1") @map("empresa_origem")
+  idempotencyKey    String               @unique @map("chave_idempotencia")
+  status            IntegrationJobStatus @default(PENDING) @map("situacao")
+  attemptCount      Int                  @default(0) @map("tentativas")
+  errorCode         String?              @map("erro_codigo")
+  errorMessage      String?              @map("erro_mensagem")
+  requestedByUserId String?              @map("solicitado_por")
+  createdAt         DateTime             @default(now()) @map("criado_em")
+  updatedAt         DateTime             @updatedAt @map("atualizado_em")
+  dispatchedAt      DateTime?            @map("despachado_em")
+  completedAt       DateTime?            @map("concluido_em")
 
+  order       Order? @relation(fields: [orderId], references: [id])
+  requestedBy User?  @relation("JobRequestedBy", fields: [requestedByUserId], references: [id])
+
+  @@index([legacyOrderNumber])
+  @@index([status, updatedAt])
   @@map("jobs_integracao")
 }
 
-model IntegrationJobEvent {
-  id        String   @id @default(cuid())
-  jobId     String
-  type      String
-  detail    String?  @db.Text
-  createdAt DateTime @default(now())
-  job       IntegrationJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  @@index([jobId, createdAt])
-
-  @@map("eventos_job_integracao")
-}
-
 model AuditLog {
-  id          String   @id @default(cuid())
-  userId      String?
-  action      String
-  entityType  String
-  entityId    String?
-  beforeJson  Json?
-  afterJson   Json?
-  reason      String?
-  correlationId String?
-  createdAt   DateTime @default(now())
-  @@index([entityType, entityId, createdAt])
+  id            String   @id @default(cuid())
+  userId        String?  @map("usuario_id")
+  action        String   @map("acao")
+  entityType    String   @map("entidade_tipo")
+  entityId      String?  @map("entidade_id")
+  beforeJson    Json?    @map("antes_json")
+  afterJson     Json?    @map("depois_json")
+  reason        String?  @map("motivo")
+  correlationId String?  @map("correlacao_id")
+  createdAt     DateTime @default(now()) @map("criado_em")
 
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([entityType, entityId, createdAt])
+  @@index([userId, createdAt])
+  @@index([correlationId])
+  @@index([action, createdAt])
   @@map("logs_auditoria")
 }

@@ -41,6 +41,10 @@ export interface IndicadoresRepository
     AlertasRepository,
     AtividadesIndicadorRepository {}
 
+function situacaoClassificacao(sectorId: string | null): 'CLASSIFIED' | 'PENDING_CLASSIFICATION' {
+  return sectorId ? 'CLASSIFIED' : 'PENDING_CLASSIFICATION'
+}
+
 /** Implementação Prisma da porta `IndicadoresRepository` (somente o banco do app). */
 export const prismaIndicadoresRepository: IndicadoresRepository = {
   async consultarPedidos({ limite, offset, ...filtros }): Promise<ResultadoConsultaPedidos> {
@@ -58,9 +62,10 @@ export const prismaIndicadoresRepository: IndicadoresRepository = {
           createdAt: true,
           items: {
             select: {
-              classificationStatus: true,
               deadlineAt: true,
-              activities: { select: { status: true, sector: { select: { code: true } } } },
+              sectorId: true,
+              status: true,
+              sector: { select: { code: true } },
             },
           },
         },
@@ -78,12 +83,11 @@ export const prismaIndicadoresRepository: IndicadoresRepository = {
         cliente: row.customerName,
         criadoEm: row.createdAt,
         itens: row.items.map((item) => ({
-          classificationStatus: item.classificationStatus,
+          classificationStatus: situacaoClassificacao(item.sectorId),
           deadlineAt: item.deadlineAt,
-          atividades: item.activities.map((atividade) => ({
-            sectorCode: atividade.sector.code,
-            status: atividade.status,
-          })),
+          atividades: item.sectorId && item.sector
+            ? [{ sectorCode: item.sector.code, status: item.status }]
+            : [],
         })),
       })),
       total,
@@ -114,52 +118,43 @@ export const prismaIndicadoresRepository: IndicadoresRepository = {
         productCode: true,
         unit: true,
         deadlineAt: true,
-        classificationStatus: true,
+        sectorId: true,
+        status: true,
+        operationalDeadlineAt: true,
         legacyCategory: true,
-        activities: {
-          select: {
-            sectorId: true,
-            status: true,
-            deadlineAt: true,
-            sector: { select: { code: true, name: true } },
-            _count: { select: { executions: true, occurrences: true } },
-          },
-          take: 1,
-        },
+        sector: { select: { code: true, name: true } },
+        _count: { select: { executions: true, occurrences: true, deliveries: true } },
         scheduledDeliveries: {
+          where: { cancelledAt: null },
           select: { id: true, remessa: true, scheduledAt: true, confirmedAt: true },
           orderBy: { remessa: 'asc' },
         },
-        _count: { select: { deliveries: true } },
       },
       orderBy: { createdAt: 'asc' },
     })
-    return rows.map((row) => {
-      const atividade = row.activities[0]
-      return {
-        itemId: row.id,
-        description: row.description,
-        productCode: row.productCode,
-        unit: row.unit,
-        deadlineAt: row.deadlineAt,
-        activityDeadlineAt: atividade?.deadlineAt ?? null,
-        classificationStatus: row.classificationStatus,
-        legacyCategory: row.legacyCategory,
-        sectorId: atividade?.sectorId ?? null,
-        sectorCode: atividade?.sector.code ?? null,
-        sectorName: atividade?.sector.name ?? null,
-        activityStatus: atividade?.status ?? null,
-        registrosAtividade: atividade
-          ? {
-              status: atividade.status,
-              execucoes: atividade._count.executions,
-              ocorrencias: atividade._count.occurrences,
-              entregas: row._count.deliveries,
-            }
-          : null,
-        remessas: row.scheduledDeliveries,
-      }
-    })
+    return rows.map((row) => ({
+      itemId: row.id,
+      description: row.description,
+      productCode: row.productCode,
+      unit: row.unit,
+      deadlineAt: row.deadlineAt,
+      activityDeadlineAt: row.operationalDeadlineAt,
+      classificationStatus: situacaoClassificacao(row.sectorId),
+      legacyCategory: row.legacyCategory,
+      sectorId: row.sectorId,
+      sectorCode: row.sector?.code ?? null,
+      sectorName: row.sector?.name ?? null,
+      activityStatus: row.sectorId ? row.status : null,
+      registrosAtividade: row.sectorId
+        ? {
+            status: row.status,
+            execucoes: row._count.executions,
+            ocorrencias: row._count.occurrences,
+            entregas: row._count.deliveries,
+          }
+        : null,
+      remessas: row.scheduledDeliveries,
+    }))
   },
 
   async buscarItensDoPedido(orderId): Promise<ItemDoPedido[] | null> {
@@ -167,11 +162,25 @@ export const prismaIndicadoresRepository: IndicadoresRepository = {
   },
 
   async listarRegrasProdutoSetor() {
-    return prisma.productSectorRule.findMany({
-      where: { active: true },
-      select: { matchType: true, matchValue: true, sectorId: true, priority: true },
+    const rows = await prisma.classificationRule.findMany({
+      where: { active: true, matchType: { in: ['CODIGO_PRODUTO', 'DESCRICAO'] } },
+      select: { operator: true, value: true, sectorId: true, priority: true },
       orderBy: { priority: 'desc' },
     })
+    const vistos = new Set<string>()
+    return rows
+      .map((row) => ({
+        matchType: row.operator === 'PREFIXO' ? 'PREFIX' : 'CONTAINS',
+        matchValue: row.value,
+        sectorId: row.sectorId,
+        priority: row.priority,
+      }))
+      .filter((regra) => {
+        const chave = `${regra.matchType}|${regra.matchValue}|${regra.sectorId}`
+        if (vistos.has(chave)) return false
+        vistos.add(chave)
+        return true
+      })
   },
 
   async listarItensParaAlerta(): Promise<ItemParaAlerta[]> {
@@ -179,84 +188,80 @@ export const prismaIndicadoresRepository: IndicadoresRepository = {
       select: {
         id: true,
         description: true,
-        classificationStatus: true,
+        sectorId: true,
+        status: true,
+        classifiedAt: true,
+        operationalDeadlineAt: true,
         order: { select: { id: true, legacyNumber: true } },
-        activities: {
-          select: {
-            id: true,
-            status: true,
-            deadlineAt: true,
-            createdAt: true,
-            sector: { select: { name: true } },
-            executions: {
-              select: { occurredAt: true },
-              orderBy: { occurredAt: 'desc' },
-              take: 1,
-            },
-          },
+        sector: { select: { name: true } },
+        executions: {
+          where: { cancelledAt: null },
+          select: { occurredAt: true },
+          orderBy: { occurredAt: 'desc' },
           take: 1,
         },
       },
     })
-    return rows.map((row) => {
-      const atividade = row.activities[0]
-      return {
-        itemId: row.id,
-        orderId: row.order.id,
-        orderNumber: row.order.legacyNumber,
-        itemDescription: row.description,
-        classificationStatus: row.classificationStatus,
-        activityId: atividade?.id ?? null,
-        activityStatus: atividade?.status ?? null,
-        sectorName: atividade?.sector.name ?? null,
-        activityCreatedAt: atividade?.createdAt ?? null,
-        deadlineAt: atividade?.deadlineAt ?? null,
-        lastExecutionAt: atividade?.executions[0]?.occurredAt ?? null,
-      }
-    })
+    return rows.map((row) => ({
+      itemId: row.id,
+      orderId: row.order.id,
+      orderNumber: row.order.legacyNumber,
+      itemDescription: row.description,
+      classificationStatus: situacaoClassificacao(row.sectorId),
+      activityId: row.sectorId ? row.id : null,
+      activityStatus: row.sectorId ? row.status : null,
+      sectorName: row.sector?.name ?? null,
+      activityCreatedAt: row.classifiedAt,
+      deadlineAt: row.operationalDeadlineAt,
+      lastExecutionAt: row.executions[0]?.occurredAt ?? null,
+    }))
   },
 
   async listarAtividades(): Promise<AtividadeIndicador[]> {
-    const rows = await prisma.activity.findMany({
+    const rows = await prisma.orderItem.findMany({
+      where: { sectorId: { not: null } },
       select: { id: true, sectorId: true, status: true, sector: { select: { name: true } } },
     })
     return rows.map((row) => ({
       id: row.id,
-      sectorId: row.sectorId,
+      sectorId: row.sectorId ?? '',
       status: row.status,
-      sectorName: row.sector.name,
+      sectorName: row.sector?.name ?? '',
     }))
   },
 
   async listarExecucoes(): Promise<ExecucaoIndicador[]> {
     const rows = await prisma.execution.findMany({
+      where: { cancelledAt: null },
       select: {
         quantity: true,
         activity: {
           select: {
             sectorId: true,
             sector: { select: { name: true } },
-            orderItem: { select: { unit: true } },
+            unit: true,
           },
         },
       },
     })
     return rows.map((row) => ({
-      sectorId: row.activity.sectorId,
-      unidade: row.activity.orderItem.unit,
+      sectorId: row.activity.sectorId ?? '',
+      unidade: row.activity.unit,
       quantidade: row.quantity,
-      sectorName: row.activity.sector.name,
+      sectorName: row.activity.sector?.name ?? '',
     }))
   },
 
   async listarAtividadesComPrazo(): Promise<AtividadeComPrazo[]> {
-    const rows = await prisma.activity.findMany({
+    const rows = await prisma.orderItem.findMany({
+      where: { operationalDeadlineAt: { not: null }, sectorId: { not: null } },
       select: {
         id: true,
         sectorId: true,
         status: true,
-        deadlineAt: true,
+        operationalDeadlineAt: true,
         executions: {
+          where: { cancelledAt: null },
           select: { occurredAt: true },
           orderBy: { occurredAt: 'desc' },
           take: 1,
@@ -266,9 +271,9 @@ export const prismaIndicadoresRepository: IndicadoresRepository = {
 
     return rows.map((row) => ({
       id: row.id,
-      sectorId: row.sectorId,
+      sectorId: row.sectorId ?? '',
       status: row.status,
-      deadlineAt: row.deadlineAt,
+      deadlineAt: row.operationalDeadlineAt,
       completedAt: row.executions[0]?.occurredAt ?? null,
     }))
   },
@@ -276,27 +281,25 @@ export const prismaIndicadoresRepository: IndicadoresRepository = {
   async listarAtividadesDetalhadas({ status, limite = 200 } = {}): Promise<
     AtividadeDetalhadaIndicador[]
   > {
-    const where =
-      status === 'ABERTAS'
+    const where = {
+      sectorId: { not: null },
+      ...(status === 'ABERTAS'
         ? { status: { not: 'COMPLETED' as const } }
         : status
           ? { status }
-          : undefined
+          : {}),
+    }
 
-    const rows = await prisma.activity.findMany({
+    const rows = await prisma.orderItem.findMany({
       where,
       select: {
         id: true,
         status: true,
         priority: true,
-        deadlineAt: true,
-        orderItem: {
-          select: {
-            description: true,
-            productCode: true,
-            order: { select: { id: true, legacyNumber: true } },
-          },
-        },
+        operationalDeadlineAt: true,
+        description: true,
+        productCode: true,
+        order: { select: { id: true, legacyNumber: true } },
         sector: { select: { name: true } },
       },
       orderBy: [{ status: 'asc' }, { createdAt: 'asc' }],
@@ -305,13 +308,13 @@ export const prismaIndicadoresRepository: IndicadoresRepository = {
 
     return rows.map((row) => ({
       id: row.id,
-      orderId: row.orderItem.order.id,
-      orderNumber: row.orderItem.order.legacyNumber,
-      itemDescription: row.orderItem.description ?? row.orderItem.productCode,
-      sectorName: row.sector.name,
+      orderId: row.order.id,
+      orderNumber: row.order.legacyNumber,
+      itemDescription: row.description ?? row.productCode,
+      sectorName: row.sector?.name ?? '',
       status: row.status,
       priority: row.priority,
-      deadlineAt: row.deadlineAt,
+      deadlineAt: row.operationalDeadlineAt,
     }))
   },
 }

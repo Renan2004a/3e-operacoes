@@ -40,8 +40,8 @@ function ehCategoriaDuplicada(erro: unknown): boolean {
   if (!erroPrisma || erroPrisma.code !== 'P2002') return false
 
   const target = erroPrisma.target
-  if (Array.isArray(target)) return target.includes('legacyCategory')
-  if (typeof target === 'string') return target.includes('legacyCategory')
+  if (Array.isArray(target)) return target.includes('value') || target.includes('matchType')
+  if (typeof target === 'string') return target.includes('value') || target.includes('tipo_correspondencia')
   return false
 }
 

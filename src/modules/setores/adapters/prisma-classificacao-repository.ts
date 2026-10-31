@@ -10,40 +10,22 @@ import {
   type ItemParaClassificar,
 } from '../classificar-item'
 
-/**
- * Identifica a violação da chave única `(orderItemId, sectorId)` de `Activity`.
- * Só traduz a constraint conhecida; outros `P2002` continuam propagando.
- */
-function ehViolacaoDaAtividadeUnica(erro: unknown): boolean {
-  if (typeof erro !== 'object' || erro === null) return false
-  const { code, meta } = erro as { code?: unknown; meta?: { target?: unknown } }
-  if (code !== 'P2002') return false
-
-  const target = meta?.target
-  if (Array.isArray(target)) {
-    return target.includes('orderItemId') && target.includes('sectorId')
-  }
-  if (typeof target === 'string') {
-    return target.includes('orderItemId') && target.includes('sectorId')
-  }
-  return false
+function situacaoClassificacao(sectorId: string | null): ItemParaClassificar['classificationStatus'] {
+  return sectorId ? 'CLASSIFIED' : 'PENDING_CLASSIFICATION'
 }
 
 /**
- * Transição condicional do item pendente para `CLASSIFIED`, executada no
- * cliente recebido (global ou transacional). Árbitro de concorrência: só vence
- * quem ainda encontra o item pendente; a consulta do estado atual somente para
- * distinguir ausência (`404`) de conflito (`409`). Assumir que reler resolve
- * dentro da mesma transação não vale para criações de outra transação; aqui a
- * leitura é apenas do próprio item, cujo `updateMany` já travou a linha.
+ * A classificação é a própria definição do setor do item. A atualização
+ * condicional (`setor_id IS NULL`) é o árbitro da concorrência: apenas uma
+ * transação vence; a perdedora recebe `ItemJaClassificadoError`.
  */
 export async function transicionarPendenteNoEscopo(
   cliente: Prisma.TransactionClient,
   itemId: string,
 ): Promise<void> {
   const { count } = await cliente.orderItem.updateMany({
-    where: { id: itemId, classificationStatus: 'PENDING_CLASSIFICATION' },
-    data: { classificationStatus: 'CLASSIFIED' },
+    where: { id: itemId, sectorId: null },
+    data: { classifiedAt: new Date() },
   })
   if (count > 0) return
 
@@ -52,32 +34,28 @@ export async function transicionarPendenteNoEscopo(
   throw new ItemJaClassificadoError(itemId)
 }
 
-/**
- * Criação da atividade no cliente recebido, com a defesa para dados legados:
- * um item já com atividade (mesmo de outro setor) não ganha uma segunda, e a
- * corrida residual fora do fluxo da aplicação ainda é coberta pela constraint
- * única de atividade.
- */
 export async function criarAtividadeNoEscopo(
   cliente: Prisma.TransactionClient,
   itemId: string,
   sectorId: string,
+  userId?: string | null,
 ): Promise<ActivityCriada> {
-  const atividadeExistente = await cliente.activity.findFirst({
-    where: { orderItemId: itemId },
-    select: { id: true },
+  const { count } = await cliente.orderItem.updateMany({
+    where: { id: itemId, sectorId: null },
+    data: {
+      sectorId,
+      classifiedAt: new Date(),
+      classifiedByUserId: userId ?? null,
+    },
   })
-  if (atividadeExistente) throw new ItemJaClassificadoError(itemId)
 
-  try {
-    const activity = await cliente.activity.create({ data: { orderItemId: itemId, sectorId } })
-    return { id: activity.id, orderItemId: activity.orderItemId, sectorId: activity.sectorId }
-  } catch (erro) {
-    // Corrida residual fora do fluxo da aplicação: a constraint de atividade
-    // única ainda protege contra duplicação e vira conflito de domínio.
-    if (ehViolacaoDaAtividadeUnica(erro)) throw new ItemJaClassificadoError(itemId)
-    throw erro
+  if (count === 1) {
+    return { id: itemId, orderItemId: itemId, sectorId }
   }
+
+  const existe = await cliente.orderItem.findUnique({ where: { id: itemId }, select: { id: true } })
+  if (!existe) throw new ItemNaoEncontradoError(itemId)
+  throw new ItemJaClassificadoError(itemId)
 }
 
 async function lerItemNoEscopo(
@@ -89,7 +67,7 @@ async function lerItemNoEscopo(
   return {
     id: row.id,
     legacyCategory: row.legacyCategory,
-    classificationStatus: row.classificationStatus,
+    classificationStatus: situacaoClassificacao(row.sectorId),
   }
 }
 
@@ -109,10 +87,7 @@ async function lerSetorNoEscopo(
   }
 }
 
-/**
- * Implementação Prisma da porta `ClassificacaoEmTransacao`: todos os métodos
- * usam o cliente transacional recebido e NÃO abrem transação própria.
- */
+/** Implementação transacional da classificação (mesmo cliente recebido). */
 export function criarClassificacaoEmTransacao(
   cliente: Prisma.TransactionClient,
 ): ClassificacaoEmTransacao {
@@ -120,7 +95,8 @@ export function criarClassificacaoEmTransacao(
     transicionarPendente: (itemId) => transicionarPendenteNoEscopo(cliente, itemId),
     findItemById: (itemId) => lerItemNoEscopo(cliente, itemId),
     findSectorById: (sectorId) => lerSetorNoEscopo(cliente, sectorId),
-    criarAtividade: (itemId, sectorId) => criarAtividadeNoEscopo(cliente, itemId, sectorId),
+    criarAtividade: (itemId, sectorId, userId) =>
+      criarAtividadeNoEscopo(cliente, itemId, sectorId, userId),
   }
 }
 
@@ -132,23 +108,13 @@ export const prismaClassificacaoRepository: ClassificacaoRepository = {
 
   async markClassified({ itemId, sectorId }): Promise<ActivityCriada> {
     try {
-      // A transição é o árbitro da concorrência: só vence quem ainda encontra
-      // o item pendente. A atualização condicional e a criação da atividade
-      // ficam na mesma transação; qualquer falha desfaz a classificação.
       return await prisma.$transaction(async (tx) => {
-        await transicionarPendenteNoEscopo(tx, itemId)
-        return criarAtividadeNoEscopo(tx, itemId, sectorId)
+        return criarAtividadeNoEscopo(tx, itemId, sectorId, null)
       })
     } catch (erro) {
-      // Erros de domínio são contratos da API; a violação residual da
-      // constraint de atividade única ainda é traduzida em conflito e o
-      // restante propaga para a unidade transacional.
       if (erro instanceof ItemJaClassificadoError || erro instanceof ItemNaoEncontradoError) {
         throw erro
       }
-      // Corrida residual fora do fluxo da aplicação: a constraint de atividade
-      // única ainda protege contra duplicação e vira conflito de domínio.
-      if (ehViolacaoDaAtividadeUnica(erro)) throw new ItemJaClassificadoError(itemId)
       throw erro
     }
   },

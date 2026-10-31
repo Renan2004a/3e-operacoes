@@ -75,10 +75,10 @@ Decisões formais do AD-009 (aprovadas em 2026-10-22).
 
 ## Nomenclatura do banco
 
-- As **tabelas físicas** do banco do app usam **português**, `snake_case` e plural: `usuarios`, `pedidos`, `pedidos_itens`, `atividades`, `execucoes`, `ocorrencias`, `entregas`, `remessas_programadas`, `setores`, `regras_produto_setor`, `mapeamentos_categoria_setor`, `jobs_integracao`, `eventos_job_integracao`, `logs_auditoria`, `usuarios_perfis`, `usuarios_setores`, `motivos_ocorrencia`.
-- Os **modelos do código (Prisma)** continuam em inglês (`User`, `Order`, `Activity`…), mapeados com `@@map`, para não quebrar domínio, APIs e testes.
-- As **colunas** continuam em inglês (identificadores técnicos). Traduzi-las exigiria `@map` em cada campo e uma migration de `RENAME COLUMN` (fase futura).
-- A renomeação usa `RENAME TABLE`, preservando dados, índices e FKs; os nomes de constraints/índices foram normalizados em migration separada.
+- **Atualização 31/10/2026 (AD-026)**: o banco foi evoluído para **14 tabelas**. Todas as tabelas, colunas, índices, constraints e views usam **português**; `atividades` foi absorvida em `pedidos_itens`, `execucoes` virou `apontamentos`, `remessas_programadas` virou `entregas_previstas`, `mapeamentos_categoria_setor` + `regras_produto_setor` viraram `regras_classificacao` e `eventos_job_integracao` foi absorvida em `logs_auditoria`. Ver [`banco-evolucao-2026-10-31.md`](banco-evolucao-2026-10-31.md).
+- Os **modelos do código (Prisma)** continuam em inglês (`User`, `Order`, `OrderItem`, `Execution`…), mapeados com `@@map`/`@map`, para não quebrar domínio, APIs e testes.
+- As **colunas físicas** agora são em português, com `@map` em cada campo do Prisma. A migração foi feita por ETL para um banco novo (`3e_operacoes_v2`), preservando IDs, datas e histórico.
+- **CUID** foi mantido como tipo de ID nesta etapa; a troca para `BIGINT` fica como fase futura, se houver exigência explícita.
 
 ## Integração sob demanda
 

@@ -19,9 +19,10 @@ export interface RemessaRepository {
     remessa: number
     scheduledAt: Date
     note: string | null
+    createdByUserId?: string | null
   }): Promise<Remessa>
-  confirmar(id: string, now: Date): Promise<Remessa | null>
-  remover(id: string): Promise<boolean>
+  confirmar(id: string, now: Date, userId?: string | null): Promise<Remessa | null>
+  remover(id: string, input?: { motivo?: string; userId?: string | null }): Promise<boolean>
 }
 
 export class RemessaDuplicadaError extends Error {
@@ -64,7 +65,7 @@ export function interpretarDataPrevista(valor: string): Date {
  * Rejeita número repetido para o mesmo item.
  */
 export async function programarRemessa(
-  input: { orderItemId: string; remessa?: number; scheduledAt: Date; note?: string | null },
+  input: { orderItemId: string; remessa?: number; scheduledAt: Date; note?: string | null; userId?: string | null },
   repo: RemessaRepository,
 ): Promise<Remessa> {
   if (!Number.isInteger(input.remessa ?? 1) || (input.remessa !== undefined && input.remessa <= 0)) {
@@ -88,6 +89,7 @@ export async function programarRemessa(
           remessa: proxima,
           scheduledAt: input.scheduledAt,
           note: input.note ?? null,
+          createdByUserId: input.userId ?? null,
         })
       } catch (erro) {
         if (!(erro instanceof RemessaDuplicadaError) || tentativa === 3) throw erro
@@ -104,24 +106,25 @@ export async function programarRemessa(
     remessa: numero,
     scheduledAt: input.scheduledAt,
     note: input.note ?? null,
+    createdByUserId: input.userId ?? null,
   })
 }
 
 /** Confirma a remessa como entregue (marca a data de confirmação). */
 export async function confirmarRemessa(
-  input: { id: string; now: Date },
+  input: { id: string; now: Date; userId?: string | null },
   repo: RemessaRepository,
 ): Promise<Remessa> {
-  const confirmada = await repo.confirmar(input.id, input.now)
+  const confirmada = await repo.confirmar(input.id, input.now, input.userId)
   if (!confirmada) throw new RemessaNaoEncontradaError(input.id)
   return confirmada
 }
 
-/** Remove uma remessa programada. */
+/** Remove uma remessa programada (anulação lógica com motivo). */
 export async function removerRemessa(
-  input: { id: string },
+  input: { id: string; motivo?: string; userId?: string | null },
   repo: RemessaRepository,
 ): Promise<void> {
-  const removida = await repo.remover(input.id)
+  const removida = await repo.remover(input.id, { motivo: input.motivo, userId: input.userId })
   if (!removida) throw new RemessaNaoEncontradaError(input.id)
 }

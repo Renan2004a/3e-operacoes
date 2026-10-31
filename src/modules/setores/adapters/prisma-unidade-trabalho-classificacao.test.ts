@@ -20,11 +20,11 @@ function erroP2034(): unknown {
 }
 
 function conflitoCategoria(): unknown {
-  return { code: 'P2002', meta: { target: ['legacyCategory'] } }
+  return { code: 'P2002', meta: { target: ['matchType', 'operator', 'value'] } }
 }
 
 function conflitoOutraConstraint(): unknown {
-  return { code: 'P2002', meta: { target: ['orderItemId', 'sectorId'] } }
+  return { code: 'P2002', meta: { target: ['email'] } }
 }
 
 describe('prismaUnidadeTrabalhoClassificacao.transacional', () => {
@@ -98,7 +98,7 @@ describe('prismaUnidadeTrabalhoClassificacao.transacional', () => {
     expect(state.prisma.$transaction).toHaveBeenCalledTimes(1)
   })
 
-  it('não repete P2002 de outra constraint (ex.: atividade única)', async () => {
+  it('não repete P2002 de outra constraint (ex.: e-mail único)', async () => {
     const erro = conflitoOutraConstraint()
 
     await expect(

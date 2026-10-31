@@ -20,7 +20,7 @@ export const prismaPedidosRepository: PedidosRepository = {
       include: {
         items: {
           include: {
-            activities: { include: { executions: true } },
+            executions: true,
             deliveries: true,
           },
         },
@@ -33,7 +33,7 @@ export const prismaPedidosRepository: PedidosRepository = {
       items: order.items.map((item) => ({
         legacyItemKey: item.legacyItemKey,
         requestedQuantity: item.requestedQuantity.toString(),
-        executedQuantity: sumDecimal(item.activities.flatMap((activity) => activity.executions.map((execution) => execution.quantity))),
+        executedQuantity: sumDecimal(item.executions.map((execution) => execution.quantity)),
         deliveredQuantity: sumDecimal(item.deliveries.map((delivery) => delivery.quantity)),
       })),
     }
@@ -76,12 +76,10 @@ export const prismaPedidosRepository: PedidosRepository = {
             description: true,
             unit: true,
             requestedQuantity: true,
-            activities: {
-              select: {
-                status: true,
-                _count: { select: { executions: true, occurrences: true } },
-              },
-            },
+            sectorId: true,
+            status: true,
+            executions: { select: { id: true } },
+            occurrences: { select: { id: true } },
             _count: { select: { deliveries: true, scheduledDeliveries: true } },
           },
         })
@@ -130,7 +128,7 @@ export const prismaPedidosRepository: PedidosRepository = {
                 unit: item.unit,
                 requestedQuantity: item.requestedQuantity,
                 legacyCategory: item.legacyCategory,
-                classificationStatus: 'PENDING_CLASSIFICATION',
+                status: 'PENDING',
               },
             })
             continue
@@ -140,11 +138,17 @@ export const prismaPedidosRepository: PedidosRepository = {
             unidadeAtual: existente.unit,
             unidadeNova: item.unit,
             registros: {
-              atividades: existente.activities.map((atividade) => ({
-                status: atividade.status,
-                execucoes: atividade._count.executions,
-                ocorrencias: atividade._count.occurrences,
-              })),
+              // A "atividade" agora é o próprio item: um item classificado
+              // equivale a uma atividade no setor; sem setor, não há atividade.
+              atividades: existente.sectorId
+                ? [
+                    {
+                      status: existente.status,
+                      execucoes: existente.executions.length,
+                      ocorrencias: existente.occurrences.length,
+                    },
+                  ]
+                : [],
               entregas: existente._count.deliveries,
               remessas: existente._count.scheduledDeliveries,
             },
@@ -174,15 +178,9 @@ export const prismaPedidosRepository: PedidosRepository = {
                 unit: existente.unit,
                 deliveries: { none: {} },
                 scheduledDeliveries: { none: {} },
-                activities: {
-                  none: {
-                    OR: [
-                      { status: { not: 'PENDING' } },
-                      { executions: { some: {} } },
-                      { occurrences: { some: {} } },
-                    ],
-                  },
-                },
+                executions: { none: {} },
+                occurrences: { none: {} },
+                OR: [{ sectorId: null }, { status: 'PENDING' }],
               },
               data: dados,
             })

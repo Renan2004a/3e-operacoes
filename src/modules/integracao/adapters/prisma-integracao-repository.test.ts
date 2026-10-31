@@ -77,6 +77,7 @@ describe('prismaIntegracaoRepository — auditoria da solicitação', () => {
         legacyOrderNumber: '70435',
         idempotencyKey: 'pedido:70435',
         status: 'PENDING',
+        requestedByUserId: 'user_vendedor',
         createdAt: NOW,
         updatedAt: NOW,
       },

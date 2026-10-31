@@ -20,7 +20,7 @@ const mocks = vi.hoisted(() => {
     orderId: string
     legacyItemKey: string
     legacyCategory: string | null
-    classificationStatus: 'CLASSIFIED' | 'PENDING_CLASSIFICATION'
+    sectorId: string | null
   }> = []
   const mappings: Array<{
     id: string
@@ -32,7 +32,6 @@ const mocks = vi.hoisted(() => {
   }> = []
   const activities: Array<{ id: string; orderItemId: string; sectorId: string }> = []
   let seq = 0
-  let actSeq = 0
 
   const integracao = {
     findRecentByIdempotencyKey: async () => null,
@@ -98,7 +97,7 @@ const mocks = vi.hoisted(() => {
             orderId: 'order_1',
             legacyItemKey: item.legacyItemKey,
             legacyCategory: item.legacyCategory,
-            classificationStatus: 'PENDING_CLASSIFICATION',
+            sectorId: null,
           })
         }
       }
@@ -116,7 +115,7 @@ const mocks = vi.hoisted(() => {
           .map((item) => ({
             id: item.id,
             legacyItemKey: item.legacyItemKey,
-            classificationStatus: item.classificationStatus,
+            sectorId: item.sectorId,
           })),
     },
   }
@@ -128,7 +127,7 @@ const mocks = vi.hoisted(() => {
         ? {
             id: found.id,
             legacyCategory: found.legacyCategory,
-            classificationStatus: found.classificationStatus,
+            classificationStatus: found.sectorId ? 'CLASSIFIED' : 'PENDING_CLASSIFICATION',
           }
         : null
     },
@@ -136,9 +135,8 @@ const mocks = vi.hoisted(() => {
     markClassified: async ({ itemId, sectorId }: { itemId: string; sectorId: string }) => {
       const found = orderItems.find((item) => item.id === itemId)
       if (!found) throw new Error('item não encontrado')
-      found.classificationStatus = 'CLASSIFIED'
-      actSeq += 1
-      const activity = { id: `act_${actSeq}`, orderItemId: itemId, sectorId }
+      found.sectorId = sectorId
+      const activity = { id: itemId, orderItemId: itemId, sectorId }
       activities.push(activity)
       return activity
     },
@@ -173,7 +171,6 @@ const mocks = vi.hoisted(() => {
     mappings.length = 0
     activities.length = 0
     seq = 0
-    actSeq = 0
   }
 
   return { jobs, events, upsertCalls, orderItems, mappings, activities, integracao, pedidos, prisma, classificacao, mapeamento, reset }
@@ -354,9 +351,9 @@ describe('POST /api/integracao/callback', () => {
     )
 
     expect(response.status).toBe(200)
-    expect(mocks.orderItems[0].classificationStatus).toBe('CLASSIFIED')
+    expect(mocks.orderItems[0].sectorId).toBe('setor_telhas')
     expect(mocks.activities).toEqual([
-      { id: 'act_1', orderItemId: mocks.orderItems[0].id, sectorId: 'setor_telhas' },
+      { id: mocks.orderItems[0].id, orderItemId: mocks.orderItems[0].id, sectorId: 'setor_telhas' },
     ])
   })
 
@@ -375,7 +372,7 @@ describe('POST /api/integracao/callback', () => {
       orderId: 'order_1',
       legacyItemKey: '1',
       legacyCategory: 'Telhas',
-      classificationStatus: 'CLASSIFIED',
+      sectorId: 'setor_telhas',
     })
 
     const response = await POST(
@@ -397,7 +394,7 @@ describe('POST /api/integracao/callback', () => {
 
     expect(response.status).toBe(200)
     expect(mocks.orderItems).toHaveLength(1)
-    expect(mocks.orderItems[0].classificationStatus).toBe('CLASSIFIED')
+    expect(mocks.orderItems[0].sectorId).toBe('setor_telhas')
     expect(mocks.activities).toHaveLength(0)
   })
 })

@@ -59,17 +59,13 @@ async function criarPedido(numero: string, itens: ItemSeed[]): Promise<PedidoCri
         description: 'Chapa',
         unit: 'UN',
         requestedQuantity: 10,
-        classificationStatus: item.comAtividade ? 'CLASSIFIED' : 'PENDING_CLASSIFICATION',
+        ...(item.comAtividade
+          ? { sectorId: setorId, classifiedAt: new Date(), status: 'PENDING' as const }
+          : {}),
       },
     })
     itemIds[item.legacyItemKey] = row.id
-
-    if (item.comAtividade) {
-      const activity = await prisma.activity.create({
-        data: { orderItemId: row.id, sectorId: setorId, status: 'PENDING' },
-      })
-      activityIds[item.legacyItemKey] = activity.id
-    }
+    if (item.comAtividade) activityIds[item.legacyItemKey] = row.id
   }
 
   return { orderId: order.id, itemIds, activityIds }
@@ -110,6 +106,14 @@ describe.skipIf(!ativo)('prazos no MySQL (integração AD-009)', () => {
     definirItem = prazoModule.definirPrazoItem
     definirAtividade = prazoModule.definirPrazoAtividade
 
+    for (const id of ['user-v08', 'user-a', 'user-b']) {
+      await prisma.user.upsert({
+        where: { id },
+        update: {},
+        create: { id, name: id, email: `${id}@teste.local`, passwordHash: 'x' },
+      })
+    }
+
     const setor = await prisma.sector.upsert({
       where: { code: 'TELHAS' },
       update: {},
@@ -144,10 +148,10 @@ describe.skipIf(!ativo)('prazos no MySQL (integração AD-009)', () => {
 
     await definirItem({ itemId: pedido.itemIds['item-1'], prazo: '2026-02-01' }, prazos)
 
-    const semPrazoSetor = await prisma.activity.findUnique({
+    const semPrazoSetor = await prisma.orderItem.findUnique({
       where: { id: pedido.activityIds['item-1'] },
     })
-    expect(semPrazoSetor?.deadlineAt).toBeNull()
+    expect(semPrazoSetor?.operationalDeadlineAt).toBeNull()
 
     await definirAtividade(
       { atividadeId: pedido.activityIds['item-1'], prazo: '2026-03-10' },
@@ -155,11 +159,11 @@ describe.skipIf(!ativo)('prazos no MySQL (integração AD-009)', () => {
     )
 
     const item = await prisma.orderItem.findUnique({ where: { id: pedido.itemIds['item-1'] } })
-    const atividade = await prisma.activity.findUnique({
+    const atividade = await prisma.orderItem.findUnique({
       where: { id: pedido.activityIds['item-1'] },
     })
     expect(iso(item?.deadlineAt)).toBe('2026-02-02T02:59:59.999Z')
-    expect(iso(atividade?.deadlineAt)).toBe('2026-03-11T02:59:59.999Z')
+    expect(iso(atividade?.operationalDeadlineAt)).toBe('2026-03-11T02:59:59.999Z')
 
     const { detalharPedido } = await import('../../indicadores/consulta-pedidos')
     const detalhe = await detalharPedido(pedido.orderId, indicadores)
@@ -195,11 +199,11 @@ describe.skipIf(!ativo)('prazos no MySQL (integração AD-009)', () => {
     })
 
     const item = await prisma.orderItem.findUnique({ where: { id: pedido.itemIds['item-1'] } })
-    const atividade = await prisma.activity.findUnique({
+    const atividade = await prisma.orderItem.findUnique({
       where: { id: pedido.activityIds['item-1'] },
     })
     expect(iso(item?.deadlineAt)).toBe('2026-02-02T02:59:59.999Z')
-    expect(iso(atividade?.deadlineAt)).toBe('2026-03-11T02:59:59.999Z')
+    expect(iso(atividade?.operationalDeadlineAt)).toBe('2026-03-11T02:59:59.999Z')
   })
 
   it('mantém prazos diferentes por item no mesmo pedido (AD-009)', async () => {
@@ -314,8 +318,8 @@ describe.skipIf(!ativo)('prazos no MySQL (integração AD-009)', () => {
     expect(segunda).toBeDefined()
     expect(deadlineDoJson(segunda!.beforeJson)).toBe(deadlineDoJson(primeira!.afterJson))
 
-    const row = await prisma.activity.findUnique({ where: { id: atividadeId } })
-    expect(iso(row?.deadlineAt)).toBe(deadlineDoJson(segunda!.afterJson))
+    const row = await prisma.orderItem.findUnique({ where: { id: atividadeId } })
+    expect(iso(row?.operationalDeadlineAt)).toBe(deadlineDoJson(segunda!.afterJson))
   })
 
   it('reverte o prazo do item quando a auditoria falha (V08)', async () => {
@@ -356,8 +360,8 @@ describe.skipIf(!ativo)('prazos no MySQL (integração AD-009)', () => {
       ),
     ).rejects.toBeTruthy()
 
-    const row = await prisma.activity.findUnique({ where: { id: atividadeId } })
-    expect(iso(row?.deadlineAt)).toBe('2026-01-11T02:59:59.999Z')
+    const row = await prisma.orderItem.findUnique({ where: { id: atividadeId } })
+    expect(iso(row?.operationalDeadlineAt)).toBe('2026-01-11T02:59:59.999Z')
     expect(await auditar('Activity', atividadeId)).toHaveLength(1)
   })
 

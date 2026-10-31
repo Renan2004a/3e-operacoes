@@ -38,6 +38,7 @@ export async function POST(request: Request, context: { params: Promise<{ itemId
         remessa,
         scheduledAt: interpretarDataPrevista(dados.scheduledAt),
         note: typeof dados.note === 'string' ? dados.note : null,
+        userId: auth.usuario.userId,
       },
       prismaRemessaRepository,
     )

@@ -58,13 +58,19 @@ function toEvent(row: IntegrationJobEventRow): IntegrationJobEventRecord {
   }
 }
 
-function dadosDoJob(input: { legacyOrderNumber: string; idempotencyKey: string; now: Date }) {
+function dadosDoJob(input: {
+  legacyOrderNumber: string
+  idempotencyKey: string
+  now: Date
+  requestedByUserId?: string | null
+}) {
   return {
     where: { idempotencyKey: input.idempotencyKey },
     create: {
       legacyOrderNumber: input.legacyOrderNumber,
       idempotencyKey: input.idempotencyKey,
       status: 'PENDING' as const,
+      requestedByUserId: input.requestedByUserId ?? null,
       createdAt: input.now,
       updatedAt: input.now,
     },
@@ -150,7 +156,7 @@ export const prismaIntegracaoRepository: IntegracaoRepository &
     return prisma.$transaction(async (tx) => {
       // Se a auditoria falhar, o upsert do job é desfeito pelo rollback.
       const row = await tx.integrationJob.upsert(
-        dadosDoJob({ legacyOrderNumber, idempotencyKey, now }),
+        dadosDoJob({ legacyOrderNumber, idempotencyKey, now, requestedByUserId }),
       )
       await tx.auditLog.create({
         data: dadosDaAuditoria({
@@ -174,11 +180,14 @@ export const prismaIntegracaoRepository: IntegracaoRepository &
   async registrarJobObsoleto({ jobId, now }) {
     // Não altera o status: o novo despacho reutiliza a mesma linha e a move
     // para DISPATCHED/RUNNING. O evento explica por que houve nova tentativa.
-    await prisma.integrationJobEvent.create({
+    await prisma.auditLog.create({
       data: {
-        jobId,
-        type: 'STALE_TIMEOUT',
-        detail: 'Tentativa anterior sem resposta do conector; nova consulta iniciada.',
+        action: 'STALE_TIMEOUT',
+        entityType: 'JobIntegracao',
+        entityId: jobId,
+        afterJson: {
+          detalhe: 'Tentativa anterior sem resposta do conector; nova consulta iniciada.',
+        },
         createdAt: now,
       },
     })
@@ -200,18 +209,39 @@ export const prismaIntegracaoRepository: IntegracaoRepository &
   },
 
   async appendEvent({ jobId, type, detail, now }) {
-    const row = await prisma.integrationJobEvent.create({
-      data: { jobId, type, detail: detail ?? null, createdAt: now },
+    const row = await prisma.auditLog.create({
+      data: {
+        action: type,
+        entityType: 'JobIntegracao',
+        entityId: jobId,
+        afterJson: { detalhe: detail ?? null },
+        createdAt: now,
+      },
     })
-    return toEvent(row)
+    return toEvent({
+      id: row.id,
+      jobId,
+      type,
+      detail: detail ?? null,
+      createdAt: row.createdAt,
+    })
   },
 
   async listEvents(jobId) {
-    const rows = await prisma.integrationJobEvent.findMany({
-      where: { jobId },
+    const rows = await prisma.auditLog.findMany({
+      where: { entityType: 'JobIntegracao', entityId: jobId },
       orderBy: { createdAt: 'asc' },
     })
-    return rows.map(toEvent)
+    return rows.map((row) => {
+      const depois = row.afterJson as { detalhe?: string | null } | null
+      return toEvent({
+        id: row.id,
+        jobId,
+        type: row.action,
+        detail: depois?.detalhe ?? null,
+        createdAt: row.createdAt,
+      })
+    })
   },
 
   async listJobs() {

@@ -11,27 +11,21 @@ export function escaparCuringasLike(valor: string): string {
   return valor.replace(/[\\%_]/g, (caractere) => `\\${caractere}`)
 }
 
-/**
- * Item concluído para o status do pedido: precisa estar desmembrado e ter ao
- * menos uma atividade, todas concluídas. Item não classificado ou sem
- * atividade nunca satisfaz esta condição (AD-013).
- */
+/** Item concluído: classificado (tem setor) e com situação COMPLETED. */
 const ITEM_CONCLUIDO: Prisma.OrderItemWhereInput = {
-  classificationStatus: 'CLASSIFIED',
-  activities: { some: {}, every: { status: 'COMPLETED' } },
+  sectorId: { not: null },
+  status: 'COMPLETED',
 }
 
 /**
- * Condição do status derivado (IND-01, A1, AD-013). Reproduz exatamente
- * `statusDoPedido`:
- * - PENDING: todos os itens sem atividade ou com todas as atividades PENDING
- *   (inclui item não desmembrado e pedido sem itens);
- * - COMPLETED: existe ao menos um item e todos os itens estão concluídos;
+ * Condição do status derivado (IND-01, A1, AD-013):
+ * - PENDING: todos os itens com situação PENDING (inclui não classificado);
+ * - COMPLETED: existe ao menos um item e todos estão concluídos;
  * - IN_PROGRESS: qualquer outro caso, inclusive PAUSED e DIVERGENT.
  */
 function whereDoStatus(status: StatusPedido): Prisma.OrderWhereInput {
   const todosNaoIniciados: Prisma.OrderWhereInput = {
-    items: { every: { activities: { every: { status: 'PENDING' } } } },
+    items: { every: { status: 'PENDING' } },
   }
   const todosConcluidos: Prisma.OrderWhereInput = {
     items: { some: {}, every: ITEM_CONCLUIDO },
@@ -48,11 +42,7 @@ function whereDoStatus(status: StatusPedido): Prisma.OrderWhereInput {
 }
 
 /**
- * Traduz os filtros da consulta de pedidos para o `where` do Prisma, com
- * relation filters (`some`/`every`/`NOT`), que geram `EXISTS`/`NOT EXISTS` e
- * não duplicam pedidos com vários setores (A1). O filtro de setor continua
- * sendo o código (`SectorCode`) da AD-018 e o período continua sobre
- * `createdAt` (AD-014).
+ * Traduz os filtros da consulta de pedidos para o `where` do Prisma.
  */
 export function montarWherePedidos(criterios: FiltrosPedido): Prisma.OrderWhereInput {
   const where: Prisma.OrderWhereInput = {}
@@ -64,7 +54,7 @@ export function montarWherePedidos(criterios: FiltrosPedido): Prisma.OrderWhereI
   if (cliente) where.customerName = { contains: escaparCuringasLike(cliente) }
 
   if (criterios.setor) {
-    where.items = { some: { activities: { some: { sector: { code: criterios.setor } } } } }
+    where.items = { some: { sector: { code: criterios.setor } } }
   }
 
   if (criterios.de && criterios.ate) {

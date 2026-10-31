@@ -45,21 +45,21 @@ interface ItemComQuantidadesRow {
   id: string
   unit: string
   requestedQuantity: Prisma.Decimal
-  activities: { executions: { quantity: Prisma.Decimal }[] }[]
+  executions: { quantity: Prisma.Decimal }[]
   deliveries: { quantity: Prisma.Decimal }[]
 }
 
 const INCLUDE_ITEM_QUANTIDADES = {
-  activities: { select: { executions: { select: { quantity: true } } } },
-  deliveries: { select: { quantity: true } },
+  executions: { where: { cancelledAt: null }, select: { quantity: true } },
+  deliveries: { where: { cancelledAt: null }, select: { quantity: true } },
 } as const
 
 function somar(quantidades: Prisma.Decimal[]): Prisma.Decimal {
   return quantidades.reduce((total, valor) => total.plus(valor), new Prisma.Decimal(0))
 }
 
-function executadoDoItem(row: Pick<ItemComQuantidadesRow, 'activities'>): Prisma.Decimal {
-  return somar(row.activities.flatMap((activity) => activity.executions.map((execution) => execution.quantity)))
+function executadoDoItem(row: Pick<ItemComQuantidadesRow, 'executions'>): Prisma.Decimal {
+  return somar(row.executions.map((execution) => execution.quantity))
 }
 
 function entregueDoItem(row: Pick<ItemComQuantidadesRow, 'deliveries'>): Prisma.Decimal {
@@ -124,11 +124,11 @@ export const prismaExpedicaoRepository: ExpedicaoRepository = {
       if (!input.managerOverride) {
         const [execucoes, entregas] = await Promise.all([
           tx.execution.aggregate({
-            where: { activity: { orderItemId: input.itemId } },
+            where: { activityId: input.itemId, cancelledAt: null },
             _sum: { quantity: true },
           }),
           tx.delivery.aggregate({
-            where: { orderItemId: input.itemId },
+            where: { orderItemId: input.itemId, cancelledAt: null },
             _sum: { quantity: true },
           }),
         ])
@@ -173,7 +173,7 @@ export const prismaExpedicaoRepository: ExpedicaoRepository = {
       }
 
       const agregado = await tx.delivery.aggregate({
-        where: { orderItemId: input.itemId },
+        where: { orderItemId: input.itemId, cancelledAt: null },
         _sum: { quantity: true },
       })
       const entregueTotal = agregado._sum.quantity ?? new Prisma.Decimal(0)
@@ -205,7 +205,7 @@ export const prismaExpedicaoRepository: ExpedicaoRepository = {
 
   async listarEntregas(itemId): Promise<EntregaHistorico[]> {
     const rows = await prisma.delivery.findMany({
-      where: { orderItemId: itemId },
+      where: { orderItemId: itemId, cancelledAt: null },
       include: { recordedBy: { select: { name: true } } },
       orderBy: { occurredAt: 'asc' },
     })

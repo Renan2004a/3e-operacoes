@@ -239,6 +239,7 @@ export function PedidoDetalhe({
     id: string
     itemId: string
   } | null>(null)
+  const [motivoRemocao, setMotivoRemocao] = useState('')
   const operacoesRemessaRef = useRef(new Set<string>())
   const removerRemessaRefs = useRef<Record<string, HTMLButtonElement | null>>({})
   const cancelarExclusaoRef = useRef<HTMLButtonElement | null>(null)
@@ -634,6 +635,7 @@ export function PedidoDetalhe({
     if (operacoesRemessaRef.current.has(remessa.id)) return
     limparFeedback()
     focoRemoverRef.current = remessa.id
+    setMotivoRemocao('')
     setRemessaParaExcluir({
       id: remessa.id,
       itemId,
@@ -643,6 +645,7 @@ export function PedidoDetalhe({
   function cancelarExclusaoRemessa() {
     if (remessaParaExcluir && operacoesRemessaRef.current.has(remessaParaExcluir.id)) return
     setRemessaParaExcluir(null)
+    setMotivoRemocao('')
   }
 
   async function excluirRemessa() {
@@ -650,15 +653,18 @@ export function PedidoDetalhe({
     if (!alvo || !iniciarOperacaoRemessa(alvo.id, 'remover')) return
     limparFeedback()
     try {
-      await apiDelete(`/api/pedidos/remessas/${alvo.id}`)
+      const motivo = motivoRemocao.trim()
+      const sufixo = motivo ? `?motivo=${encodeURIComponent(motivo)}` : ''
+      await apiDelete(`/api/pedidos/remessas/${alvo.id}${sufixo}`)
       atualizarRemessas(alvo.itemId, (remessas) =>
         remessas.filter((remessa) => remessa.id !== alvo.id),
       )
       setRemessaParaExcluir(null)
-      setSucesso('Remessa excluída.')
+      setMotivoRemocao('')
+      setSucesso('Remessa anulada.')
     } catch {
       // Mantém a remessa e a confirmação na tela para permitir nova tentativa.
-      setErroAcao('Não foi possível excluir a remessa. Tente novamente.')
+      setErroAcao('Não foi possível anular a remessa. Tente novamente.')
     } finally {
       finalizarOperacaoRemessa(alvo.id)
     }
@@ -1366,14 +1372,27 @@ export function PedidoDetalhe({
                                   >
                                     <div>
                                       <p id={tituloExclusao} className="text-sm font-semibold">
-                                        Excluir {remessa.remessa}ª remessa?
+                                        Anular {remessa.remessa}ª remessa?
                                       </p>
                                       <p id={descricaoExclusao} className="text-xs">
                                         {remessa.confirmedAt
-                                          ? `A remessa prevista para ${formatarDataRemessa(remessa.scheduledAt)} está confirmada. A exclusão removerá também o registro da confirmação. Entregas e saldos não serão alterados.`
-                                          : `A remessa prevista para ${formatarDataRemessa(remessa.scheduledAt)} será removida. Entregas e saldos não serão alterados.`}
+                                          ? `A remessa prevista para ${formatarDataRemessa(remessa.scheduledAt)} está confirmada. A anulação preserva o registro e a confirmação para auditoria. Entregas e saldos não serão alterados.`
+                                          : `A remessa prevista para ${formatarDataRemessa(remessa.scheduledAt)} será anulada e preservada para auditoria. Entregas e saldos não serão alterados.`}
                                       </p>
                                     </div>
+                                    <Field
+                                      label="Motivo da anulação (opcional)"
+                                      hint="Registrado na auditoria da remessa."
+                                    >
+                                      {(props) => (
+                                        <Input
+                                          {...props}
+                                          value={motivoRemocao}
+                                          onChange={(evento) => setMotivoRemocao(evento.target.value)}
+                                          maxLength={500}
+                                        />
+                                      )}
+                                    </Field>
                                     <div className="flex flex-wrap gap-2">
                                       <Button
                                         type="button"
@@ -1394,8 +1413,8 @@ export function PedidoDetalhe({
                                         aria-busy={processando === 'remover'}
                                       >
                                         {processando === 'remover'
-                                          ? 'Excluindo…'
-                                          : 'Excluir remessa'}
+                                          ? 'Anulando…'
+                                          : 'Anular remessa'}
                                       </Button>
                                     </div>
                                   </div>

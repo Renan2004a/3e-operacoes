@@ -36,7 +36,7 @@ describe('montarWherePedidos', () => {
 
   it('filtra pelo código do setor em qualquer atividade do pedido (AD-018)', () => {
     expect(montarWherePedidos({ setor: 'TELHAS' })).toEqual({
-      items: { some: { activities: { some: { sector: { code: 'TELHAS' } } } } },
+      items: { some: { sector: { code: 'TELHAS' } } },
     })
   })
 
@@ -51,7 +51,7 @@ describe('montarWherePedidos', () => {
 
   it('traduz PENDING para todos os itens sem atividade ou com atividades pendentes (AD-013)', () => {
     expect(montarWherePedidos({ status: 'PENDING' })).toEqual({
-      items: { every: { activities: { every: { status: 'PENDING' } } } },
+      items: { every: { status: 'PENDING' } },
     })
   })
 
@@ -59,25 +59,19 @@ describe('montarWherePedidos', () => {
     expect(montarWherePedidos({ status: 'COMPLETED' })).toEqual({
       items: {
         some: {},
-        every: {
-          classificationStatus: 'CLASSIFIED',
-          activities: { some: {}, every: { status: 'COMPLETED' } },
-        },
+        every: { sectorId: { not: null }, status: 'COMPLETED' },
       },
     })
   })
 
   it('traduz IN_PROGRESS como o que não é pendente nem concluído (AD-013)', () => {
     const todosNaoIniciados = {
-      items: { every: { activities: { every: { status: 'PENDING' } } } },
+      items: { every: { status: 'PENDING' } },
     }
     const todosConcluidos = {
       items: {
         some: {},
-        every: {
-          classificationStatus: 'CLASSIFIED',
-          activities: { some: {}, every: { status: 'COMPLETED' } },
-        },
+        every: { sectorId: { not: null }, status: 'COMPLETED' },
       },
     }
     expect(montarWherePedidos({ status: 'IN_PROGRESS' })).toEqual({
@@ -88,8 +82,8 @@ describe('montarWherePedidos', () => {
   it('combina filtros e status sem perder critérios (IND-02)', () => {
     expect(montarWherePedidos({ setor: 'TELHAS', status: 'PENDING' })).toEqual({
       AND: [
-        { items: { some: { activities: { some: { sector: { code: 'TELHAS' } } } } } },
-        { items: { every: { activities: { every: { status: 'PENDING' } } } } },
+        { items: { some: { sector: { code: 'TELHAS' } } } },
+        { items: { every: { status: 'PENDING' } } },
       ],
     })
   })

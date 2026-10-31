@@ -131,22 +131,14 @@ async function main() {
   for (const regra of REGRAS_PRODUTO_SETOR) {
     const setor = await prisma.sector.findUnique({ where: { code: regra.sector } })
     if (!setor) continue
-    const existente = await prisma.productSectorRule.findFirst({
-      where: { matchType: regra.matchType, matchValue: regra.matchValue },
-    })
-    if (existente) {
-      await prisma.productSectorRule.update({
-        where: { id: existente.id },
-        data: { sectorId: setor.id, priority: regra.priority, active: true },
-      })
-    } else {
-      await prisma.productSectorRule.create({
-        data: {
-          matchType: regra.matchType,
-          matchValue: regra.matchValue,
-          sectorId: setor.id,
-          priority: regra.priority,
-        },
+    // A regra antiga valia para código e descrição; preservamos o comportamento
+    // criando uma linha para cada tipo de correspondência.
+    for (const matchType of ['CODIGO_PRODUTO', 'DESCRICAO'] as const) {
+      const chave = { matchType, operator: 'CONTEM', value: regra.matchValue }
+      await prisma.classificationRule.upsert({
+        where: { matchType_operator_value: chave },
+        update: { sectorId: setor.id, priority: regra.priority, active: true },
+        create: { ...chave, sectorId: setor.id, priority: regra.priority, active: true },
       })
     }
   }

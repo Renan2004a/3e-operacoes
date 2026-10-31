@@ -68,21 +68,21 @@ async function criarPedido(seed: PedidoSeed) {
 
   let indice = 0
   for (const atividade of seed.atividades ?? []) {
-    const item = await prisma.orderItem.create({
+    const classificada = (atividade.classificacao ?? 'CLASSIFIED') === 'CLASSIFIED'
+    await prisma.orderItem.create({
       data: {
         orderId: order.id,
         legacyItemKey: `item-${indice++}`,
         unit: 'UN',
         requestedQuantity: 1,
-        // Item com atividade é um item já desmembrado no fluxo real (AD-003).
-        classificationStatus: atividade.classificacao ?? 'CLASSIFIED',
-      },
-    })
-    await prisma.activity.create({
-      data: {
-        orderItemId: item.id,
-        sectorId: setores.get(atividade.setor)!,
-        status: atividade.status,
+        // Item com setor é um item já desmembrado no fluxo real (AD-003).
+        ...(classificada
+          ? {
+              sectorId: setores.get(atividade.setor)!,
+              classifiedAt: new Date(),
+              status: atividade.status,
+            }
+          : {}),
       },
     })
   }

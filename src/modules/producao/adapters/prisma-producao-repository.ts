@@ -17,10 +17,9 @@ export interface ProducaoRepository
     PrioridadeRepository,
     OrdemProducaoRepository {}
 
-interface AtividadeRow {
+interface ItemOperacionalRow {
   id: string
-  orderItemId: string
-  sectorId: string
+  sectorId: string | null
   status: Atividade['status']
   priority: number
   createdAt: Date
@@ -34,11 +33,12 @@ interface ExecucaoRow {
   occurredAt: Date
 }
 
-function toAtividade(row: AtividadeRow): Atividade {
+function toAtividade(row: ItemOperacionalRow): Atividade {
   return {
     id: row.id,
-    orderItemId: row.orderItemId,
-    sectorId: row.sectorId,
+    // O item é a unidade operacional; o contrato de "atividade" é preservado.
+    orderItemId: row.id,
+    sectorId: row.sectorId ?? '',
     status: row.status,
     priority: row.priority,
     createdAt: row.createdAt,
@@ -79,41 +79,32 @@ export const prismaProducaoRepository: ProducaoRepository = {
 
   async listarAtividadesPorSetores(sectorIds) {
     if (sectorIds.length === 0) return []
-    const rows = await prisma.activity.findMany({
-      // A fila é de atividades em aberto: concluídas ficam no histórico/painel.
+    const rows = await prisma.orderItem.findMany({
+      // A fila é de itens em aberto: concluídos ficam no histórico/painel.
       where: { sectorId: { in: sectorIds }, status: { not: 'COMPLETED' } },
       orderBy: { createdAt: 'asc' },
       include: {
         sector: { select: { name: true } },
-        orderItem: {
-          select: {
-            description: true,
-            productCode: true,
-            order: { select: { legacyNumber: true } },
-          },
-        },
+        order: { select: { legacyNumber: true } },
       },
     })
     return rows.map((row) => ({
       ...toAtividade(row),
-      itemDescription: row.orderItem.description,
-      productCode: row.orderItem.productCode,
-      orderNumber: row.orderItem.order.legacyNumber,
-      sectorName: row.sector.name,
+      itemDescription: row.description,
+      productCode: row.productCode,
+      orderNumber: row.order.legacyNumber,
+      sectorName: row.sector?.name ?? '',
     }))
   },
 
   async buscarAtividadeParaExecucao(atividadeId): Promise<AtividadeParaExecucao | null> {
-    const row = await prisma.activity.findUnique({
-      where: { id: atividadeId },
-      include: { orderItem: true },
-    })
-    if (!row) return null
+    const row = await prisma.orderItem.findUnique({ where: { id: atividadeId } })
+    if (!row || !row.sectorId) return null
     return {
       id: row.id,
       sectorId: row.sectorId,
-      unidade: row.orderItem.unit,
-      solicitado: row.orderItem.requestedQuantity,
+      unidade: row.unit,
+      solicitado: row.requestedQuantity,
     }
   },
 
@@ -126,10 +117,9 @@ export const prismaProducaoRepository: ProducaoRepository = {
 
   async registrarExecucao(input): Promise<RegistrarExecucaoPortResult> {
     return prisma.$transaction(async (tx) => {
-      // Serializa execuções da mesma atividade: duas submissões simultâneas não
-      // podem calcular o status só com as próprias linhas e deixar o item em
-      // IN_PROGRESS com o total já completo.
-      await tx.$queryRaw`SELECT id FROM atividades WHERE id = ${input.atividadeId} FOR UPDATE`
+      // Serializa execuções do mesmo item: duas submissões simultâneas não
+      // podem calcular o status só com as próprias linhas.
+      await tx.$queryRaw`SELECT id FROM pedidos_itens WHERE id = ${input.atividadeId} FOR UPDATE`
 
       const execucaoRow = await tx.execution.create({
         data: {
@@ -137,23 +127,24 @@ export const prismaProducaoRepository: ProducaoRepository = {
           userId: input.usuarioId,
           quantity: input.quantidade,
           occurredAt: input.occurredAt,
+          finishedAt: input.occurredAt,
         },
       })
       const agregado = await tx.execution.aggregate({
-        where: { activityId: input.atividadeId },
+        where: { activityId: input.atividadeId, cancelledAt: null },
         _sum: { quantity: true },
       })
       const executadoTotal = agregado._sum.quantity ?? new Prisma.Decimal(0)
       const status = input.resolverStatus(executadoTotal)
-      await tx.activity.update({ where: { id: input.atividadeId }, data: { status } })
+      await tx.orderItem.update({ where: { id: input.atividadeId }, data: { status } })
       return { execucao: toExecucao(execucaoRow), executadoTotal, status }
     })
   },
 
   async definirPrioridade({ atividadeId, prioridade }) {
-    const existing = await prisma.activity.findUnique({ where: { id: atividadeId } })
+    const existing = await prisma.orderItem.findUnique({ where: { id: atividadeId } })
     if (!existing) return null
-    const row = await prisma.activity.update({
+    const row = await prisma.orderItem.update({
       where: { id: atividadeId },
       data: { priority: prioridade },
     })
@@ -161,24 +152,24 @@ export const prismaProducaoRepository: ProducaoRepository = {
   },
 
   async buscarOrdemProducao(atividadeId): Promise<DadosOrdemProducao | null> {
-    const row = await prisma.activity.findUnique({
+    const row = await prisma.orderItem.findUnique({
       where: { id: atividadeId },
       include: {
-        orderItem: { include: { order: true } },
+        order: true,
         sector: true,
-        executions: { select: { quantity: true } },
+        executions: { where: { cancelledAt: null }, select: { quantity: true } },
       },
     })
-    if (!row) return null
+    if (!row || !row.sectorId) return null
     return {
       atividadeId: row.id,
-      pedido: row.orderItem.order.legacyNumber,
-      item: row.orderItem.description ?? row.orderItem.productCode ?? '',
-      setor: row.sector.name,
-      unidade: row.orderItem.unit,
-      solicitado: row.orderItem.requestedQuantity,
+      pedido: row.order.legacyNumber,
+      item: row.description ?? row.productCode ?? '',
+      setor: row.sector?.name ?? '',
+      unidade: row.unit,
+      solicitado: row.requestedQuantity,
       executado: somarExecucoes(row.executions.map((execution) => execution.quantity)),
-      previsao: row.orderItem.deadlineAt,
+      previsao: row.deadlineAt,
     }
   },
 }

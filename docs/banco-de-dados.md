@@ -4,6 +4,8 @@ Documento para inspeção e manutenção do banco: **qual banco é qual**, **com
 
 > **Revisão pendente (2026-10-27)**: o professor apontou mistura de nomes em português/inglês, IDs string (CUID), `usuarios_perfis` sem tabela `perfis`, `remessas_programadas` desnecessária e `execucoes` sem início/fim. O diagnóstico e o plano de migração estão em [`revisao-banco-professor.md`](revisao-banco-professor.md). **Nenhuma migração destrutiva foi executada**; o histórico de prazos foi resolvido usando `logs_auditoria`.
 
+> **Atualização 31/10/2026**: o banco foi evoluído para **14 tabelas**, com **colunas em português**, `atividades` absorvida em `pedidos_itens`, `execucoes` → `apontamentos`, `remessas_programadas` → `entregas_previstas`, regras de classificação unificadas e eventos de job na auditoria. O banco atual é **`3e_operacoes_v2`**. Consulte [`banco-evolucao-2026-10-31.md`](banco-evolucao-2026-10-31.md) e o [diagrama](diagramas/banco-pt-v2.png). O restante deste documento descreve o schema anterior (17 tabelas) e permanece como histórico.
+
 ---
 
 ## 1. Dois bancos com papéis diferentes

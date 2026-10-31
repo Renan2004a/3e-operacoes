@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const state = vi.hoisted(() => {
   const prisma = {
-    activity: {
-      findFirst: vi.fn(),
+    orderItem: {
+      findUnique: vi.fn(),
       updateMany: vi.fn(),
     },
     auditLog: {
@@ -24,26 +24,24 @@ const setorNovo = { id: 'setor_telhas', code: 'TELHAS', name: 'Telhas' }
 
 describe('prismaCorrecaoSetorRepository', () => {
   beforeEach(() => {
-    state.prisma.activity.findFirst.mockReset()
-    state.prisma.activity.updateMany.mockReset()
+    state.prisma.orderItem.findUnique.mockReset()
+    state.prisma.orderItem.updateMany.mockReset()
     state.prisma.auditLog.create.mockReset()
   })
 
-  it('lê a atividade com setor e contagem dos registros que travam a correção', async () => {
-    state.prisma.activity.findFirst.mockResolvedValue({
-      id: 'act_1',
-      orderItemId: 'item_1',
+  it('lê o item com setor e contagem dos registros que travam a correção', async () => {
+    state.prisma.orderItem.findUnique.mockResolvedValue({
+      id: 'item_1',
       sectorId: 'setor_corte',
       status: 'PENDING',
       sector: { code: 'CORTE', name: 'Corte e Dobra' },
-      _count: { executions: 2, occurrences: 1 },
-      orderItem: { _count: { deliveries: 3 } },
+      _count: { executions: 2, occurrences: 1, deliveries: 3 },
     })
 
     const atividade = await prismaCorrecaoSetorRepository.findActivityByItemId('item_1')
 
     expect(atividade).toEqual({
-      id: 'act_1',
+      id: 'item_1',
       itemId: 'item_1',
       sectorId: 'setor_corte',
       sectorCode: 'CORTE',
@@ -55,12 +53,12 @@ describe('prismaCorrecaoSetorRepository', () => {
     })
   })
 
-  it('troca o setor só se a atividade continuar sem registros e grava a auditoria completa', async () => {
-    state.prisma.activity.updateMany.mockResolvedValue({ count: 1 })
+  it('troca o setor só se o item continuar sem registros e grava a auditoria completa', async () => {
+    state.prisma.orderItem.updateMany.mockResolvedValue({ count: 1 })
     state.prisma.auditLog.create.mockResolvedValue({})
 
     const trocado = await prismaCorrecaoSetorRepository.trocarSetorDaAtividade({
-      atividadeId: 'act_1',
+      atividadeId: 'item_1',
       itemId: 'item_1',
       setorAnterior,
       setorNovo,
@@ -69,17 +67,20 @@ describe('prismaCorrecaoSetorRepository', () => {
     })
 
     expect(trocado).toBe(true)
-    expect(state.prisma.activity.updateMany).toHaveBeenCalledWith({
+    expect(state.prisma.orderItem.updateMany).toHaveBeenCalledWith({
       where: {
-        id: 'act_1',
-        orderItemId: 'item_1',
+        id: 'item_1',
         sectorId: 'setor_corte',
         status: 'PENDING',
         executions: { none: {} },
         occurrences: { none: {} },
-        orderItem: { deliveries: { none: {} } },
+        deliveries: { none: {} },
       },
-      data: { sectorId: 'setor_telhas' },
+      data: {
+        sectorId: 'setor_telhas',
+        classifiedAt: expect.any(Date),
+        classifiedByUserId: 'user_gerente',
+      },
     })
     expect(state.prisma.auditLog.create).toHaveBeenCalledWith({
       data: {
@@ -88,13 +89,13 @@ describe('prismaCorrecaoSetorRepository', () => {
         entityType: 'OrderItem',
         entityId: 'item_1',
         beforeJson: {
-          activityId: 'act_1',
+          activityId: 'item_1',
           sectorId: 'setor_corte',
           sectorCode: 'CORTE',
           sectorName: 'Corte e Dobra',
         },
         afterJson: {
-          activityId: 'act_1',
+          activityId: 'item_1',
           sectorId: 'setor_telhas',
           sectorCode: 'TELHAS',
           sectorName: 'Telhas',
@@ -105,10 +106,10 @@ describe('prismaCorrecaoSetorRepository', () => {
   })
 
   it('não grava auditoria quando a condição não se mantém na gravação', async () => {
-    state.prisma.activity.updateMany.mockResolvedValue({ count: 0 })
+    state.prisma.orderItem.updateMany.mockResolvedValue({ count: 0 })
 
     const trocado = await prismaCorrecaoSetorRepository.trocarSetorDaAtividade({
-      atividadeId: 'act_1',
+      atividadeId: 'item_1',
       itemId: 'item_1',
       setorAnterior,
       setorNovo,

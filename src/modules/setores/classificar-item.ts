@@ -106,8 +106,8 @@ export interface ClassificacaoEmTransacao {
   findItemById(itemId: string): Promise<ItemParaClassificar | null>
   /** Leitura do setor, ativo ou inativo, dentro da transação. */
   findSectorById(sectorId: string): Promise<Sector | null>
-  /** Cria a atividade defendendo contra duplicidade dentro da transação. */
-  criarAtividade(itemId: string, sectorId: string): Promise<ActivityCriada>
+  /** Classifica o item (define o setor) defendendo contra duplicidade. */
+  criarAtividade(itemId: string, sectorId: string, userId?: string | null): Promise<ActivityCriada>
 }
 
 export interface ClassificacaoEscopoTransacional {
@@ -162,7 +162,7 @@ export async function classificarItem(
       )
     }
 
-    const activity = await classificacao.criarAtividade(input.itemId, input.sectorId)
+    const activity = await classificacao.criarAtividade(input.itemId, input.sectorId, input.userId)
     return { status: 'CLASSIFIED', sectorId: input.sectorId, activityId: activity.id }
   })
 }

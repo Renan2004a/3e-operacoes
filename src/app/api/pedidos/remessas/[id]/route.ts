@@ -13,7 +13,10 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 
   const { id } = await context.params
   try {
-    const remessa = await confirmarRemessa({ id, now: new Date() }, prismaRemessaRepository)
+    const remessa = await confirmarRemessa(
+      { id, now: new Date(), userId: auth.usuario.userId },
+      prismaRemessaRepository,
+    )
     return Response.json({ remessa }, { status: 200 })
   } catch (error) {
     if (error instanceof RemessaNaoEncontradaError) {
@@ -29,8 +32,15 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
   if (!auth.autorizado) return auth.resposta
 
   const { id } = await context.params
+  let motivo = new URL(request.url).searchParams.get('motivo') ?? undefined
   try {
-    await removerRemessa({ id }, prismaRemessaRepository)
+    const body = (await request.json()) as { motivo?: unknown } | null
+    if (body && typeof body.motivo === 'string') motivo = body.motivo
+  } catch {
+    // Corpo opcional: a anulação continua válida sem motivo explícito.
+  }
+  try {
+    await removerRemessa({ id, motivo, userId: auth.usuario.userId }, prismaRemessaRepository)
     return new Response(null, { status: 204 })
   } catch (error) {
     if (error instanceof RemessaNaoEncontradaError) {

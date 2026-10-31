@@ -83,15 +83,12 @@ export const prismaOcorrenciasRepository: OcorrenciasRepository = {
   },
 
   async buscarAtividadeParaOcorrencia(atividadeId): Promise<AtividadeParaOcorrencia | null> {
-    const row = await prisma.activity.findUnique({
-      where: { id: atividadeId },
-      include: { orderItem: true },
-    })
-    if (!row) return null
+    const row = await prisma.orderItem.findUnique({ where: { id: atividadeId } })
+    if (!row || !row.sectorId) return null
     return {
       id: row.id,
       sectorId: row.sectorId,
-      unidade: row.orderItem.unit,
+      unidade: row.unit,
     }
   },
 
@@ -120,7 +117,7 @@ export const prismaOcorrenciasRepository: OcorrenciasRepository = {
 
   async listarOcorrencias(atividadeId): Promise<OcorrenciaListada[]> {
     const rows = await prisma.occurrence.findMany({
-      where: { activityId: atividadeId },
+      where: { activityId: atividadeId, cancelledAt: null },
       include: { motivo: true },
       orderBy: { occurredAt: 'asc' },
     })
@@ -139,7 +136,10 @@ export const prismaOcorrenciasRepository: OcorrenciasRepository = {
     OcorrenciaDetalhada[]
   > {
     const rows = await prisma.occurrence.findMany({
-      where: usuarioId ? { userId: usuarioId } : undefined,
+      where: {
+        cancelledAt: null,
+        ...(usuarioId ? { userId: usuarioId } : {}),
+      },
       select: {
         id: true,
         type: true,
@@ -153,13 +153,9 @@ export const prismaOcorrenciasRepository: OcorrenciasRepository = {
             id: true,
             status: true,
             sector: { select: { name: true } },
-            orderItem: {
-              select: {
-                description: true,
-                productCode: true,
-                order: { select: { legacyNumber: true } },
-              },
-            },
+            description: true,
+            productCode: true,
+            order: { select: { legacyNumber: true } },
           },
         },
       },
@@ -175,9 +171,9 @@ export const prismaOcorrenciasRepository: OcorrenciasRepository = {
       observacao: row.note,
       occurredAt: row.occurredAt,
       motivo: row.motivo?.descricao ?? null,
-      pedido: row.activity.orderItem.order.legacyNumber,
-      item: row.activity.orderItem.description ?? row.activity.orderItem.productCode,
-      setor: row.activity.sector.name,
+      pedido: row.activity.order.legacyNumber,
+      item: row.activity.description ?? row.activity.productCode,
+      setor: row.activity.sector?.name ?? '',
       usuario: row.user.name,
       perfil: row.user.roles[0]?.role ?? null,
       activityStatus: row.activity.status,
