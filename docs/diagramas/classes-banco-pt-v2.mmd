@@ -1,0 +1,206 @@
+﻿classDiagram
+  direction TB
+  class Usuario {
+    <<tabela>>
+    +varchar id
+    +varchar nome
+    +varchar email
+    +varchar senha_hash
+    +enum situacao
+    +datetime criado_em
+    +datetime atualizado_em
+  }
+  class UsuarioPerfil {
+    <<tabela>>
+    +varchar usuario_id
+    +enum perfil
+  }
+  class UsuarioSetor {
+    <<tabela>>
+    +varchar usuario_id
+    +varchar setor_id
+  }
+  class Setor {
+    <<tabela>>
+    +varchar id
+    +enum codigo
+    +varchar nome
+    +boolean ativo
+    +datetime criado_em
+    +datetime atualizado_em
+  }
+  class RegraClassificacao {
+    <<tabela>>
+    +varchar id
+    +varchar tipo_correspondencia
+    +varchar operador
+    +varchar valor
+    +varchar setor_id
+    +int prioridade
+    +boolean ativo
+    +date vigente_de
+    +date vigente_ate
+  }
+  class Pedido {
+    <<tabela>>
+    +varchar id
+    +varchar chave_legado
+    +varchar numero_legado
+    +varchar cliente_nome
+    +varchar vendedor_codigo
+    +datetime data_origem
+    +datetime sincronizado_em
+    +datetime criado_em
+    +datetime atualizado_em
+  }
+  class PedidoItem {
+    <<tabela>>
+    +varchar id
+    +varchar pedido_id
+    +varchar chave_item_legado
+    +varchar codigo_produto
+    +varchar descricao
+    +varchar categoria_legado
+    +varchar unidade
+    +decimal quantidade_solicitada
+    +varchar setor_id
+    +enum situacao
+    +int prioridade
+    +datetime prazo_entrega
+    +datetime prazo_operacional
+    +datetime classificado_em
+    +varchar classificado_por
+    +datetime criado_em
+    +datetime atualizado_em
+  }
+  class Apontamento {
+    <<tabela>>
+    +varchar id
+    +varchar item_id
+    +varchar usuario_id
+    +decimal quantidade
+    +datetime registrado_em
+    +datetime iniciado_em
+    +datetime finalizado_em
+    +varchar observacao
+    +varchar situacao
+    +varchar chave_idempotencia
+    +datetime anulado_em
+    +varchar anulado_por
+    +varchar motivo_anulacao
+    +datetime criado_em
+  }
+  class Ocorrencia {
+    <<tabela>>
+    +varchar id
+    +varchar item_id
+    +varchar usuario_id
+    +varchar tipo
+    +decimal quantidade
+    +int duracao_minutos
+    +varchar motivo_id
+    +varchar observacao
+    +datetime ocorrido_em
+    +varchar apontamento_id
+    +varchar chave_idempotencia
+    +datetime anulado_em
+    +varchar anulado_por
+    +varchar motivo_anulacao
+    +datetime criado_em
+  }
+  class MotivoOcorrencia {
+    <<tabela>>
+    +varchar id
+    +varchar tipo
+    +varchar codigo
+    +varchar descricao
+    +boolean ativo
+    +datetime criado_em
+    +datetime atualizado_em
+  }
+  class Entrega {
+    <<tabela>>
+    +varchar id
+    +varchar item_id
+    +varchar usuario_id
+    +decimal quantidade
+    +boolean excecao_autorizada
+    +varchar motivo_excecao
+    +varchar autorizado_por
+    +decimal disponivel_antes
+    +datetime entregue_em
+    +varchar chave_idempotencia
+    +datetime anulado_em
+    +varchar anulado_por
+    +varchar motivo_anulacao
+    +datetime criado_em
+  }
+  class EntregaPrevista {
+    <<tabela>>
+    +varchar id
+    +varchar item_id
+    +int numero_remessa
+    +datetime data_prevista
+    +decimal quantidade_prevista
+    +datetime confirmada_em
+    +varchar confirmada_por
+    +varchar criado_por
+    +varchar observacao
+    +datetime anulada_em
+    +varchar anulada_por
+    +varchar motivo_anulacao
+    +datetime criado_em
+    +datetime atualizado_em
+  }
+  class JobIntegracao {
+    <<tabela>>
+    +varchar id
+    +varchar pedido_id
+    +varchar numero_legado
+    +varchar empresa_origem
+    +varchar chave_idempotencia
+    +enum situacao
+    +int tentativas
+    +varchar erro_codigo
+    +varchar erro_mensagem
+    +varchar solicitado_por
+    +datetime criado_em
+    +datetime despachado_em
+    +datetime concluido_em
+    +datetime atualizado_em
+  }
+  class LogAuditoria {
+    <<tabela>>
+    +varchar id
+    +varchar usuario_id
+    +varchar acao
+    +varchar entidade_tipo
+    +varchar entidade_id
+    +json antes_json
+    +json depois_json
+    +varchar motivo
+    +varchar correlacao_id
+    +datetime criado_em
+  }
+
+  Usuario "1" --> "*" UsuarioPerfil : possui
+  Usuario "1" --> "*" UsuarioSetor : atua
+  Setor "1" --> "*" UsuarioSetor : recebe
+  Setor "1" --> "*" RegraClassificacao : destino
+  Pedido "1" --> "*" PedidoItem : contÃ©m
+  Setor "0..1" --> "*" PedidoItem : classifica
+  Usuario "0..1" --> "*" PedidoItem : classificou
+  PedidoItem "1" --> "*" Apontamento : recebe
+  PedidoItem "1" --> "*" Ocorrencia : registra
+  PedidoItem "1" --> "*" Entrega : entrega
+  PedidoItem "1" --> "*" EntregaPrevista : prevÃª
+  MotivoOcorrencia "0..1" --> "*" Ocorrencia : motiva
+  Usuario "1" --> "*" Apontamento : executa
+  Usuario "1" --> "*" Entrega : registra
+  Usuario "0..1" --> "*" Entrega : autoriza/anula
+  Usuario "0..1" --> "*" EntregaPrevista : cria/confirma/anula
+  Pedido "1" --> "*" JobIntegracao : importa
+  Usuario "0..1" --> "*" JobIntegracao : solicita
+  Usuario "0..1" --> "*" LogAuditoria : autoria
+  JobIntegracao "1" --> "*" LogAuditoria : eventos
+  Ocorrencia "*" --> "0..1" Apontamento : vincula

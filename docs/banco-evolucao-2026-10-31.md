@@ -69,11 +69,18 @@
 | `vw_pedido_resumo` | Contagens por pedido (sem somar unidades diferentes) |
 | `vw_eventos_job_integracao` | Linha do tempo do job a partir da auditoria |
 
-### 2.4 Diagrama
+### 2.4 Diagramas
 
-![Diagrama do banco 3E — 14 tabelas](diagramas/banco-pt-v2.png)
+| Diagrama | Arquivo |
+| --- | --- |
+| **DER** — entidades, colunas, PK/FK e relacionamentos físicos | [`diagramas/der-banco-pt-v2.png`](diagramas/der-banco-pt-v2.png) |
+| **MER** — visão conceitual das entidades e cardinalidades | [`diagramas/mer-banco-pt-v2.png`](diagramas/mer-banco-pt-v2.png) |
+| **Classes** — classes de persistência, atributos e multiplicidades | [`diagramas/classes-banco-pt-v2.png`](diagramas/classes-banco-pt-v2.png) |
 
-Fonte editável: [`diagramas/banco-pt-v2.mmd`](diagramas/banco-pt-v2.mmd).
+![DER do banco 3E — 14 tabelas](diagramas/der-banco-pt-v2.png)
+
+Fontes editáveis: [`der`](diagramas/der-banco-pt-v2.mmd), [`mer`](diagramas/mer-banco-pt-v2.mmd) e [`classes`](diagramas/classes-banco-pt-v2.mmd).
+Para regerar: `node scripts/render-diagramas-banco.mjs`.
 
 ---
 

@@ -1,0 +1,170 @@
+erDiagram
+  USUARIOS ||--o{ USUARIOS_PERFIS : "possui"
+  USUARIOS ||--o{ USUARIOS_SETORES : "atua"
+  SETORES ||--o{ USUARIOS_SETORES : "recebe"
+  SETORES ||--o{ REGRAS_CLASSIFICACAO : "destino"
+  PEDIDOS ||--o{ PEDIDOS_ITENS : "contém"
+  SETORES ||--o{ PEDIDOS_ITENS : "classifica"
+  USUARIOS ||--o{ PEDIDOS_ITENS : "classificou"
+  PEDIDOS_ITENS ||--o{ APONTAMENTOS : "recebe"
+  PEDIDOS_ITENS ||--o{ OCORRENCIAS : "registra"
+  PEDIDOS_ITENS ||--o{ ENTREGAS : "entrega"
+  PEDIDOS_ITENS ||--o{ ENTREGAS_PREVISTAS : "prevê"
+  MOTIVOS_OCORRENCIA ||--o{ OCORRENCIAS : "motiva"
+  USUARIOS ||--o{ APONTAMENTOS : "executa"
+  USUARIOS ||--o{ ENTREGAS : "registra"
+  USUARIOS ||--o{ ENTREGAS_PREVISTAS : "cria/confirma"
+  PEDIDOS ||--o{ JOBS_INTEGRACAO : "importa"
+  USUARIOS ||--o{ JOBS_INTEGRACAO : "solicita"
+  JOBS_INTEGRACAO ||--o{ LOGS_AUDITORIA : "eventos"
+  USUARIOS ||--o{ LOGS_AUDITORIA : "autoria"
+
+  USUARIOS {
+    varchar id PK
+    varchar nome
+    varchar email UK
+    varchar senha_hash
+    enum situacao
+    datetime criado_em
+  }
+  USUARIOS_PERFIS {
+    varchar usuario_id PK,FK
+    enum perfil PK
+  }
+  USUARIOS_SETORES {
+    varchar usuario_id PK,FK
+    varchar setor_id PK,FK
+  }
+  SETORES {
+    varchar id PK
+    enum codigo UK
+    varchar nome
+    boolean ativo
+  }
+  REGRAS_CLASSIFICACAO {
+    varchar id PK
+    varchar tipo_correspondencia
+    varchar operador
+    varchar valor
+    varchar setor_id FK
+    int prioridade
+    boolean ativo
+    date vigente_de
+    date vigente_ate
+  }
+  PEDIDOS {
+    varchar id PK
+    varchar chave_legado UK
+    varchar numero_legado
+    varchar cliente_nome
+    varchar vendedor_codigo
+    datetime data_origem
+    datetime sincronizado_em
+  }
+  PEDIDOS_ITENS {
+    varchar id PK
+    varchar pedido_id FK
+    varchar chave_item_legado
+    varchar codigo_produto
+    varchar descricao
+    varchar unidade
+    decimal quantidade_solicitada
+    varchar setor_id FK
+    enum situacao
+    int prioridade
+    datetime prazo_entrega
+    datetime prazo_operacional
+    datetime classificado_em
+    varchar classificado_por FK
+  }
+  APONTAMENTOS {
+    varchar id PK
+    varchar item_id FK
+    varchar usuario_id FK
+    decimal quantidade
+    datetime registrado_em
+    datetime iniciado_em
+    datetime finalizado_em
+    varchar observacao
+    varchar situacao
+    varchar chave_idempotencia UK
+    datetime anulado_em
+    varchar anulado_por FK
+    varchar motivo_anulacao
+  }
+  OCORRENCIAS {
+    varchar id PK
+    varchar item_id FK
+    varchar usuario_id FK
+    varchar tipo
+    decimal quantidade
+    int duracao_minutos
+    varchar motivo_id FK
+    varchar observacao
+    datetime ocorrido_em
+    varchar apontamento_id FK
+    varchar chave_idempotencia UK
+    datetime anulado_em
+    varchar anulado_por FK
+  }
+  MOTIVOS_OCORRENCIA {
+    varchar id PK
+    varchar tipo
+    varchar codigo
+    varchar descricao
+    boolean ativo
+  }
+  ENTREGAS {
+    varchar id PK
+    varchar item_id FK
+    varchar usuario_id FK
+    decimal quantidade
+    boolean excecao_autorizada
+    varchar motivo_excecao
+    varchar autorizado_por FK
+    decimal disponivel_antes
+    datetime entregue_em
+    varchar chave_idempotencia UK
+    datetime anulado_em
+    varchar anulado_por FK
+  }
+  ENTREGAS_PREVISTAS {
+    varchar id PK
+    varchar item_id FK
+    int numero_remessa
+    datetime data_prevista
+    decimal quantidade_prevista
+    datetime confirmada_em
+    varchar confirmada_por FK
+    varchar criado_por FK
+    varchar observacao
+    datetime anulada_em
+    varchar anulada_por FK
+  }
+  JOBS_INTEGRACAO {
+    varchar id PK
+    varchar pedido_id FK
+    varchar numero_legado
+    varchar empresa_origem
+    varchar chave_idempotencia UK
+    enum situacao
+    int tentativas
+    varchar erro_codigo
+    varchar erro_mensagem
+    varchar solicitado_por FK
+    datetime criado_em
+    datetime despachado_em
+    datetime concluido_em
+  }
+  LOGS_AUDITORIA {
+    varchar id PK
+    varchar usuario_id FK
+    varchar acao
+    varchar entidade_tipo
+    varchar entidade_id
+    json antes_json
+    json depois_json
+    varchar motivo
+    varchar correlacao_id
+    datetime criado_em
+  }
