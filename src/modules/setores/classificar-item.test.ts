@@ -241,6 +241,7 @@ describe('classificarPorMapeamento', () => {
   it('classifica o item no setor do mapeamento ativo e cria a atividade', async () => {
     const { deps, itemStore, activities } = createDeps({
       items: [itemState({ id: 'item_1', legacyCategory: 'Telhas' })],
+      sectors: [sector({ id: 'setor_telhas', active: true })],
       mappings: [mapping({ legacyCategory: 'Telhas', sectorId: 'setor_telhas' })],
     })
 
@@ -277,6 +278,35 @@ describe('classificarPorMapeamento', () => {
     expect(result.status).toBe('PENDING_CLASSIFICATION')
     expect(result.sectorId).toBeNull()
     expect(result.activityId).toBeNull()
+    expect(itemStore[0].classificationStatus).toBe('PENDING_CLASSIFICATION')
+    expect(activities).toHaveLength(0)
+  })
+
+  it('mantém o item pendente quando o setor do mapeamento está inativo', async () => {
+    const { deps, itemStore, activities } = createDeps({
+      items: [itemState({ id: 'item_1', legacyCategory: 'Telhas' })],
+      sectors: [sector({ id: 'setor_telhas', active: false })],
+      mappings: [mapping({ legacyCategory: 'Telhas', sectorId: 'setor_telhas' })],
+    })
+
+    const result = await classificarPorMapeamento('item_1', deps)
+
+    expect(result.status).toBe('PENDING_CLASSIFICATION')
+    expect(result.sectorId).toBeNull()
+    expect(result.activityId).toBeNull()
+    expect(itemStore[0].classificationStatus).toBe('PENDING_CLASSIFICATION')
+    expect(activities).toHaveLength(0)
+  })
+
+  it('mantém o item pendente quando o setor do mapeamento não existe', async () => {
+    const { deps, itemStore, activities } = createDeps({
+      items: [itemState({ id: 'item_1', legacyCategory: 'Telhas' })],
+      mappings: [mapping({ legacyCategory: 'Telhas', sectorId: 'setor_removido' })],
+    })
+
+    const result = await classificarPorMapeamento('item_1', deps)
+
+    expect(result.status).toBe('PENDING_CLASSIFICATION')
     expect(itemStore[0].classificationStatus).toBe('PENDING_CLASSIFICATION')
     expect(activities).toHaveLength(0)
   })

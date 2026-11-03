@@ -65,6 +65,14 @@ const mocks = vi.hoisted(() => {
         (job) =>
           job.idempotencyKey === idempotencyKey && job.createdAt.getTime() >= since.getTime(),
       ) ?? null,
+    findLatestByOrderNumberSince: async (legacyOrderNumber: string, since: Date) =>
+      jobs
+        .filter(
+          (job) =>
+            job.legacyOrderNumber === legacyOrderNumber &&
+            job.createdAt.getTime() >= since.getTime(),
+        )
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0] ?? null,
     findById: async (jobId: string) => jobs.find((job) => job.id === jobId) ?? null,
     create: async (input: { legacyOrderNumber: string; idempotencyKey: string; now: Date }) =>
       criarJob(input),
@@ -74,23 +82,28 @@ const mocks = vi.hoisted(() => {
       now: Date
       requestedByUserId: string
     }) => {
+      const existente = jobs.find((job) => job.idempotencyKey === input.idempotencyKey)
       const job = criarJob(input)
       if (auditError) {
         // Simula o rollback da transação para o teste de despacho.
-        const indice = jobs.findIndex((candidato) => candidato.id === job.id)
-        if (indice >= 0) jobs.splice(indice, 1)
+        if (!existente) {
+          const indice = jobs.findIndex((candidato) => candidato.id === job.id)
+          if (indice >= 0) jobs.splice(indice, 1)
+        }
         throw auditError
       }
-      audits.push({
-        jobId: job.id,
-        legacyOrderNumber: input.legacyOrderNumber,
-        idempotencyKey: input.idempotencyKey,
-        requestedByUserId: input.requestedByUserId,
-        now: input.now,
-        requestKind: 'NEW_ATTEMPT',
-        newDispatch: true,
-      })
-      return job
+      if (!existente) {
+        audits.push({
+          jobId: job.id,
+          legacyOrderNumber: input.legacyOrderNumber,
+          idempotencyKey: input.idempotencyKey,
+          requestedByUserId: input.requestedByUserId,
+          now: input.now,
+          requestKind: 'NEW_ATTEMPT',
+          newDispatch: true,
+        })
+      }
+      return { job, criado: !existente }
     },
     registrarAuditoriaSolicitacao: async (input: Audit) => {
       if (auditError) throw auditError
@@ -401,12 +414,13 @@ describe('POST /api/integracao/pedidos', () => {
     const response = await POST(request({ orderNumber: '70435' }))
 
     expect(response.status).toBe(202)
-    expect(await response.json()).toMatchObject({ jobId: 'job_1' })
-    expect(mocks.jobs).toHaveLength(1)
+    // Job FAILED fora da janela ganha uma tentativa nova (`:retry`).
+    expect(await response.json()).toMatchObject({ jobId: 'job_2' })
+    expect(mocks.jobs).toHaveLength(2)
     expect(mocks.scheduled).toHaveLength(1)
     expect(mocks.audits).toHaveLength(2)
     expect(mocks.audits[1]).toMatchObject({
-      jobId: 'job_1',
+      jobId: 'job_2',
       requestedByUserId: 'user_import',
       requestKind: 'NEW_ATTEMPT',
       newDispatch: true,
@@ -432,6 +446,7 @@ describe('POST /api/integracao/pedidos', () => {
     expect(a.status).toBe(202)
     expect(b.status).toBe(202)
     expect(mocks.jobs).toHaveLength(1)
+    expect(mocks.scheduled).toHaveLength(1)
     expect(mocks.audits).toHaveLength(2)
     expect(mocks.audits.map((audit) => audit.requestedByUserId)).toEqual([
       'user_import',

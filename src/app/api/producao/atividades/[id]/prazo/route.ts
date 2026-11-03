@@ -7,11 +7,13 @@ import { prismaPrazosRepository } from '../../../../../../modules/prazos/adapter
 import { autorizar } from '../../../../../../shared/http/autorizacao'
 
 /**
- * PATCH /api/producao/atividades/[id]/prazo — define o prazo da atividade
- * (PRAZO-02, PRAZO-03, PRAZO-04, PRAZO-11). Restrito a gerente e vendedor.
+ * PATCH /api/producao/atividades/[id]/prazo — define o prazo operacional da
+ * atividade (PRAZO-02, PRAZO-03, PRAZO-04, PRAZO-11). Restrito ao Gerente de
+ * Produção: o Vendedor apenas consulta esse prazo (AD-009/D5), enquanto o prazo
+ * comercial do item continua em `definir_prazo`.
  */
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
-  const auth = await autorizar(request, 'definir_prazo')
+  const auth = await autorizar(request, 'definir_prazo_operacional')
   if (!auth.autorizado) return auth.resposta
 
   const { id } = await context.params

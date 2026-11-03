@@ -84,6 +84,11 @@ export async function classificarPorMapeamento(
   const mapping = await deps.mapeamento.findByCategory(category)
   if (!mapping || mapping.status !== 'ACTIVE') return PENDENTE
 
+  // Mapeamento para setor inativo (ou inexistente) não classifica
+  // automaticamente: o item fica pendente para escolha manual de um setor ativo.
+  const sector = await deps.classificacao.findSectorById(mapping.sectorId)
+  if (!sector || !sector.active) return PENDENTE
+
   const activity = await deps.classificacao.markClassified({ itemId, sectorId: mapping.sectorId })
   return { status: 'CLASSIFIED', sectorId: mapping.sectorId, activityId: activity.id }
 }

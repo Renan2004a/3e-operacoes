@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const state = vi.hoisted(() => {
   const tx = {
     integrationJob: {
-      upsert: vi.fn(),
+      create: vi.fn(),
     },
     auditLog: {
       create: vi.fn(),
@@ -51,8 +51,9 @@ describe('prismaIntegracaoRepository — auditoria da solicitação', () => {
   beforeEach(() => {
     state.prisma.$transaction.mockClear()
     state.prisma.integrationJob.upsert.mockReset()
+    state.prisma.integrationJob.findUnique.mockReset()
     state.prisma.auditLog.create.mockReset()
-    state.tx.integrationJob.upsert.mockReset()
+    state.tx.integrationJob.create.mockReset()
     state.tx.auditLog.create.mockReset()
     state.prisma.$transaction.mockImplementation(async (fn: (client: typeof state.tx) => unknown) =>
       fn(state.tx),
@@ -60,10 +61,10 @@ describe('prismaIntegracaoRepository — auditoria da solicitação', () => {
   })
 
   it('cria o job e a auditoria na mesma transação', async () => {
-    state.tx.integrationJob.upsert.mockResolvedValue(JOB)
+    state.tx.integrationJob.create.mockResolvedValue(JOB)
     state.tx.auditLog.create.mockResolvedValue({})
 
-    const job = await prismaIntegracaoRepository.criarComAuditoria({
+    const resultado = await prismaIntegracaoRepository.criarComAuditoria({
       legacyOrderNumber: '70435',
       idempotencyKey: 'pedido:70435',
       now: NOW,
@@ -71,9 +72,8 @@ describe('prismaIntegracaoRepository — auditoria da solicitação', () => {
     })
 
     expect(state.prisma.$transaction).toHaveBeenCalledTimes(1)
-    expect(state.tx.integrationJob.upsert).toHaveBeenCalledWith({
-      where: { idempotencyKey: 'pedido:70435' },
-      create: {
+    expect(state.tx.integrationJob.create).toHaveBeenCalledWith({
+      data: {
         legacyOrderNumber: '70435',
         idempotencyKey: 'pedido:70435',
         status: 'PENDING',
@@ -81,7 +81,6 @@ describe('prismaIntegracaoRepository — auditoria da solicitação', () => {
         createdAt: NOW,
         updatedAt: NOW,
       },
-      update: {},
     })
     expect(state.tx.auditLog.create).toHaveBeenCalledWith({
       data: {
@@ -100,11 +99,11 @@ describe('prismaIntegracaoRepository — auditoria da solicitação', () => {
         },
       },
     })
-    expect(job).toEqual(JOB)
+    expect(resultado).toEqual({ job: JOB, criado: true })
   })
 
   it('propaga a falha da auditoria sem engolir o erro', async () => {
-    state.tx.integrationJob.upsert.mockResolvedValue(JOB)
+    state.tx.integrationJob.create.mockResolvedValue(JOB)
     state.tx.auditLog.create.mockRejectedValue(new Error('falha de auditoria'))
 
     await expect(
@@ -116,12 +115,12 @@ describe('prismaIntegracaoRepository — auditoria da solicitação', () => {
       }),
     ).rejects.toThrow('falha de auditoria')
 
-    expect(state.tx.integrationJob.upsert).toHaveBeenCalledTimes(1)
+    expect(state.tx.integrationJob.create).toHaveBeenCalledTimes(1)
     expect(state.tx.auditLog.create).toHaveBeenCalledTimes(1)
   })
 
   it('não grava auditoria órfã quando a criação do job falha', async () => {
-    state.tx.integrationJob.upsert.mockRejectedValue(new Error('falha no job'))
+    state.tx.integrationJob.create.mockRejectedValue(new Error('falha no job'))
 
     await expect(
       prismaIntegracaoRepository.criarComAuditoria({
@@ -133,6 +132,47 @@ describe('prismaIntegracaoRepository — auditoria da solicitação', () => {
     ).rejects.toThrow('falha no job')
 
     expect(state.tx.auditLog.create).not.toHaveBeenCalled()
+  })
+
+  it('reconcilia a colisão esperada da chave de idempotência com o job persistido', async () => {
+    const colisao = Object.assign(new Error('unique constraint'), {
+      code: 'P2002',
+      meta: { target: 'jobs_integracao_chave_idempotencia_key' },
+    })
+    state.tx.integrationJob.create.mockRejectedValue(colisao)
+    state.prisma.integrationJob.findUnique.mockResolvedValue(JOB)
+
+    const resultado = await prismaIntegracaoRepository.criarComAuditoria({
+      legacyOrderNumber: '70435',
+      idempotencyKey: 'pedido:70435',
+      now: NOW,
+      requestedByUserId: 'user_perdedor',
+    })
+
+    expect(resultado).toEqual({ job: JOB, criado: false })
+    expect(state.prisma.integrationJob.findUnique).toHaveBeenCalledWith({
+      where: { idempotencyKey: 'pedido:70435' },
+    })
+    expect(state.tx.auditLog.create).not.toHaveBeenCalled()
+  })
+
+  it('não esconde P2002 de outra constraint', async () => {
+    const outraColisao = Object.assign(new Error('unique constraint'), {
+      code: 'P2002',
+      meta: { target: 'outra_chave_unica' },
+    })
+    state.tx.integrationJob.create.mockRejectedValue(outraColisao)
+
+    await expect(
+      prismaIntegracaoRepository.criarComAuditoria({
+        legacyOrderNumber: '70435',
+        idempotencyKey: 'pedido:70435',
+        now: NOW,
+        requestedByUserId: 'user_vendedor',
+      }),
+    ).rejects.toBe(outraColisao)
+
+    expect(state.prisma.integrationJob.findUnique).not.toHaveBeenCalled()
   })
 
   it('audita a reutilização do job sem alterar a autoria anterior', async () => {

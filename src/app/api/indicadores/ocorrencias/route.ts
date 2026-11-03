@@ -8,7 +8,7 @@ import { autorizar } from '../../../../shared/http/autorizacao'
  * com pedido, item, setor e responsável (OCO-07).
  */
 export async function GET(request: Request) {
-  const auth = await autorizar(request, 'consultar_pedidos')
+  const auth = await autorizar(request, 'consultar_atividades_gerente')
   if (!auth.autorizado) return auth.resposta
 
   const resumo = await resumoOcorrencias(prismaOcorrenciasRepository, new Date())

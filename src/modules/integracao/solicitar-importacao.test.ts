@@ -47,23 +47,22 @@ function createFakeRepo(): SolicitacaoImportacaoRepository & {
     },
     async criarComAuditoria({ legacyOrderNumber, idempotencyKey, now, requestedByUserId }) {
       const existing = jobs.find((job) => job.idempotencyKey === idempotencyKey)
-      let job = existing
-      if (!job) {
-        seq += 1
-        job = {
-          id: `job_${seq}`,
-          legacyOrderNumber,
-          idempotencyKey,
-          status: 'PENDING',
-          attemptCount: 0,
-          errorCode: null,
-          errorMessage: null,
-          createdAt: now,
-          updatedAt: now,
-          completedAt: null,
-        }
-        jobs.push(job)
+      if (existing) return { job: existing, criado: false }
+
+      seq += 1
+      const job: IntegrationJob = {
+        id: `job_${seq}`,
+        legacyOrderNumber,
+        idempotencyKey,
+        status: 'PENDING',
+        attemptCount: 0,
+        errorCode: null,
+        errorMessage: null,
+        createdAt: now,
+        updatedAt: now,
+        completedAt: null,
       }
+      jobs.push(job)
       audits.push({
         jobId: job.id,
         legacyOrderNumber,
@@ -73,7 +72,7 @@ function createFakeRepo(): SolicitacaoImportacaoRepository & {
         requestKind: 'NEW_ATTEMPT',
         newDispatch: true,
       })
-      return job
+      return { job, criado: true }
     },
     async registrarAuditoriaSolicitacao(input) {
       audits.push(input)

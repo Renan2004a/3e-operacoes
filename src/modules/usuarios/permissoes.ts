@@ -22,6 +22,7 @@ export type Acao =
   | 'gerenciar_setores'
   | 'monitorar_integracao'
   | 'definir_prazo'
+  | 'definir_prazo_operacional'
   | 'programar_remessa'
   | 'corrigir_setor'
   | 'corrigir_setor_justificado'
@@ -41,6 +42,9 @@ const MATRIZ: Record<Acao, readonly RoleCode[]> = {
   gerenciar_setores: ['SYSTEM_RESPONSIBLE'],
   monitorar_integracao: ['TECHNICAL_RESPONSIBLE', 'SYSTEM_RESPONSIBLE'],
   definir_prazo: ['PRODUCTION_MANAGER', 'SELLER'],
+  // O prazo do item é comercial; o prazo operacional do setor é da produção.
+  // O Vendedor continua lendo o prazo operacional, mas não o altera (AD-009/D5).
+  definir_prazo_operacional: ['PRODUCTION_MANAGER'],
   programar_remessa: ['PRODUCTION_MANAGER', 'SHIPPING'],
   corrigir_setor: ['PRODUCTION_MANAGER', 'SYSTEM_RESPONSIBLE', 'SELLER'],
   corrigir_setor_justificado: ['PRODUCTION_MANAGER', 'SYSTEM_RESPONSIBLE'],

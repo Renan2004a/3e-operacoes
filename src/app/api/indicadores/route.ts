@@ -9,7 +9,7 @@ import { autorizar } from '../../../shared/http/autorizacao'
  * IND-08). Calculado apenas com o banco do app (IND-09); exige sessão.
  */
 export async function GET(request: Request) {
-  const auth = await autorizar(request, 'consultar_pedidos')
+  const auth = await autorizar(request, 'consultar_atividades_gerente')
   if (!auth.autorizado) return auth.resposta
 
   const [painel, pcp] = await Promise.all([

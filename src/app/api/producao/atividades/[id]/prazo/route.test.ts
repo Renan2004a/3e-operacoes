@@ -71,6 +71,7 @@ describe('PATCH /api/producao/atividades/[id]/prazo', () => {
     mocks.reset()
     mocks.perfis.user_mgr = ['PRODUCTION_MANAGER']
     mocks.perfis.user_operador = ['OPERATOR']
+    mocks.perfis.user_vendedor = ['SELLER']
   })
 
   afterEach(() => {
@@ -129,6 +130,20 @@ describe('PATCH /api/producao/atividades/[id]/prazo', () => {
     expect(response.status).toBe(403)
     expect((await response.json()).error).toBe('forbidden')
     expect(mocks.atividades.get('act_1')).toBeNull()
+  })
+
+  it('responde 403 ao Vendedor e não persiste o prazo operacional', async () => {
+    mocks.atividades.set('act_1', null)
+
+    const response = await PATCH(
+      request({ prazo: '2026-10-20' }, { usuarioId: 'user_vendedor' }),
+      context('act_1'),
+    )
+
+    expect(response.status).toBe(403)
+    expect((await response.json()).error).toBe('forbidden')
+    expect(mocks.atividades.get('act_1')).toBeNull()
+    expect(mocks.chamadas).toHaveLength(0)
   })
 
   it('responde 400 para data inválida e não persiste (PRAZO-04)', async () => {

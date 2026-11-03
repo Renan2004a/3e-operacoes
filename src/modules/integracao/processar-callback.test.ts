@@ -204,8 +204,16 @@ function createClassificacaoPort(
       }
       return null
     },
-    async findSectorById() {
-      return null
+    async findSectorById(sectorId) {
+      if (sectorId !== 'setor_telhas') return null
+      return {
+        id: 'setor_telhas',
+        code: 'TELHAS' as const,
+        name: 'Telhas',
+        active: true,
+        createdAt: NOW,
+        updatedAt: NOW,
+      }
     },
     async markClassified({ itemId, sectorId }) {
       for (const order of orders) {

@@ -131,7 +131,17 @@ const mocks = vi.hoisted(() => {
           }
         : null
     },
-    findSectorById: async () => null,
+    findSectorById: async (id: string) =>
+      id === 'setor_telhas'
+        ? {
+            id: 'setor_telhas',
+            code: 'TELHAS' as const,
+            name: 'Telhas',
+            active: true,
+            createdAt: new Date(0),
+            updatedAt: new Date(0),
+          }
+        : null,
     markClassified: async ({ itemId, sectorId }: { itemId: string; sectorId: string }) => {
       const found = orderItems.find((item) => item.id === itemId)
       if (!found) throw new Error('item não encontrado')

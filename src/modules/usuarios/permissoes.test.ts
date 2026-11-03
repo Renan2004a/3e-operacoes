@@ -11,6 +11,8 @@ describe('pode', () => {
   it('Vendedor consulta, define prazo e desmembra itens, mas não registra execução', () => {
     expect(pode(['SELLER'], 'consultar_pedidos')).toBe(true)
     expect(pode(['SELLER'], 'definir_prazo')).toBe(true)
+    expect(pode(['SELLER'], 'definir_prazo_operacional')).toBe(false)
+    expect(pode(['PRODUCTION_MANAGER'], 'definir_prazo_operacional')).toBe(true)
     expect(pode(['SELLER'], 'classificar_item')).toBe(true)
     expect(pode(['SELLER'], 'solicitar_importacao')).toBe(true)
     expect(pode(['SELLER'], 'registrar_execucao')).toBe(false)

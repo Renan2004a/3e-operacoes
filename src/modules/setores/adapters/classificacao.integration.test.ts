@@ -184,6 +184,31 @@ describe.skipIf(!ativo)('classificação atômica no MySQL (integração)', () =
     ).rejects.toBeInstanceOf(ItemNaoEncontradoError)
   })
 
+  it('não classifica automaticamente quando o mapeamento aponta para setor inativo (P4)', async () => {
+    const categoria = `${CATEGORIA_PREFIXO}setor-inativo`
+    const { itemId } = await criarItem({ legacyCategory: categoria })
+    await prisma.classificationRule.create({
+      data: {
+        matchType: 'CATEGORIA',
+        operator: 'IGUAL',
+        value: categoria,
+        sectorId: setorTelhas,
+      },
+    })
+
+    await prisma.sector.update({ where: { id: setorTelhas }, data: { active: false } })
+    try {
+      const resultado = await classificarPorMapeamento(itemId, { classificacao, mapeamento })
+
+      expect(resultado.status).toBe('PENDING_CLASSIFICATION')
+      const item = await prisma.orderItem.findUnique({ where: { id: itemId } })
+      expect(item?.sectorId).toBeNull()
+      expect(item?.classifiedAt).toBeNull()
+    } finally {
+      await prisma.sector.update({ where: { id: setorTelhas }, data: { active: true } })
+    }
+  })
+
   it('classificação manual concorrendo com a automática efetiva apenas uma classificação', async () => {
     const categoria = `${CATEGORIA_PREFIXO}manual-auto`
     const { itemId } = await criarItem({ legacyCategory: categoria })

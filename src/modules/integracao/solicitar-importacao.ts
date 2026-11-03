@@ -37,6 +37,16 @@ export interface AuditoriaSolicitacaoImportacao {
 }
 
 /**
+ * Resultado da criação transacional. `criado` é verdadeiro somente para a
+ * requisição que inseriu o job; a perdedora de uma colisão de idempotência
+ * recebe `criado: false` e o job já persistido para reconciliar seu contrato.
+ */
+export interface ResultadoCriacaoJob {
+  job: IntegrationJob
+  criado: boolean
+}
+
+/**
  * Porta usada pelo caso de uso. A criação do job e a auditoria da solicitação
  * devem acontecer na mesma transação de banco. Inclui a leitura opcional do job
  * mais recente (com `:retry`) para reimportação/recuperação.
@@ -52,7 +62,7 @@ export interface SolicitacaoImportacaoRepository {
     idempotencyKey: string
     now: Date
     requestedByUserId: string
-  }): Promise<IntegrationJob>
+  }): Promise<ResultadoCriacaoJob>
   registrarAuditoriaSolicitacao(input: AuditoriaSolicitacaoImportacao): Promise<void>
   /**
    * Registra que uma tentativa ativa ficou sem resposta além do limite. O job
@@ -120,13 +130,18 @@ export async function solicitarImportacao(
     return await reaproveitarOuRetentar(latest, orderNumber, requestedByUserId, input, repo)
   }
 
-  const job = await repo.criarComAuditoria({
+  const criacao = await repo.criarComAuditoria({
     legacyOrderNumber: orderNumber,
     idempotencyKey,
     now: input.now,
     requestedByUserId,
   })
-  return { jobId: job.id, reused: false }
+  if (!criacao.criado) {
+    // Outra requisição venceu a corrida de criação. Reconciliamos esta
+    // solicitação com o job persistido, sem novo despacho.
+    return reaproveitarOuRetentar(criacao.job, orderNumber, requestedByUserId, input, repo)
+  }
+  return { jobId: criacao.job.id, reused: false }
 }
 
 async function reaproveitarOuRetentar(
@@ -165,7 +180,21 @@ async function reaproveitarOuRetentar(
       now: input.now,
       requestedByUserId,
     })
-    return { jobId: retry.id, reused: false }
+    if (!retry.criado) {
+      // A tentativa de retry já foi criada por outra requisição concorrente.
+      // A perdedora apenas registra a reutilização, sem um segundo despacho.
+      await repo.registrarAuditoriaSolicitacao({
+        jobId: retry.job.id,
+        legacyOrderNumber: orderNumber,
+        idempotencyKey: retry.job.idempotencyKey,
+        requestedByUserId,
+        now: input.now,
+        requestKind: 'REUSED_JOB',
+        newDispatch: false,
+      })
+      return { jobId: retry.job.id, reused: true }
+    }
+    return { jobId: retry.job.id, reused: false }
   }
 
   // Tentativa recente ativa é reutilizada mesmo fora da janela: reiniciar o

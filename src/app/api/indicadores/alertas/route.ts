@@ -12,7 +12,7 @@ import { autorizar } from '../../../../shared/http/autorizacao'
  * autenticados (`consultar_pedidos`).
  */
 export async function GET(request: Request) {
-  const auth = await autorizar(request, 'consultar_pedidos')
+  const auth = await autorizar(request, 'consultar_atividades_gerente')
   if (!auth.autorizado) return auth.resposta
 
   const configurado = Number(process.env.ALERTA_PARADO_DIAS ?? DIAS_PARADO_PADRAO)

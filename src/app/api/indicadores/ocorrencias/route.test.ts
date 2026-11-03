@@ -59,6 +59,7 @@ describe('GET /api/indicadores/ocorrencias', () => {
     process.env.SESSION_SECRET = 'segredo-de-teste'
     mocks.ocorrencias.length = 0
     mocks.perfis.user_mgr = ['PRODUCTION_MANAGER']
+    mocks.perfis.user_vendedor = ['SELLER']
   })
 
   afterEach(() => {
@@ -83,5 +84,11 @@ describe('GET /api/indicadores/ocorrencias', () => {
   it('responde 401 sem sessão', async () => {
     const response = await GET(request({ usuarioId: null }))
     expect(response.status).toBe(401)
+  })
+
+  it('responde 403 ao Vendedor (P3)', async () => {
+    const response = await GET(request({ usuarioId: 'user_vendedor' }))
+    expect(response.status).toBe(403)
+    expect((await response.json()).error).toBe('forbidden')
   })
 })

@@ -98,6 +98,7 @@ describe('GET /api/indicadores', () => {
     holder.comPrazo.length = 0
     for (const key of Object.keys(holder.perfis)) delete holder.perfis[key]
     holder.perfis.user_gerente = ['PRODUCTION_MANAGER']
+    holder.perfis.user_vendedor = ['SELLER']
     holder.perfis.user_sem_perfil = []
   })
 
@@ -197,6 +198,13 @@ describe('GET /api/indicadores', () => {
 
   it('responde 403 quando o usuário não tem perfil (IND-11)', async () => {
     const response = await GET(request({ userId: 'user_sem_perfil' }))
+
+    expect(response.status).toBe(403)
+    expect((await response.json()).error).toBe('forbidden')
+  })
+
+  it('responde 403 ao Vendedor: painel é da Gerência (P3)', async () => {
+    const response = await GET(request({ userId: 'user_vendedor' }))
 
     expect(response.status).toBe(403)
     expect((await response.json()).error).toBe('forbidden')

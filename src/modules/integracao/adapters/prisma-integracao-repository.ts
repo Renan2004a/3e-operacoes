@@ -7,6 +7,7 @@ import type {
 } from '../contratos'
 import type {
   AuditoriaSolicitacaoImportacao,
+  ResultadoCriacaoJob,
   SolicitacaoImportacaoRepository,
 } from '../solicitar-importacao'
 
@@ -76,6 +77,36 @@ function dadosDoJob(input: {
     },
     update: {},
   }
+}
+
+/**
+ * Colisão esperada da chave de idempotência de `jobs_integracao`. Outras
+ * violações de unicidade não são reconciliadas e continuam propagando.
+ */
+function ehColisaoIdempotencia(erro: unknown): boolean {
+  if (typeof erro !== 'object' || erro === null) return false
+  const { code, meta } = erro as {
+    code?: unknown
+    meta?: {
+      target?: unknown
+      driverAdapterError?: {
+        cause?: { constraint?: { index?: unknown }; originalMessage?: unknown }
+      }
+    }
+  }
+  if (code !== 'P2002') return false
+
+  // O adapter MariaDB não preenche `meta.target`; a constraint aparece em
+  // `driverAdapterError.cause.constraint.index` (e na mensagem original).
+  const pistas = [
+    meta?.target,
+    meta?.driverAdapterError?.cause?.constraint?.index,
+    meta?.driverAdapterError?.cause?.originalMessage,
+  ]
+  return pistas.some((pista) => {
+    const alvo = Array.isArray(pista) ? pista.join(',') : String(pista ?? '')
+    return alvo.includes('idempotencyKey') || alvo.includes('chave_idempotencia')
+  })
 }
 
 function dadosDaAuditoria(input: AuditoriaSolicitacaoImportacao) {
@@ -152,25 +183,43 @@ export const prismaIntegracaoRepository: IntegracaoRepository &
     return toJob(row)
   },
 
-  async criarComAuditoria({ legacyOrderNumber, idempotencyKey, now, requestedByUserId }) {
-    return prisma.$transaction(async (tx) => {
-      // Se a auditoria falhar, o upsert do job é desfeito pelo rollback.
-      const row = await tx.integrationJob.upsert(
-        dadosDoJob({ legacyOrderNumber, idempotencyKey, now, requestedByUserId }),
-      )
-      await tx.auditLog.create({
-        data: dadosDaAuditoria({
-          jobId: row.id,
-          legacyOrderNumber,
-          idempotencyKey,
-          requestedByUserId,
-          now,
-          requestKind: 'NEW_ATTEMPT',
-          newDispatch: true,
-        }),
+  async criarComAuditoria({
+    legacyOrderNumber,
+    idempotencyKey,
+    now,
+    requestedByUserId,
+  }): Promise<ResultadoCriacaoJob> {
+    try {
+      const row = await prisma.$transaction(async (tx) => {
+        // `create` (e não `upsert`) torna explícito quem venceu a criação: a
+        // colisão da chave única identifica a requisição perdedora.
+        const row = await tx.integrationJob.create({
+          data: dadosDoJob({ legacyOrderNumber, idempotencyKey, now, requestedByUserId }).create,
+        })
+        // Se a auditoria falhar, a criação do job é desfeita pelo rollback.
+        await tx.auditLog.create({
+          data: dadosDaAuditoria({
+            jobId: row.id,
+            legacyOrderNumber,
+            idempotencyKey,
+            requestedByUserId,
+            now,
+            requestKind: 'NEW_ATTEMPT',
+            newDispatch: true,
+          }),
+        })
+        return row
       })
-      return toJob(row)
-    })
+      return { job: toJob(row), criado: true }
+    } catch (erro) {
+      if (!ehColisaoIdempotencia(erro)) throw erro
+
+      // A outra transação já commitou o job. A perdedora não audita aqui: a
+      // camada de domínio reconcilia o job e registra REUSED_JOB/EM_ANDAMENTO.
+      const existente = await prisma.integrationJob.findUnique({ where: { idempotencyKey } })
+      if (!existente) throw erro
+      return { job: toJob(existente), criado: false }
+    }
   },
 
   async registrarAuditoriaSolicitacao(input) {
