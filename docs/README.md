@@ -4,6 +4,9 @@
 - `diagnostico-docentes.md`: problemas relatados, causas, correções e plano de execução.
 - `diagnostico-operador.md`: análise do perfil Operador, telas, ocorrências e visão do gerente.
 - `banco-de-dados.md`: bancos local/hospedado, tabelas, relacionamentos, nomenclatura e DBeaver.
+- `banco-evolucao-2026-10-31.md`: evolução para 14 tabelas, ETL, validação, deploy e mudanças visíveis.
+- `banco-tabelas-relacionamentos.md`: dicionário de cada tabela, relação e propósito (por que existe e para que serve).
+- `diagramas/`: DER, MER e diagrama de classes do banco em PNG e Mermaid.
 - `mockups/`: mockups editáveis das telas propostas (HTML/CSS) e instruções.
 - `wireframes/`: wireframes de baixa fidelidade de todas as telas, projeto Balsamiq e importação BMPR.
 - `revisao-banco-professor.md`: diagnóstico e plano de migração do banco (nomes, IDs, perfis, remessas, apontamentos).

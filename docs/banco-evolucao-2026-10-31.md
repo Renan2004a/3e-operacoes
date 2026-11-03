@@ -6,6 +6,8 @@
 **Backup**: `3e_operacoes_backup_20261031`.
 **Aplicação**: mesma base de código, com adaptadores reescritos e apenas uma mudança visível ao usuário (anulação de remessa com motivo).
 
+**Dicionário de tabelas e relações**: [banco-tabelas-relacionamentos.md](banco-tabelas-relacionamentos.md)
+
 ---
 
 ## 1. Resumo executivo
