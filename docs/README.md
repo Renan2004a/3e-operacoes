@@ -6,6 +6,7 @@
 - `banco-de-dados.md`: bancos local/hospedado, tabelas, relacionamentos, nomenclatura e DBeaver.
 - `banco-evolucao-2026-10-31.md`: evolução para 14 tabelas, ETL, validação, deploy e mudanças visíveis.
 - `banco-tabelas-relacionamentos.md`: dicionário de cada tabela, relação e propósito (por que existe e para que serve).
+- `banco-3e-operacoes-2026-11-04.docx`: documento técnico completo para o professor, com capa, sumário, justificativa do número de tabelas, diagramas, dicionário e DDL.
 - `diagramas/`: DER, MER e diagrama de classes do banco em PNG e Mermaid.
 - `mockups/`: mockups editáveis das telas propostas (HTML/CSS) e instruções.
 - `wireframes/`: wireframes de baixa fidelidade de todas as telas, projeto Balsamiq e importação BMPR.

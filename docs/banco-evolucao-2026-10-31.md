@@ -7,6 +7,7 @@
 **Aplicação**: mesma base de código, com adaptadores reescritos e apenas uma mudança visível ao usuário (anulação de remessa com motivo).
 
 **Dicionário de tabelas e relações**: [banco-tabelas-relacionamentos.md](banco-tabelas-relacionamentos.md)
+**Documento para o professor (DOCX)**: [banco-3e-operacoes-2026-11-04.docx](banco-3e-operacoes-2026-11-04.docx)
 
 ---
 
