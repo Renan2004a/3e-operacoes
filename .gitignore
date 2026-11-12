@@ -42,3 +42,5 @@ dist/
 
 # Vínculo local do Railway (não versionar)
 .railway/
+
+docs/seminario/preview/

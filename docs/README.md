@@ -8,6 +8,7 @@
 - `banco-tabelas-relacionamentos.md`: dicionário de cada tabela, relação e propósito (por que existe e para que serve).
 - `banco-3e-operacoes-2026-11-04.docx`: documento técnico completo para o professor, com capa, sumário, justificativa do número de tabelas, diagramas, dicionário e DDL.
 - `diagramas/`: DER, MER e diagrama de classes do banco em PNG e Mermaid.
+- `seminario/`: PowerPoint do seminário técnico (35 slides, com notas do apresentador) e instruções de uso.
 - `mockups/`: mockups editáveis das telas propostas (HTML/CSS) e instruções.
 - `wireframes/`: wireframes de baixa fidelidade de todas as telas, projeto Balsamiq e importação BMPR.
 - `revisao-banco-professor.md`: diagnóstico e plano de migração do banco (nomes, IDs, perfis, remessas, apontamentos).
